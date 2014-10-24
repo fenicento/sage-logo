@@ -1,0 +1,999 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">HPC</journal-id>
+<journal-id journal-id-type="hwp">sphpc</journal-id>
+<journal-title>The International Journal of High Performance Computing Applications</journal-title>
+<issn pub-type="ppub">1094-3420</issn>
+<issn pub-type="epub">1741-2846</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1094342011428145</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1094342011428145</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Iterative Krylov solution methods for geophysical electromagnetic simulations on throughput-oriented processing units</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name>
+<surname>Commer</surname>
+<given-names>Michael</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342011428145">1</xref>
+<xref ref-type="corresp" rid="corresp1-1094342011428145"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Maia</surname>
+<given-names>Filipe RNC</given-names>
+</name>
+<xref ref-type="aff" rid="aff2-1094342011428145">2</xref>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Newman</surname>
+<given-names>Gregory A</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342011428145">1</xref>
+</contrib>
+<bio>
+<title>Authors’ Biographies</title>
+<p>
+<italic>Dr Michael Commer</italic> is a Geological Research Scientist at Lawrence Berkeley National Laboratory (LBNL), Earth Science Division. His research interests include large-scale, multi-dimensional, inverse and forward modeling problems arising in exploration and environmental geophysics, numerical methods on distributed computing platforms, accelerated hardware computing, and EM geophysics. He started his career at LBNL in 2004 as a postdoctoral scientist, supported through a Feodor-Lynen fellowship by the German Alexander-von-Humboldt foundation. He graduated in 2003 at the University of Cologne (Germany). His PhD focused on 3D time-domain EM imaging methods, and included application of inverse methods to EM data from Merapi volcano (Indonesia).</p>
+<p>
+<italic>Dr Filipe RNC Maia</italic> is a Petascale Postdoctoral Fellow at LBNL, NERSC. He graduated in biochemistry in 2004 from Oporto University, Portugal, and in 2010 completed his PhD in physics, specializing in molecular biophysics, at Uppsala University, Sweden. During his PhD he developed the only publicly available software for inverting continuous X-ray diffraction images and was part of the first X-ray ultrafast single particle diffraction imaging experiment. His research interests include image reconstruction, compressive sensing, X-ray diffraction imaging, optimization applied to problems arising from phasing, GPU computing, and parallel algorithms.</p>
+<p>
+<italic>Dr Gregory Newman</italic> is a Senior Scientist at LBNL, Earth Science Division and Head of the Geophysics Department in the Earth Sciences Division. Prior to his appointment in January 2004, he worked for nearly 14 years at Sandia National Laboratories, Geophysical Technology Department. His interests include large-scale, multi-dimensional, inverse and forward modeling problems arising in exploration geophysics, parallel computation, and EM geophysics. He has over 20 years of experience in large-scale geophysical field simulation and computation. In 2000, he was a Mercator Fellow at the Institute for Geophysics and Meteorology, University of Cologne, Federal Republic of Germany. The fellowship was awarded from the German National Science Foundation for a year of study in the Federal Republic of Germany. Studies at the Institute were directed on the formulation and implementation of 3D transient EM modeling and inversion algorithms for geophysical applications and lectures on the EM modeling and inversion. He was also affiliated with this institution from 1987–1989 as a PostDoctorate Appointee and an Alexander von Humboldt Fellow.</p>
+</bio>
+</contrib-group>
+<aff id="aff1-1094342011428145">
+<label>1</label>Earth Sciences Division, Lawrence Berkeley National Laboratory, Berkeley, USA</aff>
+<aff id="aff2-1094342011428145">
+<label>2</label>National Energy Research Scientific Computing Center, Lawrence Berkeley National Laboratory, Berkeley, USA</aff>
+<author-notes>
+<corresp id="corresp1-1094342011428145">Michael Commer, Earth Sciences Division, Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA Email: <email>mcommer@lbl.gov</email>
+</corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>11</month>
+<year>2012</year>
+</pub-date>
+<volume>26</volume>
+<issue>4</issue>
+<issue-title>Special Issue: Manycore and Accelerator-based High-performance Scientific Computing</issue-title>
+<fpage>378</fpage>
+<lpage>385</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Many geo-scientific applications involve boundary value problems arising in simulating electrostatic and electromagnetic fields for geophysical prospecting and subsurface imaging of electrical resistivity. Modeling complex geological media with three-dimensional finite-difference grids gives rise to large sparse linear systems of equations. For such systems, we have implemented three common iterative Krylov solution methods on graphics processing units and compared their performance with parallel host-based versions. The benchmarks show that the device efficiency improves with increasing grid sizes. Limitations are currently given by the device memory resources.</p>
+</abstract>
+<kwd-group>
+<kwd>electromagnetic modeling</kwd>
+<kwd>finite-difference methods</kwd>
+<kwd>graphics processing unit</kwd>
+<kwd>iterative Krylov methods</kwd>
+<kwd>NVIDIA Compute Unified Device Architecture</kwd>
+<kwd>parallel solutions</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1094342011428145">
+<title>1 Introduction</title>
+<p>Modern graphics processing units (GPUs) are designed for efficiently manipulating computer graphics. Their highly parallel architecture makes them also suitable for compute-intensive scientific applications. To provide access to the multithreaded computational resources and associated memory bandwidth of GPUs, graphics hardware manufacturers have introduced new application programming interfaces enabling numerical calculations in a fashion similar to parallel computing paradigms.</p>
+<p>A large class of geo-scientific applications involves boundary value problems arising in simulating electromagnetic (EM) and magnetotelluric (MT) fields for geophysical prospecting and subsurface imaging of electrical resistivity. Often the need is to simulate such fields in complex three-dimensional (3D) geological media. Finite-difference (FD) techniques have been our methods of choice for complex simulation problems of this sort (<xref ref-type="bibr" rid="bibr4-1094342011428145">Commer and Newman, 2008</xref>), and give rise to large sparse linear systems of equations of the form<disp-formula id="disp-formula1-1094342011428145">
+<mml:math id="mml-disp1-1094342011428145">
+<mml:msub>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">x</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">b</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo mathvariant="normal">.</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1094342011428145" xlink:href="10.1177_1094342011428145-eq1.tif"/>
+</disp-formula>
+</p>
+<p>The non-singular matrix <bold>A</bold> is either real-symmetric, <inline-formula id="inline-formula1-1094342011428145">
+<mml:math id="mml-inline1-1094342011428145">
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">∈</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ℝ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula>, or complex-symmetric, <inline-formula id="inline-formula2-1094342011428145">
+<mml:math id="mml-inline2-1094342011428145">
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">∈</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ℂ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula>, and the solution and right-hand-side vectors are <inline-formula id="inline-formula3-1094342011428145">
+<mml:math id="mml-inline3-1094342011428145">
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">x</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">b</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">∈</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ℝ</mml:mi>
+</mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:msup>
+<mml:mrow>
+<mml:mo>/</mml:mo>
+</mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ℂ</mml:mi>
+</mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:msup>
+</mml:math>
+</inline-formula>, respectively. The size of such systems arising from 3D EM simulations prohibits usage of direct solvers. Thus, iterative Krylov subspace techniques are commonly used.</p>
+<sec id="section2-1094342011428145">
+<title>1.1 Iterative Krylov subspace methods</title>
+<p>Krylov subspace methods are defined as projection (Galerkin) or generalized projection (Petrov–Galerkin) methods for the solution of the linear system (1). The solution involves constructing the Krylov subspace <italic>K<sub>m</sub>
+</italic>:<disp-formula id="disp-formula2-1094342011428145">
+<mml:math id="mml-disp2-1094342011428145">
+<mml:msub>
+<mml:mi>K</mml:mi>
+<mml:mi>m</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>K</mml:mi>
+<mml:mi>m</mml:mi>
+</mml:msub>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">r</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfenced>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mi>p</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mfenced close="}" open="{">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">r</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+<mml:mi mathvariant="bold">r</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mo stretchy="false">…</mml:mo>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">r</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfenced>
+<mml:mo>.</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-1094342011428145" xlink:href="10.1177_1094342011428145-eq2.tif"/>
+</disp-formula>
+</p>
+<p>Starting with the residual vector, <inline-formula id="inline-formula4-1094342011428145">
+<mml:math id="mml-inline4-1094342011428145">
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold">r</mml:mi>
+</mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mrow>
+<mml:mi mathvariant="bold">b</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold">x</mml:mi>
+<mml:mn mathvariant="bold">0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, Krylov methods compute the optimal approximation <inline-formula id="inline-formula5-1094342011428145">
+<mml:math id="mml-inline5-1094342011428145">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold">x</mml:mi>
+</mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="false">∈</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold">x</mml:mi>
+</mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi>K</mml:mi>
+<mml:mi>m</mml:mi>
+</mml:msub>
+</mml:math>
+</inline-formula> to the solution of (1) in an iterative manner, where at each iteration the dimension <italic>m</italic> of <italic>K</italic> is updated. Krylov methods are named after the Russian applied mathematician and naval engineer Alexei Krylov, who published a paper on this topic in 1931 and formed the basis from which all Krylov methods later developed.</p>
+</sec>
+<sec id="section3-1094342011428145">
+<title>1.2 Krylov solvers used in geophysical resistivity prospecting</title>
+<p>A common near-surface application is the direct current (DC) resistivity method, where a DC (or a very low-frequency) current is introduced as a means of studying Earth’s electrical resistivity, for example in groundwater mapping. Time-harmonic EM prospecting methods with larger penetration depths use transmitter frequencies below roughly 100 kHz. The Krylov solvers of interest for these applications are designed to handle linear systems, where <bold>A</bold> is real/complex-symmetric. For the real-symmetric case, the conjugate gradient (CG) method of <xref ref-type="bibr" rid="bibr9-1094342011428145">Hestenes and Stiefel (1952)</xref> is the method of choice. While in practice rounding errors introduce a loss of orthogonality in the conjugate directions, CG performs excellently when solving sparse linear systems that are reasonable well conditioned. CG can also be applied to any Hermitian (complex) linear system that is symmetric positive definite. For the complex-symmetric case, where the matrix is non-Hermitian, the bi-conjugate gradient (BiCG) method first proposed by <xref ref-type="bibr" rid="bibr10-1094342011428145">Lanczos (1952)</xref> and quasi minimum residual (QMR), more recently proposed by <xref ref-type="bibr" rid="bibr8-1094342011428145">Freund and Nachtigal (1991)</xref> and <xref ref-type="bibr" rid="bibr7-1094342011428145">Freund (1992)</xref>, are effective and cost-efficient solvers.</p>
+<p>The main computational burden of Krylov methods lies in a sparse matrix-vector (SpMV) product that occurs hundreds to thousands of times and is needed to iteratively construct the Krylov subspace. This subspace forms the basis from which the solution to <xref ref-type="disp-formula" rid="disp-formula1-1094342011428145">Equation (1)</xref> is constructed. The remaining operations with a significant computing percentage are dense linear algebra operations on vectors. To exploit the GPU throughput, a key point is parallelizing these operations in a way that fits the highly parallel device hardware architecture.</p>
+<p>For the present performance study, we have developed three iterative solvers relevant for solving electrostatic, frequency-domain EM and MT modeling problems on GPUs. In Section 2, we briefly introduce the relevant underlying equations, and describe their solution with a FD technique. In Section 3, the GPU-specific methodology is introduced, before comparing the performance of our GPU Krylov solvers against different parallel central processing unit (CPU) counterparts in Section 4.</p>
+</sec>
+</sec>
+<sec id="section4-1094342011428145">
+<title>2 Method</title>
+<p>The BiCG and QMR methods are widely applied for modeling time-harmonic eddy current problems (e.g. <xref ref-type="bibr" rid="bibr13-1094342011428145">Sarkar, 1987</xref>; <xref ref-type="bibr" rid="bibr14-1094342011428145">Smith et al., 1990</xref>; <xref ref-type="bibr" rid="bibr17-1094342011428145">Wang and Jin, 1998</xref>; <xref ref-type="bibr" rid="bibr6-1094342011428145">De Gersem et al., 1999</xref>). In contrast to typical engineering applications, geophysical EM responses involve the solution of Maxwell’s equation in the quasi-static limit, where EM diffusion dominates (<xref ref-type="bibr" rid="bibr1-1094342011428145">Alumbaugh et al., 1996</xref>). Simulations with both an alternating current (AC) and DC transmitter type can involve a real or a complex tensor for describing Earth’s electrical resistivity. Therefore, we also consider complex arithmetic for the electrostatic problem. We choose the FD method over the integral equation method because of the ability to employ fast iterative solvers. Finite elements (FEs) are superior for simulating topographically complex structures, an aspect that becomes more important with higher excitation frequencies (as in radar methods). While this may be open to debate, considering the diffusive domain of our applications, we have concluded that the FD method offers more advantages over the FE one. Using our solvers in computationally expensive imaging methods, efficient grid separation strategies play a key role in keeping computing times at bay, where the regularity of 3D Cartesian FD meshes allows for a straightforward implementation of an elaborate material averaging scheme (<xref ref-type="bibr" rid="bibr5-1094342011428145">Commer et al., 2008</xref>). In our case, the complex conductivity (reciprocal of resistivity) tensor for a 3D Cartesian FD grid cell is the diagonal tensor<disp-formula id="disp-formula3-1094342011428145">
+<mml:math id="mml-disp3-1094342011428145">
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="italic">σ</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mtable columnspacing="1em" rowspacing="4pt">
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="italic">σ</mml:mi>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="italic">σ</mml:mi>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="italic">σ</mml:mi>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mfenced>
+<mml:mo stretchy="false">,</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-1094342011428145" xlink:href="10.1177_1094342011428145-eq3.tif"/>
+</disp-formula>where σ<sub>
+<italic>xx</italic>
+</sub>, σ<sub>
+<italic>yy</italic>
+</sub>, and σ<sub>
+<italic>zz</italic>
+</sub> denote the directional (real or complex) conductivities sampled on a FD grid cell’s <italic>x-</italic>, <italic>y-</italic>, and <italic>z-</italic>edges.</p>
+<sec id="section5-1094342011428145">
+<title>2.1 Finite-difference solution of wideband electromagnetic problems</title>
+<p>The time-harmonic EM field simulation leads to the vector Helmholtz equation, where the unknowns are given by the components of the vector electric field, <bold>E</bold>:<disp-formula id="disp-formula4-1094342011428145">
+<mml:math id="mml-disp4-1094342011428145">
+<mml:mi mathvariant="normal">∇</mml:mi>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mi mathvariant="normal">∇</mml:mi>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">E</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mi mathvariant="italic">ω</mml:mi>
+<mml:mtext> </mml:mtext>
+<mml:msub>
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mtext> </mml:mtext>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="italic">σ</mml:mi>
+<mml:mi mathvariant="bold">E</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mi mathvariant="italic">ω</mml:mi>
+<mml:mtext> </mml:mtext>
+<mml:msub>
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mtext> </mml:mtext>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">J</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>.</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-1094342011428145" xlink:href="10.1177_1094342011428145-eq4.tif"/>
+</disp-formula>
+</p>
+<p>In this formulation, μ<sub>0</sub> and ω = 2π<italic>f</italic> denote the free-space magnetic permeability and angular frequency, where <italic>f</italic> is measured in Hz. The FD discretization of <xref ref-type="disp-formula" rid="disp-formula4-1094342011428145">Equation (4)</xref> is illustrated in <xref ref-type="fig" rid="fig1-1094342011428145">Figure 1</xref>, where each node has three designated field components <italic>E<sub>x</sub>
+</italic>, <italic>E<sub>y</sub>
+</italic>, and <italic>E<sub>z</sub>
+</italic>, as depicted for the center node (<italic>i</italic>,<italic>j</italic>,<italic>k</italic>). Hence, given a mesh size (in nodes) of <italic>N<sub>x</sub>
+</italic>× <italic>N<sub>y</sub>
+</italic>× <italic>N<sub>z</sub>
+</italic>, the size of <bold>A</bold>
+<sub>
+<italic>N</italic>×<italic>N</italic>
+</sub> is <italic>N</italic> = 3 × <italic>N<sub>x</sub>
+</italic>× <italic>N<sub>y</sub>
+</italic>× <italic>N<sub>z</sub>
+</italic> rows. The FD discretization of the curl-curl operator results in a maximum number of 13 non-zeros per row. For example, all black arrows in <xref ref-type="fig" rid="fig1-1094342011428145">Figure 1</xref> are the field components involved in forming <xref ref-type="disp-formula" rid="disp-formula4-1094342011428145">Equation (4)</xref> for the component <italic>E<sub>x</sub>
+</italic> at the center node (<italic>i</italic>,<italic>j</italic>,<italic>k</italic>). Similarly, the red and blue arrows pertain to <italic>E<sub>y</sub>
+</italic>(<italic>i</italic>,<italic>j</italic>,<italic>k</italic>) and <italic>E<sub>z</sub>
+</italic>(<italic>i</italic>,<italic>j</italic>,<italic>k</italic>), respectively. This scheme leads to a sparse pattern, as exemplified in <xref ref-type="fig" rid="fig2-1094342011428145">Figure 2</xref>(a).</p>
+<fig id="fig1-1094342011428145" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>The staggered finite-difference grid for discretization of the three-dimensional Helmholtz and Poisson equations. Electric field components are assigned to each grid node and are shown by arrows. The center node (<italic>i</italic>,<italic>j</italic>,<italic>k</italic>) has the three designated components <italic>E<sub>x</sub>
+</italic>, <italic>E<sub>y</sub>
+</italic>, and <italic>E<sub>z</sub>
+</italic> shown by three-colored arrows. All black, red, and blue arrows mark the field components that go into constructing the matrix rows corresponding to <italic>E<sub>x</sub>
+</italic>, <italic>E<sub>y</sub>
+</italic>, and <italic>E<sub>z</sub>
+</italic>, respectively, at (<italic>i</italic>,<italic>j</italic>,<italic>k</italic>). The seven-point stencil for the discrete Poisson equation is shown by the green-bordered circles. Electrical conductivities are assigned to individual grid nodes. The conductivity tensor (3) is then derived through a proper material averaging scheme (<xref ref-type="bibr" rid="bibr4-1094342011428145">Commer and Newman, 2008</xref>). (Color online only.)</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011428145-fig1.tif"/>
+</fig>
+<fig id="fig2-1094342011428145" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Sparse structure of matrix <bold>A</bold> in <xref ref-type="disp-formula" rid="disp-formula1-1094342011428145">Equation (1)</xref> resulting from Helmholtz (a) and Poisson equation (b).</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011428145-fig2.tif"/>
+</fig>
+<p>Higher order difference schemes produce similarly sparse systems that can also be effectively solved using Krylov methods, but will come at added expense because of increased matrix bandwidths. For EM-type problems, the need to go to higher order schemes is mitigated because calculations are performed out to several wavelengths, hence grid dispersion problems, which can be treated with higher order schemes, do not typically arise.</p>
+</sec>
+<sec id="section6-1094342011428145">
+<title>2.2 Finite-difference solution of electrostatic problems</title>
+<p>The electrostatic problem gives rise to the Poisson equation, a partial differential equation of elliptic type:<disp-formula id="disp-formula5-1094342011428145">
+<mml:math id="mml-disp5-1094342011428145">
+<mml:mi mathvariant="normal">∇</mml:mi>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="italic">σ</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mi mathvariant="normal">∇</mml:mi>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="italic">ϕ</mml:mi>
+</mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:mfenced>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi mathvariant="normal">∇</mml:mi>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">J</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">,</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-1094342011428145" xlink:href="10.1177_1094342011428145-eq5.tif"/>
+</disp-formula>
+</p>
+<p>where <bold>J</bold> represents the DC source current distribution impressed by a galvanic source type. The numerical solution of (5) on a 3D FD grid is also illustrated in <xref ref-type="fig" rid="fig1-1094342011428145">Figure 1</xref>. Here, the unknowns are given by the potential field vector <bold>φ</bold> and are node-based, thus leading to a matrix size of <italic>N</italic> = <italic>N<sub>x</sub>
+</italic>× <italic>N<sub>y</sub>
+</italic>× <italic>N<sub>z</sub>
+</italic>. Exemplified by the green nodes, updating <bold>φ</bold> at the central node (<italic>i</italic>,<italic>j</italic>,<italic>k</italic>) involves a seven-point stencil, with a maximum of seven non-zeros per row. The sparse structure resulting from <xref ref-type="disp-formula" rid="disp-formula5-1094342011428145">Equation (5)</xref> is shown in <xref ref-type="fig" rid="fig2-1094342011428145">Figure 2</xref>(b).</p>
+</sec>
+</sec>
+<sec id="section7-1094342011428145">
+<title>3 Parallel iterative Krylov solvers</title>
+<p>For low-level GPU access, we employ the Compute Unified Device Architecture (CUDA) from NVIDIA, a parallel computing architecture that provides low-level access to GPUs through a C/C++-type programming language with NVIDIA extensions. All CUDA implementations of the three employed Krylov methods, namely CG, BiCG, and QMR, were reprogrammed from our original parallel FORTRAN90 EM modeling algorithms. The reader is referred to the works of <xref ref-type="bibr" rid="bibr1-1094342011428145">Alumbaugh et al. (1996)</xref> and <xref ref-type="bibr" rid="bibr5-1094342011428145">Commer et al. (2008)</xref> for details related to the massively parallel aspect of these simulators. Our FORTRAN90 versions, also referred to as CPU solvers in the following, do not rely on any external libraries. We found that the flexibility of general-purpose library packages often comes at the expense of not achieving the optimal performance for specific problems. Nevertheless, we also provide timing results from external (CPU) solvers in order to relate our benchmarks to commonly applied library packages. Specifically, we employ the CG solver contained in the parallel solver library Aztec, version 2.1, (<xref ref-type="bibr" rid="bibr16-1094342011428145">Tuminaro et al., 1999</xref>). For the BiCG and QMR methods, we employ the Portable Extensible Toolkit for Scientific Computation (PETSc, version 3.1) (<xref ref-type="bibr" rid="bibr2-1094342011428145">Balay et al., 2010</xref>). Note that we did not make use of any external GPU library for SpMV.</p>
+<p>We use Jacobi scaling as a default preconditioner for all Krylov solvers employed here. Being called only once before the call of the Krylov solver, it has proved good efficiency over a number of other preconditioners investigated for wideband EM problems (<xref ref-type="bibr" rid="bibr1-1094342011428145">Alumbaugh et al., 1996</xref>). Even with Jacobi scaling, solving <xref ref-type="disp-formula" rid="disp-formula4-1094342011428145">Equation (4)</xref> in the low-frequency range - <italic>f</italic> &lt; 0.1 Hz is common in MT applications – is hindered by a badly conditioned system due to the null space of the curl-curl operator. Removing this null space can be accomplished by a preconditioning step that decomposes the electric field into curl-free and divergence-free projections using the Helmholtz theorem. However, owing to additional memory overhead, this low-induction-number preconditioner (<xref ref-type="bibr" rid="bibr11-1094342011428145">Newman and Alumbaugh, 2002</xref>) is not part of our current GPU implementations.</p>
+<sec id="section8-1094342011428145">
+<title>3.1 Sparse matrix-vector multiplication on GPUs</title>
+<p>Owing to the relatively low operation count versus memory access count in SpMV involved in the solution of (4) and (5), memory bandwidth is a major limiting factor in the iterative Krylov solver performance. Poor cache utilization and extra load operations due to non-optimal matrix storage can decrease the performance of SpMV, because with modern hardware, cache miss latencies dominate latencies due to operations. While with irregular sparsity patterns the number of cache misses can increase significantly, the matrix types of our applications are characterized by a regular sparse structure (<xref ref-type="fig" rid="fig2-1094342011428145">Figure 2</xref>). For such types, where the number of non-zeros per row, <italic>K</italic>, is almost constant, the sparse ELLPACK (or ELL) storage format is particularly suited (<xref ref-type="bibr" rid="bibr3-1094342011428145">Bell and Garland, 2009</xref>). The ELLPACK format stores the non-zero values in column-major order, filling a dense <italic>N</italic>-by-<italic>K</italic> data array, where rows with less than <italic>K</italic> non-zeros, pertaining to mesh boundaries, are zero-padded. The corresponding column indices are stored in another column-major ordered integer array, with the padding entries pointing to zeros.</p>
+<p>Each thread of the GPU carries out the multiplication of one matrix row. Because the overwhelming majority of the rows have the same number of non-zero elements, almost no threads sit idle waiting for the rest of the warp to complete. By using a column-major ordering of the data, contiguous threads in a warp access contiguous global memory banks, thus maximizing memory throughput and avoiding memory bank conflicts. Other multiplication strategies were tested, including the schemes outlined by <xref ref-type="bibr" rid="bibr3-1094342011428145">Bell and Garland (2009)</xref>, where the one described above was the most efficient. We found no performance advantage when assigning multiple rows to one thread.</p>
+</sec>
+<sec id="section9-1094342011428145">
+<title>3.2 Other optimizations for iterative solvers</title>
+<p>The Krylov solvers involve other dense linear algebra operations, such as vector sum, vector scaling, and dot products. <xref ref-type="table" rid="table1-1094342011428145">Table 1</xref> lists the number of operation counts for each solver. To further reduce the memory bandwidth, several basic linear algebra subprogram (BLAS) calls were fused into a single kernel whenever possible, such as vector scaling followed by a dot product. This cuts the number of memory accesses roughly in half. Speeding up these vector operations becomes beneficial for more complex algorithms, such as QMR, where the computing effort spent outside the matrix-vector multiplication is significant. The kernels were optimized for the NVIDIA Tesla C2050 (Fermi); in particular, no attempt was made to load the input vector to shared memory, instead relying on the L1 cache to limit the number of accesses to global memory. The kernels were configured to prefer L1 cache over shared memory. This provides 48 kB of L1 cache per streaming multiprocessor instead of the default 16 kB, but the performance improvement obtained was marginal.</p>
+<table-wrap id="table1-1094342011428145" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Operation counts per iteration for the three Krylov solvers.</p>
+</caption>
+<graphic alternate-form-of="table1-1094342011428145" xlink:href="10.1177_1094342011428145-table1.tif"/>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>CG</th>
+<th>BiCG</th>
+<th>QMR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Matrix–vector multiply</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Vector dot product</td>
+<td>3</td>
+<td>3</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Vector addition/subtraction</td>
+<td>3</td>
+<td>3</td>
+<td>6</td>
+</tr>
+<tr>
+<td>Vector constant multiply</td>
+<td>3</td>
+<td>3</td>
+<td>9</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-1094342011428145">
+<p>CG: conjugate gradient; BiCG: bi-conjugate gradient; QMR: quasi minimum residual</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>While not pursued further in this work, cache utilization can be further optimized by matrix bandwidth reduction techniques and alternative data structures (<xref ref-type="bibr" rid="bibr15-1094342011428145">Toledo, 1997</xref>; <xref ref-type="bibr" rid="bibr12-1094342011428145">Pinar and Heath, 1999</xref>; <xref ref-type="bibr" rid="bibr18-1094342011428145">Xu et al., 2010</xref>). To estimate the potential of reducing the bandwidth of <bold>A</bold> for our implementations, we run the QMR solver for a number of grid sizes ranging from <italic>N</italic> = 3.8 × 10<sup>5</sup> to <italic>N</italic> = 6.6 × 10<sup>6</sup>. The matrix column indices were arbitrarily reordered to reach the theoretically lowest bandwidth of 13. While obviously not leading to solution convergence, we are only interested in the computing speedup compared to the actual matrix profile. <xref ref-type="fig" rid="fig3-1094342011428145">Figure 3</xref> indicates that the speedup becomes more significant with increasing <italic>N</italic>. However, it remains relatively modest given that the shown computing times pertain to the lowest bandwidth possible. For our CPU QMR solver (a), we obtain an average speedup of 3.4%. For the GPU QMR solver (b), the average is 10.8%, which is in accordance with similar findings by <xref ref-type="bibr" rid="bibr18-1094342011428145">Xu et al. (2010)</xref>.
+<fig id="fig3-1094342011428145" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Performance improvement for different matrix sizes, where the sparse matrix resulting from <xref ref-type="disp-formula" rid="disp-formula4-1094342011428145">Equation (4)</xref> has the ideal bandwidth of 13 (blue), compared against the actual bandwidth (gray). Central processing unit (CPU) (a) and graphics processing unit (GPU) (b) computing times are for 1000 quasi minimum residual (QMR) iterations. (Color online only.)</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011428145-fig3.tif"/>
+</fig>
+</p>
+</sec>
+</sec>
+<sec id="section10-1094342011428145">
+<title>4 Krylov solver performance comparisons</title>
+<p>All following CPU benchmarks were performed on a general-purpose GPU testbed with eight cores per compute node and a node configuration as follows: two Intel 5530 processors, 2.4 GHz, 8 MB cache, 5.86 GT/sec QPI quad core Nehalem, where QPI stands for QuickPath Interconnect by Intel for high interconnect performance. <xref ref-type="table" rid="table2-1094342011428145">Table 2</xref> summarizes hardware and software specifications. The employed CPU solvers use eight cores (one node) of the parallel cluster. Note that a higher memory bandwidth and thus faster solution can be achieved by distributing the problem across the same number of nodes, using one core per node. However, we restrict ourselves to the case that would be more realistic in a multi-user environment. The employed compute node is connected to an NVIDIA Tesla C2050 (Fermi) GPU with 3 GB of memory and 448 parallel CUDA processor cores.</p>
+<table-wrap id="table2-1094342011428145" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Hardware and software specifications of the graphics processing unit (GPU) testbed used for the Krylov solver performance tests.</p>
+</caption>
+<graphic alternate-form-of="table2-1094342011428145" xlink:href="10.1177_1094342011428145-table2.tif"/>
+<table>
+<thead>
+<tr>
+<th>
+</th>
+<th>CPU</th>
+<th>GPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node configuration</td>
+<td>2 Intel 5530 2.4 GHz, 8 MB cache, 5.86 GT/sec QPI Quad core Nehalem, 8 cores per node</td>
+<td>NVIDIA Tesla C2050 (code named Fermi), 448 parallel CUDA processor cores</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td>24 GB DDR3-1066 Reg ECC</td>
+<td>3GB</td>
+</tr>
+<tr>
+<td>Compiler</td>
+<td>pgf90 –O2</td>
+<td>nvcc –O2 –arch sm_20</td>
+</tr>
+<tr>
+<td>Programming language</td>
+<td>FORTRAN90 with MPI library OpenMPI 1.4.2</td>
+<td>CUDA 3.2 with CUBLAS library</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>It is our experience that, depending on the spectral norm of the underlying matrix, the three employed Krylov methods require several hundreds to thousands of iterations for achieving acceptable solution accuracies for typical EM modeling problems. Therefore, we use a fixed number of 1000 solver iterations for each timing data point and report the actual solution times in seconds. For our applications, this measure is preferable, owing to greater practicality for geophysical imaging applications, where one imaging experiment requires a large number of solutions of <xref ref-type="disp-formula" rid="disp-formula1-1094342011428145">Equation (1)</xref> (<xref ref-type="bibr" rid="bibr5-1094342011428145">Commer et al., 2008</xref>).</p>
+<sec id="section11-1094342011428145">
+<title>4.1 CG solver for electrostatic simulations</title>
+<p>We first compare our GPU implementation of a CG solver with benchmarks obtained from two different CPU implementations. In addition to our original FORTRAN90 version of the CG method, we also compare our GPU implementation against the CG solver provided by the Aztec library (<xref ref-type="bibr" rid="bibr16-1094342011428145">Tuminaro et al., 1999</xref>). Because ELLPACK is not supported by Aztec, the chosen matrix storage format is the distributed modified sparse row format, which is a generalization of the modified sparse row format.</p>
+<p>
+<xref ref-type="fig" rid="fig4-1094342011428145">Figure 4</xref>(a) shows that the performance difference between CPU and GPU solvers becomes more prominent with increasing matrix size, <italic>N</italic>, shown on the abscissa in units of millions. Here, the matrix results from a sample modeling problem that involves the solution of <xref ref-type="disp-formula" rid="disp-formula5-1094342011428145">Equation (5)</xref>. The largest matrix size shown here would represent a 3D FD grid of node size 250 × 250 × 250. The GPU solver achieves a 2.8-fold speedup compared to its CPU equivalent. Furthermore, compared to the library version (named Aztec-CPU in <xref ref-type="fig" rid="fig4-1094342011428145">Figure 4</xref>(a)), the speedup factor is 5. With 8 CPU cores, these factors would amount to 22.4 and 40, respectively, when expressed in terms of a single core. Also shown, by the square symbols, is the memory consumption. At the same time, these symbols denote sample points where actual calculations for the timing data were carried out. The parallel efficiency can be assessed in <xref ref-type="fig" rid="fig4-1094342011428145">Figure 4</xref>(b) by the achieved memory throughput (black symbols). Relating the bandwidth to its peak, one observes that for the CG solver, because of L1 caching, we exceed the theoretical bandwidth for matrix sizes with more than 10<sup>6</sup> matrix rows.
+<fig id="fig4-1094342011428145" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Solution times for the three different iterative Krylov solvers, conjugate gradient (CG) (a), bi-conjugate gradient (BiCG) (c), and quasi minimum residual (QMR) (e). The solid lines correspond to the left-hand <italic>y</italic>-axis and show the computing times in seconds required for 1000 Krylov iterations. The symbols pertain to the right-hand <italic>y</italic>-axis and denote the requirements for storing all Krylov solver data structures in memory. Each graphics processing unit (GPU) implementation is compared against its original parallel FORTRAN90 version, as well as a parallel solver provided by an external library. All central processing unit (CPU) solvers were run on eight processor cores. The corresponding memory throughput for each GPU solver is shown in the lower row ((b),(d),(f)).</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011428145-fig4.tif"/>
+</fig>
+</p>
+</sec>
+<sec id="section12-1094342011428145">
+<title>4.2 BiCG and QMR solver for frequency-domain EM simulations</title>
+<p>The BiCG solution times are presented in <xref ref-type="fig" rid="fig4-1094342011428145">Figure 4</xref>(c). The sample modeling problems considered here were taken from a Controlled-Source Electromagnetics (CSEM) imaging experiment involving data measured over the Troll gas reservoir in the North Sea (<xref ref-type="bibr" rid="bibr4-1094342011428145">Commer and Newman, 2008</xref>). The biggest sample problem fitting into the memory of the employed GPU device is exemplified by a mesh size of 132 × 132 × 132. For the marine CSEM data simulation of the Troll survey, the GPU’s resources are absolutely sufficient. <xref ref-type="fig" rid="fig4-1094342011428145">Figure 4</xref>(c) exhibits a performance trend similar to the CG solution times for the three different BiCG solvers. Again, the results indicate an increasing performance difference with larger meshes. Note that the PETSc benchmark was obtained from the performance-optimized (non-debugging) build for complex double precision. Because of a higher operation count, compared to CG, the peak bandwidth is not exceeded; however, it does get close to the theoretical maximum (<xref ref-type="fig" rid="fig4-1094342011428145">Figure 4</xref>(d)).</p>
+<p>At last, we summarize QMR performance measurements in <xref ref-type="fig" rid="fig4-1094342011428145">Figure 4</xref>(e). The QMR solver is favorable because it combines the advantage of BiCG, namely the relatively low memory and computational overhead, with smoother convergence properties. The convergence behavior of QMR follows from a least-square solution of the reduced tridiagonal system produced by the Lanczos process; this is similar to the approach followed in the generalized minimal residual method (GMRES). Since the constructed basis for the Krylov subspace is biorthogonal, rather than orthogonal as in the GMRES, the obtained solution is viewed as a quasi-minimal residual solution, which explains the name. QMR also exploits look-ahead techniques to avoid breakdowns in the underlying Lanczos process. This makes it more robust than the BiCG method at the expense of a slightly higher computational overhead. Like CG, both BiCG and QMR solvers use short recurrences, as opposed to long ones in the GMRES. To avoid the loss of orthogonality, longer term recurrence relations, at higher computational expense, could be used as in GMRES, which renormalizes the conjugate directions against a subset of pre-determined ones through a Gram–Schmidt orthogonalization process.</p>
+<p>The GPU QMR solver achieves acceleration factors of 2.4 and 4, compared to the CPU counterpart and the solver provided by PETSc, respectively (again, using eight CPU cores). PETSc provides two types of QMR solvers, where we used the transpose-free QMR method, being the most comparable to our implementation. Compared to CG and BiCG, QMR has the highest operation count, which reflects in a lower memory throughput (<xref ref-type="fig" rid="fig4-1094342011428145">Figure 4</xref>(f)).</p>
+</sec>
+</sec>
+<sec id="section13-1094342011428145">
+<title>5 Conclusions</title>
+<p>We have implemented efficient Krylov subspace methods for the iterative solution of linear systems with a large sparse matrix on GPUs. Our solvers are suitable for the simulation of electrical and EM simulation problems that arise in geophysical resistivity prospecting. All shown timing comparisons clearly indicate the increasing efficiency of the GPU solvers for increasingly larger matrix sizes. For the largest problems exemplified, the GPU performance is equivalent to almost 23 (CG) and 19 (BiCG, QMR) CPU cores, when comparing to the faster CPU solvers that do not use external libraries.</p>
+<p>As outlined in detail in a previous work (<xref ref-type="bibr" rid="bibr4-1094342011428145">Commer and Newman, 2008</xref>), our EM field simulation code achieves computational efficiency by a FD grid optimization scheme for the underlying forward modeling operator. This scheme optimizes grid spatial extension and sampling, taking the survey characteristics of a given modeling scenario into consideration. However, to address both computing and memory needs of systems arising from typical large-scale exploration applications, we still need to distribute the solution of (1) across the order of 100 CPU cores or more.</p>
+<p>We are exploring a corresponding GPU approach, that is, solving one system on multiple GPUs. CUDA’s direct GPU-to-GPU communication is one approach. However, it is limited to the number of GPUs connected to one host node, as communication is not possible across the network. Therefore, a non-blocking message passing interface (MPI) device-host-device communication will also be investigated.</p>
+</sec>
+</body>
+<back>
+<ack>
+<title>Acknowledgment</title>
+<p>We thank the National Energy Research Scientific Computing Center (NERSC) staff for support and computing time on a GPU cluster.</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure" id="fn1-1094342011428145">
+<label>Funding</label>
+<p>This work was supported by the Chevron Energy Technology Corporation and the Petascale Initiative in Computational Science at NERSC. It was also supported by the Director, Office of Science, Advanced Scientific Computing Research, of the US Department of Energy [Contract No. DE-AC02-05CH11231].</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Alumbaugh</surname>
+<given-names>DL</given-names>
+</name>
+<name>
+<surname>Newman</surname>
+<given-names>GA</given-names>
+</name>
+<name>
+<surname>Prevost</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Shadid</surname>
+<given-names>JN</given-names>
+</name>
+</person-group> (<year>1996</year>) <article-title>Three-dimensional wideband electromagnetic modeling on massively parallel computers</article-title>. <source>Radio Science</source> <volume>31</volume>: <fpage>1</fpage>–<lpage>23</lpage>.</citation>
+</ref>
+<ref id="bibr2-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Balay</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Brown</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Buschelman</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Eijkhout</surname>
+<given-names>V</given-names>
+</name>
+<name>
+<surname>Gropp</surname>
+<given-names>WD</given-names>
+</name>
+<name>
+<surname>Kaushik</surname>
+<given-names>D</given-names>
+</name>
+<etal/>
+</person-group>. (<year>2010</year>) <article-title>PETSc Users Manual, Tech</article-title>. <comment>Rep. Number ANL-95/11 - Revision 3.1, Argonne National Laboratory</comment>.</citation>
+</ref>
+<ref id="bibr3-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Bell</surname>
+<given-names>N</given-names>
+</name>
+<name>
+<surname>Garland</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>2009</year>) <article-title>Implementing sparse matrix-vector multiplication on throughput-oriented processors</article-title>. In: <source>Proceedings of Supercomputing ‘09</source>, <comment>November</comment>.</citation>
+</ref>
+<ref id="bibr4-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Commer</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Newman</surname>
+<given-names>GA</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>New advances in three-dimensional controlled-source electromagnetic inversion</article-title>. <source>Geophysical Journal International</source> <volume>172</volume>: <fpage>513</fpage>–<lpage>535</lpage>.</citation>
+</ref>
+<ref id="bibr5-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Commer</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Newman</surname>
+<given-names>GA</given-names>
+</name>
+<name>
+<surname>Carazzone</surname>
+<given-names>JJ</given-names>
+</name>
+<name>
+<surname>Dickens</surname>
+<given-names>TA</given-names>
+</name>
+<name>
+<surname>Green</surname>
+<given-names>KE</given-names>
+</name>
+<name>
+<surname>Wahrmund</surname>
+<given-names>LA</given-names>
+</name>
+<name>
+<surname>et</surname>
+<given-names>al.</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>Massively-parallel electrical-conductivity imaging of hydrocarbons using the Blue Gene/L supercomputer</article-title>. <source>IBM Journal of Research and Development</source> <volume>52</volume>: <fpage>93</fpage>–<lpage>103</lpage>.</citation>
+</ref>
+<ref id="bibr6-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>De Gersem</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Lahaye</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Vandewalle</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Hameyer</surname>
+<given-names>K</given-names>
+</name>
+</person-group> (<year>1999</year>) <article-title>Comparison of quasi minimal residual and bi-conjugate gradient iterative methods to solve complex symmetric systems arising from time-harmonic simulations</article-title>. <source>COMPEL</source> <volume>18</volume>: <fpage>298</fpage>–<lpage>310</lpage>.</citation>
+</ref>
+<ref id="bibr7-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Freund</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>1992</year>) <article-title>Conjugate gradient type methods for linear systems with complex symmetric coefficient matrices</article-title>. <source>SIAM Journal on Scientific and Statistical Computing</source> <volume>13</volume>: <fpage>425</fpage>–<lpage>448</lpage>.</citation>
+</ref>
+<ref id="bibr8-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Freund</surname>
+<given-names>RW</given-names>
+</name>
+<name>
+<surname>Nachtigal</surname>
+<given-names>NM</given-names>
+</name>
+</person-group> (<year>1991</year>) <article-title>QMR: a quasiminimal residual method for non-Hermitian linear systems</article-title>. <source>Numerical Mathematics</source> <volume>60</volume>: <fpage>315</fpage>–<lpage>339</lpage>.</citation>
+</ref>
+<ref id="bibr9-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Hestenes</surname>
+<given-names>MR</given-names>
+</name>
+<name>
+<surname>Stiefel</surname>
+<given-names>E</given-names>
+</name>
+</person-group> (<year>1952</year>) <article-title>Methods of conjugate directions for solving linear systems</article-title>. <source>Journal of Research of the National Bureau of Standards</source> <volume>49</volume>: <fpage>409</fpage>–<lpage>435</lpage>.</citation>
+</ref>
+<ref id="bibr10-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Lanczos</surname>
+<given-names>C</given-names>
+</name>
+</person-group> (<year>1952</year>) <article-title>Solution of systems of linear equations by minimized iterations</article-title>. <source>Journal of Research of the National Bureau of Standards</source> <volume>49</volume>: <fpage>33</fpage>–<lpage>53</lpage>.</citation>
+</ref>
+<ref id="bibr11-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Newman</surname>
+<given-names>GA</given-names>
+</name>
+<name>
+<surname>Alumbaugh</surname>
+<given-names>DL</given-names>
+</name>
+</person-group> (<year>2002</year>) <article-title>Three-dimensional induction logging problems</article-title>, <source>Part 2: A finite-difference solution. <italic>Geophysics</italic>
+</source> <volume>67</volume>: <fpage>484</fpage>–<lpage>491</lpage>.</citation>
+</ref>
+<ref id="bibr12-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Pinar</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Heath</surname>
+<given-names>MT</given-names>
+</name>
+</person-group> (<year>1999</year>) <article-title>Improving performance of sparse matrix-vector multiplication</article-title>. In: <source>Proceedings of the 1999 ACM/IEEE Conference on Supercomputing</source>.</citation>
+</ref>
+<ref id="bibr13-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Sarkar</surname>
+<given-names>TK</given-names>
+</name>
+</person-group> (<year>1987</year>) <article-title>On the application of the generalized biconjugate gradient method</article-title>. <source>Journal of Electromagnetic Waves and Applications</source> <volume>1</volume>: <fpage>223</fpage>–<lpage>242</lpage>.</citation>
+</ref>
+<ref id="bibr14-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Smith</surname>
+<given-names>CF</given-names>
+</name>
+<name>
+<surname>Peterson</surname>
+<given-names>AF</given-names>
+</name>
+<name>
+<surname>Mittra</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>1990</year>) <article-title>The biconjugate gradient method for electromagnetic scattering</article-title>. <source>IEEE Transactions on Antennas and Propagation</source> <volume>38</volume>: <fpage>938</fpage>–<lpage>940</lpage>.</citation>
+</ref>
+<ref id="bibr15-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Toledo</surname>
+<given-names>S</given-names>
+</name>
+</person-group> (<year>1997</year>) <article-title>Improving memory system performance of sparse matrix-vector multiplication</article-title>. In: <source>Proceedings of the 8th SIAM Conference on Parallel Processing for Scientific Computing</source>, <comment>March</comment>.</citation>
+</ref>
+<ref id="bibr16-1094342011428145">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Tuminaro</surname>
+<given-names>RS</given-names>
+</name>
+<name>
+<surname>Heroux</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Hutchinson</surname>
+<given-names>SA</given-names>
+</name>
+<name>
+<surname>Shadid</surname>
+<given-names>JN</given-names>
+</name>
+</person-group> (1999) Official Aztec User's Guide: <source>Version 2.1, Sand Report SAND99-8801J</source>, <publisher-loc>December</publisher-loc> <year>1999</year>, <publisher-name>Sandia National Laboratories</publisher-name>.</citation>
+</ref>
+<ref id="bibr17-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Wang</surname>
+<given-names>CF</given-names>
+</name>
+<name>
+<surname>Jin</surname>
+<given-names>JM</given-names>
+</name>
+</person-group> (<year>1998</year>) <article-title>Simple and efficient computation of electromagnetic fields in arbitrarily shaped inhomogeneous dielectric bodies using transpose-free QMR and FFT</article-title>. <source>IEEE Transactions on Microwave Theory and Techniques</source> <volume>46</volume>: <fpage>553</fpage>–<lpage>558</lpage>.</citation>
+</ref>
+<ref id="bibr18-1094342011428145">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Xu</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Lin</surname>
+<given-names>HX</given-names>
+</name>
+<name>
+<surname>Xue</surname>
+<given-names>W</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Sparse matrix-vector multiplication optimizations based on matrix bandwidth reduction using NVIDIA CUDA</article-title>. In: <source>Proceedings of the Ninth International Symposium on Distributed Computing and Applications to Business, Engineering and Science</source>, <comment>Hong Kong</comment>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

@@ -1,0 +1,4430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PID</journal-id>
+<journal-id journal-id-type="hwp">sppid</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part D: Journal of Automobile Engineering</journal-title>
+<issn pub-type="ppub">0954-4070</issn>
+<issn pub-type="epub">2041-2991</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0954407012440934</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0954407012440934</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Model predictive regenerative braking control for lightweight electric vehicles with in-wheel motors</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Huang</surname><given-names>Xiaoyu</given-names></name>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Wang</surname><given-names>Junmin</given-names></name>
+</contrib>
+</contrib-group>
+<aff id="aff1-0954407012440934">Department of Mechanical and Aerospace Engineering, Ohio State University, Columbus, OH, USA</aff>
+<author-notes>
+<corresp id="corresp1-0954407012440934">Junmin Wang, Department of Mechanical and Aerospace Engineering, Ohio State University, Columbus, OH 43210, USA. Email: <email>wang.1381@osu.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>9</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>9</issue>
+<fpage>1220</fpage>
+<lpage>1232</lpage>
+<history>
+<date date-type="received">
+<day>24</day>
+<month>11</month>
+<year>2011</year>
+</date>
+<date date-type="accepted">
+<day>10</day>
+<month>2</month>
+<year>2012</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>This paper presents a nonlinear model predictive controller for regenerative braking control of lightweight electric vehicles equipped with in-wheel motors. In-wheel-motors-driven electric vehicles possess significant advantages such as actuation flexibilities, torque control precision, and energy recovery improvement by direct regenerative braking control. The proposed controller not only improves the regenerative braking energy recovery by determining the front and rear braking torques independently but also prevents wheel locks during deceleration when the tire–road friction coefficient is low. The energy-saving objective is accomplished by including in the cost function the additional penalty term on the motor-to-battery regenerative braking power, while the safety objective is formulated as hard constraints on the longitudinal slip ratios of the wheels. Since the problem is based on a nonlinear vehicle longitudinal model, the global minimum within each time step is searched for by gridding the initial torque plane. Simulation results, based on a vehicle model in CarSim<sup>®</sup>, show that the proposed nonlinear model predictive controller is capable of restoring considerably more regenerative braking energy than a conventional proportional–integral controller supplemented with a feedforward control effort and another nonlinear model predictive controller with no consideration of the energy recovery and of maintaining a good vehicle-speed-tracking performance.</p>
+</abstract>
+<kwd-group>
+<kwd>Model predictive control</kwd>
+<kwd>regenerative braking</kwd>
+<kwd>lightweight electric vehicle</kwd>
+<kwd>in-wheel motors</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0954407012440934" sec-type="intro">
+<title>Introduction</title>
+<p>Recently emerging electric vehicle (EV) technologies show great potential in relieving energy consumption as well as emission concerns in the transportation sector. Among all the EV architectures, in-wheel-motors-driven electric vehicles (IWMDEVs) have received much research interest in recent years because of their relatively simple powertrain connections and available redundant actuation.<sup><xref ref-type="bibr" rid="bibr1-0954407012440934">1</xref></sup> The absence of mechanical links between the power source (battery) and the actuators (motors) enhances the IWMDEV overall operational efficiency, and the over-actuation increases both the control flexibility and the accuracy.<sup><xref ref-type="bibr" rid="bibr1-0954407012440934">1</xref></sup></p>
+<p>One significant advantage of EVs is the ability to convert the kinetic energy of the vehicle into electric energy through regenerative braking (RB).<sup><xref ref-type="bibr" rid="bibr2-0954407012440934">2</xref></sup> This recovered energy in turn can be used to power EVs in the driving maneuver, thus reducing the total energy consumption. As early as 40 years ago, Kokotovic and Singh<sup><xref ref-type="bibr" rid="bibr3-0954407012440934">3</xref></sup> proposed an energy control method for a motor-driven vehicle, which allowed RB, using a maximum principle. In recent years, some simple and effective RB control strategies have also been provided for hybrid EVs and plug-in hybrid EVs. However, to the present authors’ best knowledge, RB control research for IWMDEVs is still an open area.</p>
+<p>When a vehicle needs to decelerate, one common approach is to distribute the total braking torque equally to the four wheels, or to the front and rear wheels at a certain ratio. This is easy to realize and yet not energy efficient or energy optimal for an IWMDEV. Intuitively, because the experimentally measured motor-to-battery RB efficiency curve is not strictly concave or convex with regard to the braking torque, there exist better torque distribution patterns than the traditional pattern. Moreover, the normal load transfer from the rear to the front part of the vehicle makes the occurrence of rear-wheel locks much easier, thus affecting the driving safety, especially on a low-friction road even if the deceleration is not high. Therefore, the main objective of this paper is to design a RB control law that improves the energy recovery and simultaneously ensures safety when the tire–road friction coefficient (TRFC) is low for the IWMDEV. We focus on lightweight EVs where RB itself can generate sufficiently high deceleration. The control method developed can also be extended to other applications such as narrow tilt vehicles, military autonomous wheeled robots, or other special vehicles which have much smaller weights than conventional vehicles. In this study, only straight-line braking is involved; thus the two independent control variables are the front-wheel and rear-wheel braking torques. The proposed method is potentially valuable in autonomous vehicle control where the velocity trajectories are predefined or can be combined with some advanced active safety systems such as adaptive cruise control, where the desired profiles of the vehicle speed are determined online.</p>
+<p>Among all the available control methodologies, nonlinear model predictive control is well known for its capability to deal with complex optimization problems as well as to handle nonlinearities and constraints and has been attractive in automotive systems.<sup><xref ref-type="bibr" rid="bibr2-0954407012440934">2</xref>,<xref ref-type="bibr" rid="bibr4-0954407012440934">4</xref><xref ref-type="bibr" rid="bibr5-0954407012440934"/><xref ref-type="bibr" rid="bibr6-0954407012440934"/><xref ref-type="bibr" rid="bibr7-0954407012440934"/><xref ref-type="bibr" rid="bibr8-0954407012440934"/><xref ref-type="bibr" rid="bibr9-0954407012440934"/><xref ref-type="bibr" rid="bibr10-0954407012440934"/><xref ref-type="bibr" rid="bibr11-0954407012440934"/>–<xref ref-type="bibr" rid="bibr12-0954407012440934">12</xref></sup> Another advantage of applying a nonlinear model predictive controller (NMPC) to this specific problem is that it incorporates all control objectives in only one formulation and the control parameters are easy to tune, although an NMPC is computationally inefficient. In fact, with the presence of additional objectives as well as limitations, tradeoffs become possible between tracking the desired vehicle speed and improving the RB energy recovery. The energy-saving objective is accomplished by including in the cost function the additional penalty term on the motor-to-battery RB power, while the safety objective is formulated as hard constraints on the longitudinal slip ratios of the wheels. An experimentally determined IWMDEV in-wheel motor RB efficiency map and constraints on the braking torques are explicitly reflected in the NMPC formulations.</p>
+<p>The main contribution of this paper lies in three aspects. First, this is among the first attempts to develop an RB controller for IWMDEVs, with considerations of the energy recovery and the driving safety. Second, the motor-to-battery efficiency of RB,<sup><xref ref-type="bibr" rid="bibr1-0954407012440934">1</xref></sup> which has not been considered in any previous research studies, is explicitly incorporated together with the longitudinal model of the vehicle in the control algorithm. Third, an NMPC is applied to this multi-objective problem, where the energy concern is included in the cost function and where the safety concern is formulated as hard constraints on the states. Detailed controller designs including initial plane gridding (IPG) and the distinct efficiency characteristics case are also provided in simulations.</p>
+<p>The rest of this paper is organized as follows. In the second section, the RB system is introduced together with a description of the in-wheel motor-to-battery RB efficiency characteristics. The third section presents the modeling procedure of the longitudinal dynamics of the vehicle. The fourth section provides the detailed design of the nonlinear model predictive RB control. Some discussions on the numerical technique and the fast implementation of the NMPC in real time are provided in the fifth section. Simulation results and analyses of the proposed nonlinear model predictive RB control methods are given in the sixth section, followed by the concluding remarks in the final section.</p>
+</sec>
+<sec id="section2-0954407012440934">
+<title>The regenerative braking system of an electric vehicle</title>
+<p>For electric vehicles with in-wheel motors, the RB system for each wheel can work alone or together with a mechanical friction braking system. In this paper, we consider only the case where the in-wheel motors conduct RB. This section will first give a brief description of the RB system of a prototype IWMDEV and will then provide the RB efficiency characteristics of the in-wheel motors.</p>
+<sec id="section3-0954407012440934">
+<title>Regenerative braking system</title>
+<p>The in-wheel motors on an EV are customized permanent-magnet brushless d.c. electric motors, as shown in <xref ref-type="fig" rid="fig1-0954407012440934">Figure 1</xref>. The detailed configuration description and parameters can be found in the paper by Wang et al.<sup><xref ref-type="bibr" rid="bibr1-0954407012440934">1</xref></sup> Since each motor is connected with a controller in series, the RB mode can be independently triggered and precisely controlled. In the RB mode, the in-wheel motor works as a generator.</p>
+<fig id="fig1-0954407012440934" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>In-wheel motors for a prototype EV.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig1.tif"/>
+</fig>
+<p>The power source of the IWMDEV is a 72 V lithium-ion battery pack, which can be charged when the motors are operated under the RB mode. The inner structure or power characteristics of the batteries are not the focus of this study. Hence, the efficiency inside the batteries is not explicitly considered, but only the sum of the electric power generated by the regenerative wheels is treated as the energy recovery.</p>
+</sec>
+<sec id="section4-0954407012440934">
+<title>Motor-to-battery regenerative braking efficiency</title>
+<p>The energy efficiency characteristics of the RB system have been generated by chassis dynamometer tests.<sup><xref ref-type="bibr" rid="bibr1-0954407012440934">1</xref></sup> For control purposes, this paper introduces only the motor-to-battery efficiency, which is defined by</p>
+<p>
+<disp-formula id="disp-formula1-0954407012440934">
+<label>(1)</label>
+<mml:math display="block" id="math1-0954407012440934">
+<mml:mrow>
+<mml:mi>η</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>U</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0954407012440934" xlink:href="10.1177_0954407012440934-eq1.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula1-0954407012440934">
+<mml:math display="inline" id="math2-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>U</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula2-0954407012440934">
+<mml:math display="inline" id="math3-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are the battery charging voltage and current respectively during RB, <inline-formula id="inline-formula3-0954407012440934">
+<mml:math display="inline" id="math4-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is the absolute value of the in-wheel motor braking torque, and <inline-formula id="inline-formula4-0954407012440934">
+<mml:math display="inline" id="math5-0954407012440934">
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is the wheel–motor angular speed. It should be noted that the braking torque includes the resistance torque embedded in the wheel–motor set, i.e. <inline-formula id="inline-formula5-0954407012440934">
+<mml:math display="inline" id="math6-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is the net torque on an individual wheel.</p>
+<p>The chassis dynamometer tests were conducted under different command voltages of the motor controller and various wheel speeds <inline-formula id="inline-formula6-0954407012440934">
+<mml:math display="inline" id="math7-0954407012440934">
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. Since the battery charging voltage <inline-formula id="inline-formula7-0954407012440934">
+<mml:math display="inline" id="math8-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>U</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, the current <inline-formula id="inline-formula8-0954407012440934">
+<mml:math display="inline" id="math9-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and <inline-formula id="inline-formula9-0954407012440934">
+<mml:math display="inline" id="math10-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are all functions of the command voltage and <inline-formula id="inline-formula10-0954407012440934">
+<mml:math display="inline" id="math11-0954407012440934">
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>, the RB efficiency is eventually transformed to be a function of <inline-formula id="inline-formula11-0954407012440934">
+<mml:math display="inline" id="math12-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and the wheel speed and is rewritten in the form</p>
+<p>
+<disp-formula id="disp-formula2-0954407012440934">
+<label>(2)</label>
+<mml:math display="block" id="math13-0954407012440934">
+<mml:mrow>
+<mml:mi>η</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>η</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>ω</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0954407012440934" xlink:href="10.1177_0954407012440934-eq2.tif"/>
+</disp-formula>
+</p>
+<p>In order to facilitate the NMPC design, the efficiency map for a single motor was fitted using a surface fitting tool to be a polynomial of <inline-formula id="inline-formula12-0954407012440934">
+<mml:math display="inline" id="math14-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula13-0954407012440934">
+<mml:math display="inline" id="math15-0954407012440934">
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> to the highest order of four, as shown in <xref ref-type="fig" rid="fig2-0954407012440934">Figure 2</xref>.</p>
+<fig id="fig2-0954407012440934" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Motor-to-battery efficiency map.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig2.tif"/>
+</fig>
+<p>As can be seen from <xref ref-type="fig" rid="fig2-0954407012440934">Figure 2</xref>, at a given wheel speed, the RB efficiency generally has a maximum value in a certain high- <inline-formula id="inline-formula14-0954407012440934">
+<mml:math display="inline" id="math16-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> range. When the wheel speed is less than 500 r/min, the RB efficiency drops rapidly and yet the surface becomes flat for the low- <inline-formula id="inline-formula15-0954407012440934">
+<mml:math display="inline" id="math17-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and low- <inline-formula id="inline-formula16-0954407012440934">
+<mml:math display="inline" id="math18-0954407012440934">
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> ranges. In other words, the efficiency map is not strictly concave or convex, which gives merit to the torque distribution strategy. Moreover, there are no statically measured data for the low-speed range, i.e. less than 200 r/min. This is because the RB mode can be triggered only at a wheel speed higher than 200 r/min and takes effect thereafter, which is an embedded feature of the motor controller because of safety concerns. A further observation is that the maximum <inline-formula id="inline-formula17-0954407012440934">
+<mml:math display="inline" id="math19-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> of an in-wheel motor is around 80 N m, and the maximum wheel speed on the surface is around 700 r/min, which is equivalent to a vehicle speed of 24.2 m/s with a 0.33 m tire radius.</p>
+</sec>
+</sec>
+<sec id="section5-0954407012440934">
+<title>Modeling of the vehicle’s longitudinal motion</title>
+<sec id="section6-0954407012440934">
+<title>Three-degree-of-freedom longitudinal vehicle model</title>
+<p>Since only a straight-line braking maneuver is considered, the vehicle model takes into account only longitudinal motion and consists of three degrees of freedom: the longitudinal velocity, the front-wheel angular speed, and the rear-wheel angular speed of the vehicle. One of the reasons for the inclusion of such a dynamic model is to incorporate constraints brought by longitudinal tire normal load transfer into the NMPC formulation. All physical properties of the four motor–wheel sets are assumed to be identical. Suppose that the vehicle is running on flat ground. Also assume that the rolling resistance force is a constant that can be omitted from the system equation for simplicity. The dynamic equations are therefore derived as<sup><xref ref-type="bibr" rid="bibr13-0954407012440934">13</xref></sup></p>
+<p>
+<disp-formula id="disp-formula3-0954407012440934">
+<label>(3)</label>
+<mml:math display="block" id="math20-0954407012440934">
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0954407012440934" xlink:href="10.1177_0954407012440934-eq3.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula4-0954407012440934">
+<label>(4)</label>
+<mml:math display="block" id="math21-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0954407012440934" xlink:href="10.1177_0954407012440934-eq4.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula5-0954407012440934">
+<label>(5)</label>
+<mml:math display="block" id="math22-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0954407012440934" xlink:href="10.1177_0954407012440934-eq5.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>v</italic>, <inline-formula id="inline-formula18-0954407012440934">
+<mml:math display="inline" id="math23-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and <inline-formula id="inline-formula19-0954407012440934">
+<mml:math display="inline" id="math24-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are the longitudinal velocity of the vehicle, the angular speed of the front wheel, and the angular speed of the rear wheel respectively; <inline-formula id="inline-formula20-0954407012440934">
+<mml:math display="inline" id="math25-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula21-0954407012440934">
+<mml:math display="inline" id="math26-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula22-0954407012440934">
+<mml:math display="inline" id="math27-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and <inline-formula id="inline-formula23-0954407012440934">
+<mml:math display="inline" id="math28-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are the exerted longitudinal tire force, the aerodynamic drag force, the front combined tire normal force, and the rear combined tire normal force respectively. Also, <inline-formula id="inline-formula24-0954407012440934">
+<mml:math display="inline" id="math29-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula25-0954407012440934">
+<mml:math display="inline" id="math30-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are the friction coefficients of the front and rear tires respectively and will be described later. The system inputs are the front braking torque <inline-formula id="inline-formula26-0954407012440934">
+<mml:math display="inline" id="math31-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and the rear braking torque <inline-formula id="inline-formula27-0954407012440934">
+<mml:math display="inline" id="math32-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, which should be distributed equally between the left and the right wheels. The aerodynamic drag force is calculated from</p>
+<p>
+<disp-formula id="disp-formula6-0954407012440934">
+<label>(6)</label>
+<mml:math display="block" id="math33-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0954407012440934" xlink:href="10.1177_0954407012440934-eq6.tif"/>
+</disp-formula>
+</p>
+<p>The normal force transfers are mainly due to the acceleration term, as shown in</p>
+<p>
+<disp-formula id="disp-formula7-0954407012440934">
+<label>(7)</label>
+<mml:math display="block" id="math34-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>mg</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>h</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0954407012440934" xlink:href="10.1177_0954407012440934-eq7.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula8-0954407012440934">
+<label>(8)</label>
+<mml:math display="block" id="math35-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>mg</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>h</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0954407012440934" xlink:href="10.1177_0954407012440934-eq8.tif"/>
+</disp-formula>
+</p>
+<p>Some of the parameters in these equations are defined in <xref ref-type="app" rid="app1-0954407012440934">Appendix 1</xref>. It can be demostrated that, during braking, <inline-formula id="inline-formula28-0954407012440934">
+<mml:math display="inline" id="math36-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> will decrease when <inline-formula id="inline-formula29-0954407012440934">
+<mml:math display="inline" id="math37-0954407012440934">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math></inline-formula> is negative, thus leading more easily to rear-wheel locks.</p>
+</sec>
+<sec id="section7-0954407012440934">
+<title>Tire model</title>
+<p>The tire model serves as the bridge connecting the system inputs (the front and rear braking torques) with the vehicle’s longitudinal motion (the state variable <italic>v</italic>). Several candidate tire models can be selected for this problem, including empirical (semiempirical) and analytical models. Although the LuGre tire model shows merits in its dynamic presentation of the tire properties and simplicity, it is more favorable here to use the `magic formula’ model<sup><xref ref-type="bibr" rid="bibr13-0954407012440934">13</xref></sup> which contains more parameters but brings no additional states to the system. The magic formula tire model is presented by the equations</p>
+<p>
+<disp-formula id="disp-formula9-0954407012440934">
+<label>(9)</label>
+<mml:math display="block" id="math38-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>θ</mml:mi>
+<mml:mi>D</mml:mi>
+<mml:mi>sin</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:msup>
+<mml:mrow>
+<mml:mi>tan</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>E</mml:mi>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>tan</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0954407012440934" xlink:href="10.1177_0954407012440934-eq9.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula10-0954407012440934">
+<label>(10)</label>
+<mml:math display="block" id="math39-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0954407012440934" xlink:href="10.1177_0954407012440934-eq10.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula11-0954407012440934">
+<label>(11)</label>
+<mml:math display="block" id="math40-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>xi</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>zi</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0954407012440934" xlink:href="10.1177_0954407012440934-eq11.tif"/>
+</disp-formula>
+</p>
+<p>where the friction coefficient <inline-formula id="inline-formula30-0954407012440934">
+<mml:math display="inline" id="math41-0954407012440934">
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is related to the longitudinal slip ratio <italic>s</italic>, which is defined in <xref ref-type="disp-formula" rid="disp-formula10-0954407012440934">equation (10)</xref>, and <inline-formula id="inline-formula31-0954407012440934">
+<mml:math display="inline" id="math42-0954407012440934">
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is the (maximum) TRFC which has been widely explored and estimated in recent decades. The meanings of the parameters <italic>B, C, D</italic>, and <italic>E</italic> can be easily found in the paper by Pacejka and Bakker.<sup><xref ref-type="bibr" rid="bibr14-0954407012440934">14</xref></sup></p>
+<p>One important property of the tire model (<xref ref-type="disp-formula" rid="disp-formula9-0954407012440934">equation (9)</xref>) is that the parameters <italic>B</italic> to <italic>E</italic> are mostly related to the tire’s own properties, and some successful techniques are available to identify them.<sup><xref ref-type="bibr" rid="bibr15-0954407012440934">15</xref></sup> Hence, they are assumed to be known in this paper. However, the TRFC is strongly affected by the tire–road contact conditions and cannot be known beforehand.<sup><xref ref-type="bibr" rid="bibr16-0954407012440934">16</xref></sup> For some icy roads, the TRFC can be as low as 0.1–0.3, thus significantly limiting the braking forces, as <xref ref-type="disp-formula" rid="disp-formula11-0954407012440934">equation (11)</xref> indicates. Tire models with both high <inline-formula id="inline-formula32-0954407012440934">
+<mml:math display="inline" id="math43-0954407012440934">
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> and low <inline-formula id="inline-formula33-0954407012440934">
+<mml:math display="inline" id="math44-0954407012440934">
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> are shown in <xref ref-type="fig" rid="fig3-0954407012440934">Figure 3</xref>, with the parameters being listed in <xref ref-type="table" rid="table1-0954407012440934">Table 1</xref>. As can be seen, when the TRFC is low, the braking force of the tire saturates at absolute slip values<sup><xref ref-type="bibr" rid="bibr17-0954407012440934">17</xref></sup> of around 0.2–0.3 more easily. If the braking torque increases thereafter, the braking force does not increase accordingly, while <xref ref-type="disp-formula" rid="disp-formula4-0954407012440934">equations (4)</xref> and <xref ref-type="disp-formula" rid="disp-formula5-0954407012440934">(5)</xref> indicate that the wheel speed converges to zero rapidly and wheel lock occurs. It is even more dangerous for the rear wheel to lock before the front wheel locks because the vehicle tends to drift in this case, and the vehicle’s directional control towards it will be lost. This is also the scenario that anti-lock braking systems try to avoid.</p>
+<fig id="fig3-0954407012440934" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Slip and force relationships predicted by the magic formula tire model.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig3.tif"/>
+</fig>
+<table-wrap id="table1-0954407012440934" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Tire model parameters.</p>
+</caption>
+<graphic alternate-form-of="table1-0954407012440934" xlink:href="10.1177_0954407012440934-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Parameter</th>
+<th align="left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<italic>B</italic>
+</td>
+<td>8.98</td>
+</tr>
+<tr>
+<td>
+<italic>C</italic>
+</td>
+<td>1.62</td>
+</tr>
+<tr>
+<td>
+<italic>D</italic>
+</td>
+<td>1</td>
+</tr>
+<tr>
+<td>
+<italic>E</italic>
+</td>
+<td>0.5</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+</sec>
+<sec id="section8-0954407012440934">
+<title>Nonlinear model predictive regenerative braking design</title>
+<p>Nonlinear model predictive RB control aims at minimizing the defined cost function which contains the vehicle-speed-tracking error and RB efficiency, with knowledge of the current system state variables and previous system inputs.<sup><xref ref-type="bibr" rid="bibr18-0954407012440934">18</xref></sup> In this paper, only a straight-line deceleration maneuver is involved. It is assumed that the desired profiles of the vehicle’s velocity are generated by some higher-level controllers, as reported in the papers by Li et al.<sup><xref ref-type="bibr" rid="bibr8-0954407012440934">8</xref></sup> and Bageshwar et al.,<sup><xref ref-type="bibr" rid="bibr12-0954407012440934">12</xref></sup> and are known in advance or within a longer time window than that of the NMPC. It is also assumed that all three system state variables are measurable with either a global positioning system or other onboard sensors. The front RB torque and rear RB torque are two independent control inputs to be determined in an energy-efficient way. Also, the actuation limitations and safety criterion are all considered as constraints and are incorporated into the NMPC formulation.</p>
+<sec id="section9-0954407012440934">
+<title>Discretized model</title>
+<p>Let <inline-formula id="inline-formula34-0954407012440934">
+<mml:math display="inline" id="math45-0954407012440934">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> be the sampling time adopted in the NMPC; then the vehicle model in <xref ref-type="disp-formula" rid="disp-formula3-0954407012440934">equations (3)</xref> to <xref ref-type="disp-formula" rid="disp-formula5-0954407012440934">(5)</xref> after discretization and rearrangement can be derived as</p>
+<p>
+<disp-formula id="disp-formula12-0954407012440934">
+<label>(12)</label>
+<mml:math display="block" id="math46-0954407012440934">
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>v</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mi>v</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0954407012440934" xlink:href="10.1177_0954407012440934-eq12.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula13-0954407012440934">
+<label>(13)</label>
+<mml:math display="block" id="math47-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0954407012440934" xlink:href="10.1177_0954407012440934-eq13.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula14-0954407012440934">
+<label>(14)</label>
+<mml:math display="block" id="math48-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0954407012440934" xlink:href="10.1177_0954407012440934-eq14.tif"/>
+</disp-formula>
+</p>
+<p>In the above equations, the state vector is <inline-formula id="inline-formula35-0954407012440934">
+<mml:math display="inline" id="math49-0954407012440934">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math></inline-formula>; the input vector is <inline-formula id="inline-formula36-0954407012440934">
+<mml:math display="inline" id="math50-0954407012440934">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math></inline-formula>, which needs to be determined by the NMPC; the output is <inline-formula id="inline-formula37-0954407012440934">
+<mml:math display="inline" id="math51-0954407012440934">
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mi>v</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula>; the time-varying normal forces as well as the other terms in <xref ref-type="disp-formula" rid="disp-formula6-0954407012440934">equations (6)</xref> to <xref ref-type="disp-formula" rid="disp-formula10-0954407012440934">(10)</xref> are discretized as</p>
+<p>
+<disp-formula id="disp-formula15-0954407012440934">
+<label>(15)</label>
+<mml:math display="block" id="math52-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>v</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>v</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0954407012440934" xlink:href="10.1177_0954407012440934-eq15.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula16-0954407012440934">
+<label>(16)</label>
+<mml:math display="block" id="math53-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>mg</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>h</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula16-0954407012440934" xlink:href="10.1177_0954407012440934-eq16.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula17-0954407012440934">
+<label>(17)</label>
+<mml:math display="block" id="math54-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>mg</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>h</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula17-0954407012440934" xlink:href="10.1177_0954407012440934-eq17.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula18-0954407012440934">
+<label>(18)</label>
+<mml:math display="block" id="math55-0954407012440934">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mi>v</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula18-0954407012440934" xlink:href="10.1177_0954407012440934-eq18.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula19-0954407012440934">
+<label>(19)</label>
+<mml:math display="block" id="math56-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mi>θ</mml:mi>
+<mml:mi>D</mml:mi>
+<mml:mi>sin</mml:mi>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:msup>
+<mml:mrow>
+<mml:mi>tan</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mi>E</mml:mi>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>tan</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula19-0954407012440934" xlink:href="10.1177_0954407012440934-eq19.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula20-0954407012440934">
+<label>(20)</label>
+<mml:math display="block" id="math57-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula20-0954407012440934" xlink:href="10.1177_0954407012440934-eq20.tif"/>
+</disp-formula>
+</p>
+<p>Note that, in the calculation of the normal forces <inline-formula id="inline-formula38-0954407012440934">
+<mml:math display="inline" id="math58-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>zi</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, the deceleration term <inline-formula id="inline-formula39-0954407012440934">
+<mml:math display="inline" id="math59-0954407012440934">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> is calculated from <xref ref-type="disp-formula" rid="disp-formula18-0954407012440934">equation (18)</xref>. At the beginning of RB (<inline-formula id="inline-formula40-0954407012440934">
+<mml:math display="inline" id="math60-0954407012440934">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>), the initial states <inline-formula id="inline-formula41-0954407012440934">
+<mml:math display="inline" id="math61-0954407012440934">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> are measured, the initial inputs <inline-formula id="inline-formula42-0954407012440934">
+<mml:math display="inline" id="math62-0954407012440934">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> are set to within a reasonable range, and the NMPC takes effect after one sampling period such that the undesirable algebraic loop in <xref ref-type="disp-formula" rid="disp-formula12-0954407012440934">equations (12)</xref>, <xref ref-type="disp-formula" rid="disp-formula16-0954407012440934">(16)</xref>, and <xref ref-type="disp-formula" rid="disp-formula17-0954407012440934">(17)</xref> is avoided.</p>
+</sec>
+<sec id="section10-0954407012440934">
+<title>Cost function</title>
+<p>Since the main objective is to track the desired velocity of the vehicle and to improve the RB energy recovery by intelligently distributing the braking torques between the front and rear wheels, the cost function at step <italic>k</italic> can then be written in the form</p>
+<p>
+<disp-formula id="disp-formula21-0954407012440934">
+<label>(21)</label>
+<mml:math display="block" id="math63-0954407012440934">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mi>J</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula21-0954407012440934" xlink:href="10.1177_0954407012440934-eq21.tif"/>
+</disp-formula>
+</p>
+<p>where</p>
+<p>
+<disp-formula id="disp-formula22-0954407012440934">
+<label>(22)</label>
+<mml:math display="block" id="math64-0954407012440934">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>η</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>η</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula22-0954407012440934" xlink:href="10.1177_0954407012440934-eq22.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula23-0954407012440934">
+<label>(23)</label>
+<mml:math display="block" id="math65-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula23-0954407012440934" xlink:href="10.1177_0954407012440934-eq23.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula24-0954407012440934">
+<label>(24)</label>
+<mml:math display="block" id="math66-0954407012440934">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mi mathvariant="bold">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula24-0954407012440934" xlink:href="10.1177_0954407012440934-eq24.tif"/>
+</disp-formula>
+</p>
+<p>In the above equations, <inline-formula id="inline-formula43-0954407012440934">
+<mml:math display="inline" id="math67-0954407012440934">
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> denotes the Euclidean norm; <inline-formula id="inline-formula44-0954407012440934">
+<mml:math display="inline" id="math68-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>η</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula45-0954407012440934">
+<mml:math display="inline" id="math69-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>η</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are the front-wheel and rear-wheel RB efficiencies respectively, which are functions of the torque and the speed of a single wheel as in <xref ref-type="disp-formula" rid="disp-formula2-0954407012440934">equation (2)</xref>; <inline-formula id="inline-formula46-0954407012440934">
+<mml:math display="inline" id="math70-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula47-0954407012440934">
+<mml:math display="inline" id="math71-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are the lengths of the prediction horizon and the control horizon respectively,<sup><xref ref-type="bibr" rid="bibr18-0954407012440934">18</xref></sup> and <inline-formula id="inline-formula48-0954407012440934">
+<mml:math display="inline" id="math72-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>; <inline-formula id="inline-formula49-0954407012440934">
+<mml:math display="inline" id="math73-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula50-0954407012440934">
+<mml:math display="inline" id="math74-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and <inline-formula id="inline-formula51-0954407012440934">
+<mml:math display="inline" id="math75-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are the weighting matrices that determine the relative importance of the penalized terms, namely the speed-tracking error <inline-formula id="inline-formula52-0954407012440934">
+<mml:math display="inline" id="math76-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula>, the overall RB power <italic>P</italic>, and the braking torque incremental rate <inline-formula id="inline-formula53-0954407012440934">
+<mml:math display="inline" id="math77-0954407012440934">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> respectively.</p>
+</sec>
+<sec id="section11-0954407012440934">
+<title>Constraints</title>
+<p>Owing to the limitation of the in-wheel motor, the highest absolute value of the RB torque for an individual wheel is no more than 80 N m (<xref ref-type="fig" rid="fig2-0954407012440934">Figure 2</xref>), which is represented by <xref ref-type="disp-formula" rid="disp-formula25-0954407012440934">equation (25)</xref> given below. From the safety point of view, the slip ratio<sup><xref ref-type="bibr" rid="bibr17-0954407012440934">17</xref></sup> of each wheel should be kept under 0.2 to avoid wheel locks and to maximize the possible braking force. Here, a more conservative value may be used. It can be obtained by simply setting the first derivative of <xref ref-type="disp-formula" rid="disp-formula9-0954407012440934">equation (9)</xref> with respect to the slip ratio to zero, i.e. <inline-formula id="inline-formula54-0954407012440934">
+<mml:math display="inline" id="math78-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo>∂</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo>∂</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula>. Therefore, the constraints on system inputs and states can be expressed as</p>
+<p>
+<disp-formula id="disp-formula25-0954407012440934">
+<label>(25)</label>
+<mml:math display="block" id="math79-0954407012440934">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>bi</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula25-0954407012440934" xlink:href="10.1177_0954407012440934-eq25.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula26-0954407012440934">
+<label>(26)</label>
+<mml:math display="block" id="math80-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula26-0954407012440934" xlink:href="10.1177_0954407012440934-eq26.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula27-0954407012440934">
+<label>(27)</label>
+<mml:math display="block" id="math81-0954407012440934">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula27-0954407012440934" xlink:href="10.1177_0954407012440934-eq27.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula55-0954407012440934">
+<mml:math display="inline" id="math82-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula56-0954407012440934">
+<mml:math display="inline" id="math83-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are determined by the properties of the in-wheel motor’s RB mode.</p>
+</sec>
+<sec id="section12-0954407012440934">
+<title>Nonlinear model predictive control</title>
+<p>NMPC solves online a nonlinear optimization problem at each time instant, with knowledge of the current system state variables and previous system inputs, and then takes the first element of the optimal control sequence as the current control to the system. For the RB control problem, it follows several steps listed below.</p>
+<p>
+<italic>Step 1</italic>: At the sampling instant <italic>k</italic>, measure the current system states <inline-formula id="inline-formula57-0954407012440934">
+<mml:math display="inline" id="math84-0954407012440934">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula>. Also, the previous input <inline-formula id="inline-formula58-0954407012440934">
+<mml:math display="inline" id="math85-0954407012440934">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> generated by the NMPC is kept in the memory.</p>
+<p>
+<italic>Step 2</italic>: Rearrange the control sequence within a control horizon <inline-formula id="inline-formula59-0954407012440934">
+<mml:math display="inline" id="math86-0954407012440934">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo><mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> as</p>
+<p>
+<disp-formula id="disp-formula28-0954407012440934">
+<label>(28)</label>
+<mml:math display="block" id="math87-0954407012440934">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>⋯</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>⋯</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msup>
+<mml:mo>∈</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula28-0954407012440934" xlink:href="10.1177_0954407012440934-eq28.tif"/>
+</disp-formula>
+</p>
+<p>and solve the nonlinear optimization problem where the cost function is defined in <xref ref-type="disp-formula" rid="disp-formula21-0954407012440934">equation (21)</xref> according to</p>
+<p>
+<disp-formula id="disp-formula29-0954407012440934">
+<label>(29)</label>
+<mml:math display="block" id="math88-0954407012440934">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:munder>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula29-0954407012440934" xlink:href="10.1177_0954407012440934-eq29.tif"/>
+</disp-formula>
+</p>
+<p>subject to the nonlinear model (12) to (20) in the prediction horizon and the constraints (25) to (27).</p>
+<p>
+<italic>Step 3</italic>: The current desirable control input is taken to be</p>
+<p>
+<disp-formula id="disp-formula30-0954407012440934">
+<label>(30)</label>
+<mml:math display="block" id="math89-0954407012440934">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula30-0954407012440934" xlink:href="10.1177_0954407012440934-eq30.tif"/>
+</disp-formula>
+</p>
+<p>and is applied to the vehicle.</p>
+<p>Then, for the next time instant, with <inline-formula id="inline-formula60-0954407012440934">
+<mml:math display="inline" id="math90-0954407012440934">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> and measured <inline-formula id="inline-formula61-0954407012440934">
+<mml:math display="inline" id="math91-0954407012440934">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula>, the same procedure is repeated to generate the control input <inline-formula id="inline-formula62-0954407012440934">
+<mml:math display="inline" id="math92-0954407012440934">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>It is important to point out that the length <inline-formula id="inline-formula63-0954407012440934">
+<mml:math display="inline" id="math93-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> of the control horizon determines the dimension of the manipulated variable <inline-formula id="inline-formula64-0954407012440934">
+<mml:math display="inline" id="math94-0954407012440934">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> and therefore the size of the optimization problem, while the length <inline-formula id="inline-formula65-0954407012440934">
+<mml:math display="inline" id="math95-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> of the prediction horizon decides the extent to which the NMPC can `predict’, thus affecting the control performance. In fact, the prediction horizon window is typically much smaller than the entire optimization time window; therefore this finite-horizon NMPC provides only `semi-optimal’ solutions. Furthermore, since <inline-formula id="inline-formula66-0954407012440934">
+<mml:math display="inline" id="math96-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, for simplicity, the control inputs outside the control horizon and inside the prediction horizon will take the last value in the control horizon according to</p>
+<p>
+<disp-formula id="disp-formula31-0954407012440934">
+<label>(31)</label>
+<mml:math display="block" id="math97-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>bi</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>bi</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula31-0954407012440934" xlink:href="10.1177_0954407012440934-eq31.tif"/>
+</disp-formula>
+</p>
+</sec>
+<sec id="section13-0954407012440934">
+<title>Remarks</title>
+<p>Since theoretical analysis of the closed-loop stability of the NMPC is not the focus of this study, interested readers can refer to earlier work<sup><xref ref-type="bibr" rid="bibr18-0954407012440934">18</xref><xref ref-type="bibr" rid="bibr19-0954407012440934"/><xref ref-type="bibr" rid="bibr20-0954407012440934"/>–<xref ref-type="bibr" rid="bibr21-0954407012440934">21</xref></sup> and the references therein for the stability of the NMPC. The later simulation results show that the stability of this RB control problem is achieved.</p>
+</sec>
+</sec>
+<sec id="section14-0954407012440934" sec-type="discussion">
+<title>Discussions on the nonlinear model predictive controller for regenerative braking control</title>
+<p>The NMPC algorithms may have low computational efficiency; hence, the applications on systems with fast dynamics were limited. This section introduces some practical techniques that may be applied to tackle this difficulty. Before that, to achieve a better optimization result at each step, a numerical technique is first described.</p>
+<sec id="section15-0954407012440934">
+<title>Initial plane gridding</title>
+<p>For constrained nonlinear optimization problems, finding the global minimum can be challenging for typical optimization algorithms. This in-wheel motor RB control problem involves high nonlinearity such that the cost function may have several `valleys’ with respect to the manipulated variables. In other words, the global minimum within the prediction window may not be reached, but only some local minima. Therefore, the initial values of the manipulated variables <inline-formula id="inline-formula67-0954407012440934">
+<mml:math display="inline" id="math98-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> set at the beginning of each step are critical to the `quality’ of the solution.</p>
+<p>The IPG technique is applied here for better solution of this optimization problem. The basic idea of this technique is to divide the plane of possible initial values into smaller planes. Then the initial values of the manipulated variable are set to be the values on the cross points. By solving the optimization problem several times with regard to these initial value settings and recording their corresponding costs, the best solution can be achieved by selecting the solution with the lowest cost function value. For example, if the front and rear braking torques can take any value between −160 N m and 0 N m, then the initial value of <inline-formula id="inline-formula68-0954407012440934">
+<mml:math display="inline" id="math99-0954407012440934">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>10</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>20</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> can be [−60, −60], [−60, −120], [−120, −60], or [−120, −120], which divide the entire plane into several blocks with similar areas, as shown in <xref ref-type="fig" rid="fig4-0954407012440934">Figure 4</xref>. It should be noted that the initial value of this optimization problem is a <inline-formula id="inline-formula69-0954407012440934">
+<mml:math display="inline" id="math100-0954407012440934">
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>-dimensional vector, and the first <inline-formula id="inline-formula70-0954407012440934">
+<mml:math display="inline" id="math101-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> elements are all equal to <inline-formula id="inline-formula71-0954407012440934">
+<mml:math display="inline" id="math102-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>10</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and the last <inline-formula id="inline-formula72-0954407012440934">
+<mml:math display="inline" id="math103-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> elements are all equal to <inline-formula id="inline-formula73-0954407012440934">
+<mml:math display="inline" id="math104-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mn>20</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> for simplicity.</p>
+<fig id="fig4-0954407012440934" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Illustration of the IPG technique.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig4.tif"/>
+</fig>
+<p>It should be pointed out that the solution obtained by IPG is still not guaranteed to be globally optimal within the prediction window. However, it can be shown that this technique largely improves the outcome of the NMPC algorithm, as can be seen in the simulation results.</p>
+</sec>
+<sec id="section16-0954407012440934">
+<title>Fast implementation of nonlinear model predictive control in real time</title>
+<p>Because of the high nonlinearity of the system dynamics and the complicated RB efficiency feature, efficient implementations of NMPC are necessary for its real-time applications. This section describes two existing approaches: explicit nonlinear model predictive control and the approximate primal barrier method.</p>
+<p>Explicit NMPC is an offline method, which treats the control as a function of the initial state as described by Yang and Boyd<sup><xref ref-type="bibr" rid="bibr22-0954407012440934">22</xref></sup> (and the references therein). Then, the online implementation of NMPC can be treated as the search for corresponding points on the map <inline-formula id="inline-formula74-0954407012440934">
+<mml:math display="inline" id="math105-0954407012440934">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula>. Although this approach does not even involve online computation, it may be significantly affected by changes in the parameters, e.g. the vehicle mass, tire model and TRFC in this study. If these uncertainties are also viewed as initial states, the complexity of the problem will be increased exponentially. Moreover, this approach may not be robust to external disturbances because it has already lost the property of `prediction’. In the approximate primal barrier method described by Yang and Boyd<sup><xref ref-type="bibr" rid="bibr22-0954407012440934">22</xref></sup> (and the references therein), an overall optimization variable combining all controls and states within the prediction window is defined, and the inequality constraints are formulated as a log barrier term in the cost function. Either the infeasible-start Newton method or the warm-start method can be applied to solve the approximate problem. A further approximation of the problem can be realized by fixing the barrier parameter and the iteration limit. It was shown that the proposed method can reduce the computation time for each step to only a few milliseconds for a large-scale problem. Some other methods such as set membership approximation<sup><xref ref-type="bibr" rid="bibr5-0954407012440934">5</xref>,<xref ref-type="bibr" rid="bibr23-0954407012440934">23</xref>,<xref ref-type="bibr" rid="bibr24-0954407012440934">24</xref></sup> are not discussed here.</p>
+</sec>
+</sec>
+<sec id="section17-0954407012440934">
+<title>Simulation results and analyses</title>
+<p>Simulations were conducted in the MATLAB/Simulink environment to show the control performance of the proposed NMPC. The command <italic>fmincon</italic> in the optimization toolbox was employed in the NMPC design. A full-vehicle model (which includes the dynamics that were not considered or simplified in the control-oriented model) provided by CarSim<sup>®</sup> was used in the co-simulations with MATLAB/Simulink. This vehicle model takes the form of an IWMDEV, which has five inputs: four motor torques and one front steering angle. A simple independent suspension model is also included. Besides those in <xref ref-type="app" rid="app1-0954407012440934">Appendix 1</xref> and <xref ref-type="table" rid="table1-0954407012440934">Table 1</xref>, some other important simulation parameters are listed in <xref ref-type="table" rid="table2-0954407012440934">Table 2</xref>. The tires on the energy-generating vehicle are the typical 215/70 tires used on passenger cars, and the parameters of the tire model in <xref ref-type="table" rid="table1-0954407012440934">Table 1</xref> were obtained by careful calibration in some road tests previously conducted for the vehicle<sup><xref ref-type="bibr" rid="bibr25-0954407012440934">25</xref></sup> with assistance from the parameters given by Wong.<sup><xref ref-type="bibr" rid="bibr26-0954407012440934">26</xref></sup></p>
+<table-wrap id="table2-0954407012440934" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Parameters in the simulation.</p>
+</caption>
+<graphic alternate-form-of="table2-0954407012440934" xlink:href="10.1177_0954407012440934-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Parameter (units)</th>
+<th align="left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<inline-formula id="inline-formula75-0954407012440934">
+<mml:math display="inline" id="math106-0954407012440934">
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>1</td>
+</tr>
+<tr>
+<td><italic>T</italic><sub><italic>b</italic>, max</sub> (N m)</td>
+<td>80</td>
+</tr>
+<tr>
+<td>
+<italic>ω</italic>
+<sub>min</sub> (r/min)</td>
+<td>150</td>
+</tr>
+<tr>
+<td>
+<italic>ω</italic>
+<sub>max</sub> (r/min)</td>
+<td>750</td>
+</tr>
+<tr>
+<td>
+<italic>s</italic>
+<sub>max</sub>
+</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Δ<italic>t</italic></td>
+<td>0.02</td>
+</tr>
+<tr>
+<td>
+<italic>h<sub>p</sub></italic>
+</td>
+<td>5</td>
+</tr>
+<tr>
+<td>
+<italic>h<sub>c</sub></italic>
+</td>
+<td>2</td>
+</tr>
+<tr>
+<td>
+<italic>w<sub>y</sub></italic>
+</td>
+<td>1</td>
+</tr>
+<tr>
+<td>
+<italic>w<sub>r</sub></italic>
+</td>
+<td>1 × 10<sup>−5</sup></td>
+</tr>
+<tr>
+<td>
+<italic>w<sub>u</sub></italic>
+</td>
+<td>1 × 10<sup>−5</sup></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>Owing to torque limitations of the current prototype in-wheel motors in the RB mode, the electric vehicle was purposely made to be `lightweight’ to allow for the higher-deceleration range. This assumption is reasonable since EVs are to be made increasingly lighter as a trend in the automotive industry. Moreover, the control method developed can also be applied to other small-sized lightweight vehicles, such as narrow tilt vehicles, military autonomous wheeled robots, or other special vehicles.</p>
+<p>In the following sections, two desired velocity profiles (during deceleration) that are to be tracked are designed. Throughout the remaining sections, they will be denoted as VP1 and VP2 respectively. The IPG numerical technique is first evaluated. Then, comparisons are made between three controllers: the proposed NMPC, an NMPC without energy concerns, i.e. <inline-formula id="inline-formula76-0954407012440934">
+<mml:math display="inline" id="math107-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>, and a conventional proportional–integral (PI) controller supplemented with a feedforward (FF) control effort. Both the velocity-tracking performance and the total RB energy recovery of these three controllers are investigated under the two velocity profiles. Moreover, the case when the front and the rear motors have different RB efficiency characteristics is studied with simulation conducted for VP1. Also, the constraints on the slip ratios, which are highly related to the driving safety, are shown to be satisfied by the proposed controller with simulation results obtained for VP2.</p>
+<sec id="section18-0954407012440934">
+<title>Reference velocity profiles</title>
+<p>The objectives of the simulations are to show the effectiveness of the proposed NMPC in improving the RB energy recovery, without affecting the velocity-tracking performance of the vehicle, in an ordinary braking maneuver. Therefore, the reference velocity profiles are designed to cover large ranges of velocities and decelerations, as shown in <xref ref-type="fig" rid="fig5-0954407012440934">Figure 5</xref>. VP1 is selected and revised from a section of the standard Federal Test Procedure driving cycle, and VP2 was specifically designed. The characteristics of these two profiles are further described in <xref ref-type="table" rid="table3-0954407012440934">Table 3</xref>.</p>
+<fig id="fig5-0954407012440934" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Reference velocity and deceleration profiles.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig5.tif"/>
+</fig>
+<table-wrap id="table3-0954407012440934" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Characteristics of the reference velocity profiles.</p>
+</caption>
+<graphic alternate-form-of="table3-0954407012440934" xlink:href="10.1177_0954407012440934-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Parameter (units)</th>
+<th align="left" colspan="2">Value for the following velocity profiles<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">VP 1</th>
+<th align="left">VP 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<italic>v</italic>
+<sub>max</sub> (m/s)</td>
+<td>19.68</td>
+<td>22</td>
+</tr>
+<tr>
+<td>
+<italic>v</italic>
+<sub>min</sub> (m/s)</td>
+<td>9.53</td>
+<td>6.83</td>
+</tr>
+<tr>
+<td>
+<inline-formula id="inline-formula77-0954407012440934">
+<mml:math display="inline" id="math108-0954407012440934">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> (m/s<sup>2</sup>)</td>
+<td>2.45</td>
+<td>2.98</td>
+</tr>
+<tr>
+<td>
+<inline-formula id="inline-formula78-0954407012440934">
+<mml:math display="inline" id="math109-0954407012440934">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> (m/s<sup>2</sup>)</td>
+<td>1.02</td>
+<td>1.52</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>As can be observed from the figure and table, VP1 has the braking pattern `harsh–moderate–harsh’, while VP2 has the pattern `moderate–harsh–moderate’. Both profiles cover the velocity range where RB can take effect. Moreover, VP2 has maximum deceleration with an absolute value of almost 3 m/s<sup>2</sup>, which is most likely to incur wheel locks when the road is slippery.</p>
+</sec>
+<sec id="section19-0954407012440934">
+<title>Initial plane gridding performance</title>
+<p>The performance of the IPG technique described in the preceding section is first evaluated for VP1. The plots in <xref ref-type="fig" rid="fig6-0954407012440934">Figure 6</xref> show the comparisons of the front and rear braking torques for the cases with and without use of the IPG technique; the plots in <xref ref-type="fig" rid="fig7-0954407012440934">Figure 7</xref> show the comparisons of the instant power and the recovered energy for the cases with and without use of the IPG technique. The cross point values are chosen to be −60, −120, and the initialization without using the IPG always adopts −80 as the initial values of each element in <inline-formula id="inline-formula79-0954407012440934">
+<mml:math display="inline" id="math110-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<fig id="fig6-0954407012440934" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Comparison of the front and rear braking torques for IPG evaluation.</p>
+<p>IPG: initial plane gridding; w/o: without.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig6.tif"/>
+</fig>
+<fig id="fig7-0954407012440934" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Comparison of the RB power and recovered energy values for IPG evaluation.</p>
+<p>RB: regenerative braking; IPG: initial plane gridding; w/o: without.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig7.tif"/>
+</fig>
+<p>As can be seen from <xref ref-type="fig" rid="fig6-0954407012440934">Figure 6</xref>, when the IPG technique is not applied, the front and rear braking torque levels are mostly the same after 4.5 s. When the IPG technique is applied, there are more significant differences between the two torque values. The power and energy curves clearly show that the solutions are better when using IPG. At some small portions in the power curve, such as between 8 s and 9 s, the power when not using IPG is even greater than that when using IPG. This may be caused by the mismatch of the fitted in-wheel motor efficiency map and the true map in the high-torque region.</p>
+</sec>
+<sec id="section20-0954407012440934">
+<title>Velocity-tracking performance</title>
+<p>The velocity-tracking performances of three controllers, namely the proposed NMPC with the parameters listed in <xref ref-type="table" rid="table2-0954407012440934">Table 2</xref>, an NMPC with the RB efficiency weighting factor <inline-formula id="inline-formula80-0954407012440934">
+<mml:math display="inline" id="math111-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>, i.e. the only objective is velocity tracking, and a conventional PI controller supplemented with an FF term, are compared. The PI+FF controller is designed according to</p>
+<p>
+<disp-formula id="disp-formula32-0954407012440934">
+<label>(32)</label>
+<mml:math display="block" id="math112-0954407012440934">
+<mml:mrow>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:munderover>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mtext>d</mml:mtext>
+<mml:mi>τ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>FF</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula32-0954407012440934" xlink:href="10.1177_0954407012440934-eq32.tif"/>
+</disp-formula>
+</p>
+<p>where the FF term <inline-formula id="inline-formula81-0954407012440934">
+<mml:math display="inline" id="math113-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>FF</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> is determined by the reference deceleration and vehicle model according to</p>
+<p>
+<disp-formula id="disp-formula33-0954407012440934">
+<label>(33)</label>
+<mml:math display="block" id="math114-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>FF</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ref</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ref</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula33-0954407012440934" xlink:href="10.1177_0954407012440934-eq33.tif"/>
+</disp-formula>
+</p>
+<p>The total braking torque <inline-formula id="inline-formula82-0954407012440934">
+<mml:math display="inline" id="math115-0954407012440934">
+<mml:mrow>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> is then distributed to the front and the rear wheels according to their normal forces with the main consideration of wheel lock avoidance according to</p>
+<p>
+<disp-formula id="disp-formula34-0954407012440934">
+<label>(34)</label>
+<mml:math display="block" id="math116-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>bi</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>zi</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mg</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula34-0954407012440934" xlink:href="10.1177_0954407012440934-eq34.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula83-0954407012440934">
+<mml:math display="inline" id="math117-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>zi</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are obtained from <xref ref-type="disp-formula" rid="disp-formula7-0954407012440934">equations (7)</xref> and <xref ref-type="disp-formula" rid="disp-formula8-0954407012440934">(8)</xref> using the acceleration measurements.</p>
+<p>By a trial-and-error process, the proportional gain and integral gain were tuned to be <inline-formula id="inline-formula84-0954407012440934">
+<mml:math display="inline" id="math118-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>200</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula85-0954407012440934">
+<mml:math display="inline" id="math119-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>10</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> respectively. It is noted that <inline-formula id="inline-formula86-0954407012440934">
+<mml:math display="inline" id="math120-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> cannot be too high because the system will be unstable then.</p>
+<p>
+<xref ref-type="fig" rid="fig8-0954407012440934">Figure 8</xref> and <xref ref-type="fig" rid="fig9-0954407012440934">Figure 9</xref> show the velocity-tracking performances of the three controllers under the designed references. As can be observed, all three controllers are able to restrict the tracking error to a small value, with the second NMPC exhibiting the smallest error and the PI+FF controller being the worst. In <xref ref-type="fig" rid="fig8-0954407012440934">Figure 8</xref>, large oscillations can be observed in both NMPCs. Although the tracking performance of the proposed NMPC is somewhat worse than those of the other two during the 0–6 s period, it becomes better in the following 4 s and more favorable than that of the PI+FF controller. Another conclusion that can be drawn is that the performance of the PI+FF controller is largely affected by the reference deceleration (which means that, the higher the deceleration, the larger is the tracking error), while the other two NMPC designs do not deteriorate accordingly.</p>
+<fig id="fig8-0954407012440934" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Comparison of the velocity-tracking performances for VP1.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig8.tif"/>
+</fig>
+<fig id="fig9-0954407012440934" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>Comparison of the velocity-tracking performances for VP2.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig9.tif"/>
+</fig>
+</sec>
+<sec id="section21-0954407012440934">
+<title>Regenerative braking energy recovery performance</title>
+<p>The comparisons between the RB energy recovery values for the three controllers are given below for the two velocity profiles. For VP1, <xref ref-type="fig" rid="fig10-0954407012440934">Figure 10</xref> shows comparisons of the front and rear braking torques, and <xref ref-type="fig" rid="fig11-0954407012440934">Figure 11</xref> shows comparisons of the instant power and recovered energy values. As can be clearly observed in <xref ref-type="fig" rid="fig11-0954407012440934">Figure 11</xref>, the energy recovered using the NMPC is more than that obtained by using either the NMPC without energy consideration or the PI+FF controller, especially during the periods 1–4 s and 5–9 s. A total of about 13% more energy can be obtained by the proposed NMPC than by the other two controllers. The braking torque curves in <xref ref-type="fig" rid="fig10-0954407012440934">Figure 10</xref> show that the NMPC with <inline-formula id="inline-formula87-0954407012440934">
+<mml:math display="inline" id="math121-0954407012440934">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> acts as though it is distributing the total braking torque equally to the front and the rear wheels, which is not an energy-efficient pattern. It can also easily be seen that distributing the braking torque according to <xref ref-type="disp-formula" rid="disp-formula34-0954407012440934">equation (34)</xref> by the PI+FF controller is even a little worse. During the period 1–8 s, the proposed NMPC applies almost all the braking torque to the front wheels. Together with the power curve in <xref ref-type="fig" rid="fig11-0954407012440934">Figure 11</xref>, it can be deduced that, under relatively moderate decelerations, the larger the torque difference is between the front and the rear wheels, the higher is the RB efficiency. This can be explained by the concave shape on the RB efficiency map near the low-torque range. When the deceleration requirement is high and the desired braking torque is sufficiently high, corresponding to 8–10 s, the optimal solution is close to the equal distribution of the total braking torque, and the improvement in the RB energy recovery is limited.</p>
+<fig id="fig10-0954407012440934" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>Comparison of the front and rear braking torques for VP1. The Y axes are the braking torque values.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig10.tif"/>
+</fig>
+<fig id="fig11-0954407012440934" position="float">
+<label>Figure 11.</label>
+<caption>
+<p>Comparison of the RB power and recovered energy values for VP1.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig11.tif"/>
+</fig>
+<p>For VP2, <xref ref-type="fig" rid="fig12-0954407012440934">Figure 12</xref> shows comparisons of the front and rear braking torques, and <xref ref-type="fig" rid="fig13-0954407012440934">Figure 13</xref> shows comparisons of the instant power and recovered energy values. Similar conclusions can be made as for VP1; at low decelerations, the more efficient way is to distribute the braking torque to the front wheels, even if it reaches a maximum value at some instant (e.g. around 2 s), and the improvement in the energy recovery is substantial; at high decelerations, there is not much room for energy improvement, as shown by the power comparison between 3 s and 5 s. An improvement of about 9% in the RB energy recovery can be achieved by the proposed NMPC. It is noticeable that, at around 2 s, the RB power curve of the proposed NMPC exhibits a sudden decrease to a level even below those of the other two controllers. This arises because of the rapid drop in the wheel speed and because the rear motors’ RB was not effective in time.</p>
+<fig id="fig12-0954407012440934" position="float">
+<label>Figure 12.</label>
+<caption>
+<p>Comparison of the front and rear braking torques for VP2.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig12.tif"/>
+</fig>
+<fig id="fig13-0954407012440934" position="float">
+<label>Figure 13.</label>
+<caption>
+<p>Comparison of the RB power and recovered energy values for VP2.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig13.tif"/>
+</fig>
+<p>A further observation from the torque curves is that the proposed NMPC successfully limits the braking torques to their permissible range (<xref ref-type="disp-formula" rid="disp-formula25-0954407012440934">equation (25)</xref>).</p>
+</sec>
+<sec id="section22-0954407012440934">
+<title>Regenerative braking control with distinct efficiency characteristics</title>
+<p>In the above section, the efficiency characteristics of the front and rear motors are assumed to be perfectly identical. As <xref ref-type="fig" rid="fig10-0954407012440934">Figure 10</xref> and <xref ref-type="fig" rid="fig12-0954407012440934">Figure 12</xref> show, the desired braking torque is mostly applied to the front wheels rather than to the rear wheels under the low-deceleration requirement. This can be explained as follows: since the front normal loads are higher, as indicated by the torque curves of the PI+FF controller (<xref ref-type="fig" rid="fig11-0954407012440934">Figure 11</xref> or <xref ref-type="fig" rid="fig13-0954407012440934">Figure 13</xref>), higher torques are needed according to the vehicle dynamics in <xref ref-type="disp-formula" rid="disp-formula3-0954407012440934">equations (3)</xref> to <xref ref-type="disp-formula" rid="disp-formula5-0954407012440934">(5)</xref>; hence a higher RB efficiency can be achieved because the RB efficiency generally increases with increasing torque.</p>
+<p>In this section, the case where the front and the rear motors have different RB efficiency characteristics is investigated. It is assumed that the front-wheel RB efficiency is scaled down by 50% of the rear motors’ efficiency; for VP1, the plots in <xref ref-type="fig" rid="fig14-0954407012440934">Figure 14</xref> give comparisons of the torque distributions, and the plots in <xref ref-type="fig" rid="fig15-0954407012440934">Figure 15</xref> give comparisons of the instant power and the recovered energy values. The proposed NMPC and PI+FF controller are compared. As shown in <xref ref-type="fig" rid="fig14-0954407012440934">Figure 14</xref>, for the proposed NMPC, most of the time the braking torque is exerted only by the rear wheels, which is reasonable given the higher efficiency of the rear wheels and is opposite to the case where all wheels are identical. The improvement in the RB energy recovery, which is around 30%, is even more substantial than the identical efficiency map case in the previous section. Also, the constraints on the motor are satisfied all the time.</p>
+<fig id="fig14-0954407012440934" position="float">
+<label>Figure 14.</label>
+<caption>
+<p>Comparison of the front and rear braking torques.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig14.tif"/>
+</fig>
+<fig id="fig15-0954407012440934" position="float">
+<label>Figure 15.</label>
+<caption>
+<p>Comparison of the instant power and energy values.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig15.tif"/>
+</fig>
+</sec>
+<sec id="section23-0954407012440934">
+<title>Constraints on the slip ratio</title>
+<p>Any control system on ground vehicles cannot ignore the importance of safety issues. When driving on a slippery road surface, the TRFC is so low that the wheels tend to be easily locked whenever the vehicle needs to undergo extensive deceleration. Although limiting the slip ratio is not an exclusive merit of the NMPC algorithm, this function can be easily realized by incorporating into the NMPC formulation an additional constraint on the system states (27). No complex control strategy is needed. <xref ref-type="fig" rid="fig16-0954407012440934">Figure 16</xref> shows the comparison between the rear-wheel slip ratios for the NMPC and the PI+FF controller when the TRFC <inline-formula id="inline-formula88-0954407012440934">
+<mml:math display="inline" id="math122-0954407012440934">
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is reduced to 0.3. It can be readily concluded that the NMPC is capable of limiting the slip ratio and preventing the wheels from locking. In contrast, at 6 s, the rear wheels under the control of the PI+FF controller have already been locked. The speed-tracking performance is maintained by the NMPC with only slight deteriorations, as illustrated by <xref ref-type="fig" rid="fig17-0954407012440934">Figure 17</xref>, while the vehicle with the PI+FF controller tends to lose speed control starting from 2 s. The braking torque curves in <xref ref-type="fig" rid="fig18-0954407012440934">Figure 18</xref> also clearly display that the PI+FF controller exploits the maximum capability of all four in-wheel motors throughout the period 3–6 s. On the contrary, the NMPC saturates the front and rear braking torques at different instants with no more than a 1 s period.</p>
+<fig id="fig16-0954407012440934" position="float">
+<label>Figure 16.</label>
+<caption>
+<p>Comparison of the slip ratios. The <italic>y</italic> axes are the slip ratios.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig16.tif"/>
+</fig>
+<fig id="fig17-0954407012440934" position="float">
+<label>Figure 17.</label>
+<caption>
+<p>Comparison of the velocity-tracking errors on a slippery road.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig17.tif"/>
+</fig>
+<fig id="fig18-0954407012440934" position="float">
+<label>Figure 18.</label>
+<caption>
+<p>Braking torques on a slippery road.</p>
+<p>NMPC: nonlinear model predictive controller; PI: proportional–integral; FF: feedforward.</p>
+</caption>
+<graphic xlink:href="10.1177_0954407012440934-fig18.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section24-0954407012440934" sec-type="conclusions">
+<title>Conclusions</title>
+<p>In this paper, a nonlinear model predictive RB controller for an IWMDEV is proposed with considerations for improving the energy recovery and ensuring safety in low-TRFC cases. Simulations were conducted for two desired velocity profiles. They show that, by wisely distributing the braking torque to the front and rear wheels, the NMPC is able to recover more RB energy than a conventional PI controller supplemented with FF control effort and another NMPC with no consideration of energy, especially for low-deceleration cases, without deterioration in the tracking performance. For the case where the RB efficiency characteristics are not identical for the front motors and the rear motors, the proposed NMPC can readily adjust the distribution pattern accordingly. Moreover, the safety during emergency braking on a low-friction road is also ensured by incorporating slip constraints into the NMPC formulation. A technique for achieving a better solution in the nonlinear optimization problem is also presented and shown to be effective.</p>
+</sec>
+</body>
+<back>
+<app-group>
+<app id="app1-0954407012440934">
+<title>Appendix</title>
+<sec id="section25-0954407012440934">
+<title>Notation</title>
+<p><italic>C<sub>a</sub></italic> air resistance coefficient = 0.368 N s<sup>2</sup>/m<sup>2</sup></p>
+<p>
+<italic>g</italic> acceleration due to gravity = 9.81 m/s<sup>2</sup></p>
+<p>
+<italic>h</italic> height at the center of gravity = 0.61 m</p>
+<p>
+<italic>J<sub>w</sub></italic> moment of inertia of two tire–wheel–in-wheel-motor–brake-disk sets = 1.9 kg m<sup>2</sup></p>
+<p>
+<italic>l</italic> wheel base = 1.89 m</p>
+<p>
+<italic>l</italic>
+<sub>1</sub> distance of the center of gravity from the front axle = 1.09 m</p>
+<p>
+<italic>l</italic>
+<sub>2</sub> distance of the center of gravity from the rear axle = 0.8 m</p>
+<p>
+<italic>m</italic> mass of the vehicle = 300 kg</p>
+<p>
+<italic>r<sub>e</sub></italic> tire radius = 0.33 m</p>
+</sec>
+</app>
+</app-group>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work was partially supported by a National Science Foundation CAREER Award (grant no. CMMI-1149657), an Office of Naval Research Young Investigator Program Award (grant no. N00014-09-1-1018), the Honda–The Ohio State University Partnership Program, and The Ohio State University Transportation Research Endowment Program.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0954407012440934">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wang</surname><given-names>R</given-names></name>
+<name><surname>Chen</surname><given-names>Y</given-names></name>
+<name><surname>Feng</surname><given-names>D</given-names></name><etal/>
+</person-group>. <article-title>Development and performance characterization of an electric ground vehicle with independently-actuated in-wheel motors</article-title>. <source>J Power Sources</source> <year>2011</year>; <volume>196</volume>(<issue>8</issue>): <fpage>3962</fpage>–<lpage>3971</lpage>.</citation>
+</ref>
+<ref id="bibr2-0954407012440934">
+<label>2.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Falcone</surname><given-names>P</given-names></name>
+<name><surname>Khoshfetrat Pakazad</surname><given-names>S</given-names></name>
+<name><surname>Solyom</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Predictive approaches to rear axle regenerative braking control in hybrid vehicles</article-title>. In: <conf-name>Joint 48th IEEE conference on decision and control and 28th Chinese control conference</conf-name>, <conf-loc>Shanghai, People’s Republic of China</conf-loc>, <conf-date>15–18 December 2009</conf-date>, pp. <fpage>7627</fpage>–<lpage>7632</lpage>. <publisher-loc>New York</publisher-loc>: <publisher-name>IEEE</publisher-name>.</citation>
+</ref>
+<ref id="bibr3-0954407012440934">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kokotovic</surname><given-names>P</given-names></name>
+<name><surname>Singh</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Minimum-energy control of a traction motor</article-title>. <source>IEEE Trans Autom Control</source> <year>1972</year>; <volume>17</volume>(<issue>1</issue>): <fpage>92</fpage>–<lpage>95</lpage>.</citation>
+</ref>
+<ref id="bibr4-0954407012440934">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hsieh</surname><given-names>M-F</given-names></name>
+<name><surname>Wang</surname><given-names>J</given-names></name>
+<name><surname>Canova</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Two-level nonlinear model predictive control for lean NO<italic><sub>x</sub></italic> trap regenerations</article-title>. <source>Trans ASME, J Dynamic Systems, Measmt, Control</source> <year>2010</year>; <volume>132</volume>(<issue>4</issue>): <fpage>041001-1</fpage>–<lpage>041001-13</lpage>.</citation>
+</ref>
+<ref id="bibr5-0954407012440934">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Canale</surname><given-names>M</given-names></name>
+<name><surname>Fagiano</surname><given-names>L</given-names></name>
+<name><surname>Razza</surname><given-names>V</given-names></name>
+</person-group>. <article-title>Approximate NMPC for vehicle stability: design, implementation and SIL testing</article-title>. <source>Control Engng Practice</source> <year>2010</year>; <volume>18</volume>(<issue>6</issue>): <fpage>630</fpage>–<lpage>639</lpage>.</citation>
+</ref>
+<ref id="bibr6-0954407012440934">
+<label>6.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>del Re</surname><given-names>L</given-names></name>
+<name><surname>Allgöwer</surname><given-names>F</given-names></name>
+<name><surname>Glielmo</surname><given-names>L</given-names></name><etal/>
+</person-group>. <source>Automotive model predictive control: models, methods and applications</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2010</year>.</citation>
+</ref>
+<ref id="bibr7-0954407012440934">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Qin</surname><given-names>SJ</given-names></name>
+<name><surname>Badgwell</surname><given-names>TA</given-names></name>
+</person-group>. <article-title>A survey of industrial model predictive control technology</article-title>. <source>Control Engng Practice</source> <year>2003</year>: <volume>11</volume>(<issue>7</issue>): <fpage>733</fpage>–<lpage>764</lpage>.</citation>
+</ref>
+<ref id="bibr8-0954407012440934">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>S</given-names></name>
+<name><surname>Li</surname><given-names>K</given-names></name>
+<name><surname>Rajamani</surname><given-names>R</given-names></name>
+<name><surname>Wang</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Model predictive multi-objective vehicular adaptive cruise control</article-title>. <source>IEEE Trans Control Systems Technol</source> <year>2011</year>; <volume>19</volume>(<issue>3</issue>): <fpage>556</fpage>–<lpage>566</lpage>.</citation>
+</ref>
+<ref id="bibr9-0954407012440934">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Borhan</surname><given-names>H</given-names></name>
+<name><surname>Vahidi</surname><given-names>A</given-names></name>
+<name><surname>Phillips</surname><given-names>AM</given-names></name><etal/>
+</person-group>. <article-title>MPC-based energy management of a power-split hybrid electric vehicle</article-title>. <source>IEEE Trans Control Systems Technol</source> <year>2011</year> (<comment>in press</comment>).</citation>
+</ref>
+<ref id="bibr10-0954407012440934">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Asadi</surname><given-names>B</given-names></name>
+<name><surname>Vahidi</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Predictive cruise control: utilizing upcoming traffic signal information for improving fuel economy and reducing trip time</article-title>. <source>IEEE Trans Control Systems Technol</source> <year>2011</year>; <volume>19</volume>(<issue>3</issue>): <fpage>707</fpage>–<lpage>714</lpage>.</citation>
+</ref>
+<ref id="bibr11-0954407012440934">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Falcone</surname><given-names>P</given-names></name>
+<name><surname>Borrelli</surname><given-names>F</given-names></name>
+<name><surname>Asgari</surname><given-names>J</given-names></name><etal/>
+</person-group>. <article-title>Predictive active steering control for autonomous vehicle systems</article-title>. <source>IEEE Trans Control Systems Technol</source> <year>2007</year>; <volume>15</volume>(<issue>3</issue>): <fpage>566</fpage>–<lpage>580</lpage>.</citation>
+</ref>
+<ref id="bibr12-0954407012440934">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bageshwar</surname><given-names>VL</given-names></name>
+<name><surname>Garrard</surname><given-names>WL</given-names></name>
+<name><surname>Rajamani</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Model predictive control of transitional maneuvers for adaptive cruise control vehicles</article-title>. <source>IEEE Trans Veh Technol</source> <year>2004</year>; <volume>53</volume>(<issue>5</issue>): <fpage>1573</fpage>–<lpage>1585</lpage>.</citation>
+</ref>
+<ref id="bibr13-0954407012440934">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ahmadi</surname><given-names>J</given-names></name>
+<name><surname>Sedigh</surname><given-names>AK</given-names></name>
+<name><surname>Kabganian</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Adaptive vehicle lateral-plane motion control using optimal tire friction forces with saturation limits consideration</article-title>. <source>IEEE Trans Veh Technol</source> <year>2009</year>; <volume>58</volume>(<issue>8</issue>): <fpage>4098</fpage>–<lpage>4107</lpage>.</citation>
+</ref>
+<ref id="bibr14-0954407012440934">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Pacejka</surname><given-names>HB</given-names></name>
+<name><surname>Bakker</surname><given-names>E</given-names></name>
+</person-group>. <article-title>Magic formula tyre model</article-title>. <source>Veh System Dynamics</source> <year>1993</year>; <volume>21</volume>(<supplement>Suppl</supplement>): <fpage>1</fpage>–<lpage>18</lpage>.</citation>
+</ref>
+<ref id="bibr15-0954407012440934">
+<label>15.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Braghin</surname><given-names>F</given-names></name>
+<name><surname>Cheli</surname><given-names>F</given-names></name>
+<name><surname>Sabbioni</surname><given-names>E</given-names></name>
+</person-group>. <article-title>Identification of tire model parameters through full vehicle experimental tests</article-title>. <source>Trans ASME, J Dynamic Systems, Measmt, Control</source> <year>2011</year>; <volume>133</volume>(<issue>3</issue>): <fpage>031006-1</fpage>–<lpage>031006-11</lpage>.</citation>
+</ref>
+<ref id="bibr16-0954407012440934">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wang</surname><given-names>J</given-names></name>
+<name><surname>Alexander</surname><given-names>L</given-names></name>
+<name><surname>Rajamani</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Friction estimation on highway vehicles using longitudinal measurements</article-title>. <source>Trans ASME, J Dynamic Systems, Measmt, Control</source> <year>2004</year>; <volume>126</volume>(<issue>2</issue>): <fpage>265</fpage>–<lpage>275</lpage>.</citation>
+</ref>
+<ref id="bibr17-0954407012440934">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Rajamani</surname><given-names>R</given-names></name>
+<name><surname>Piyabongkarn</surname><given-names>N</given-names></name>
+<name><surname>Lew</surname><given-names>J</given-names></name><etal/>
+</person-group>. <article-title>Tire–road friction-coefficient estimation</article-title>. <source>IEEE Control Systems Mag</source> <year>2010</year>; <volume>30</volume>(<issue>4</issue>) <fpage>54</fpage>–<lpage>69</lpage>.</citation>
+</ref>
+<ref id="bibr18-0954407012440934">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mayne</surname><given-names>DQ</given-names></name>
+<name><surname>Rawlings</surname><given-names>JB</given-names></name>
+<name><surname>Rao</surname><given-names>CV</given-names></name>
+<name><surname>Scokaert</surname><given-names>POM</given-names></name>
+</person-group>. <article-title>Constrained model predictive control: stability and optimality</article-title>. <source>Automatica</source> <year>2000</year>; <volume>36</volume>(<issue>6</issue>); <fpage>789</fpage>–<lpage>814</lpage>.</citation>
+</ref>
+<ref id="bibr19-0954407012440934">
+<label>19.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bemporad</surname><given-names>A</given-names></name>
+<name><surname>Munoz de la Pena</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Multiobjective model predictive control</article-title>. <source>Automatic</source> <year>2009</year>; <volume>45</volume>(<issue>12</issue>); <fpage>2823</fpage>–<lpage>2830</lpage>.</citation>
+</ref>
+<ref id="bibr20-0954407012440934">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Graichen</surname><given-names>K</given-names></name>
+<name><surname>Kugi</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Stability and incremental improvement of suboptimal MPC without terminal constraints</article-title>. <source>IEEE Trans Autom Control</source> <year>2010</year>; <volume>55</volume>(<issue>11</issue>): <fpage>2576</fpage>–<lpage>2580</lpage>.</citation>
+</ref>
+<ref id="bibr21-0954407012440934">
+<label>21.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Rossiter</surname><given-names>JA</given-names></name>
+</person-group>. <source>Model-based predictive control: a practical approach</source>. <publisher-loc>Boca Raton, FL</publisher-loc>: <publisher-name>CRC Press</publisher-name>, <year>2004</year>.</citation>
+</ref>
+<ref id="bibr22-0954407012440934">
+<label>22.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Yang</surname><given-names>W</given-names></name>
+<name><surname>Boyd</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Fast model predictive control using online optimization</article-title>. <source>IEEE Trans Control Systems Technol</source> <year>2010</year>; <volume>18</volume>(<issue>2</issue>): <fpage>267</fpage>–<lpage>278</lpage>.</citation>
+</ref>
+<ref id="bibr23-0954407012440934">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Canale</surname><given-names>M</given-names></name>
+<name><surname>Fagiano</surname><given-names>L</given-names></name>
+<name><surname>Milanese</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Set membership approximation theory for fast implementation of model predictive control laws</article-title>. <source>Automatica</source> <year>2009</year>; <volume>45</volume>(<issue>1</issue>): <fpage>45</fpage>–<lpage>54</lpage>.</citation>
+</ref>
+<ref id="bibr24-0954407012440934">
+<label>24.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Canale</surname><given-names>M</given-names></name>
+<name><surname>Fagiano</surname><given-names>L</given-names></name>
+<name><surname>Milanese</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Efficient model predictive control for nonlinear systems via function approximation techniques</article-title>. <source>IEEE Trans Autom Control</source> <year>2010</year>; <volume>55</volume>(<issue>8</issue>): <fpage>1911</fpage>–<lpage>1916</lpage>.</citation>
+</ref>
+<ref id="bibr25-0954407012440934">
+<label>25.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Huang</surname><given-names>X</given-names></name>
+<name><surname>Wang</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Lightweight vehicle control-oriented modeling and payload parameter sensitivity analysis</article-title>. <source>IEEE Trans Veh Technol</source> <year>2011</year>; <volume>60</volume>(<issue>5</issue>): <fpage>1999</fpage>–<lpage>2011</lpage>.</citation>
+</ref>
+<ref id="bibr26-0954407012440934">
+<label>26.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Wong</surname><given-names>JY</given-names></name>
+</person-group>. <source>Theory of ground vehicles</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>John Wiley</publisher-name>, <year>2001</year>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

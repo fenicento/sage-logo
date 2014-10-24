@@ -1,0 +1,6549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PID</journal-id>
+<journal-id journal-id-type="hwp">sppid</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part D: Journal of Automobile Engineering</journal-title>
+<issn pub-type="ppub">0954-4070</issn>
+<issn pub-type="epub">2041-2991</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0954407011424098</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0954407011424098</article-id>
+<title-group>
+<article-title>A model predictive control approach to vehicle yaw control using identified models</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Canale</surname><given-names>M</given-names></name>
+<xref ref-type="aff" rid="aff1-0954407011424098">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Fagiano</surname><given-names>L</given-names></name>
+<xref ref-type="aff" rid="aff1-0954407011424098">1</xref>
+<xref ref-type="aff" rid="aff2-0954407011424098">2</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Signorile</surname><given-names>M C</given-names></name>
+<xref ref-type="aff" rid="aff1-0954407011424098">1</xref>
+<xref ref-type="corresp" rid="corresp1-0954407011424098">*</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-0954407011424098"><label>1</label>Dipartimento di Automatica e Informatica, Politecnico di Torino, Turin, Italy</aff>
+<aff id="aff2-0954407011424098"><label>2</label>Department of Mechanical Engineering, University of California, Santa Barbara, CA, USA</aff>
+<author-notes>
+<corresp id="corresp1-0954407011424098"><label>*</label>Dipartimento di Automatica e Informatica, Politecnico di Torino, Corso Duca degli Abruzzi 24, 10129 Turin, Italy. email: <email>maria.signorile@polito.it</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>5</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>5</issue>
+<fpage>577</fpage>
+<lpage>590</lpage>
+<history>
+<date date-type="received">
+<day>4</day>
+<month>4</month>
+<year>2011</year>
+</date>
+<date date-type="accepted">
+<day>31</day>
+<month>8</month>
+<year>2011</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© Authors 2011</copyright-statement>
+<copyright-year>2011</copyright-year>
+<copyright-holder content-type="sage">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>A vehicle equipped with a front steer-by-wire device is considered and the related control design problem dealt with by using a yaw rate feedback structure. In order to effectively handle both the system non-linearities and the input constraints, a Non-linear Model Predictive Control (NMPC) technique is adopted. A novelty of the present paper is that the vehicle model employed by the NMPC algorithm is obtained from previously collected input/output data, using a Non-linear Set Membership (NSM) identification methodology. Since the NSM approach is able to provide a model with minimal worst-case identification error, improved robustness of the closed-loop system is obtained with respect to that of an NMPC law based on a physical vehicle model. Furthermore, the measure of the model uncertainty provided by the NSM approach allows one to perform a theoretical robust stability analysis of the closed-loop system. The effectiveness of the proposed technique is shown through numerical simulations of manoeuvres using a detailed vehicle model.</p>
+</abstract>
+<kwd-group>
+<kwd>vehicle stability</kwd>
+<kwd>yaw control</kwd>
+<kwd>predictive control</kwd>
+<kwd>robust stability</kwd>
+<kwd>non-linear control</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0954407011424098" sec-type="intro">
+<title>1 Introduction</title>
+<p>Vehicle active control systems aim at enhancing handling performance while ensuring stability in critical situations. Several solutions to active chassis control have appeared in recent years; all of the proposed approaches modify the vehicle behaviour by means of devices that are able to vary the front or rear steering angles or change the distribution of the driving/braking torques applied to the wheels (see e.g. references [<xref ref-type="bibr" rid="bibr1-0954407011424098">1</xref>] and [<xref ref-type="bibr" rid="bibr2-0954407011424098">2</xref>]). Common to all solutions is the fact that they are able to generate limited values of the control input, with consequent possible input saturation and performance deterioration. Moreover, vehicle lateral dynamics may show a highly non-linear behaviour, especially in the critical conditions that motivate the use of active stability systems. In order to cope with these issues, Non-linear Model Predictive Control (NMPC) (see e.g. reference [<xref ref-type="bibr" rid="bibr3-0954407011424098">3</xref>]) techniques can be employed, since they are able to effectively deal with the presence of both input constraints and system non-linearities.</p>
+<p>NMPC relies on the online solution of a constrained finite-horizon optimal control problem, in which the predicted courses of the state variables are computed using a simplified vehicle model. Existing applications of model predictive control to yaw control problems employ either a linear time-varying or a non-linear vehicle model (see e.g. references [<xref ref-type="bibr" rid="bibr4-0954407011424098">4</xref>] and [<xref ref-type="bibr" rid="bibr5-0954407011424098">5</xref>]) derived on the basis of physical laws, i.e. force and moment equilibrium equations together with some model of the tyre behaviour, like the renowned Pacejka ‘magic formula’ [<xref ref-type="bibr" rid="bibr6-0954407011424098">6</xref>]. However, the accuracy of such models, which are referred to as ‘physical models’ hereafter, inherently suffers from under-modelling and parameter uncertainties. As a consequence, closed-loop stability and performance may deteriorate in the presence of parameter variations (e.g. different vehicle mass, tyres, diverse surfaces, etc.) and in situations in which the real vehicle response is ‘too different’ from that of the employed model. Indeed, robust NMPC techniques have been also developed (see e.g. the survey in reference [<xref ref-type="bibr" rid="bibr7-0954407011424098">7</xref>]), able to guarantee stability in the presence of external disturbance and/or model uncertainty. However, the problem of robust yaw control using NMPC is still open, due to the difficulty of deriving a suitable uncertainty measure, associated with the employed physical model, to be used in the aforementioned robust NMPC approaches.</p>
+<p>In order to deal with the issue described above, the present paper originally aimed at designing an NMPC law that employs a vehicle model derived directly from vehicle input/output experimental data, using a Non-linear Set Membership (NSM) identification technique [<xref ref-type="bibr" rid="bibr8-0954407011424098">8</xref>]. Now, since the NSM approach is able to provide a model with minimal worst-case identification error, improved robustness of the closed-loop system is obtained with respect to that of an NMPC law based on a physical vehicle model. Furthermore, the measure of the model uncertainty provided by the NSM technique allows one to perform a theoretical robust stability analysis of the closed-loop system, which is also carried out here. Such a stability analysis paves the way for the design of robust NMPC laws for vehicle yaw stability. The resulting control design methodology, denoted as Set Membership Predictive Control (SMPC), is applied here to design a feedback control law for a vehicle equipped with a front steer-by-wire device. The effectiveness of the approach is tested through simulations of harsh manoeuvres using a detailed 14-degrees-of-freedom (DOF) vehicle model. The obtained results indicate that the SMPC approach proposed in this paper has quite good potential to effectively handle both input constraints and system non-linearities and, at the same time, to tackle the problem of control system robustness in a systematic way.</p>
+</sec>
+<sec id="section2-0954407011424098">
+<title>2 Problem Formulation and Vehicle Model Identification</title>
+<sec id="section3-0954407011424098">
+<title>2.1 Control requirements</title>
+<p>In this paper, a vehicle equipped with a front steer-by-wire actuator, based on a classical rack-and-pinion steering system (see e.g. reference [<xref ref-type="bibr" rid="bibr9-0954407011424098">9</xref>]), is considered. With such a device, the value of the handwheel angle <italic>δ</italic><sub>d</sub> imposed by the driver is measured by a handwheel angle sensor and employed, together with the estimated value of the vehicle speed <italic>v</italic>, to compute a suitable yaw rate reference <inline-formula id="inline-formula1-0954407011424098">
+<mml:math display="inline" id="math1-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. A feedback control law receives as input such reference yaw rate value together with the measured yaw rate <inline-formula id="inline-formula2-0954407011424098">
+<mml:math display="inline" id="math2-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> and computes a suitable input current for the steer-by-wire device, which imposes accordingly the pinion angle and, consequently, the steering angles of the front wheels’ kinematics. Thus, the steering angle <italic>δ</italic> is the control input, and the controlled output is the vehicle yaw rate <inline-formula id="inline-formula3-0954407011424098">
+<mml:math display="inline" id="math3-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The desired vehicle behaviour is taken into account in the control design by a suitable choice of the reference signal, which is generated by means of a non-linear static map</p>
+<p><disp-formula id="disp-formula1-0954407011424098">
+<label>(1)</label>
+<mml:math display="block" id="math4-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>δ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>v</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0954407011424098" xlink:href="10.1177_0954407011424098-eq1.tif"/>
+</disp-formula></p>
+<p>Details on the computation of the map <inline-formula id="inline-formula4-0954407011424098">
+<mml:math display="inline" id="math5-0954407011424098">
+<mml:mrow>
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> employed here can be found, for example, in reference [<xref ref-type="bibr" rid="bibr2-0954407011424098">2</xref>]. In particular, <inline-formula id="inline-formula5-0954407011424098">
+<mml:math display="inline" id="math6-0954407011424098">
+<mml:mrow>
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is designed in order to obtain improvements of the vehicle handling characteristics with respect to the uncontrolled case (i.e. the same vehicle equipped with a conventional steering system). The tracking of <inline-formula id="inline-formula6-0954407011424098">
+<mml:math display="inline" id="math7-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> can be taken into account by minimizing the amount of the tracking error <italic>e</italic></p>
+<p><disp-formula id="disp-formula2-0954407011424098">
+<mml:math display="block" id="math8-0954407011424098">
+<mml:mrow>
+<mml:mi>e</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0954407011424098" xlink:href="10.1177_0954407011424098-eq2.tif"/>
+</disp-formula></p>
+<p>The value of the front steering angle generated by the employed active device is subject to its physical limits. In particular, the range of allowed front steering angles that can be mechanically generated is ± 35 °. Thus, saturation of the control input (i.e. the angle <italic>δ</italic>) has to be taken into account in the control design. Therefore, considering the presence of input constraints, the employment of NMPC techniques (see e.g. reference [<xref ref-type="bibr" rid="bibr3-0954407011424098">3</xref>]) appears to be an appropriate approach to solve the problem. NMPC requires the online solution of a constrained finite-horizon optimal control problem in which the predicted system behaviour is computed using a system model. Differently from existing NMPC approaches for vehicle yaw control (see e.g. references [<xref ref-type="bibr" rid="bibr4-0954407011424098">4</xref>], [<xref ref-type="bibr" rid="bibr5-0954407011424098">5</xref>], and [<xref ref-type="bibr" rid="bibr10-0954407011424098">10</xref>]), in this paper the vehicle model embedded in the NMPC algorithm is not a physical one, but it is identified directly from measured input/output data using an NSM technique. In the following sections, the details on the NSM approach and its application to derive a vehicle model are described.</p>
+</sec>
+<sec id="section4-0954407011424098">
+<title>2.2 NSM identification</title>
+<p>The NSM identification method employed in this paper is derived from the methodology proposed in reference [<xref ref-type="bibr" rid="bibr8-0954407011424098">8</xref>].</p>
+<p>Suppose that the plant <bold>P</bold> to be controlled is a non-linear discrete-time dynamic system described in regression form</p>
+<p><disp-formula id="disp-formula3-0954407011424098">
+<mml:math display="block" id="math9-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold">y</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold">u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0954407011424098" xlink:href="10.1177_0954407011424098-eq3.tif"/>
+</disp-formula></p>
+<p><disp-formula id="disp-formula4-0954407011424098">
+<label>(2)</label>
+<mml:math display="block" id="math10-0954407011424098">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mtext mathvariant="bold">y</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>;</mml:mo>
+<mml:mn>…</mml:mn>
+<mml:mo>;</mml:mo>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mtext mathvariant="bold">u</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>;</mml:mo>
+<mml:mn>…</mml:mn>
+<mml:mo>;</mml:mo>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0954407011424098" xlink:href="10.1177_0954407011424098-eq4.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula7-0954407011424098">
+<mml:math display="inline" id="math11-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula8-0954407011424098">
+<mml:math display="inline" id="math12-0954407011424098">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo>:</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>→</mml:mo>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula9-0954407011424098">
+<mml:math display="inline" id="math13-0954407011424098">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p>Suppose that system <bold>P</bold> is not known, but a set of noise-corrupted measurements is available</p>
+<p><disp-formula id="disp-formula5-0954407011424098">
+<label>(3)</label>
+<mml:math display="block" id="math14-0954407011424098">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo>≐</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0954407011424098" xlink:href="10.1177_0954407011424098-eq5.tif"/>
+</disp-formula></p>
+<p>Let <inline-formula id="inline-formula10-0954407011424098">
+<mml:math display="inline" id="math15-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mover>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:mover>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi mathvariant="bold">y</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi mathvariant="bold">u</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> where <inline-formula id="inline-formula11-0954407011424098">
+<mml:math display="inline" id="math16-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="bold">y</mml:mi>
+<mml:mo>˜</mml:mo>
+</mml:mover>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo>˜</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>;</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>;</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo>˜</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula12-0954407011424098">
+<mml:math display="inline" id="math17-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo>˜</mml:mo>
+</mml:mover>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo>˜</mml:mo>
+</mml:mover>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>;</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>;</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo>˜</mml:mo>
+</mml:mover>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Then (2) can be rewritten as</p>
+<p><disp-formula id="disp-formula6-0954407011424098">
+<label>(4)</label>
+<mml:math display="block" id="math18-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0954407011424098" xlink:href="10.1177_0954407011424098-eq6.tif"/>
+</disp-formula></p>
+<p>where the term <italic>d<sub>t</sub></italic> accounts for the fact that <italic>y<sub>t</sub></italic> and <italic>φ<sub>t</sub></italic> are not exactly known. The aim is to derive an approximation <italic>M</italic> of <italic>P</italic> from the available measurements <inline-formula id="inline-formula13-0954407011424098">
+<mml:math display="inline" id="math19-0954407011424098">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The estimate <italic>M</italic> should be chosen to give small (possibly minimal) error <italic>L<sub>p</sub></italic> error <inline-formula id="inline-formula14-0954407011424098">
+<mml:math display="inline" id="math20-0954407011424098">
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where the <italic>p</italic>-norm of a given function <italic>F</italic>(<italic>φ</italic>) is defined as <inline-formula id="inline-formula15-0954407011424098">
+<mml:math display="inline" id="math21-0954407011424098">
+<mml:mo>∥</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:msub>
+<mml:mo>∥</mml:mo>
+<mml:mi>p</mml:mi>
+</mml:msub>
+<mml:mo>≐</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mo>∫</mml:mo>
+<mml:mi>φ</mml:mi>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>φ</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mi>ρ</mml:mi>
+</mml:msup>
+<mml:mi>d</mml:mi>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>/</mml:mo>
+<mml:mi>ρ</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula16-0954407011424098">
+<mml:math display="inline" id="math22-0954407011424098">
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>∞</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula17-0954407011424098">
+<mml:math display="inline" id="math23-0954407011424098">
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>∞</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mover>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:mover>
+<mml:mrow>
+<mml:mtext>ess</mml:mtext>
+</mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mo>sup</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>Φ</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>φ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and Φ is a bounded set in <inline-formula id="inline-formula18-0954407011424098">
+<mml:math display="inline" id="math24-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p>Whatever estimate is chosen, no information on the identification error can be derived unless some assumptions are made on the function <italic>P</italic> and the noise <italic>d</italic>.</p>
+<p>Prior assumptions on the function <italic>P</italic></p>
+<p><disp-formula id="disp-formula7-0954407011424098">
+<mml:math display="block" id="math25-0954407011424098">
+<mml:mrow>
+<mml:mi>F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≐</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:msup>
+<mml:mi>C</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msup>
+<mml:mo>:</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>φ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>φ</mml:mi>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>‖</mml:mo>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mover accent="true">
+<mml:mi>φ</mml:mi>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo>‖</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo>∀</mml:mo>
+<mml:mi>φ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mover accent="true">
+<mml:mi>φ</mml:mi>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo>∈</mml:mo>
+<mml:mi>Φ</mml:mi>
+<mml:mo>⊂</mml:mo>
+<mml:msup>
+<mml:mi>ℝ</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>φ</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0954407011424098" xlink:href="10.1177_0954407011424098-eq7.tif"/></disp-formula></p>
+<p>Prior assumptions on <italic>d</italic></p>
+<p><disp-formula id="disp-formula8-0954407011424098">
+<mml:math display="block" id="math26-0954407011424098">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>≤</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>ε</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>&lt;</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>∞</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0954407011424098" xlink:href="10.1177_0954407011424098-eq8.tif"/>
+</disp-formula></p>
+<p>Thus, <inline-formula id="inline-formula19-0954407011424098">
+<mml:math display="inline" id="math27-0954407011424098">
+<mml:mrow>
+<mml:mi>F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the set of Lipschitz continuous functions on Φ with Lipschitz constant <italic>γ</italic>. It is assumed that Φ is a compact set.</p>
+<p>A key role in this Set Membership framework is played by the Feasible Systems Set (<italic>FSS</italic>), often called the ‘unfalsified systems set’, i.e. the set of all systems consistent with prior information and measured data.</p>
+<sec id="section5-0954407011424098">
+<title>Definition 1</title>
+<p>Feasible Systems Set</p>
+<p><disp-formula id="disp-formula9-0954407011424098">
+<label>(5)</label>
+<mml:math display="block" id="math28-0954407011424098">
+<mml:mrow>
+<mml:mi>FSS</mml:mi>
+<mml:mo>≐</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>:</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>≤</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>ε</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0954407011424098" xlink:href="10.1177_0954407011424098-eq9.tif"/>
+</disp-formula></p>
+<p>▪</p>
+<p>The <italic>FSS</italic> summarizes all information on the mechanism generating the data that is available up to time <inline-formula id="inline-formula20-0954407011424098">
+<mml:math display="inline" id="math29-0954407011424098">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. If prior assumptions are ‘true’, then <inline-formula id="inline-formula21-0954407011424098">
+<mml:math display="inline" id="math30-0954407011424098">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>FSS</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, an important property for evaluating the accuracy of the identification. Indeed, for a given estimate <inline-formula id="inline-formula22-0954407011424098">
+<mml:math display="inline" id="math31-0954407011424098">
+<mml:mrow>
+<mml:mi>M</mml:mi>
+<mml:mo>≈</mml:mo>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the related <italic>L<sub>p</sub></italic> error <inline-formula id="inline-formula23-0954407011424098">
+<mml:math display="inline" id="math32-0954407011424098">
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> cannot be exactly computed, but its tightest bound is given by</p>
+<p><disp-formula id="disp-formula10-0954407011424098">
+<mml:math display="block" id="math33-0954407011424098">
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mo>sup</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>FSS</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0954407011424098" xlink:href="10.1177_0954407011424098-eq10.tif"/>
+</disp-formula></p>
+<p>This motivates the following definition of worst-case identification error.</p>
+</sec>
+<sec id="section6-0954407011424098">
+<title>Definition 2</title>
+<p>The worst-case identification error of the estimate is</p>
+<p><disp-formula id="disp-formula11-0954407011424098">
+<mml:math display="block" id="math34-0954407011424098">
+<mml:mrow>
+<mml:mi>E</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≐</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mo>sup</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>FSS</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0954407011424098" xlink:href="10.1177_0954407011424098-eq11.tif"/>
+</disp-formula></p>
+<p>Looking for estimates that minimize the worst-case identification error leads to the following optimality concept.</p>
+</sec>
+<sec id="section7-0954407011424098">
+<title>Definition 3</title>
+<p>An estimate is optimal if</p>
+<p><disp-formula id="disp-formula12-0954407011424098">
+<mml:math display="block" id="math35-0954407011424098">
+<mml:mrow>
+<mml:mi>E</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mo>inf</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mi>E</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0954407011424098" xlink:href="10.1177_0954407011424098-eq12.tif"/>
+</disp-formula></p>
+<p>The quantity <inline-formula id="inline-formula24-0954407011424098">
+<mml:math display="inline" id="math36-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, called the ‘radius of information’, gives the minimal worst-case identification error that can be guaranteed by any estimate based on the available information.</p>
+<p>Define the functions</p>
+<p><disp-formula id="disp-formula13-0954407011424098">
+<label>(6)</label>
+<mml:math display="block" id="math37-0954407011424098">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>φ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≐</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>φ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:munder>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="true">¯</mml:mo>
+</mml:munder>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>φ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≐</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="true">¯</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>φ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0954407011424098" xlink:href="10.1177_0954407011424098-eq13.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula25-0954407011424098">
+<mml:math display="inline" id="math38-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mover>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:mover>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>ε</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula26-0954407011424098">
+<mml:math display="inline" id="math39-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="true">¯</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mover>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:mover>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>ε</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The next result shows that the estimate</p>
+<p><disp-formula id="disp-formula14-0954407011424098">
+<mml:math display="block" id="math40-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="true">¯</mml:mo>
+</mml:munder>
+<mml:mo>+</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0954407011424098" xlink:href="10.1177_0954407011424098-eq14.tif"/>
+</disp-formula></p>
+<p>is optimal for any <italic>L<sub>p</sub></italic> norm.</p>
+</sec>
+<sec id="section8-0954407011424098">
+<title>Theorem 1</title>
+<p>Following reference [<xref ref-type="bibr" rid="bibr8-0954407011424098">8</xref>], for any <italic>L<sub>p</sub></italic> norm, with <inline-formula id="inline-formula27-0954407011424098">
+<mml:math display="inline" id="math41-0954407011424098">
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>∞</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>:</p>
+<list id="list1-0954407011424098" list-type="alpha-lower">
+<list-item><p>the estimate <italic>M<sub>c</sub></italic> is optimal;</p></list-item>
+<list-item>
+<p><inline-formula id="inline-formula28-0954407011424098">
+<mml:math display="inline" id="math42-0954407011424098">
+<mml:mrow>
+<mml:mi>E</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo>−</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="true">¯</mml:mo>
+</mml:munder>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+</list-item>
+</list>
+<p>Note that the model <italic>M<sub>c</sub></italic> can be expressed as a non-linear regression of the form</p>
+<p><disp-formula id="disp-formula15-0954407011424098">
+<label>(7)</label>
+<mml:math display="block" id="math43-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>;</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>;</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0954407011424098" xlink:href="10.1177_0954407011424098-eq15.tif"/>
+</disp-formula></p>
+<p>where <italic>M<sub>c</sub></italic> is a Lipschitz continuous function with Lipschitz constant <italic>γ</italic> [<xref ref-type="bibr" rid="bibr8-0954407011424098">8</xref>].</p>
+<p>As a matter of fact, for the design and robustness analysis of the NMPC law employed in this paper, a state space representation of <xref ref-type="disp-formula" rid="disp-formula4-0954407011424098">equations (2)</xref> and <xref ref-type="disp-formula" rid="disp-formula15-0954407011424098">(7)</xref> is needed. In particular the regression (2) can be easily represented in the context of state space equations. In fact, by choosing the state vector as</p>
+<p><disp-formula id="disp-formula16-0954407011424098">
+<label>(8)</label>
+<mml:math display="block" id="math44-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula16-0954407011424098" xlink:href="10.1177_0954407011424098-eq16.tif"/>
+</disp-formula></p>
+<p>and as input the value <italic>u<sub>t</sub></italic>, the regression form (2) can be expressed as</p>
+<p><disp-formula id="disp-formula17-0954407011424098">
+<label>(9)</label>
+<mml:math display="block" id="math45-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula17-0954407011424098" xlink:href="10.1177_0954407011424098-eq17.tif"/>
+</disp-formula></p>
+<p>where</p>
+<p><disp-formula id="disp-formula18-0954407011424098">
+<label>(10)</label>
+<mml:math display="block" id="math46-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mi>f</mml:mi>
+<mml:mi>P</mml:mi>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula18-0954407011424098" xlink:href="10.1177_0954407011424098-eq18.tif"/>
+</disp-formula></p>
+<p>Note that, since <inline-formula id="inline-formula29-0954407011424098">
+<mml:math display="inline" id="math47-0954407011424098">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is assumed to be Lipschitz continuous with constant <italic>γ</italic>, function <inline-formula id="inline-formula30-0954407011424098">
+<mml:math display="inline" id="math48-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> in <xref ref-type="disp-formula" rid="disp-formula18-0954407011424098">equation (10)</xref> is Lipschitz continuous too with constant <inline-formula id="inline-formula31-0954407011424098">
+<mml:math display="inline" id="math49-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The same procedure applied to the model <italic>M<sub>c</sub></italic>, <xref ref-type="disp-formula" rid="disp-formula15-0954407011424098">equation (7)</xref>, leads to the state space description</p>
+<p><disp-formula id="disp-formula19-0954407011424098">
+<label>(11)</label>
+<mml:math display="block" id="math50-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>u</mml:mi>
+<mml:msub>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula19-0954407011424098" xlink:href="10.1177_0954407011424098-eq19.tif"/>
+</disp-formula></p>
+<p>where</p>
+<p><disp-formula id="disp-formula20-0954407011424098">
+<label>(12)</label>
+<mml:math display="block" id="math51-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mi>f</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mi>c</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mi>c</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula20-0954407011424098" xlink:href="10.1177_0954407011424098-eq20.tif"/>
+</disp-formula></p>
+<p>Indeed, on the basis of the assumptions made in the considered NSM identification set-up, function <inline-formula id="inline-formula32-0954407011424098">
+<mml:math display="inline" id="math52-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> in <xref ref-type="disp-formula" rid="disp-formula20-0954407011424098">equation (12)</xref> is Lipschitz continuous with the same constant <inline-formula id="inline-formula33-0954407011424098">
+<mml:math display="inline" id="math53-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:math>
+</inline-formula> of <inline-formula id="inline-formula34-0954407011424098">
+<mml:math display="inline" id="math54-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Moreover it can be shown that</p>
+<p><disp-formula id="disp-formula21-0954407011424098">
+<label>(13)</label>
+<mml:math display="block" id="math55-0954407011424098">
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo>≤</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula21-0954407011424098" xlink:href="10.1177_0954407011424098-eq21.tif"/>
+</disp-formula></p>
+<p>Section 2.3 shows how the described NSM approach can be applied to derive a vehicle model to be used in the NMPC design.</p>
+</sec>
+</sec>
+<sec id="section9-0954407011424098">
+<title>2.3 Vehicle model using NSM identification</title>
+<p>In the considered case of a vehicle with a front steer-by-wire device, the system input is the front steering angle <italic>δ</italic> and the measured output is the vehicle yaw rate <inline-formula id="inline-formula35-0954407011424098">
+<mml:math display="inline" id="math56-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula>. A set of experimental data, to be used for the computation of the NSM model <italic>M<sub>c</sub></italic>, <xref ref-type="disp-formula" rid="disp-formula15-0954407011424098">equation (7)</xref>, can be collected by performing driving tests with the vehicle equipped with a classical steering system and by collecting the measured values of <inline-formula id="inline-formula36-0954407011424098">
+<mml:math display="inline" id="math57-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula37-0954407011424098">
+<mml:math display="inline" id="math58-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> with a suitable sampling time <italic>T</italic><sub>s</sub>, the value <italic>T</italic><sub>s</sub> = 0.01 s is considered here. Then, the number of output and input regressors, <italic>n<sub>y</sub></italic> and <italic>n<sub>u</sub></italic>, respectively, has to be chosen in order to achieve a suitable trade-off between model complexity and accuracy, while the values of the Lipschitz constant <italic>γ</italic> and of the noise bound <italic>ϵ</italic> are estimated from the data in order to achieve a non-empty <italic>FSS</italic> (for more details on the choice of regressors and the computation of <italic>γ</italic> and <italic>ϵ</italic>, the interested reader is referred to reference [<xref ref-type="bibr" rid="bibr8-0954407011424098">8</xref>]). The obtained NSM vehicle model <inline-formula id="inline-formula38-0954407011424098">
+<mml:math display="inline" id="math59-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> is of the form of <xref ref-type="disp-formula" rid="disp-formula19-0954407011424098">equation (11)</xref>, in particular</p>
+<p><disp-formula id="disp-formula22-0954407011424098">
+<label>(14)</label>
+<mml:math display="block" id="math60-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>u</mml:mi>
+<mml:msub>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula22-0954407011424098" xlink:href="10.1177_0954407011424098-eq22.tif"/>
+</disp-formula></p>
+<p>where</p>
+<p><disp-formula id="disp-formula23-0954407011424098">
+<mml:math display="block" id="math61-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mi>f</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mi>c</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mi>c</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>ϕ</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>ϕ</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>ϕ</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>δ</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>ϕ</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>x</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>ϕ</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mi>δ</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula23-0954407011424098" xlink:href="10.1177_0954407011424098-eq23.tif"/>
+</disp-formula></p>
+<p>and</p>
+<p><disp-formula id="disp-formula24-0954407011424098">
+<label>(15)</label>
+<mml:math display="block" id="math62-0954407011424098">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ℝ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula24-0954407011424098" xlink:href="10.1177_0954407011424098-eq24.tif"/>
+</disp-formula></p>
+<p>The model <xref ref-type="disp-formula" rid="disp-formula22-0954407011424098">equation (14)</xref> can be employed to design an NMPC law for yaw control, as described in the section 3.</p>
+</sec>
+</sec>
+<sec id="section10-0954407011424098">
+<title>3 NMPC Strategy for Yaw Control</title>
+<p>The control move computation is performed at discrete time instants <inline-formula id="inline-formula39-0954407011424098">
+<mml:math display="inline" id="math63-0954407011424098">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, defined by the sampling period <italic>T</italic><sub>s</sub> and on the basis of the state <xref ref-type="disp-formula" rid="disp-formula22-0954407011424098">equations (14)</xref>. At each step <italic>t</italic> the measured values of the state <italic>x<sub>t</sub></italic>, <xref ref-type="disp-formula" rid="disp-formula24-0954407011424098">equation (15)</xref>, together with the requested value of the yaw rate reference <inline-formula id="inline-formula40-0954407011424098">
+<mml:math display="inline" id="math64-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, are used to compute the control move through the optimization of the following performance index</p>
+<p><disp-formula id="disp-formula25-0954407011424098">
+<label>(16)</label>
+<mml:math display="block" id="math65-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>Qe</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mi>R</mml:mi>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula25-0954407011424098" xlink:href="10.1177_0954407011424098-eq25.tif"/>
+</disp-formula></p>
+<p>where <italic>Q</italic>, <inline-formula id="inline-formula41-0954407011424098">
+<mml:math display="inline" id="math66-0954407011424098">
+<mml:mrow>
+<mml:mi>R</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>+</mml:mo>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> are suitable weights, <inline-formula id="inline-formula42-0954407011424098">
+<mml:math display="inline" id="math67-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the prediction horizon, <inline-formula id="inline-formula43-0954407011424098">
+<mml:math display="inline" id="math68-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the <italic>j</italic>th step ahead prediction of the tracking error obtained as</p>
+<p><disp-formula id="disp-formula26-0954407011424098">
+<mml:math display="block" id="math69-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≐</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula26-0954407011424098" xlink:href="10.1177_0954407011424098-eq26.tif"/>
+</disp-formula></p>
+<p>The value of <inline-formula id="inline-formula44-0954407011424098">
+<mml:math display="inline" id="math70-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is computed using the measured values of the handwheel angle <italic>δ</italic><sub>d</sub>, <italic><sub>t</sub></italic> (imposed by the driver) and of the vehicle speed <italic>v<sub>t</sub></italic> (see <xref ref-type="disp-formula" rid="disp-formula1-0954407011424098">equation (1)</xref>). On the basis of <xref ref-type="disp-formula" rid="disp-formula24-0954407011424098">equation (15)</xref>, the predicted yaw rate <inline-formula id="inline-formula45-0954407011424098">
+<mml:math display="inline" id="math71-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is obtained as <inline-formula id="inline-formula46-0954407011424098">
+<mml:math display="inline" id="math72-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula> via recursion of the state <xref ref-type="disp-formula" rid="disp-formula22-0954407011424098">equations (14)</xref> starting from the ‘initial condition’</p>
+<p><disp-formula id="disp-formula27-0954407011424098">
+<mml:math display="block" id="math73-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula27-0954407011424098" xlink:href="10.1177_0954407011424098-eq27.tif"/>
+</disp-formula></p>
+<p>and using the following sequence of the inputs <italic>δ</italic></p>
+<p><disp-formula id="disp-formula28-0954407011424098">
+<mml:math display="block" id="math74-0954407011424098">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula28-0954407011424098" xlink:href="10.1177_0954407011424098-eq28.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula47-0954407011424098">
+<mml:math display="inline" id="math75-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mo>≤</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the control horizon and the assumption <inline-formula id="inline-formula48-0954407011424098">
+<mml:math display="inline" id="math76-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula49-0954407011424098">
+<mml:math display="inline" id="math77-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mo>≤</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>≤</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, is made. Thus, the optimization of the index, <xref ref-type="disp-formula" rid="disp-formula25-0954407011424098">equation (16)</xref>, is performed with respect to the variables <inline-formula id="inline-formula50-0954407011424098">
+<mml:math display="inline" id="math78-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula>, while the value of the reference yaw rate angle <inline-formula id="inline-formula51-0954407011424098">
+<mml:math display="inline" id="math79-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is kept constant at the value <inline-formula id="inline-formula52-0954407011424098">
+<mml:math display="inline" id="math80-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, computed at time <italic>t</italic>, during the whole prediction horizon. Therefore, since <inline-formula id="inline-formula53-0954407011424098">
+<mml:math display="inline" id="math81-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is a function of and <italic>δ</italic><sub>d</sub>, <italic><sub>t</sub></italic> and <italic>u<sub>t</sub></italic>, the performance index <italic>J<sub>t</sub></italic> depends on <inline-formula id="inline-formula54-0954407011424098">
+<mml:math display="inline" id="math82-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and on the vector <inline-formula id="inline-formula55-0954407011424098">
+<mml:math display="inline" id="math83-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> of the measured variables</p>
+<p><disp-formula id="disp-formula29-0954407011424098">
+<label>(17)</label>
+<mml:math display="block" id="math84-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≐</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula29-0954407011424098" xlink:href="10.1177_0954407011424098-eq29.tif"/>
+</disp-formula></p>
+<p>The predictive control law is then computed using a Receding Horizon (RH) strategy as follows.</p>
+<list id="list2-0954407011424098" list-type="order">
+<list-item>
+<p>At time instant <italic>t</italic>, get <italic>w<sub>t</sub></italic>.</p>
+</list-item>
+<list-item>
+<p>Solve the optimization problem</p>
+<p><disp-formula id="disp-formula30-0954407011424098">
+<label>(18a)</label>
+<mml:math display="block" id="math85-0954407011424098">
+<mml:munder>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>D</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>D</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>w</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula30-0954407011424098" xlink:href="10.1177_0954407011424098-eq30.tif"/>
+</disp-formula></p>
+<p>subject to</p>
+<p><disp-formula id="disp-formula31-0954407011424098">
+<label>(18b)</label>
+<mml:math display="block" id="math86-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>:</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula31-0954407011424098" xlink:href="10.1177_0954407011424098-eq31.tif"/>
+</disp-formula></p>
+</list-item>
+<list-item>
+<p>Apply the first element of the optimal solution sequence <inline-formula id="inline-formula56-0954407011424098">
+<mml:math display="inline" id="math87-0954407011424098">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula> as the actual control action <inline-formula id="inline-formula57-0954407011424098">
+<mml:math display="inline" id="math88-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+</list-item>
+<list-item>
+<p>Repeat the whole procedure at the next sampling time <inline-formula id="inline-formula58-0954407011424098">
+<mml:math display="inline" id="math89-0954407011424098">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+</list-item>
+</list>
+<p>The application of the RH procedure gives rise to a feedback control law which is a static function</p>
+<p><disp-formula id="disp-formula32-0954407011424098">
+<label>(19)</label>
+<mml:math display="block" id="math90-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula32-0954407011424098" xlink:href="10.1177_0954407011424098-eq32.tif"/>
+</disp-formula></p>
+<p>implicitly defined by the solution of the constrained finite-horizon optimal control problem, <xref ref-type="disp-formula" rid="disp-formula30-0954407011424098">equation (18)</xref>. The saturation value <inline-formula id="inline-formula59-0954407011424098">
+<mml:math display="inline" id="math91-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> is chosen as the maximal steering angle that can be mechanically generated (i.e. 35 °). The values of <italic>Q</italic>, <italic>R</italic>, <italic>N</italic><sub>p</sub>, and <italic>N</italic><sub>c</sub> are design parameters that have to be chosen in order to achieve a good compromise between closed-loop stability and performance (see e.g. reference [<xref ref-type="bibr" rid="bibr3-0954407011424098">3</xref>]). It has to be noted that the described NMPC law does not take explicitly into account the robustness of the closed-loop system. However, the use of the NSM model makes it possible to perform a theoretical analysis to be used for an a posteriori evaluation of the system robustness, as will be shown in section 4.</p>
+</sec>
+<sec id="section11-0954407011424098">
+<title>4 Robustness Analysis of Smpc</title>
+<p>It will be now shown how the computable bounds on the estimation error introduced in section 2.2 can be suitably employed in order to analyse the robustness properties of the designed predictive controller <italic>κ</italic> when applied to the real system. Let us recall that the plant dynamics are supposed to be described by the following state space equations</p>
+<p><disp-formula id="disp-formula33-0954407011424098">
+<label>(20)</label>
+<mml:math display="block" id="math92-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula33-0954407011424098" xlink:href="10.1177_0954407011424098-eq33.tif"/>
+</disp-formula></p>
+<p>The identified model state equations are</p>
+<p><disp-formula id="disp-formula34-0954407011424098">
+<label>(21)</label>
+<mml:math display="block" id="math93-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula34-0954407011424098" xlink:href="10.1177_0954407011424098-eq34.tif"/>
+</disp-formula></p>
+<p>Assuming that constant values of the handwheel angle <italic>δ</italic><sub>d</sub> and of the vehicle speed <italic>v</italic> are imposed by the driver, the reference yaw rate value <inline-formula id="inline-formula60-0954407011424098">
+<mml:math display="inline" id="math94-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> also results to be constant and the NMPC law results to be a static function of the system state only, i.e. <inline-formula id="inline-formula61-0954407011424098">
+<mml:math display="inline" id="math95-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> defined on a compact set <inline-formula id="inline-formula62-0954407011424098">
+<mml:math display="inline" id="math96-0954407011424098">
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> of values of <italic>x</italic> where the optimization problem, <xref ref-type="disp-formula" rid="disp-formula30-0954407011424098">equation (18)</xref>, is feasible. When the predictive controller <inline-formula id="inline-formula63-0954407011424098">
+<mml:math display="inline" id="math97-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> is applied to the systems in <xref ref-type="disp-formula" rid="disp-formula33-0954407011424098">equations (20)</xref> and <xref ref-type="disp-formula" rid="disp-formula34-0954407011424098">(21)</xref>, the following autonomous systems are obtained</p>
+<p><disp-formula id="disp-formula35-0954407011424098">
+<label>(22)</label>
+<mml:math display="block" id="math98-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula35-0954407011424098" xlink:href="10.1177_0954407011424098-eq35.tif"/>
+</disp-formula></p>
+<p><disp-formula id="disp-formula36-0954407011424098">
+<label>(23)</label>
+<mml:math display="block" id="math99-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula36-0954407011424098" xlink:href="10.1177_0954407011424098-eq36.tif"/>
+</disp-formula></p>
+<p>Now, given the two systems in <xref ref-type="disp-formula" rid="disp-formula35-0954407011424098">equations (22)</xref> and <xref ref-type="disp-formula" rid="disp-formula36-0954407011424098">(23)</xref>, the notations</p>
+<p><disp-formula id="disp-formula37-0954407011424098">
+<mml:math display="block" id="math100-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mtext>times</mml:mtext>
+</mml:mrow>
+</mml:munder>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula37-0954407011424098" xlink:href="10.1177_0954407011424098-eq37.tif"/>
+</disp-formula></p>
+<p>and</p>
+<p><disp-formula id="disp-formula38-0954407011424098">
+<mml:math display="block" id="math101-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mtext>times</mml:mtext>
+</mml:mrow>
+</mml:munder>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula38-0954407011424098" xlink:href="10.1177_0954407011424098-eq38.tif"/>
+</disp-formula></p>
+<p>will denote the respective corresponding state trajectories. In this context it is useful to compute a bound on the one-step prediction error</p>
+<p><disp-formula id="disp-formula39-0954407011424098">
+<label>(24)</label>
+<mml:math display="block" id="math102-0954407011424098">
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msubsup>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mo>≤</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula39-0954407011424098" xlink:href="10.1177_0954407011424098-eq39.tif"/>
+</disp-formula></p>
+<p>Note that according to the non-linear Set Membership identification, the larger the number of data employed for the identification of <inline-formula id="inline-formula64-0954407011424098">
+<mml:math display="inline" id="math103-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> the lower the value of <inline-formula id="inline-formula65-0954407011424098">
+<mml:math display="inline" id="math104-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (see reference [<xref ref-type="bibr" rid="bibr8-0954407011424098">8</xref>]).</p>
+<p>The NMPC law, if suitably designed, will make the state trajectory of the system, <xref ref-type="disp-formula" rid="disp-formula36-0954407011424098">equation (23)</xref>, converge to the fixed point</p>
+<p><disp-formula id="disp-formula40-0954407011424098">
+<label>(25)</label>
+<mml:math display="block" id="math105-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mrow>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mrow>
+
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula40-0954407011424098" xlink:href="10.1177_0954407011424098-eq40.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula66-0954407011424098">
+<mml:math display="inline" id="math106-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> is such that <inline-formula id="inline-formula67-0954407011424098">
+<mml:math display="inline" id="math107-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p>Theorem 2 shows that the trajectory <inline-formula id="inline-formula68-0954407011424098">
+<mml:math display="inline" id="math108-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula>of the system (22) can be regulated to an arbitrarily small neighbourhood of a given feasible fixed point <inline-formula id="inline-formula69-0954407011424098">
+<mml:math display="inline" id="math109-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> of the system (23).</p>
+<sec id="section12-0954407011424098">
+<title>Theorem 2</title>
+<p>Suppose that:</p>
+<list id="list3-0954407011424098" list-type="alpha-lower">
+<list-item>
+<p>the predictive controller <inline-formula id="inline-formula70-0954407011424098">
+<mml:math display="inline" id="math110-0954407011424098">
+<mml:mrow>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> uniformly asymptotically regulates the nominal state trajectory <inline-formula id="inline-formula71-0954407011424098">
+<mml:math display="inline" id="math111-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> to the objective <inline-formula id="inline-formula72-0954407011424098">
+<mml:math display="inline" id="math112-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula>;</p>
+</list-item>
+<list-item>
+<p>there exists a positively invariant <inline-formula id="inline-formula73-0954407011424098">
+<mml:math display="inline" id="math113-0954407011424098">
+<mml:mrow>
+<mml:mi>G</mml:mi>
+<mml:mo>⊂</mml:mo>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> set such that</p>
+<p><disp-formula id="disp-formula41-0954407011424098">
+<mml:math display="block" id="math114-0954407011424098">
+<mml:mrow>
+<mml:mi>G</mml:mi>
+<mml:mo>⊂</mml:mo>
+<mml:mi>X</mml:mi>
+<mml:mo>:</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>G</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>∀</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>G</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mo>∀</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>≥</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula41-0954407011424098" xlink:href="10.1177_0954407011424098-eq41.tif"/>
+</disp-formula></p>
+<p><disp-formula id="disp-formula42-0954407011424098">
+<mml:math display="block" id="math115-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo>⊂</mml:mo>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula42-0954407011424098" xlink:href="10.1177_0954407011424098-eq42.tif"/>
+</disp-formula></p>
+</list-item>
+</list>
+<p>Then:</p>
+<list id="list4-0954407011424098" list-type="alpha-lower">
+<list-item>
+<p>the trajectory distance</p>
+<p><disp-formula id="disp-formula43-0954407011424098">
+<mml:math display="block" id="math116-0954407011424098">
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula43-0954407011424098" xlink:href="10.1177_0954407011424098-eq43.tif"/>
+</disp-formula></p>
+<p>is bounded by which depends on the bound <italic>µ</italic> introduced in <xref ref-type="disp-formula" rid="disp-formula39-0954407011424098">equation (24)</xref>, that is</p>
+<p><disp-formula id="disp-formula44-0954407011424098">
+<mml:math display="block" id="math117-0954407011424098">
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mo>≤</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Δ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula44-0954407011424098" xlink:href="10.1177_0954407011424098-eq44.tif"/>
+</disp-formula></p>
+</list-item>
+<list-item>
+<p>the trajectory <inline-formula id="inline-formula74-0954407011424098">
+<mml:math display="inline" id="math118-0954407011424098">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> asymptotically converges to an arbitrarily small neighbourhood of <inline-formula id="inline-formula75-0954407011424098">
+<mml:math display="inline" id="math119-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula></p>
+<p><disp-formula id="disp-formula45-0954407011424098">
+<mml:math display="block" id="math120-0954407011424098">
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mo>lim</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:mi>∞</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mo>≤</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>q</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>∀</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula45-0954407011424098" xlink:href="10.1177_0954407011424098-eq45.tif"/>
+</disp-formula></p>
+</list-item>
+</list>
+</sec>
+<sec id="section13-0954407011424098">
+<title>Proof 1</title>
+<p>Trivial extension of Theorem 2 in reference [<xref ref-type="bibr" rid="bibr11-0954407011424098">11</xref>]. ▪</p>
+</sec>
+<sec id="section14-0954407011424098">
+<title>Remark 1</title>
+<p>Details on the explicit computation of the bounds Δ and <italic>q</italic> can be found in reference [<xref ref-type="bibr" rid="bibr11-0954407011424098">11</xref>].</p>
+</sec>
+<sec id="section15-0954407011424098">
+<title>Remark 2</title>
+<p>Theorem 2 allows an a posteriori robust stability analysis when the nominal controller <inline-formula id="inline-formula76-0954407011424098">
+<mml:math display="inline" id="math121-0954407011424098">
+<mml:mrow>
+<mml:mi>κ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> is applied to the real system.</p>
+</sec>
+</sec>
+<sec id="section16-0954407011424098" sec-type="results">
+<title>5 Simulation Results</title>
+<p>In order to evaluate the effectiveness of the proposed approach in a realistic way, a detailed 14-DOF Simulink<sup>®</sup> vehicle model is employed. Such a model gives an accurate description of the vehicle dynamics compared with actual measurements and includes non-linear suspension, steer, and tyre characteristics, obtained on the basis of measurements on the real vehicle. The model degrees of freedom correspond to the standard three-chassis translations and yaw, pitch, and roll angles, the four wheel angular speeds, and the four wheel vertical movements with respect to the chassis. Non-linear characteristics obtained on the basis of measurements on the real vehicle have been employed to model the tyre, steer, and suspension behaviour. The employed tyre model, described, for example, in reference [<xref ref-type="bibr" rid="bibr12-0954407011424098">12</xref>], takes into account the interaction between longitudinal and lateral slip, as well as vertical tyre load and suspension motion, to compute the tyre longitudinal and lateral forces and self-aligning moments. An example of the employed tyre friction ellipses is shown in <xref ref-type="fig" rid="fig1-0954407011424098">Fig. 1</xref>, where the lateral friction coefficient is reported as a function of the exploited longitudinal friction (during traction) and of the tyre slip angle <italic>α</italic>. Unsymmetrical friction ellipses for traction/braking longitudinal forces are also considered. The comparisons between yaw rate and lateral acceleration measured on the real vehicle, during a track test, and the ones obtained in simulation with the considered model, reported in <xref ref-type="fig" rid="fig2-0954407011424098">Fig. 2</xref>, show the good accuracy properties of the employed 14-DOF model.</p>
+<fig id="fig1-0954407011424098" position="float"><label>Fig. 1</label>
+<caption><p>Front tyre friction ellipses considered in the 14-DOF, with different values of lateral slip angle <italic>α</italic> for a constant vertical load of 4 kN</p></caption><graphic xlink:href="10.1177_0954407011424098-fig1.tif"/></fig>
+<fig id="fig2-0954407011424098" position="float">
+<label>Fig. 2</label>
+<caption><p>Comparison between real data (dashed line) and simulation results obtained with the 14-DOF model (solid line) during a track test: (a) front steering angle <italic>δ</italic> (used as input for the 14-DOF model); (b) vehicle speed <italic>v</italic>; (c) yaw rate <inline-formula id="inline-formula77-0954407011424098">
+<mml:math display="inline" id="math122-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula>; (d) lateral acceleration <italic>a<sub>y</sub></italic></p></caption>
+<graphic xlink:href="10.1177_0954407011424098-fig2.tif"/>
+</fig>
+<p>The 14-DOF model has been employed to generate ‘experimental’ data by imposing suitably designed courses <inline-formula id="inline-formula78-0954407011424098">
+<mml:math display="inline" id="math123-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> of the handwheel angle made up by quick ramps followed by different constant values with superimposed pseudorandom binary sequences (see <xref ref-type="fig" rid="fig3-0954407011424098">Fig. 3</xref>) and collecting the corresponding noisy values <inline-formula id="inline-formula79-0954407011424098">
+<mml:math display="inline" id="math124-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> of the vehicle yaw rate. Then, such data have been divided into two subsets, the ‘identification data’ and the ‘validation data’. As already pointed out, the chosen sampling time is <italic>T</italic><sub>s</sub> = 0.001 s. The identification data have been employed to derive the NSM vehicle model, <xref ref-type="disp-formula" rid="disp-formula22-0954407011424098">equation (14)</xref>, and the validation data have been used to evaluate its accuracy and to tune the values of <italic>n<sub>u</sub></italic>, <italic>n<sub>y</sub></italic>, <italic>γ</italic>, and <italic>ϵ</italic>. In particular, after a series of trial-and-error iterations, the values <inline-formula id="inline-formula80-0954407011424098">
+<mml:math display="inline" id="math125-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula81-0954407011424098">
+<mml:math display="inline" id="math126-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula82-0954407011424098">
+<mml:math display="inline" id="math127-0954407011424098">
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula83-0954407011424098">
+<mml:math display="inline" id="math128-0954407011424098">
+<mml:mrow>
+<mml:mi>ε</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>02</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> have been chosen. Then, the SMPC law has been designed and tuned through simulations. The chosen design parameters are <inline-formula id="inline-formula84-0954407011424098">
+<mml:math display="inline" id="math129-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>30</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula85-0954407011424098">
+<mml:math display="inline" id="math130-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula86-0954407011424098">
+<mml:math display="inline" id="math131-0954407011424098">
+<mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>10</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula87-0954407011424098">
+<mml:math display="inline" id="math132-0954407011424098">
+<mml:mrow>
+<mml:mi>R</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The performance of the SMPC strategy will be also compared here with that of an NMPC algorithm designed using a physical non-linear single-track vehicle model described, for example, in reference [<xref ref-type="bibr" rid="bibr13-0954407011424098">13</xref>]. The state equations of such a model are</p>
+<fig id="fig3-0954407011424098" position="float">
+<label>Fig. 3</label>
+<caption><p>Steering angle course used to collect data</p></caption>
+<graphic xlink:href="10.1177_0954407011424098-fig3.tif"/>
+</fig>
+<p><disp-formula id="disp-formula46-0954407011424098">
+<label>(26)</label>
+<mml:math display="block" id="math133-0954407011424098">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mi>mv</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>mv</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>f</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>f</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula46-0954407011424098" xlink:href="10.1177_0954407011424098-eq46.tif"/>
+</disp-formula></p>
+<p>In <xref ref-type="disp-formula" rid="disp-formula46-0954407011424098">equation (26)</xref>, <italic>m</italic> is the vehicle mass, <italic>J<sub>z</sub></italic> is the moment of inertia around the vertical axis, <italic>β</italic> is the sideslip angle, <italic>ψ</italic> is the yaw angle, <italic>v</italic> is the vehicle speed, and <italic>a</italic> and <italic>b</italic> are the distances between the centre of gravity and the front and rear axles, respectively. <italic>F<sub>y</sub></italic><sub>f</sub> and <italic>F<sub>y</sub></italic><sub>r</sub> are the front and rear tyre lateral forces, which can be expressed as non-linear functions of the other variables (see references [<xref ref-type="bibr" rid="bibr2-0954407011424098">2</xref>] and [<xref ref-type="bibr" rid="bibr6-0954407011424098">6</xref>] for more details)</p>
+<p><disp-formula id="disp-formula47-0954407011424098">
+<label>(27)</label>
+<mml:math display="block" id="math134-0954407011424098">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>f</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>f</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:mi>v</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>δ</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:mi>v</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>δ</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula47-0954407011424098" xlink:href="10.1177_0954407011424098-eq47.tif"/>
+</disp-formula></p>
+<p>Note that the model, <xref ref-type="disp-formula" rid="disp-formula46-0954407011424098">equation (26)</xref>, requires a measure of the sideslip angle <italic>β</italic> that is expensive to obtain in practice. However, quite good and accurate solutions have been proposed in the literature to estimate <italic>β</italic> (see e.g. references [<xref ref-type="bibr" rid="bibr14-0954407011424098">14</xref>] to [<xref ref-type="bibr" rid="bibr16-0954407011424098">16</xref>]), ensuring the reliability of control techniques involving sideslip angle loops. On the other hand, the SMPC approach proposed here requires only the measurement of the vehicle yaw rate, which is already available on passenger cars. The NMPC controller based on the physical model, <xref ref-type="disp-formula" rid="disp-formula46-0954407011424098">equations (26)</xref> and <xref ref-type="disp-formula" rid="disp-formula47-0954407011424098">(27)</xref>, has been designed with the following nominal parameter values: <italic>m</italic> = 1715 kg, <italic>J<sub>z</sub></italic> = 2700 kgm<sup>2</sup>, <italic>a</italic> = 1.07 m, and <italic>b</italic> = 1.47 m. The physical model has been discretized using forward difference approximation, with sampling time <italic>T</italic><sub>s</sub>.</p>
+<p>At first, the NMPC parameters <italic>Q</italic>, <italic>R</italic>, <italic>N</italic><sub>p</sub>, and <italic>N</italic><sub>c</sub> were the same as the SMPC ones. In such a way, the performance of the NMPC controller was worse than that of the SMPC controller. In order to perform a fair comparison the NMPC parameters were tuned again through simulations and have been finally chosen as <inline-formula id="inline-formula88-0954407011424098">
+<mml:math display="inline" id="math135-0954407011424098">
+<mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula89-0954407011424098">
+<mml:math display="inline" id="math136-0954407011424098">
+<mml:mrow>
+<mml:mi>R</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>10</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula90-0954407011424098">
+<mml:math display="inline" id="math137-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>80</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula91-0954407011424098">
+<mml:math display="inline" id="math138-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. With both the SMPC law and the NMPC law based on the physical models, the control move computation has been performed using the MATLAB<sup>®</sup> optimization function fmincon.</p>
+<sec id="section17-0954407011424098">
+<title>Remark 3</title>
+<p>The proposed SMPC controller cannot be implemented online due to the impossibility to perform the RH procedure on the hardware platform usually available on commercial vehicles. On the other hand, this is a common problem of the application of model predictive control methodologies to systems with ‘fast’ dynamics. A viable and effective solution is made up by the use of an approximation <inline-formula id="inline-formula92-0954407011424098">
+<mml:math display="inline" id="math139-0954407011424098">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>κ</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> of the control law, <xref ref-type="disp-formula" rid="disp-formula32-0954407011424098">equation (19)</xref>, obtained using a finite number of values of <italic>κ</italic> computed offline. The approximation can be successfully computed using several techniques such as neural networks, piecewise linear functions, and nearest point approaches as described respectively in references [<xref ref-type="bibr" rid="bibr17-0954407011424098">17</xref>], [<xref ref-type="bibr" rid="bibr18-0954407011424098">18</xref>], and [<xref ref-type="bibr" rid="bibr11-0954407011424098">11</xref>]. As an example, an approximate MPC controller has been successfully employed in reference [<xref ref-type="bibr" rid="bibr19-0954407011424098">19</xref>] for the case of vehicle semi-active suspensions.</p>
+<p>Open- and closed-loop (i.e. without and with driver’s feedback) manoeuvres were selected to evaluate the effectiveness of the proposed methodology. With regard to the open-loop manoeuvres, the following tests were carried out:</p>
+<list id="list5-0954407011424098" list-type="alpha-lower">
+<list-item>
+<p>a 50° handwheel step at 100 km/h, with a handwheel speed of 400°/s, both with nominal vehicle parameters and with increased vehicle mass, +100 kg, with consequent variations of the other involved inertial and geometrical characteristics;</p>
+</list-item>
+<list-item>
+<p>a 50° handwheel step at 100 km/h, with a handwheel speed of 400°/s, when a blast of wind comes and applies to the vehicle a lateral and a moment force of 800 N and 500 N/m, respectively, for a time of 1 s;</p>
+</list-item>
+<list-item>
+<p>steer reversal at 100 km/h on dry and wet road, respectively, with a 50° and 30° handwheel angle (the friction coefficients for dry and wet road are, respectively, 1 and 0.4).</p>
+</list-item>
+</list>
+<p>Regarding the closed-loop test, an ISO double-lane-change manoeuvre was performed (see reference [<xref ref-type="bibr" rid="bibr12-0954407011424098">12</xref>]). Such a test has been carried out on dry and wet road at 80 and 60 km/h, respectively. As in the previous test, the friction coefficients for dry and wet road are, respectively, 1 and 0.4. The following driver model has been used</p>
+<p><disp-formula id="disp-formula48-0954407011424098">
+<label>(28)</label>
+<mml:math display="block" id="math140-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>ψ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula48-0954407011424098" xlink:href="10.1177_0954407011424098-eq48.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula93-0954407011424098">
+<mml:math display="inline" id="math141-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ψ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ref</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the course of the reference yaw angle, corresponding to the ISO double-lane-change path at the considered speed (see reference [<xref ref-type="bibr" rid="bibr12-0954407011424098">12</xref>]), and <italic>K</italic><sub>d</sub>, <italic>τ</italic><sub>d</sub> are the driver gain and the driver time constant, respectively. Although more complex driver models could be employed (see e.g. reference [<xref ref-type="bibr" rid="bibr12-0954407011424098">12</xref>]), the simple model, <xref ref-type="disp-formula" rid="disp-formula48-0954407011424098">equation (28)</xref>, has been considered in the present work because the purpose here is to make a comparison between the behaviour of the uncontrolled vehicle and of the controlled ones, given the same driver model, rather than to use a detailed driver model. As regards the driver model’s parameters, the values <inline-formula id="inline-formula94-0954407011424098">
+<mml:math display="inline" id="math142-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>10</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula95-0954407011424098">
+<mml:math display="inline" id="math143-0954407011424098">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> s have been considered. Note that the values of <italic>τ</italic><sub>d</sub> range roughly from 0.08 s (experienced driver) to 0.25 s (inexperienced driver), while the higher is the driver gain, the more aggressive is the driving action which could more likely cause vehicle instability.</p>
+<p>Such tests aim at comparing the performance achieved with the SMPC and NMPC controllers in different driving conditions both in transient and steady state.</p>
+<p>The results obtained for the handwheel step manoeuvre in nominal conditions, i.e. when the parameters of the 14-DOF model match with those of the physical model, <xref ref-type="disp-formula" rid="disp-formula46-0954407011424098">equation (26)</xref>, are reported in <xref ref-type="fig" rid="fig4-0954407011424098">Fig. 4</xref>.</p>
+<fig id="fig4-0954407011424098" position="float">
+<label>Fig. 4</label>
+<caption><p>Results of the 50° handwheel step test with nominal parameters. Uncontrolled vehicle yaw rate (dotted line), reference yaw rate (thin solid line), and yaw rate obtained with the SMPC (solid line) and NMPC based on a physical model (dashed line) control laws</p></caption>
+<graphic xlink:href="10.1177_0954407011424098-fig4.tif"/>
+</fig>
+<p>It can be noted that the NMPC law based on the physical model achieves a steady-state regulation error of about 3 per cent, even if the 14-DOF model parameters match with those of the physical model employed to predict the system behaviour. This is due to the neglected dynamics and under-modelling of the physical model. On the other hand, the SMPC approach, by employing a model identified from data, achieves better regulation precision. The advantages of the SMPC technique are even more evident in a handwheel step test with increased vehicle mass. The result of this test is shown in <xref ref-type="fig" rid="fig5-0954407011424098">Fig. 5</xref>: while the SMPC law is able to keep a nearly zero tracking error (per cent), the NMPC law based on the physical model achieves a slightly higher steady-state tracking error with respect to the SMPC law. Further, <xref ref-type="fig" rid="fig6-0954407011424098">Fig. 6</xref> shows how the vehicle using the SMPC controller shows a more robust behaviour with respect to the vehicle with the NMCP controller when an external disturbance occurs (i.e. a blast of wind).</p>
+<fig id="fig5-0954407011424098" position="float">
+<label>Fig. 5</label>
+<caption><p>Results of the 50° handwheel step test with increased mass. Uncontrolled vehicle yaw rate (dotted line), reference yaw rate (thin solid line), and yaw rate obtained with the SMPC (solid line) and NMPC based on a physical model (dashed line) control laws</p></caption>
+<graphic xlink:href="10.1177_0954407011424098-fig5.tif"/>
+</fig>
+<fig id="fig6-0954407011424098" position="float">
+<label>Fig. 6</label>
+<caption><p>Results of the 50° handwheel step test when a blast of wind occurs at 1 s. Uncontrolled vehicle yaw rate (dotted line), reference yaw rate (thin solid line), and yaw rate obtained with the SMPC (solid line) and NMPC based on a physical model (dashed line) control laws</p></caption>
+<graphic xlink:href="10.1177_0954407011424098-fig6.tif"/>
+</fig>
+<p>In order to evaluate the vehicle performance in situations critical from the point of view of friction between wheels and road surface, from <xref ref-type="fig" rid="fig7-0954407011424098">Fig. 7</xref> it can be noted that the transient behaviour is very well damped when the SMPC controller is used. Moreover, the vehicle controlled by the SMPC controller shows fewer and smaller oscillations than the NMPC one also with low friction coefficient. With regard to the double-lane-change manoeuvre (<xref ref-type="fig" rid="fig8-0954407011424098">Figs 8</xref> and <xref ref-type="fig" rid="fig9-0954407011424098">9</xref>), it shows that the SMPC controller makes the vehicle able to better track the reference trajectory imposed by the driver. Indeed, on a dry road (see <xref ref-type="fig" rid="fig8-0954407011424098">Fig. 8</xref>) the yaw rate course related to the SMPC controller shows smaller overdamping than that related to the NMPC. Very good performance as well is achieved on a wet road by the vehicle with the SMPC controller; the passive one, instead, shows unstable results (see <xref ref-type="fig" rid="fig9-0954407011424098">Fig. 9</xref>).</p>
+<fig id="fig7-0954407011424098" position="float">
+<label>Fig. 7</label>
+<caption><p>Steer reversal test: (a) 50° handwheel angle on dry road at 100 km/h; (b) 30° handwheel angle on wet road at 50 km/h. Uncontrolled vehicle yaw rate (dotted line), reference yaw rate (thin solid line), and yaw rate obtained with the SMPC (solid line) and NMPC based on a physical model (dashed line) control laws</p></caption>
+<graphic xlink:href="10.1177_0954407011424098-fig7.tif"/>
+</fig>
+<fig id="fig8-0954407011424098" position="float">
+<label>Fig. 8</label>
+<caption><p>ISO double-lane-change test at 100 km/h on dry road: (a) yaw rate (dotted line, uncontrolled vehicle; solid line, vehicle controlled with SMPC controller; dashed line, vehicle controlled with NMPC controller); (b) vehicle trajectories (top, uncontrolled vehicle; middle, vehicle controlled with SMPC controller; bottom, vehicle controlled with NMPC controller)</p></caption>
+<graphic xlink:href="10.1177_0954407011424098-fig8.tif"/>
+</fig>
+<fig id="fig9-0954407011424098" position="float">
+<label>Fig. 9</label>
+<caption><p>ISO double-lane-change test at 60 km/h on wet road: (a) yaw rate (dotted line, uncontrolled vehicle; solid line, vehicle controlled with SMPC controller; dashed line, vehicle controlled with NMPC controller); (b) vehicle trajectories (top, uncontrolled vehicle; middle, vehicle controlled with SMPC controller; bottom, vehicle controlled with NMPC controller)</p></caption>
+<graphic xlink:href="10.1177_0954407011424098-fig9.tif"/>
+</fig>
+<p>Finally, the performance obtained with the proposed SMPC controller has been compared with that achieved using the internal model control (IMC) control structure introduced in reference [<xref ref-type="bibr" rid="bibr20-0954407011424098">20</xref>]. Such an IMC controller, whose effectiveness in vehicle stability control has been shown in reference [<xref ref-type="bibr" rid="bibr2-0954407011424098">2</xref>], is a linear filter designed to exploit a linear vehicle model derived from physical laws. In order to carry out this comparison, a 50° steer reversal manoeuvre on dry and wet road, respectively, at 100 km/h and 60 km/h, has been performed. From <xref ref-type="fig" rid="fig10-0954407011424098">Fig. 10</xref> it can be noted that the vehicle controlled with the IMC structure shows an overdamping of about 16 per cent in both tests, while the vehicle controlled with the SMPC shows a nearly zero overdamping thanks to the non-linear, more accurate model identified directly from experimental data employed for the predictions.</p>
+<fig id="fig10-0954407011424098" position="float">
+<label>Fig. 10</label>
+<caption><p>50° steer reversal test performed: (a) at 100 km/h on dry road; (b) at 60 km/h on wet road. Uncontrolled vehicle yaw rate (dotted line), reference yaw rate (thin solid line), and yaw rate obtained with the SMPC (solid line) and IMC (dash-dotted line) control laws</p></caption>
+<graphic xlink:href="10.1177_0954407011424098-fig10.tif"/>
+</fig>
+<p>Thus, the performed tests indicate that the SMPC approach, using a model derived from data with minimal guaranteed accuracy, achieves better overall closed-loop robustness properties than NMPC and IMC strategies.</p>
+</sec>
+</sec>
+<sec id="section18-0954407011424098" sec-type="conclusions">
+<title>6 Conclusions and Future Developments</title>
+<p>The current paper presented a novel approach, denoted as Set Membership Predictive Control (SMPC), to design a predictive control law for a vehicle equipped with a front steer-by-wire actuator. The proposed SMPC technique relies on a vehicle model derived using a Non-linear Set Membership (NSM) identification method and input/output data collected during preliminary tests on the vehicle. The employed NSM model gives minimal worst-case error as well as a measure of the model uncertainty. The simulation results obtained with a detailed 14-DOF vehicle model show that the SMPC approach is able to achieve better closed-loop robustness with respect to both an IMC and a Non-linear Model Predictive Control (NMPC) law, based on a physical model of the vehicle. An a posteriori theoretical robustness analysis has also been presented, paving the way for the future investigation of robust predictive control laws, able to systematically handle system non-linearities, constraints, and model uncertainty.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<p>This work was partly supported by the European Union Seventh Framework Programme [FP7/2007-2013, grant agreement no. PIOF-GA-2009-252284], Marie Curie project ‘Innovative Control, Identification and Estimation Methodologies for Sustainable Energy Technologies’.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0954407011424098">
+<label>1</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Van Zanten</surname><given-names>A. T.</given-names></name>
+<name><surname>Erhart</surname><given-names>R.</given-names></name>
+<name><surname>Pfaff</surname><given-names>G.</given-names></name>
+</person-group> <article-title>VDC, the vehicle dynamics control system of Bosch</article-title>. <comment>SAE paper 95759</comment>, <year>1995</year>.</citation>
+</ref>
+<ref id="bibr2-0954407011424098">
+<label>2</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Canale</surname><given-names>M.</given-names></name>
+<name><surname>Fagiano</surname><given-names>L.</given-names></name>
+<name><surname>Milanese</surname><given-names>M.</given-names></name>
+<name><surname>Borodani</surname><given-names>P.</given-names></name>
+</person-group> <article-title>Robust vehicle yaw control using an active differential and IMC techniques</article-title>. <source>Contr. Engng Pract.</source>, <year>2007</year>, <volume>15</volume>(<issue>8</issue>), <fpage>923</fpage>–<lpage>941</lpage>.</citation>
+</ref>
+<ref id="bibr3-0954407011424098">
+<label>3</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mayne</surname><given-names>D. Q.</given-names></name>
+<name><surname>Rawlings</surname><given-names>J. B.</given-names></name>
+<name><surname>Rao</surname><given-names>C. V.</given-names></name>
+<name><surname>Scokaert</surname><given-names>P. O. M.</given-names></name>
+</person-group> <article-title>Constrained model predictive control: stability and optimality</article-title>. <source>Automatica</source>, <year>2000</year>, <volume>36</volume>(<issue>6</issue>), <fpage>789</fpage>–<lpage>814</lpage>.</citation>
+</ref>
+<ref id="bibr4-0954407011424098">
+<label>4</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Tøndel</surname><given-names>P.</given-names></name>
+<name><surname>Johansen</surname><given-names>T. A.</given-names></name>
+</person-group> <article-title>Control allocation for yaw stabilization in automotive vehicles using multiparametric nonlinear programming</article-title>. In <conf-name>Proceedings of the American Control Conference</conf-name>, <conf-loc>Portland, Oregon, USA</conf-loc>, <conf-date>8–10 June 2005</conf-date>, pp. <fpage>566</fpage>–<lpage>580</lpage>.</citation>
+</ref>
+<ref id="bibr5-0954407011424098">
+<label>5</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Canale</surname><given-names>M.</given-names></name>
+<name><surname>Fagiano</surname><given-names>L.</given-names></name>
+<name><surname>Razza</surname><given-names>V.</given-names></name>
+</person-group> <article-title>Approximate NMPC for vehicle stability: design, implementation and SIL testing</article-title>. <source>Contr. Engng Pract</source>., <year>2010</year>, <volume>10</volume>(<issue>6</issue>), <fpage>630</fpage>–<lpage>639</lpage>.</citation>
+</ref>
+<ref id="bibr6-0954407011424098">
+<label>6</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Bakker</surname><given-names>E.</given-names></name>
+<name><surname>Lidner</surname><given-names>L.</given-names></name>
+<name><surname>Pacejka</surname><given-names>H. B.</given-names></name>
+</person-group> <article-title>A new tyre model with an application in vehicle dynamics studies</article-title>. <comment>SAE paper 890087</comment>, <year>1989</year>.</citation>
+</ref>
+<ref id="bibr7-0954407011424098">
+<label>7</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Bemporad</surname><given-names>A.</given-names></name>
+<name><surname>Morari</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Robust model predictive control: a survey</article-title>. In <source>Robustness in identification and control</source> (Eds <person-group person-group-type="editor">
+<name><surname>Garulli</surname><given-names>A.</given-names></name>
+<name><surname>Tesi</surname><given-names>A.</given-names></name>
+<name><surname>Vicino</surname><given-names>A.</given-names></name>
+</person-group>), <comment>no. 245 in Lecture Notes in Control and Information Sciences</comment>, <year>1999</year>, pp. <fpage>207</fpage>–<lpage>226</lpage> (<publisher-loc>Springer-Verlag</publisher-loc>).</citation>
+</ref>
+<ref id="bibr8-0954407011424098">
+<label>8</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Milanese</surname><given-names>M.</given-names></name>
+<name><surname>Novara</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Set membership identification of nonlinear systems</article-title>. <source>Automatica</source>, <year>2004</year>, <volume>40</volume>(<issue>6</issue>), <fpage>957</fpage>–<lpage>975</lpage>.</citation>
+</ref>
+<ref id="bibr9-0954407011424098">
+<label>9</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Yih</surname><given-names>P.</given-names></name>
+<name><surname>Gerdes</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Modification of vehicle handling characteristics via steer-by-wire</article-title>. <source>IEEE Trans. Contr. Syst. Technol.</source>, <year>2005</year>, <volume>13</volume>(<issue>6</issue>), <fpage>965</fpage>–<lpage>976</lpage>.</citation>
+</ref>
+<ref id="bibr10-0954407011424098">
+<label>10</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Falcone</surname><given-names>M.</given-names></name>
+<name><surname>Borrelli</surname><given-names>F.</given-names></name>
+<name><surname>Tseng</surname><given-names>H. C.</given-names></name>
+<name><surname>Hrovat</surname><given-names>D.</given-names></name>
+</person-group> <article-title>Predictive active steering control for autonomous vehicle systems</article-title>. <source>IEEE Trans. Contr. Syst. Technol.</source>, <year>2007</year>, <volume>15</volume>(<issue>3</issue>), <fpage>566</fpage>–<lpage>580</lpage>.</citation>
+</ref>
+<ref id="bibr11-0954407011424098">
+<label>11</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Canale</surname><given-names>M.</given-names></name>
+<name><surname>Fagiano</surname><given-names>L.</given-names></name>
+<name><surname>Milanese</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Set membership approximation theory for fast implementation of model predictive control laws</article-title>. <source>Automatica</source>, <year>2009</year>, <volume>45</volume>(<issue>1</issue>), <fpage>45</fpage>–<lpage>54</lpage>.</citation>
+</ref>
+<ref id="bibr12-0954407011424098">
+<label>12</label>
+<citation citation-type="book">
+<person-group person-group-type="editor">
+<name><surname>Genta</surname><given-names>G.</given-names></name>
+</person-group> <source>Motor vehicle dynamics</source>, <edition>edition II</edition>, <year>2003</year> (<publisher-name>World Scientific</publisher-name>, <publisher-loc>Singapore</publisher-loc>).</citation>
+</ref>
+<ref id="bibr13-0954407011424098">
+<label>13</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Rajamani</surname><given-names>R.</given-names></name>
+</person-group> <source>Vehicle dynamics and control</source>, <year>2005</year> (<publisher-name>Springer Verlag</publisher-name>, <publisher-loc>Berlin</publisher-loc>).</citation>
+</ref>
+<ref id="bibr14-0954407011424098">
+<label>14</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Van Zanten</surname><given-names>A. T.</given-names></name>
+</person-group> <article-title>Bosch ESP systems: 5 years of experience</article-title>. <comment>SAE paper 2000-01-1633</comment>, <year>2000</year>.</citation>
+</ref>
+<ref id="bibr15-0954407011424098">
+<label>15</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Piyabongkarn</surname><given-names>D.</given-names></name>
+<name><surname>Rajamanim</surname><given-names>R.</given-names></name>
+<name><surname>Grogg</surname><given-names>J. A.</given-names></name>
+<name><surname>Lew</surname><given-names>J. Y.</given-names></name>
+</person-group> <article-title>Development and experimental evaluation of a slip angle estimator for vehicle stability control</article-title>. In <conf-name>Proceedings of the 25th American Control Conference</conf-name>, <conf-loc>Minneapolis, Minnesota, USA</conf-loc>, <conf-date>14–16 June 2006</conf-date>.</citation>
+</ref>
+<ref id="bibr16-0954407011424098">
+<label>16</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ryu</surname><given-names>J.</given-names></name>
+<name><surname>Gerdes</surname><given-names>J. C.</given-names></name>
+</person-group> <article-title>Integrating inertial sensors with GPS for vehicle dynamics control</article-title>. <source>ASME J. Dyn. Syst. Meas. Contr.</source>, <year>2004</year>, <volume>126</volume>(<issue>2</issue>), <fpage>243</fpage>–<lpage>254</lpage>.</citation>
+</ref>
+<ref id="bibr17-0954407011424098">
+<label>17</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Johansen</surname><given-names>T. A.</given-names></name>
+</person-group> <article-title>Approximate explicit receding horizon control of constrained nonlinear systems</article-title>. <source>Automatica</source>, <year>2004</year>, <volume>40</volume>(2), <fpage>293</fpage>–<lpage>300</lpage>.</citation>
+</ref>
+<ref id="bibr18-0954407011424098">
+<label>18</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Parisini</surname><given-names>T.</given-names></name>
+<name><surname>Zoppoli</surname><given-names>R.</given-names></name>
+</person-group> <article-title>A receding-horizon regulator for nonlinear systems and a neural approximation</article-title>. <source>Automatica</source>, <year>1995</year>, <volume>31</volume>(<issue>10</issue>), <fpage>1443</fpage>–<lpage>1451</lpage>.</citation>
+</ref>
+<ref id="bibr19-0954407011424098">
+<label>19</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Canale</surname><given-names>M.</given-names></name>
+<name><surname>Milanese</surname><given-names>M.</given-names></name>
+<name><surname>Novara</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Semi-active suspension control using ‘fast’ model-predictive techniques</article-title>. <source>IEEE Trans. Contr. Syst. Technol.</source>, <year>2006</year>, <volume>14</volume>(<issue>6</issue>), <fpage>1034</fpage>–<lpage>1046</lpage>.</citation>
+</ref>
+<ref id="bibr20-0954407011424098">
+<label>20</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Canale</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Robust control from data in presence of input saturation</article-title>. <source>Int. J. Robust Nonlinear Contr.</source>, <year>2004</year>, <volume>14</volume>(<issue>11</issue>), <fpage>983</fpage>–<lpage>998</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

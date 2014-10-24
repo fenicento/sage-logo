@@ -1,0 +1,1270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">SIM</journal-id>
+<journal-id journal-id-type="hwp">spsim</journal-id>
+<journal-title>SIMULATION</journal-title>
+<issn pub-type="ppub">0037-5497</issn>
+<issn pub-type="epub">1741-3133</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0037549711435950</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0037549711435950</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Spatial activity-based modeling for pedestrian crowd simulation</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Qiu</surname><given-names>Fasheng</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Hu</surname><given-names>Xiaolin</given-names></name>
+</contrib>
+<aff id="aff1-0037549711435950">Department of Computer Science, Georgia State University, USA</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0037549711435950">Fasheng Qiu, Department of Computer Science, Georgia State University, Atlanta, Georgia, USA. Email: <email>qfs2004@gmail.com</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>89</volume>
+<issue>4</issue>
+<fpage>451</fpage>
+<lpage>465</lpage>
+<permissions>
+<copyright-statement>© 2011 The Society for Modeling and Simulation International</copyright-statement>
+<copyright-year>2011</copyright-year>
+<copyright-holder content-type="society">Simulation Councils Inc.</copyright-holder>
+</permissions>
+<abstract>
+<p>This paper proposes a spatial activity-based modeling approach and applies it to pedestrian crowd behavior simulations. Compared to conventional pedestrian crowd models where pedestrians make movement decisions in a time-based manner, the spatial activity-based pedestrian crowd model allows a pedestrian to make decisions only when needed, that is, when there is significant change in the pedestrian’s spatial position, as defined by a threshold called ‘space resolution’. To demonstrate the spatial activity-based modeling, we develop an activity-based model for pedestrian crowd simulation in a two-dimensional environment and compare it with a conventional time-based simulation model. Experiment results show that the spatial activity-based model can lead to more efficient simulations when simulating heterogeneous pedestrian crowds.</p>
+</abstract>
+<kwd-group>
+<kwd>pedestrian crowd simulation</kwd>
+<kwd>spatial activity</kwd>
+<kwd>space resolution</kwd>
+<kwd>activity-based modeling</kwd>
+<kwd>efficient simulation</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0037549711435950" sec-type="intro">
+<title>1. Introduction</title>
+<p>Pedestrian crowd simulation is widely used to study pedestrian behaviors in virtual environments. It is applied in a variety of areas, such as social entertainment, urban planning, building design, and traffic modeling. Using pedestrian crowd simulation, collective crowd behaviors in situations such as emergency evacuation can be simulated to guide the architectural design of public facilities. Pedestrian crowd simulation is also used in the entertainment industry to create realistic gaming scenarios and to achieve better animations. Over the years, researchers have developed many pedestrian crowd simulations that adopt different approaches in modeling pedestrian behaviors. Examples include physics-inspired models that utilize the similarity between gas movement and crowd dynamics to model crowd behavior, and agent-based models that treat individual pedestrians as independent autonomous agents whose decision making is controlled by a set of predefined rules.</p>
+<p>From the simulation perspective, most crowd simulation models are simulated in a time-based manner, where each pedestrian makes a movement decision to choose its next movement at each time step. Although the time-based approach is easy to understand and implement, it is inefficient in the sense that every pedestrian needs to make a decision at every time step, regardless of pedestrians’ individual differences in moving speed. This makes it difficult to exploit the heterogeneity of movement in the crowd system. To give an example, let us consider two pedestrians situated in a large environment where one pedestrian moves much slower than the other. In a discrete time-based simulation, both pedestrians make movement decisions in every time step. This is independent of the pedestrians’ moving speeds. However, since one pedestrian moves much slower than the other, intuitively one would think the slower pedestrian does not need to make movement decisions as frequently as the faster one. Thus a more computation efficient way of simulating the two pedestrians is to allow the faster pedestrian to make movement decisions more frequently and the slower one to make decisions less frequently. In extreme cases, for example, if a pedestrian does not move, it does not need to make any movement decision, as long as there is no change in the external environment and in its internal states.</p>
+<p>The above observation motivated us to model a pedestrian crowd system in a new way, where the simulation is driven by the amount of movement activities of the pedestrians instead of driven by a fixed time step. Specifically, in this paper we introduce a concept of ‘spatial activity’ that is defined as the position change of a pedestrian in the spatial environment. This concept of spatial activity is inspired from the work of Zeigler et al.<sup><xref ref-type="bibr" rid="bibr1-0037549711435950">1</xref></sup> and theory of quantization developed by Zeigler et al.<sup><xref ref-type="bibr" rid="bibr2-0037549711435950">2</xref></sup> In the theory of quantization, a quantizer is a significant event detector that monitors its input (i.e. activity) and uses a logical condition to decide when a significant change happens. Using quantization, a continuous system can be approximated with a finite number of states and the state is updated only at discrete quantum-level crossings. In this paper, we consider activity in the context of spatial movement and develop a spatial activity-based model for pedestrian crowd simulation. Compared to conventional pedestrian crowd models, where a pedestrian makes a movement decision at every time step, the spatial activity-based pedestrian crowd model allows a pedestrian to make decisions only when needed, that is, when there is significant change in the pedestrian’s position as defined by a threshold called ‘space resolution’. The space resolution defines a pedestrian’s minimum spatial change (the threshold) crossing, which is considered as a significant event. When such an event happens, the pedestrian updates its position and decides its next movement. It also informs other pedestrians of its position change by sending messages to nearby pedestrians (see Section 3 for more details). Receiving such a message, which represents a change in the environment, will trigger a pedestrian to make a movement decision too. Notice that in the spatial activity-based model, a spatial change less than the space resolution does not trigger any movement decision of the pedestrian and its nearby pedestrians. This spatial activity-based model naturally exploits the heterogeneity of the crowd system, because pedestrians with different moving speeds will have different frequency of movement decisions. As will be shown later, it can lead to more efficient simulations when simulating pedestrian crowd systems that have significant heterogeneity in pedestrians’ moving speeds.</p>
+<p>The contribution of this paper is to develop spatial activity-based modeling and apply it to pedestrian crowd simulation. A spatial activity-based model for pedestrian crowd simulation is developed and its simulation performance is compared with that of a time-based model, where all pedestrian agents make movement decisions in a fixed time-based manner. We name the spatial activity-based model as the activity-based model (referred to as <italic>ABM</italic>), and the conventional model as the time-based model (referred to <italic>TBM</italic>). In order to ensure a fair performance comparison of these two models, we analyze the two models’ maximum position error and use it as a fair comparison rule. Performance results from different aspects, including the execution time and the number of movement decisions for simulating one pedestrian and multiple pedestrians, are measured. In this paper, both the <italic>ABM</italic> and <italic>TBM</italic> are developed based on the Discrete Event System Specification (<italic>DEVS</italic>)<sup><xref ref-type="bibr" rid="bibr3-0037549711435950">3</xref></sup> framework using the DEVSJAVA<sup><xref ref-type="bibr" rid="bibr4-0037549711435950">4</xref></sup> simulation environment. Nevertheless, we note that the developed spatial activity-based modeling does not rely on the underlying simulation environment, and can be applied to other simulation applications that have moving agents.</p>
+<p>The remainder of this paper is organized as follows. Section 2 presents the related work of pedestrian crowd simulations and introduces the background information on activity and DEVS.<sup><xref ref-type="bibr" rid="bibr3-0037549711435950">3</xref></sup> Section 3 presents the spatial activity-based modeling for pedestrian crowd simulation and Section 4 describes the <italic>ABM</italic> model and the <italic>TBM</italic> model implemented in DEVSJAVA. Section 5 provides a quantitative analysis of the two models and establishes a fair comparison rule for comparing the two models. Section 6 compares the performance results of the <italic>ABM</italic> model the <italic>TBM</italic> model. Section 7 concludes this work and proposes some future research directions.</p>
+</sec>
+<sec id="section2-0037549711435950">
+<title>2. Related work and background</title>
+<sec id="section3-0037549711435950">
+<title>2.1 Pedestrian crowd simulation</title>
+<p>Pedestrian crowd simulation has been an active research topic over the past two decades. It is widely used in many areas. An important application of pedestrian crowd simulations is computer animation,<sup><xref ref-type="bibr" rid="bibr5-0037549711435950">5</xref><xref ref-type="bibr" rid="bibr6-0037549711435950"/><xref ref-type="bibr" rid="bibr7-0037549711435950"/>–<xref ref-type="bibr" rid="bibr8-0037549711435950">8</xref></sup> where crowd simulations are used to create realistic animation scenarios. Shao and Terzopoulos<sup><xref ref-type="bibr" rid="bibr5-0037549711435950">5</xref></sup> developed a human animation system for indoor urban environments by using an artificial life approach in which different components, such as motor and perception, are integrated in their system. Reynolds’s work<sup><xref ref-type="bibr" rid="bibr6-0037549711435950">6</xref></sup> described an implementation of real-time large-scale crowd simulations for PLAYSTATION3 by using a spatial hashing approach. Musse and Thalmann<sup><xref ref-type="bibr" rid="bibr7-0037549711435950">7</xref></sup> developed a ViCrowd model for simulating pedestrian crowds in real time with different levels of autonomy. Besides computer animation, pedestrian crowd simulation also finds application in other areas, such as urban planning,<sup><xref ref-type="bibr" rid="bibr9-0037549711435950">9</xref></sup> building design,<sup><xref ref-type="bibr" rid="bibr10-0037549711435950">10</xref>,<xref ref-type="bibr" rid="bibr11-0037549711435950">11</xref></sup> and traffic modeling,<sup><xref ref-type="bibr" rid="bibr12-0037549711435950">12</xref>,<xref ref-type="bibr" rid="bibr13-0037549711435950">13</xref></sup> to assist the design of public facilities. Loscos et al.<sup><xref ref-type="bibr" rid="bibr9-0037549711435950">9</xref></sup> presented a pedestrian crowd simulation system for crowded urban environments to achieve realistic simulations. Isobe et al.<sup><xref ref-type="bibr" rid="bibr10-0037549711435950">10</xref></sup> studied the evacuation process from a smoky room by the means of experiments and simulations, the results of which can have practical implications for the planning of safer buildings. Hoogendoorn et al.<sup><xref ref-type="bibr" rid="bibr12-0037549711435950">12</xref></sup> developed microscopic simulations with three inter-related levels to predict the pedestrian crowd flow operations. Associated with these applications, many software tools have been developed too. For example, SimWalk<sup><xref ref-type="bibr" rid="bibr14-0037549711435950">14</xref></sup> is a simulation software for studying pedestrian flow in urban planning, emergency evacuation, and traffic management. Legion<sup><xref ref-type="bibr" rid="bibr15-0037549711435950">15</xref></sup> is a simulation system that predicts, measures, and displays actual human movement within venues, to improve design and operational effectiveness and safety.</p>
+<p>Pedestrian crowd models are the essential components of pedestrian crowd simulations. Pedestrian crowd models can be roughly categorized into physics-inspired models,<sup><xref ref-type="bibr" rid="bibr13-0037549711435950">13</xref>,<xref ref-type="bibr" rid="bibr16-0037549711435950">16</xref>,<xref ref-type="bibr" rid="bibr17-0037549711435950">17</xref></sup> cellular automata models,<sup><xref ref-type="bibr" rid="bibr12-0037549711435950">12</xref>,<xref ref-type="bibr" rid="bibr18-0037549711435950">18</xref>,<xref ref-type="bibr" rid="bibr19-0037549711435950">19</xref></sup> network-based models,<sup><xref ref-type="bibr" rid="bibr20-0037549711435950">20</xref>,<xref ref-type="bibr" rid="bibr21-0037549711435950">21</xref></sup> and agent-based models.<sup><xref ref-type="bibr" rid="bibr22-0037549711435950">22</xref><xref ref-type="bibr" rid="bibr23-0037549711435950"/><xref ref-type="bibr" rid="bibr24-0037549711435950"/>–<xref ref-type="bibr" rid="bibr25-0037549711435950">25</xref></sup> The physics-inspired models are inspired from the fluid or gas dynamics. A well-known physics-inspired model is Helbing’s social force model,<sup><xref ref-type="bibr" rid="bibr16-0037549711435950">16</xref></sup> based on which many extended works have been developed.<sup><xref ref-type="bibr" rid="bibr8-0037549711435950">8</xref>,<xref ref-type="bibr" rid="bibr26-0037549711435950">26</xref></sup> Unlike Helbing’s model, Hughes’s work<sup><xref ref-type="bibr" rid="bibr13-0037549711435950">13</xref></sup> treats the crowd as a whole and uses non-linear partial differential equations to model the flow of pedestrian crowds. Cellular automata models<sup><xref ref-type="bibr" rid="bibr12-0037549711435950">12</xref>,<xref ref-type="bibr" rid="bibr18-0037549711435950">18</xref>,<xref ref-type="bibr" rid="bibr19-0037549711435950">19</xref></sup> are discrete-space models where pedestrians are located at nodes of a fixed or adaptive grid. Network flow models<sup><xref ref-type="bibr" rid="bibr20-0037549711435950">20</xref>,<xref ref-type="bibr" rid="bibr21-0037549711435950">21</xref></sup> are also used to model emergency evacuation in which buildings and the attributes of the buildings’ components are represented as a static network. The evacuation process is then modeled as a dynamic network, which is the time-expanded version of the static network. Agent-based modeling is widely used and is the most popular modeling paradigm in pedestrian crowd simulations. In agent-based modeling, each individual is modeled as an agent with its own characteristic and behavior situated in an environment. Extensive works have been developed in agent-based pedestrian crowd simulation (see Musse and Thalmann,<sup><xref ref-type="bibr" rid="bibr22-0037549711435950">22</xref></sup> Pan et al.,<sup><xref ref-type="bibr" rid="bibr23-0037549711435950">23</xref></sup> Pelechano et al.,<sup><xref ref-type="bibr" rid="bibr24-0037549711435950">24</xref></sup> and Qiu and Hu<sup><xref ref-type="bibr" rid="bibr25-0037549711435950">25</xref></sup> for some examples).</p>
+<p>Simulation performance is a critical issue in simulating crowds that have a large number of pedestrians with complex behaviors. When complex behaviors are modeled, current crowd simulation is only efficient for crowds of to a few hundred people.<sup><xref ref-type="bibr" rid="bibr6-0037549711435950">6</xref></sup> To improve simulation performance, a common theme in the literature is to trade the complexity of pedestrian’s movement decisions for scalability by using simple behaviors. For example, the work of Loscos et al.<sup><xref ref-type="bibr" rid="bibr9-0037549711435950">9</xref></sup> uses intuitive behaviors and can support up to 10,000 pedestrians. Another theme is to design efficient algorithms from the environment point of view. For example, in Loscos et al.,<sup><xref ref-type="bibr" rid="bibr9-0037549711435950">9</xref></sup> Hamagami and Hirata,<sup><xref ref-type="bibr" rid="bibr27-0037549711435950">27</xref></sup> and Tecchia et al.,<sup><xref ref-type="bibr" rid="bibr28-0037549711435950">28</xref></sup> the authors use grid and cellular automata to model pedestrians’ movement space in order to reduce computational complexity. Parallel simulations<sup><xref ref-type="bibr" rid="bibr29-0037549711435950">29</xref><xref ref-type="bibr" rid="bibr30-0037549711435950"/>–<xref ref-type="bibr" rid="bibr31-0037549711435950">31</xref></sup> are also employed to achieve more efficient simulations. The work of Yilmaz et al.<sup><xref ref-type="bibr" rid="bibr31-0037549711435950">31</xref></sup> proposed a parallel simulation of massive crowds in real-time based on a GPU (Graphic Processing Unit) with CUDA programming model and OpenGL rendering library. About 100× speedup is achieved by comparing with the Central Processing Unit (CPU) counterpart. In this paper, we present spatial activity-based modeling for pedestrian crowd simulation and show how it can exploit the heterogeneity of pedestrian crowds for improving simulation performance.</p>
+</sec>
+<sec id="section4-0037549711435950">
+<title>2.2 Background on activity and DEVS</title>
+<sec id="section5-0037549711435950">
+<title>2.2.1 Activity</title>
+<p>The activity measure was originally formulated in the context of ordinary and partial differential equations as the integral of the magnitudes of the state space derivatives.<sup><xref ref-type="bibr" rid="bibr32-0037549711435950">32</xref>,<xref ref-type="bibr" rid="bibr33-0037549711435950">33</xref></sup> This concept was further developed by Zeigler et al.<sup><xref ref-type="bibr" rid="bibr1-0037549711435950">1</xref></sup> where activity is a measure of change in system behaviors – when it is divided by a quantum gives the least number of events required to simulate the behavior with that quantum size. Based on Muzy et al.,<sup><xref ref-type="bibr" rid="bibr34-0037549711435950">34</xref></sup> the following is the definition of activity for a continuous segment, as illustrated in <xref ref-type="fig" rid="fig1-0037549711435950">Figure 1</xref>. In <xref ref-type="fig" rid="fig1-0037549711435950">Figure 1</xref>, Φ(<italic>t</italic>) is a continuous function of time; <italic>D</italic> corresponds to the quantum (the minimum threshold for change below which no processing occurs); <italic>m<sub>i</sub></italic> corresponds to the local maxima and minima of the curve, where the first and last <italic>m<sub>i</sub></italic> are the values of the function at the initial and final times.</p>
+<fig id="fig1-0037549711435950" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Definition of activity for continuous time segments.<sup><xref ref-type="bibr" rid="bibr34-0037549711435950">34</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig1.tif"/>
+</fig>
+<p>The activity in an interval [0, <italic>T</italic>] can be calculated by summing the differences between the adjacent maxima and minima over the time interval <italic>T</italic>, as shown in <xref ref-type="disp-formula" rid="disp-formula1-0037549711435950">Equation (1)</xref>. The average activity in an interval [0, <italic>T</italic>] is given by <xref ref-type="disp-formula" rid="disp-formula2-0037549711435950">Equation (2)</xref>:</p>
+<p><disp-formula id="disp-formula1-0037549711435950">
+<label>(1)</label>
+<mml:math display="block" id="math1-0037549711435950">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0037549711435950" xlink:href="10.1177_0037549711435950-eq1.tif"/>
+</disp-formula></p>
+<p><disp-formula id="disp-formula2-0037549711435950">
+<label>(2)</label>
+<mml:math display="block" id="math2-0037549711435950">
+<mml:mrow>
+<mml:mi>AvgActivity</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0037549711435950" xlink:href="10.1177_0037549711435950-eq2.tif"/>
+</disp-formula></p>
+<p>The activity concept is important because it can provide a measurement of the computational effort required by an ideal quantizer to simulate the system behavior. To do this we need to relate the number of threshold crossings in the simulation, the activity of system behavior over a time interval <italic>T</italic>, and the quantum size <italic>D</italic> of the quantizer that simulates the behavior. Based on Muzy et al.,<sup><xref ref-type="bibr" rid="bibr34-0037549711435950">34</xref></sup> the number of threshold crossings in an interval of length <italic>T</italic> for threshold levels that are equally spaced by quantum size <italic>D</italic> is as shown in <xref ref-type="disp-formula" rid="disp-formula3-0037549711435950">Equation (3)</xref>:</p>
+<p><disp-formula id="disp-formula3-0037549711435950">
+<label>(3)</label>
+<mml:math display="block" id="math3-0037549711435950">
+<mml:mrow>
+<mml:mi>NumberOfThresholdCross</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0037549711435950" xlink:href="10.1177_0037549711435950-eq3.tif"/>
+</disp-formula></p>
+<p>where the number of threshold crossings represents the number of events in the discrete event simulation for simulating the behavior. This number equals the number of state transitions in the discrete event simulation, and thus reflects the computation effort needed for simulating the system behavior over time <italic>T</italic>. In this paper, we apply the activity concept to pedestrian crowd simulation and consider pedestrians’ movement activity in a spatial environment (see Section 3 for more details). Similarly, as shown in <xref ref-type="disp-formula" rid="disp-formula3-0037549711435950">Equation (3)</xref>, when the spatial movement activity is divided by a spatial quantum, the result gives the number of events (each event triggers a movement decision of the pedestrian) to simulate a pedestrian’s moving behavior with that spatial quantum.</p>
+</sec>
+<sec id="section6-0037549711435950">
+<title>2.2.2 DEVS</title>
+<p>DEVS<sup><xref ref-type="bibr" rid="bibr3-0037549711435950">3</xref></sup> is a formalism derived from dynamic systems theory. It provides a formal modeling and simulation framework and has been supported by many simulation environments, such as DEVSJAVA,<sup><xref ref-type="bibr" rid="bibr4-0037549711435950">4</xref></sup> which is used in this paper. Important concepts of DEVS include model, coupling, and hierarchical model composition, which are expressed through a set of mathematical formalism to provide an approximation of dynamic systems. The basic component in DEVS is the atomic model. An atomic model models system behaviors using states and state transitions (triggered by internal and external events) over time. It includes elements such as external events (e.g. the change of a pedestrian’s position), states (e.g. ‘<italic>make_decision</italic>’, ‘<italic>move</italic>’, and ‘<italic>inform_neighbors</italic>’, which will be illustrated later), and outputs (e.g. a pedestrian’s new position). The dynamics of an atomic model are specified by a set of well-defined functions that can be extended by users. These functions include an initialization function, an internal transition function, an external transition function, a time advance function, and an output function. The initialization function, denoted as <italic>initialize()</italic> in this paper, sets up the initial state of the model as well as the initial value of attributes. The internal transition function, denoted as <italic>deltint()</italic>, specifies the state transition in response to the internal events (i.e. the expiration of the time duration of the current state). The external transition function, denoted as <italic>deltext()</italic>, specifies the state transition in response to external events (e.g. when receiving a message). The time advance function determines the lifespan of a state. The output function, denoted as <italic>output()</italic>, allows the model to generate output, which can be received by other models that are coupled to this model.</p>
+<p>DEVS models can be coupled together to form a composed model that is known as a coupled model. With couplings, models can pass messages to each other. In DEVS, a coupled model itself can be treated as a component and coupled to other models, giving rise to hierarchical model composition. A useful feature of DEVS is dynamic structure modeling, which refers to the capability of a simulation to dynamically change its model structure, such as dynamically adding/removing models, and dynamically adding/removing couplings between models.<sup><xref ref-type="bibr" rid="bibr35-0037549711435950">35</xref></sup> This work uses the dynamic structure modeling capability to model the dynamically changing interactions among pedestrians by setting up the couplings between a pedestrian and its neighbors dynamically. When a pedestrian changes its position, its old couplings are replaced with new ones so the pedestrian can interact with the new neighbors.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section7-0037549711435950">
+<title>3. Spatial activity-based pedestrian crowd modeling</title>
+<p>Within the context of pedestrian crowd simulation, we define <italic>spatial activity</italic> as the change of spatial positions in a two-dimensional (2D) environment. This spatial change can be approximated by a sequence of position updates according to a spatial quantum called ‘space resolution’, denoted as <italic>SR</italic> in the following descriptions. Similar to the quantum in the general quantization theory, the space resolution defines the minimum threshold for spatial changes below which no position update occurs. This means that a position change less than the space resolution is considered as ‘insignificant’ in the sense that it does not trigger the pedestrian to update its position and to inform other pedestrians of this position change (in other words, this change is ‘unperceivable’ by others). In pedestrian crowd simulations, a pedestrian makes a decision to choose its next movement only when its position is significantly changed or when it perceives significant changes in its environment, that is, position changes of other pedestrians. Based on this idea, in our spatial activity-based model a pedestrian updates its positions and makes movement decisions only at those points when crossing the space resolution threshold. A position change crossing the space resolution is considered as an event. <xref ref-type="fig" rid="fig2-0037549711435950">Figure 2</xref> illustrates a pedestrian’s spatial activity in a 2D environment during a simulation. The rectangle represents the 2D environment. The continuous curve from A to B is the movement trajectory to be simulated; the segmented line shows the pedestrian’s moving trajectory and position updates in the simulation. As can be seen, whenever the pedestrian’s position change reaches <italic>SR</italic>, the pedestrian updates its position and makes a new decision to choose its next movement.</p>
+<fig id="fig2-0037549711435950" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>A pedestrian’s spatial activity.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig2.tif"/>
+</fig>
+<p>When there are multiple pedestrians, a pedestrian may also receive position updates from other pedestrians and thus need to make new movement decisions to respond to those updates. To illustrate this, a detailed description showing how the space resolution works when messages are received is given in <xref ref-type="fig" rid="fig3-0037549711435950">Figure 3</xref>. In <xref ref-type="fig" rid="fig3-0037549711435950">Figure 3</xref>, the solid and dashed circles represent the threshold circles of a pedestrian at two different positions. The radius of the circles represents the pedestrian’s space resolution <italic>SR</italic>, and <italic>PS<sub>i</sub></italic> (<italic>i</italic>=0, 1, 2, 3, 4, 5) are its positions at different time instances. In this example, the pedestrian’s initial position is at <italic>PS</italic><sub>0</sub> and it decides to move in the direction along line <italic>PS</italic><sub>0</sub>–<italic>PS</italic><sub>2</sub>. According to the space resolution, the pedestrian schedules its next destination at <italic>PS</italic><sub>2</sub>, which is the intersection of the pedestrian’s moving direction and the threshold circle. The time for the pedestrian to reach <italic>PS</italic><sub>2</sub> is <italic>Dist<sub>PS</sub></italic><sub>0–</sub><italic><sub>PS</sub></italic><sub>2</sub>/<italic>speed</italic> = <italic>SR</italic>/<italic>speed</italic>, where <italic>speed</italic> is the moving speed of the pedestrian. Although the pedestrian schedules to update its position at <italic>PS</italic><sub>2</sub>, it may be interrupted before it reaches the scheduled destination. In <xref ref-type="fig" rid="fig3-0037549711435950">Figure 3</xref>, the pedestrian receives a message at position <italic>PS</italic><sub>1</sub> from a nearby pedestrian. Such a message indicates that the nearby pedestrian’s position has been changed. Since this represents an environmental change, the pedestrian at <italic>PS</italic><sub>1</sub> makes a new movement decision to respond to the environmental change. In <xref ref-type="fig" rid="fig3-0037549711435950">Figure 3</xref>, the pedestrian makes a movement decision and changes its moving direction to a new one along line <italic>PS</italic><sub>1</sub>–<italic>PS</italic><sub>4</sub>. Similarly, according to the space resolution, the pedestrian schedules its next destination at <italic>PS</italic><sub>4</sub>, which is the intersection of the pedestrian’s moving direction and the threshold circle. In this case, the pedestrian schedules the event (reaching <italic>PS</italic><sub>4</sub>) in time <italic>Dist<sub>PS</sub></italic><sub>1</sub><italic><sub>–PS</sub></italic><sub>4</sub>/<italic>speed</italic>, where <italic>speed</italic> is the pedestrian’s current moving speed. It is important to note that the threshold circle is always based on the last updated position (<italic>PS</italic><sub>0</sub> instead of <italic>PS</italic><sub>1</sub>), in order to avoid accumulated errors that may occur when the pedestrian receives frequent messages from others. <xref ref-type="fig" rid="fig3-0037549711435950">Figure 3</xref> shows that the pedestrian receives another message at <italic>PS</italic><sub>3</sub> before it reaches its scheduled destination <italic>PS</italic><sub>4</sub>, and chooses a new moving direction along line <italic>PS</italic><sub>3</sub>–<italic>PS</italic><sub>5</sub> and schedules its new destination at <italic>PS</italic><sub>5</sub> on the threshold circle. Finally, the pedestrian reaches <italic>PS</italic><sub>5</sub> (on the threshold circle). At <italic>PS</italic><sub>5</sub>, since the threshold circle is reached, the pedestrian updates its new position to <italic>PS</italic><sub>5</sub>, and sends a message to its neighbors about its new position. Meanwhile, the pedestrian makes a decision to decide its next movement. We note that when reaching <italic>PS</italic><sub>5</sub> the center of the pedestrian’s threshold circle (shown by the dashed circle) is moved to the new position <italic>PS</italic><sub>5</sub>. At positions <italic>PS</italic><sub>1</sub> and <italic>PS</italic><sub>3</sub>, the center of the threshold circle is not moved and no message is sent to neighboring pedestrians, since the pedestrian’s spatial location change is less than the space resolution.</p>
+<fig id="fig3-0037549711435950" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Space resolution threshold in a two-dimensional environment.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig3.tif"/>
+</fig>
+<p>The above example shows that the space resolution defines the threshold of a pedestrian’s position update in the space, and thus influences the frequency of a pedestrian’s movement decisions. In general, when a pedestrian moves slower, it takes a longer time for the pedestrian to make the next movement decision because it takes a longer time for the pedestrian to reach the space resolution. The value of space resolution has significant impacts on the crowd behavior simulation. On one hand, the larger the space resolution, the less frequently pedestrians make decisions, and thus the faster the simulation runs. (We assume the decision making is the most computation-intensive component in the simulation. This is true when modeling complex behaviors.) On the other hand, the space resolution means that a pedestrian does not update its position until it reaches the space resolution threshold. This introduces position errors in simulations. The larger the space resolution, the larger the position error, and thus the less accurate the simulation will be. We note that a similar trade-off also exists in a time-based model, whose efficiency and accuracy depend on the value of the time step. Time step affects the decision-making frequency of the pedestrians. The larger the time step, the less frequently a pedestrian makes movement decisions, and thus the faster the simulation runs. Time step also introduces position errors in simulations. A pedestrian does not update its position within a time step. This means the larger the time step, the larger the position errors will be.</p>
+<p>The example in <xref ref-type="fig" rid="fig3-0037549711435950">Figure 3</xref> also demonstrates the importance of message passing in the <italic>ABM</italic>. A pedestrian informs others of its position change by sending messages to others. Such messages are treated as external events by a receiving pedestrian and thus trigger the pedestrian’s decision making to respond to the environmental change. When a pedestrian receives more messages, it makes more movement decisions. To avoid unnecessary message passing, in our work a pedestrian sends messages only to nearby pedestrians. To implement this in an efficient way, we adopt a grid-based approach to model the space and to track pedestrians’ positions. This approach is commonly used by many crowd simulation models (see e.g. Hamagami and Hirata<sup><xref ref-type="bibr" rid="bibr27-0037549711435950">27</xref></sup>) to improve the scalability of the simulations. Specifically, the environment space is equally divided into multiple grid cells. Each pedestrian registers itself in the grid cell where it locates. When a pedestrian moves to a position belonging to a different grid cell, its registration information is updated accordingly. In finding nearby pedestrians to send position update messages, a pedestrian checks only the pedestrians registered in its neighboring grid cells (in our work, neighboring grid cells include the center cell and its eight surrounding cells) instead of checking all the pedestrians in the system.</p>
+<p>Once a message is received, a pedestrian determines whether to trigger a decision making, depending on whether the message sender is within its perception range. Similar to the work of Qiu and Hu,<sup><xref ref-type="bibr" rid="bibr36-0037549711435950">36</xref></sup> each pedestrian is equipped with an elliptical perception model, as shown in <xref ref-type="fig" rid="fig4-0037549711435950">Figure 4</xref>. In this model, a pedestrian (shown by the solid dot) can only perceive an elliptical area (defined by <italic>Dist1, Dist2</italic>, and <italic>Angle</italic>) that heads to its current moving direction <italic>Direction</italic>. The <italic>Dist1</italic>, <italic>Dist2</italic>, and <italic>Angle</italic> represent the front frontier, the side frontier, and the range within which the pedestrian can see, respectively. Note that in Section 4 both the <italic>ABM</italic> and <italic>TBM</italic> adopt the same environment model and perception model described above, and for simplicity all pedestrians are equipped with the same perception model.</p>
+<fig id="fig4-0037549711435950" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Pedestrians’ perception model.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig4.tif"/>
+</fig>
+<p>It is worth pointing out that the number of messages passed is also related to the density of the crowd. In general, when the crowd is sparse, there are fewer interactions among pedestrians and thus the number of messages is small. As the density increases, pedestrians interact more frequently and thus the number of messages increases too. However, this trend does not always hold true as the density keeps increasing. In a very dense crowd, pedestrians block each other, resulting in only a few pedestrians that can move freely. In the <italic>ABM</italic>, when there is no movement, there is no position update and thus no message passing. This means in a dense crowd the overall number of messages could be small, even though there are a large number of pedestrians. An example of this and its performance results are provided in experiments 3 and 4 in Section 6.</p>
+</sec>
+<sec id="section8-0037549711435950">
+<title>4. Time-based and activity-based modeling for pedestrian crowd simulations</title>
+<p>Based on the spatial activity-based modeling presented above, we develop an activity-based model (<italic>ABM</italic>) and compare it with a time-based model (<italic>TBM</italic>) for pedestrian crowd simulation. This section presents the two models implemented in the DEVSJAVA environment.<sup><xref ref-type="bibr" rid="bibr4-0037549711435950">4</xref></sup></p>
+<sec id="section9-0037549711435950">
+<title>4.1 The TBM</title>
+<p>The <italic>TBM</italic> for simulating crowd behaviors is straightforward to understand. At every time step, each pedestrian checks the environment (e.g. to see whether a destination is reached or whether there are obstacles or other pedestrians in nearby locations), makes a decision to decide its next movement (e.g. move sideways to avoid collision), and then carries out the movement that will change the pedestrian’s position. At the next time step, the pedestrian goes through the same sequence again to check its environment, make a decision, and carry out the movement.</p>
+<p>To implement the <italic>TBM</italic> model in DEVSJAVA, each pedestrian is modeled as a DEVS atomic model. Specifically, the model has two states ‘<italic>make_decision</italic>’ and ‘<italic>update_position</italic>’. At the ‘<italic>make_decision</italic>’ state, the pedestrian checks the environment and makes a decision to choose a movement action. Once the decision is made, the pedestrian transits to the ‘<italic>update_position</italic>’ state, where its position is updated after executing the selected movement. The above procedure is executed in each time step. The procedure is implemented in the pedestrian’s internal transition function <italic>deltint()</italic>; the pseudo-code of the function is shown in <xref ref-type="fig" rid="fig5-0037549711435950">Figure 5</xref>, where <italic>holdIn()</italic> is a method of DEVSJAVA that sets the model to stay at the specified state for a given time period.</p>
+<fig id="fig5-0037549711435950" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>The internal transition function of the <italic>TBM</italic> pedestrian model.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig5.tif"/>
+</fig>
+</sec>
+<sec id="section10-0037549711435950">
+<title>4.2 The ABM</title>
+<p>Unlike the <italic>TBM</italic>, a pedestrian in the <italic>ABM</italic> does not make a decision at every time step. Instead, its movement decision is based on the changes occurred in the environment and/or the changes of the pedestrian’s own position. Whenever such a change happens, the pedestrian checks the environment and makes a decision to select a movement (e.g. moving forward or moving sideways to avoid collision). Meanwhile, the pedestrian informs the neighbors of its new position if the change of its position reaches the space resolution. After a movement is selected, the pedestrian carries out the movement until the next space resolution is reached or the pedestrian is interrupted by messages received from other pedestrians. As a result, each pedestrian makes its movement decisions based on its ‘events’ instead of making decisions at every time step.</p>
+<p>As in the <italic>TBM</italic>, each pedestrian is implemented as a DEVS atomic model. <xref ref-type="fig" rid="fig6-0037549711435950">Figure 6</xref> shows the state transitions of pedestrians in the <italic>ABM</italic>. The top solid line indicates the external transition, which is triggered when a message is received from nearby pedestrians. The dashed lines represent the internal transitions. The other solid line indicates the output (the updated position). In the ‘<italic>make_decision</italic>’ state, a pedestrian checks its environment and makes a decision. In the ‘<italic>move</italic>’ state, the pedestrian carries out the movement. In the ‘<italic>inform_neighbors</italic>’ state, the pedestrian notifies its position to the neighboring pedestrians.</p>
+<fig id="fig6-0037549711435950" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Pedestrians’ state transition diagram of the <italic>ABM</italic>.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig6.tif"/>
+</fig>
+<p>Initially, the pedestrian is set to the ‘<italic>make_decision</italic>’, state where it makes a movement decision through its behavior model to decide the next movement. The result is an action that indicates the location to which the pedestrian should move to. The action is further adjusted such that the movement does not exceed the space resolution. The pedestrian prepares the next movement by transiting to the ‘<italic>move</italic>’ state. After holding in a duration (calculated by <italic>distance/speed</italic>, where <italic>distance</italic> = <italic>SR</italic> is the distance between the pedestrian’s current position and the intersection point on the space resolution circle, as shown in <xref ref-type="fig" rid="fig3-0037549711435950">Figure 3</xref>), the pedestrian moves to a new position. Dynamic couplings between the pedestrian and its neighbors are established to allow the pedestrian to send messages to nearby pedestrians. The pedestrian then transits to the ‘<italic>inform_neighbors</italic>’ state to notify its updated position to the nearby pedestrians, so that they can avoid possible collisions. After sending the messages, the pedestrian transits to the ‘<italic>make_decision</italic>’ state. After each movement or when a message is received from nearby pedestrians, the pedestrian makes a new movement decision and then continues the same procedure as mentioned above. The pseudo-code of each function of the atomic model is listed as follows.</p>
+<p>When the crowd system starts up, each pedestrian is initialized according to the initialization function, as shown in <xref ref-type="fig" rid="fig7-0037549711435950">Figure 7</xref>. In the function, the moving speed and space resolution are initialized. In addition, the pedestrian’s initial state is set to ‘<italic>make_decision</italic>’.</p>
+<fig id="fig7-0037549711435950" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>The initialization function of the <italic>ABM</italic> model.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig7.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig8-0037549711435950">Figure 8</xref> shows the external transition function that is used to handle the messages received from others. When a message is received, the pedestrian’s position is updated to the position where the pedestrian is interrupted, and then the pedestrian transits to the ‘<italic>make_decision</italic>’ state. Here <italic>x</italic> refers to an external message, and <italic>e</italic> is the elapse time from the last event.</p>
+<fig id="fig8-0037549711435950" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>The external transition function of the <italic>ABM</italic> model.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig8.tif"/>
+</fig>
+<p>In the internal transition function, a pedestrian makes a movement decision if the current state is ‘<italic>make_decision</italic>’. Otherwise, it carries out the movement, updates its position, and notifies the new position to nearby pedestrians if the movement distance reaches its space resolution. The internal transition function is shown in <xref ref-type="fig" rid="fig9-0037549711435950">Figure 9</xref>, where <italic>action.distance</italic> represents the movement distance indicated by the chosen action.</p>
+<fig id="fig9-0037549711435950" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>The internal transition function of the <italic>ABM</italic>.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig9.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig10-0037549711435950">Figure 10</xref> shows the output function that is used to notify others of the pedestrian’s new position if the current state is ‘<italic>inform_neighbors</italic>’.</p>
+<fig id="fig10-0037549711435950" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>The output function of the <italic>ABM</italic>.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig10.tif"/>
+</fig>
+</sec>
+<sec id="section11-0037549711435950">
+<title>4.3 The pedestrian crowd system</title>
+<p>Two versions of the pedestrian crowd simulation systems are implemented. Both versions have the same configurations, except that one version adopts the <italic>ABM</italic> and the other adopts the <italic>TBM</italic>.</p>
+<p>The crowd system is featured with a model of the spatial environment, a list of pedestrians, and optional obstacles. Both the environment and obstacles are in rectangle shapes specified with widths and heights. Obstacles are stationary objects that block the movement of pedestrians. Pedestrians are autonomous entities, each of which has an <italic>ID</italic> that defines the unique identification of the pedestrian in the crowd, and <italic>speed</italic> that is the current moving speed. For the <italic>ABM</italic>, <italic>SR</italic> defines the space resolution threshold of pedestrians’ position changes. For the <italic>TBM</italic>, <italic>TS</italic> defines the time step of the simulation. Besides these two parameters, each pedestrian is also featured with a perception model and a behavior model. The perception and behavior models specify pedestrians’ visibility range and the logic of movement decisions, respectively.</p>
+<p>The perception model defines an elliptical area (see <xref ref-type="fig" rid="fig4-0037549711435950">Figure 4</xref>) in front of the pedestrian within which the pedestrian can perceive obstacles and other approaching pedestrians. A detection routine is used to find the visible pedestrians. Note that a pedestrian does not need to check the position of all other pedestrians to see if they are in the perception range – it only needs to check the pedestrians in its neighboring grid cells as described before. In this work, the behavior model uses a bio-inspired behavior control architecture<sup><xref ref-type="bibr" rid="bibr37-0037549711435950">37</xref></sup> to decide pedestrians’ movements. In the behavior control architecture, each pedestrian is featured with two behaviors. A mutual inhibition mechanism is used so only one of the two behaviors is selected in each movement decision. The two behaviors are described below.</p>
+<p>1) <italic>Move</italic>: This behavior is used to simulate the casual movement. A pedestrian moves to a series of randomly generated destinations sequentially. The moving path is the shortest path from the current position to the destination. When the pedestrian reaches a destination, it moves towards the next destination. Note that for the same pedestrian, the sequence of destinations is the same in both models for the purpose of fair comparison.</p>
+<p>2) <italic>Avoid</italic>: This behavior is used to simulate the obstacle avoidance during the movement. When a pedestrian is within a predefined minimum distance from the nearest neighboring pedestrian or obstacle, it will steer away from it. In this behavior, if the pedestrian is on the left-hand side of the object to be avoided, it turns right; otherwise, it turns left. In this process, a basic ‘collision prediction’ subroutine is used to predict if the pedestrian will collide with other pedestrians when the turn is finished. If turning left or right is not possible, the pedestrian will stay at its current location.</p>
+</sec>
+</sec>
+<sec id="section12-0037549711435950">
+<title>5. Analysis and comparison of the <italic>ABM</italic> and <italic>TBM</italic></title>
+<p>Both the <italic>ABM</italic> and <italic>TBM</italic> introduce imprecision (also referred to as <italic>position error</italic>), in modeling pedestrians’ position updates. For the <italic>TBM</italic>, a pedestrian’s position will not be updated until the time step is reached. Within a time step, a pedestrian’s position is considered as unchanged. For the <italic>ABM</italic>, a pedestrian’s position will not be updated until the space resolution threshold is reached. Any position change within the space resolution threshold is not captured. This section analyzes the position error introduced by the <italic>ABM</italic> and <italic>TBM</italic> and studies their relationship. The goal is to build a ground for comparing the <italic>ABM</italic> and <italic>TBM</italic>. We carry out this analysis using one pedestrian to illustrate the concept. We note that an analytical solution for multiple pedestrians is intractable due to the interactions among pedestrians.</p>
+<p>We compare both the <italic>ABM</italic> and <italic>TBM</italic> with an analytic model for a pedestrian’s position update. Consider a pedestrian crowd simulation with <italic>n</italic> pedestrians that have different moving speeds, and the simulation runs over the time base [<italic>t</italic>1, <italic>t</italic>2], where <italic>t</italic>1 is the starting time and <italic>t</italic>2 is the ending time. Assume the position at time <italic>t</italic>1 is known for all pedestrians. This position is also called the <italic>initial position</italic>. Using the analytic model, a pedestrian <italic>j</italic> (<inline-formula id="inline-formula1-0037549711435950">
+<mml:math display="inline" id="math4-0037549711435950">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>≤</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>)’s position at time <italic>t</italic> (<inline-formula id="inline-formula2-0037549711435950">
+<mml:math display="inline" id="math5-0037549711435950">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mn>1</mml:mn>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>) is calculated according to <xref ref-type="disp-formula" rid="disp-formula4-0037549711435950">Equation (4)</xref>:</p>
+<p><disp-formula id="disp-formula4-0037549711435950">
+<label>(4)</label>
+<mml:math display="block" id="math6-0037549711435950">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:munderover>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>dx</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0037549711435950" xlink:href="10.1177_0037549711435950-eq4.tif"/>
+</disp-formula></p>
+<p>In both the <italic>ABM</italic> and <italic>TBM</italic>, a pedestrian’s position is updated discretely. <xref ref-type="disp-formula" rid="disp-formula5-0037549711435950">Equations (5)</xref> and <xref ref-type="disp-formula" rid="disp-formula6-0037549711435950">(6)</xref> present the position update of the <italic>TBM</italic> and <italic>ABM</italic>, respectively, where <inline-formula id="inline-formula3-0037549711435950">
+<mml:math display="inline" id="math7-0037549711435950">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the time step of the <italic>TBM</italic> and <italic>SR</italic> is the space resolution of the <italic>ABM</italic>. In the <italic>TBM</italic>, <xref ref-type="disp-formula" rid="disp-formula5-0037549711435950">Equation (5)</xref> shows that before the time step <italic>t</italic> is reached, the pedestrian <italic>j</italic>’s position <inline-formula id="inline-formula4-0037549711435950">
+<mml:math display="inline" id="math8-0037549711435950">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is not changed. Thus, compared with the analytical model, between the time step <italic>t</italic>–1 and <italic>t</italic>, there is an error of pedestrian <italic>j</italic>’s position. Similarly, in the <italic>ABM</italic>, <xref ref-type="disp-formula" rid="disp-formula6-0037549711435950">Equation (6)</xref> shows that a pedestrian’s position will not be updated until the space resolution threshold is reached. Note that in <xref ref-type="disp-formula" rid="disp-formula6-0037549711435950">Equation (6)</xref>, <inline-formula id="inline-formula5-0037549711435950">
+<mml:math display="inline" id="math9-0037549711435950">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> should be interpreted as the pedestrian <italic>j</italic>’s previous position, instead of the position at time <italic>t</italic>–1:</p>
+<p><disp-formula id="disp-formula5-0037549711435950">
+<label>(5)</label>
+<mml:math display="block" id="math10-0037549711435950">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>t</mml:mtext>
+<mml:mo>&lt;</mml:mo>
+<mml:mtext>t</mml:mtext>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:munderover>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>d</mml:mi>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>t</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mtext>t</mml:mtext>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mtext>t</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0037549711435950" xlink:href="10.1177_0037549711435950-eq5.tif"/>
+</disp-formula></p>
+<p><disp-formula id="disp-formula6-0037549711435950">
+<label>(6)</label>
+<mml:math display="block" id="math11-0037549711435950">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mrow>
+<mml:mstyle displaystyle="true">
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:munderover>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>d</mml:mi>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:munderover>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>d</mml:mi>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mrow>
+<mml:mstyle displaystyle="true">
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:munderover>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>d</mml:mi>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0037549711435950" xlink:href="10.1177_0037549711435950-eq6.tif"/>
+</disp-formula></p>
+<p>To compare the two models fairly, the following condition should be satisfied: <italic>The maximum position error in both models should be the same</italic>. In the <italic>TBM</italic>, from <xref ref-type="disp-formula" rid="disp-formula5-0037549711435950">Equation (5)</xref> the maximum position error is<inline-formula id="inline-formula6-0037549711435950">
+<mml:math display="inline" id="math12-0037549711435950">
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mi>dx</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where <italic>v</italic><sub>max</sub> is the maximum moving speed among all pedestrians. In the <italic>ABM</italic>, from <xref ref-type="disp-formula" rid="disp-formula6-0037549711435950">Equation (6)</xref> the maximum error is the space resolution <italic>SR</italic>. Thus, <xref ref-type="disp-formula" rid="disp-formula7-0037549711435950">Equation (7)</xref> holds when the two models are compared:</p>
+<p><disp-formula id="disp-formula7-0037549711435950">
+<label>(7)</label>
+<mml:math display="block" id="math13-0037549711435950">
+<mml:mrow>
+<mml:mi>SR</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:munderover>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>dx</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0037549711435950" xlink:href="10.1177_0037549711435950-eq7.tif"/>
+</disp-formula></p>
+<p>When the moving speed is not changed during a time step, <xref ref-type="disp-formula" rid="disp-formula7-0037549711435950">Equation (7)</xref> can be simplified to <xref ref-type="disp-formula" rid="disp-formula8-0037549711435950">Equation (8)</xref>. In what follows, we use <italic>TS</italic> to represent the time step of the <italic>TBM</italic>:</p>
+<p><disp-formula id="disp-formula8-0037549711435950">
+<label>(8)</label>
+<mml:math display="block" id="math14-0037549711435950">
+<mml:mrow>
+<mml:mi>SR</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:mi>TS</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0037549711435950" xlink:href="10.1177_0037549711435950-eq8.tif"/>
+</disp-formula></p>
+<p><xref ref-type="disp-formula" rid="disp-formula8-0037549711435950">Equation (8)</xref> establishes the basis in this work for comparing the <italic>ABM</italic> and <italic>TBM</italic>. In the next section, experiments are carried out to compare the two models.</p>
+</sec>
+<sec id="section13-0037549711435950" sec-type="results">
+<title>6. Experimental results</title>
+<p>This section presents the comparison between the <italic>ABM</italic> and <italic>TBM</italic>, as well as the performance measurement of both models. The comparison described in Section 6.1 is used to ensure that <xref ref-type="disp-formula" rid="disp-formula8-0037549711435950">Equation (8)</xref> holds for both models under fair comparison. The performance measurement records the number of movement decisions and the execution time under the fair comparison rule. The number of movement decisions is the total number of movement decisions made by all pedestrians in a simulation. The execution time represents the duration (in milliseconds) of the simulation. We also calculate two ratios, <italic>DMRatio</italic> and <italic>TimeRatio</italic>. <italic>DMRatio</italic> is the number of movement decisions of the <italic>TBM</italic> divided by that of the <italic>ABM</italic>. Similarly, <italic>TimeRatio</italic> is the execution time of the <italic>TBM</italic> divided by that of the <italic>ABM</italic>. <italic>TimeRatio</italic> represents the speedup of the <italic>ABM</italic>. The greater the <italic>TimeRatio</italic>, the more efficient the <italic>ABM</italic> is.</p>
+<p>Experiment 1 (Section 6.2) explores the effect of space resolution (of the <italic>ABM</italic>) and time step (of the <italic>TBM</italic>) on the simulation performance. Experiment 2 (Section 6.3) illustrates how the speed heterogeneity affects the simulation performance. Experiment 3 (Section 6.4) demonstrates the effect of crowd density on the simulation performance. Experiment 4 (Section 6.5) shows an emergency evacuation example for both models with a variety of crowd density. All four experiments are carried out in a rectangle simulation environment (by default, 900m in length and 360m in width), with four walls of width 20m surrounding the environment. To compare the two models fairly, the same pedestrian (i.e. pedestrian with same <italic>ID</italic>) has the same destinations and moving speed in both models. The moving speed is in the range of 0.01–2.0m/s (we choose this range according to Equation (1.1) in the work of Daamen and Hoogendoorn<sup><xref ref-type="bibr" rid="bibr38-0037549711435950">38</xref></sup>). Based on the fair comparison rule, as shown in <xref ref-type="disp-formula" rid="disp-formula8-0037549711435950">Equation (8)</xref>, the time step of the <italic>TBM</italic> is defined as the space resolution divided by the maximum moving speed of the crowd.</p>
+<sec id="section14-0037549711435950">
+<title>6.1 Comparing the ABM and TBM using one pedestrian</title>
+<p>We consider the <italic>ABM</italic> in a simple scenario (with only one pedestrian) and compare its position error with that of the <italic>TBM</italic>. In this experiment, the crowd consists of one pedestrian whose moving speed is 0.5m/s. The pedestrian moves through a series of pre-specified destinations. When all destinations are reached, the simulation stops, and the position error for each simulation time, is calculated. Here, the position error is the difference of the position between the <italic>ABM</italic>/<italic>TBM</italic> and the analytic model (see <xref ref-type="disp-formula" rid="disp-formula4-0037549711435950">Equation (4)</xref>). <xref ref-type="fig" rid="fig11-0037549711435950">Figure 11</xref> presents the position errors of the two models under two space resolutions <italic>SR</italic> and two time steps <italic>TS</italic>. To ensure fair comparison between the two models, for a specific space resolution <italic>SR</italic> in the <italic>ABM</italic>, the corresponding time step <italic>TS</italic> in the <italic>TBM</italic> is calculated as <italic>TS = SR/v</italic>, where <italic>v</italic> is the pedestrian’s moving speed (0.5m/s in this experiment).</p>
+<fig id="fig11-0037549711435950" position="float">
+<label>Figure 11.</label>
+<caption>
+<p>Position errors in the <italic>ABM</italic> (a) and <italic>TBM</italic> (b) (<italic>SR</italic>=1.35 and 2.7m; <italic>TS</italic> = 2.7 and 5.4s).</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig11.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig11-0037549711435950">Figure 11(a)</xref> shows the position errors of the <italic>ABM</italic> under two space resolutions: 1.35 and 2.7m. The <italic>x</italic>-axis represents the simulation time and the <italic>y</italic>-axis indicates the position error. For <italic>SR</italic>=1.35m the pedestrian updates its position at simulation time 2.7*<italic>N</italic> (<italic>N</italic>=1, 2, 3…) seconds, since its moving speed is 0.5m/s. The position error increases linearly between two position updates. Similarly, for <italic>SR</italic> = 2.7m, the pedestrian updates its position at time 5.4*<italic>N</italic> (<italic>N</italic>=1, 2, 3…) seconds. This figure shows that the larger the space resolution, the larger the position error, and the less accurate the simulation is. <xref ref-type="fig" rid="fig11-0037549711435950">Figure 11(b)</xref> shows the position errors in the <italic>TBM</italic> under two time steps: 2.7 and 5.4s. It shows that the position error increases linearly between two time steps. For the time step 2.7s, the maximum position error is 1.35m. Note that when the pedestrian approaches a destination (e.g. at the time step 364.5s), there is a position error, since in our implementation if the pedestrian is near the destination within a specified distance range, we consider that the pedestrian has reached that destination. <xref ref-type="fig" rid="fig11-0037549711435950">Figure 11(a)</xref> and <xref ref-type="fig" rid="fig11-0037549711435950">(b)</xref> confirms that both the <italic>ABM</italic> and <italic>TBM</italic> introduce position errors in pedestrians’ position update. To make a fair comparison, the maximum position error in both models should be the same. The <italic>ABM</italic> with <italic>SR</italic>=2.7m and the <italic>TBM</italic> with <italic>TS</italic>=5.4s can be fairly compared, since the maximum error in both models is the same. Similarly, the <italic>ABM</italic> with <italic>SR</italic>=1.35m and the <italic>TBM</italic> with <italic>TS</italic>=2.7s can be fairly compared.</p>
+</sec>
+<sec id="section15-0037549711435950">
+<title>6.2 Experiment 1: Space resolution/time step versus performance</title>
+<p>This experiment varies the space resolution of the <italic>ABM</italic> (and the corresponding time step of the <italic>TBM</italic> calculated according to <xref ref-type="disp-formula" rid="disp-formula8-0037549711435950">Equation (8)</xref>) and explores how the space resolution affects the simulation performance. Specifically, a simulation is used to measure the performance of each space resolution. Each simulation lasts for 2 hours. To eliminate the effect of different moving speeds on the simulation performance, the moving speed of each pedestrian is kept unchanged in different simulations. The speed profile of the crowd is set as follows: 10 moving speeds are randomly generated (in the range of [0.01–2.0m/s]), each of which is assigned to 10% of the pedestrians. The crowd consists of 100 pedestrians. In what follows, ‘<italic>ABMDM</italic>’, ‘<italic>TBMDM</italic>’, ‘<italic>ABMTime</italic>’, ‘<italic>TBMTime</italic>’ represent the number of movement decisions of the <italic>ABM</italic>, the number of movement decisions of the <italic>TBM</italic>, the execution time of the <italic>ABM</italic>, and the execution time of the <italic>TBM</italic>, respectively. ‘<italic>DMRatio</italic>’ and ‘<italic>TimeRatio</italic>’ represent the ratio of the number of movement decisions and the ratio of execution time, respectively.</p>
+<p><xref ref-type="fig" rid="fig12-0037549711435950">Figures 12</xref> and <xref ref-type="fig" rid="fig13-0037549711435950">13</xref> show the number of movement decisions and the execution time under different space resolutions/time steps and the corresponding ratios, respectively. In both figures, the <italic>x</italic>-axis represents the space resolution of the <italic>ABM</italic> and the corresponding time step of the <italic>TBM</italic>. In <xref ref-type="fig" rid="fig12-0037549711435950">Figure 12</xref>, the <italic>y</italic>-axis represents the number of movement decisions of the whole crowd (left-hand <italic>y</italic>-axis) and the execution time (right-hand <italic>y</italic>-axis, in milliseconds). In <xref ref-type="fig" rid="fig13-0037549711435950">Figure 13</xref>, the <italic>y</italic>-axis represents the ratio of the number of movement decisions and the execution time.</p>
+<fig id="fig12-0037549711435950" position="float">
+<label>Figure 12.</label>
+<caption>
+<p>The number of movement decisions and the execution time under different space resolutions.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig12.tif"/>
+</fig>
+<fig id="fig13-0037549711435950" position="float">
+<label>Figure 13.</label>
+<caption>
+<p>Ratio of number of movement decisions/execution time under different space resolutions.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig13.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig12-0037549711435950">Figure 12</xref> shows that, as space resolution/time step increases, the number of movement decisions and the execution time decrease in both models. This is because when moving at the same speed, a pedestrian with a larger space resolution/time step will take longer time to make decisions. Thus, for the same simulation period, the larger the space resolution/time step, the fewer movement decisions the crowd will make. This figure also shows that the number of movement decisions and the execution time of the <italic>TBM</italic> are greater than those of the <italic>ABM</italic>. This is because pedestrians move at different moving speeds. In the <italic>TBM</italic>, all agents make movement decisions at the same frequency defined by the fastest moving pedestrians. In the <italic>ABM</italic>, slower moving pedestrians make movement decisions less frequently, leading to a smaller number of movement decisions and faster simulations.</p>
+<p><xref ref-type="fig" rid="fig13-0037549711435950">Figure 13</xref> confirms that the <italic>ABM</italic> model is more efficient than the <italic>TBM</italic> model as both <italic>DMRatio</italic> and <italic>TimeRatio</italic> are larger than 1.0. This figure also shows that the <italic>DMRatio</italic> and <italic>TimeRatio</italic> do not change much under different space resolutions. This is because in both models, the number of movement decisions decreases at about the same rate as space resolution increases. This experiment shows that the <italic>ABM</italic> model is more efficient than the <italic>TBM</italic> model for heterogeneous crowd systems where pedestrians move at different speeds.</p>
+</sec>
+<sec id="section16-0037549711435950">
+<title>6.3 Experiment 2: Speed heterogeneity versus performance</title>
+<p>This experiment explores the effect of the speed heterogeneity on the simulation performance. We measure the differences of the number of movement decisions and the execution time between the <italic>ABM</italic> and <italic>TBM</italic>. In this experiment, each pedestrian moves at either 0.02 or 2.0m/s, representing slow and fast movement, respectively. The speed heterogeneity of the crowd is varied by changing the number of pedestrians moving at the speed of 0.02m/s. The space resolution is predefined as 1.0m and the crowd consists of 100 pedestrians. The simulation lasts for 2 hours. <xref ref-type="fig" rid="fig14-0037549711435950">Figure 14</xref> shows the number of movement decisions and the execution time of both the <italic>TBM</italic> and the <italic>ABM</italic> under different configurations of the moving speed. <xref ref-type="fig" rid="fig15-0037549711435950">Figure 15</xref> shows the ratio of the number of movement decisions and the execution time. In both figures, the <italic>x</italic>-axis represents the number of pedestrians moving at speed 0.02m/s. The <italic>y</italic>-axis in <xref ref-type="fig" rid="fig14-0037549711435950">Figures 14</xref> and <xref ref-type="fig" rid="fig15-0037549711435950">15</xref> has the same meaning as those of <xref ref-type="fig" rid="fig12-0037549711435950">Figures 12</xref> and <xref ref-type="fig" rid="fig13-0037549711435950">13</xref>, respectively.</p>
+<fig id="fig14-0037549711435950" position="float">
+<label>Figure 14.</label>
+<caption>
+<p>The number of movement decisions and the execution time under different speed distributions.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig14.tif"/>
+</fig>
+<fig id="fig15-0037549711435950" position="float">
+<label>Figure 15.</label>
+<caption>
+<p>Ratio of number of movement decisions/execution time under different speed distributions.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig15.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig14-0037549711435950">Figure 14</xref> shows that, as the number of pedestrians moving at speed 0.02m/s increases, in the <italic>ABM</italic> the number of movement decisions and the execution time decrease; in the <italic>TBM</italic>, they do not change much. This is because in the <italic>ABM</italic>, the more pedestrians moving at speed 0.02m/s, the fewer movement decisions the crowd will make. In the <italic>TBM</italic>, the number of movement decisions only depends on the time step, which is not changed during the simulation as long as there is at least one pedestrian moving at speed 2.0m/s. This figure also shows that when there are a small number of pedestrians moving at speed 0.02m/s, the <italic>ABM</italic> has more movement decisions and longer execution time than the <italic>TBM</italic>. This is due to the message passing among agents that causes extra decision makings in the <italic>ABM</italic>. As the number of pedestrians moving at 0.02m/s increases, the performance gains brought by the <italic>ABM</italic> bypass the overhead of message passing and thus the <italic>ABM</italic> is more efficient than the <italic>TBM</italic>.</p>
+<p><xref ref-type="fig" rid="fig15-0037549711435950">Figure 15</xref> shows that both the <italic>DMRatio</italic> and <italic>TimeRatio</italic> increase as the number of pedestrians moving at speed 0.02m/s increases. This is because, in the <italic>ABM</italic>, as the number of pedestrians moving at speed 0.02m/s increases, the crowd will make fewer movement decisions because more pedestrians move slowly. It can be seen that the greatest speedup can be obtained when the crowd has only one pedestrian moving at speed 2.0m/s and all other pedestrians are moving at speed 0.02m/s.</p>
+</sec>
+<sec id="section17-0037549711435950">
+<title>6.4 Experiment 3: Crowd density versus performance</title>
+<p>This experiment demonstrates the effect of crowd density on the simulation performance. The crowd density is changed by using different numbers of pedestrians in the same environment space. Each density is tested by one simulation. The simulation lasts for 0.5 hour. Similar to <italic>Experiment 1</italic>, 10 moving speeds are randomly generated, each of which is assigned to 10% of the pedestrians. The speed of each pedestrian is unchanged in different simulations to let the speed heterogeneity be the same among different simulations. The space resolution of all pedestrians is predefined as 1.0m. Thus, the time step in the <italic>TBM</italic> is defined as 1.0 divided by the maximum moving speed in the crowd. <xref ref-type="fig" rid="fig16-0037549711435950">Figure 16</xref> shows the number of movement decisions and the execution time of both models under different crowd densities. <xref ref-type="fig" rid="fig17-0037549711435950">Figure 17</xref> shows the ratio of the number of movement decisions and the ratio of the execution time. In both figures, the <italic>x</italic>-axis represents the number of pedestrians in the crowd. The <italic>y</italic>-axis in <xref ref-type="fig" rid="fig16-0037549711435950">Figures 16</xref> and <xref ref-type="fig" rid="fig17-0037549711435950">17</xref> has the same meaning as those in <xref ref-type="fig" rid="fig12-0037549711435950">Figures 12</xref> and <xref ref-type="fig" rid="fig13-0037549711435950">13</xref>, respectively.</p>
+<fig id="fig16-0037549711435950" position="float">
+<label>Figure 16.</label>
+<caption>
+<p>The number of movement decisions and the execution time under different numbers of pedestrians.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig16.tif"/>
+</fig>
+<fig id="fig17-0037549711435950" position="float">
+<label>Figure 17.</label>
+<caption>
+<p>Ratio of number of movement decisions/execution time under different numbers of pedestrians.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig17.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig16-0037549711435950">Figure 16</xref> shows that the number of movement decisions and the execution time increase as the number of pedestrians increases for both models. This is because the more pedestrians in the crowd, the more events (i.e. the change of internal and external statuses) the crowd will have. In addition, the number of movement decisions and the execution time of the <italic>TBM</italic> are greater than those of the <italic>ABM</italic> since pedestrians move at different speeds. It can also be seen that the <italic>ABM</italic> is more efficient than the <italic>TBM</italic>, since in the <italic>ABM</italic> pedestrians make decisions only when needed based on their own moving speeds.</p>
+<p><xref ref-type="fig" rid="fig17-0037549711435950">Figure 17</xref> shows that when the crowd is sparse (the number of pedestrians is less than 400), both the <italic>DMRatio</italic> and <italic>TimeRatio</italic> decrease as the density increases. This is because in the <italic>ABM</italic> as the system becomes more crowded, the number of interactions increases (i.e. more messages are passed within the crowd), leading to more frequent movement decisions per pedestrian. However, the frequency of movement decision per pedestrian in the <italic>TBM</italic> is not changed, where the decision frequency only depends on the time step, which is not changed. However, for over-crowded situations, the <italic>DMRatio</italic> and <italic>TimeRatio</italic> do not necessarily decrease as the density increases further. In fact, <xref ref-type="fig" rid="fig17-0037549711435950">Figure 17</xref> shows that when the number of pedestrians is greater than 400, the <italic>DMRatio</italic> and <italic>TimeRatio</italic> increase as the density increases. This is because in an over-crowded situation, pedestrians block each other and thus only a few pedestrians can move freely. Note that in the <italic>ABM</italic>, when there is no movement, there is no change of pedestrians’ positions and thus no message passing. Therefore, in a dense crowd the total number of movement decisions could be small even if there are a large number of pedestrians. The denser the crowd is, the fewer movement decisions the crowd will make, and the greater the <italic>DMRatio</italic> and <italic>TimeRatio</italic> will be. <xref ref-type="fig" rid="fig17-0037549711435950">Figure 17</xref> also shows that, for extremely dense crowds (i.e. the number of pedestrians is greater than 1400), the two ratios increase slowly and after a certain point (the number of pedestrians is greater than 1800), the ratios are almost unchanged. This is because the frequency of movement decisions per pedestrian cannot be reduced further, since most pedestrians are already clustered together.</p>
+</sec>
+<sec id="section18-0037549711435950">
+<title>6.5 Experiment 4: An emergency evacuation example</title>
+<p>This experiment demonstrates the effect of crowd density on the simulation performance for both models in an emergency evacuation scenario. An exit entry is situated at the right-hand side of the environment, which is of size 360m in both width and height. The size of the exit entry and a pedestrian is 10 and 7.5m, respectively. In the simulation, all pedestrians escape from the exit entry to the outside. Pedestrians’ moving speeds are randomly generated in the range of [0.5–2m/s]. Pedestrians’ destinations are also randomly generated. The space resolution of all pedestrians is 1.0m. The simulation lasts for 0.5 hour. A snapshot of the emergency evacuation is given in <xref ref-type="fig" rid="fig18-0037549711435950">Figure 18</xref>.</p>
+<fig id="fig18-0037549711435950" position="float">
+<label>Figure 18.</label>
+<caption>
+<p>A simulation scenario of emergency evacuation.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig18.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig19-0037549711435950">Figure 19</xref> presents the <italic>DMRatio</italic> and <italic>TimeRatio</italic> for different number of pedestrians. The <italic>x</italic>-axis and <italic>y</italic>-axis represent the number of pedestrians in the crowd and the ratio of the number of movement decisions/execution time, respectively. As can be seen, a similar trend as in <xref ref-type="fig" rid="fig17-0037549711435950">Figure 17</xref> (for the part when the number of pedestrians &gt;400) is observed. This is because a relative small environment (360m in width and height) is used in the experiment, which makes it difficult for pedestrians to move freely in the environments. In the emergency evacuation, all pedestrians move towards the exit entry. Near the exit entry, ‘clusters’ of pedestrians are formed because of the slow flow at the exit entry (only one pedestrian can enter the exit entry at each time). The denser the crowd is, the larger the clusters will be, and the better performance the <italic>ABM</italic> shows compared to that of the <italic>TBM</italic>. By comparing <xref ref-type="fig" rid="fig19-0037549711435950">Figures 19</xref> and <xref ref-type="fig" rid="fig17-0037549711435950">17</xref>, one can see that the <italic>DMRatio</italic> and <italic>TimeRatio</italic> in <xref ref-type="fig" rid="fig19-0037549711435950">Figure 19</xref> are higher than those in <xref ref-type="fig" rid="fig17-0037549711435950">Figure 17</xref>.</p>
+<fig id="fig19-0037549711435950" position="float">
+<label>Figure 19.</label>
+<caption>
+<p>Ratio of the number of movement decisions and execution time in emergency evacuation.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711435950-fig19.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section19-0037549711435950" sec-type="conclusions">
+<title>7. Conclusion and future work</title>
+<p>This paper develops a spatial activity-based modeling and applies it to pedestrian crowd simulations. Description and analysis of the activity-based model and a time-based model are provided. Performance measurement and comparison of both models are carried out using four experiments. Experiment results show that the activity-based model is able to exploit a crowd system’s heterogeneity (in moving speeds) to improve the simulation performance. One future work of this research is to systematically analyze the relationship between the crowd heterogeneity and the simulation performance, and to quantitatively measure how message passing affects the simulation speedup of the activity-based model. Other future directions include implementing the activity-based model in a parallel simulation environment and studying its performance, and applying the model to other application domains where heterogeneity can be exploited, such as disease or chemical spreading simulations, and biological application simulations.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>The authors would like to thank the anonymous reviewers and editors for their constructive criticism and helpful suggestions for improving the quality of this paper.</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This research was supported in part by the National Science Foundation (grants CNS-0841170 and CNS-0941432).</p>
+</fn>
+</fn-group>
+<bio>
+<title>Author biographies</title>
+<p><bold>Fasheng Qiu</bold> is a PhD candidate at the Department of Computer Science, Georgia State University, USA. His research interests include pedestrian crowd simulations, agent-based modeling and simulation, and parallel and distributed simulations.</p>
+<p><bold>Xiaolin Hu</bold> is an associate professor at the Department of Computer Science, Georgia State University, USA. His research interests include modeling and simulation, agents, and simulation-based design.</p>
+</bio>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0037549711435950">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zeigler</surname><given-names>BP</given-names></name>
+<name><surname>Jammalamadaka</surname><given-names>R</given-names></name>
+<name><surname>Akerkar</surname><given-names>SR</given-names></name>
+</person-group>. <article-title>Continuity and change (activity) are fundamentally related in DEVS simulation of continuous systems</article-title>. <source>Artif Intell Simulat</source> <year>2005</year>; <volume>3397</volume>: <fpage>1</fpage>–<lpage>13</lpage>.</citation>
+</ref>
+<ref id="bibr2-0037549711435950">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zeigler</surname><given-names>BP</given-names></name>
+<name><surname>Sarjoughian</surname><given-names>HS</given-names></name>
+<name><surname>Praehofer</surname><given-names>H</given-names></name>
+</person-group>. <article-title>Theory of quantized systems: DEVS Simulation of perceiving agents</article-title>. <source>Int J Cybern Syst</source> <year>2000</year>; <volume>31</volume>: <fpage>611</fpage>–<lpage>648</lpage>.</citation>
+</ref>
+<ref id="bibr3-0037549711435950">
+<label>3.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Zeigler</surname><given-names>BP</given-names></name>
+<name><surname>Praehofer</surname><given-names>H</given-names></name>
+<name><surname>Kim</surname><given-names>TG</given-names></name>
+</person-group>. <source>Theory of modeling and simulation</source>. <edition>2nd ed.</edition> <publisher-name>Academic Press</publisher-name>, <year>2000</year>: <publisher-loc>New York, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr4-0037549711435950">
+<label>4.</label>
+<citation citation-type="journal">
+<collab>ACIMS</collab>. <article-title>DEVSJAVA reference guide</article-title>, <year>2004</year>.</citation>
+</ref>
+<ref id="bibr5-0037549711435950">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Shao</surname><given-names>W</given-names></name>
+<name><surname>Terzopoulos</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Autonomous pedestrians</article-title>. <source>Graph Model</source> <year>2007</year>; <volume>69</volume>: <fpage>246</fpage>–<lpage>274</lpage>.</citation>
+</ref>
+<ref id="bibr6-0037549711435950">
+<label>6.</label>
+<citation citation-type="confproc">
+<collab>Reynolds CW. Big fast crowds on PS3</collab>. In: <conf-name>2006 ACM SIGGRAPH symposium on Videogames</conf-name>, <conf-loc>New York</conf-loc>, <conf-date>2006</conf-date>, pp.<fpage>113</fpage>–<lpage>121</lpage>.</citation>
+</ref>
+<ref id="bibr7-0037549711435950">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Musse</surname><given-names>SR</given-names></name>
+<name><surname>Thalmann</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Hierarchical model for real time simulation of virtual human crowds</article-title>. <source>IEEE Trans Visual Comput Graphics</source> <year>2001</year>; <volume>7</volume>: <fpage>152</fpage>–<lpage>164</lpage>.</citation>
+</ref>
+<ref id="bibr8-0037549711435950">
+<label>8.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Braun</surname><given-names>A</given-names></name>
+<name><surname>Musse</surname><given-names>SR</given-names></name>
+<name><surname>de Oliveira</surname><given-names>LPL</given-names></name>
+<etal/>
+</person-group>. <article-title>Modeling Individual behaviors in crowd simulation</article-title>. In: <conf-name>16th international conference on computer animation and social agents</conf-name>, <conf-date>2003</conf-date>, pp.<fpage>143</fpage>–<lpage>148</lpage>.</citation>
+</ref>
+<ref id="bibr9-0037549711435950">
+<label>9.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Loscos</surname><given-names>C</given-names></name>
+<name><surname>Marchal</surname><given-names>D</given-names></name>
+<name><surname>Meyer</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Intuitive crowd behaviour in dense urban environments using local laws</article-title>. In: <source>theory and practice of computer graphics 2003</source>, <publisher-name>Birmingham</publisher-name>, <publisher-loc>UK</publisher-loc>, <year>2003</year>, pp.<fpage>122</fpage>–<lpage>129</lpage>.</citation>
+</ref>
+<ref id="bibr10-0037549711435950">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Isobe</surname><given-names>M</given-names></name>
+<name><surname>Helbing</surname><given-names>D</given-names></name>
+<name><surname>Nagatani</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Experiment, theory, and simulation of the evacuation of a room without visibility</article-title>. <source>Phys Rev E</source> <year>2004</year>; <volume>69</volume>: <fpage>638</fpage>–<lpage>650</lpage>.</citation>
+</ref>
+<ref id="bibr11-0037549711435950">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Song</surname><given-names>W</given-names></name>
+<name><surname>Xu</surname><given-names>X</given-names></name>
+<name><surname>Wang</surname><given-names>BH</given-names></name><etal/>
+</person-group>. <article-title>Simulation of evacuation processes using a multi-grid model for pedestrian dynamics</article-title>. <source>Physica A</source> <year>2006</year>; <volume>363</volume>: <fpage>492</fpage>–<lpage>500</lpage>.</citation>
+</ref>
+<ref id="bibr12-0037549711435950">
+<label>12.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Hoogendoorn</surname><given-names>SP</given-names></name>
+<name><surname>Bovy</surname><given-names>PHL</given-names></name>
+<name><surname>Daamen</surname><given-names>W</given-names></name>
+</person-group>. <article-title>Microscopic pedestrian wayfinding and dynamics modelling</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Schreckenberg</surname><given-names>M</given-names></name>
+<name><surname>Sharma</surname><given-names>SD</given-names></name>
+</person-group> (eds) <source>Pedestrian and evacuation dynamics</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2002</year>, pp.<fpage>123</fpage>–<lpage>154</lpage>.</citation>
+</ref>
+<ref id="bibr13-0037549711435950">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hughes</surname><given-names>RL</given-names></name>
+</person-group>. <article-title>A continuum theory for the flow of pedestrians</article-title>. <source>Transp Res B</source> <year>2002</year>; <volume>36</volume>: <fpage>507</fpage>–<lpage>535</lpage>.</citation>
+</ref>
+<ref id="bibr14-0037549711435950">
+<label>14.</label>
+<citation citation-type="journal">
+<collab>SavannahSimulationsAG</collab>. <article-title>SimWalk: The simulation software for pedestrian flows</article-title>, <year>2009</year>.</citation>
+</ref>
+<ref id="bibr15-0037549711435950">
+<label>15.</label>
+<citation citation-type="journal">
+<collab>Legion</collab>. <article-title>Pedestrian simulation solutions</article-title>, <year>1997</year>.</citation>
+</ref>
+<ref id="bibr16-0037549711435950">
+<label>16.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Helbing</surname><given-names>D</given-names></name>
+<name><surname>Farkas</surname><given-names>IJ</given-names></name>
+<name><surname>Molnar</surname><given-names>P</given-names></name><etal/>
+</person-group>. <article-title>Simulation of pedestrian crowds in normal and evacuation situations</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Schreckenberg</surname><given-names>M</given-names></name>
+<name><surname>Sharma</surname><given-names>SD</given-names></name>
+</person-group> (eds) <source>Pedestrian and evacuation dynamics</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2002</year>, pp.<fpage>21</fpage>–<lpage>58</lpage>.</citation>
+</ref>
+<ref id="bibr17-0037549711435950">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Henderson</surname><given-names>LF</given-names></name>
+</person-group>. <article-title>On the fluid mechanics of human crowd motion</article-title>. <source>Transp Res</source> <year>1974</year>; <volume>8</volume>: <fpage>509</fpage>–<lpage>515</lpage>.</citation>
+</ref>
+<ref id="bibr18-0037549711435950">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Blue</surname><given-names>VJ</given-names></name>
+<name><surname>Adler</surname><given-names>JL</given-names></name>
+</person-group>. <article-title>Cellular automata microsimulation for modeling bi-directional pedestrian walkways</article-title>. <source>Transp Res B</source> <year>2001</year>; <volume>35</volume>: <fpage>293</fpage>–<lpage>312</lpage>.</citation>
+</ref>
+<ref id="bibr19-0037549711435950">
+<label>19.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Schadschneider</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Cellular automaton approach to pedestrian dynamics - Theory</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Schreckenberg</surname><given-names>M</given-names></name>
+<name><surname>Sharma</surname><given-names>SD</given-names></name>
+</person-group> (eds) <source>Pedestrian and evacuation dynamics</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2002</year>, pp.<fpage>75</fpage>–<lpage>86</lpage>.</citation>
+</ref>
+<ref id="bibr20-0037549711435950">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hamacher</surname><given-names>H</given-names></name>
+<name><surname>Tjandra</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Mathematical Modeling of evacuation problems: A state of the art</article-title>. In: <source>pedestrian and evacuation dynamics</source>, <year>2002</year>, pp.<fpage>227</fpage>–<lpage>266</lpage>.</citation>
+</ref>
+<ref id="bibr21-0037549711435950">
+<label>21.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Tjandra</surname><given-names>SA</given-names></name>
+</person-group>. <source>Dynamic network flow models for evacuation problems</source>. PhD Thesis, <publisher-name>Department of Mathematics, Technische Universität Kaiserslautern</publisher-name>, <publisher-loc>Kaiserslautern, Germany</publisher-loc>, <year>2001</year>.</citation>
+</ref>
+<ref id="bibr22-0037549711435950">
+<label>22.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Musse</surname><given-names>SR</given-names></name>
+<name><surname>Thalmann</surname><given-names>D</given-names></name>
+</person-group>. <article-title>A Model of human crowd behavior: Group inter-relationship and collision detection analysis</article-title>. In: <source>computer animation and simulations ‘97</source>, <publisher-name>Budapest</publisher-name>, <publisher-loc>Hungary</publisher-loc>, <year>1997</year>, pp.<fpage>39</fpage>–<lpage>52</lpage>.</citation>
+</ref>
+<ref id="bibr23-0037549711435950">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Han</surname><given-names>CS</given-names></name>
+<name><surname>Pan</surname><given-names>X</given-names></name>
+<name><surname>Dauber</surname><given-names>K</given-names></name><etal/>
+</person-group>. <article-title>A multi-agent based framework for simulating human and social behaviors during emergency evacuations</article-title>. <source>Artif Intell Soc</source> <year>2007</year>; <volume>22</volume>: <fpage>113</fpage>–<lpage>132</lpage>.</citation>
+</ref>
+<ref id="bibr24-0037549711435950">
+<label>24.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pelechano</surname><given-names>N</given-names></name>
+<name><surname>Allbeck</surname><given-names>JM</given-names></name>
+<name><surname>Badler</surname><given-names>NI</given-names></name>
+</person-group>. <article-title>Controlling individual agents in high-density crowd simulation</article-title>. In: <conf-name>ACM SIGGRAPH/eurographics symposium on computer animation</conf-name>, <conf-loc>San Diego, CA</conf-loc>, <conf-date>2007</conf-date>, pp.<fpage>99</fpage>–<lpage>108</lpage>.</citation>
+</ref>
+<ref id="bibr25-0037549711435950">
+<label>25.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Qiu</surname><given-names>F</given-names></name>
+<name><surname>Hu</surname><given-names>X</given-names></name>
+</person-group>. <article-title>Modeling social group structures in pedestrian crowds</article-title>. <source>Simul Modell Pract Theory</source> <year>2010</year>; <volume>18</volume>: <fpage>190</fpage>–<lpage>205</lpage>.</citation>
+</ref>
+<ref id="bibr26-0037549711435950">
+<label>26.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lakoba</surname><given-names>TI</given-names></name>
+<name><surname>Kaup</surname><given-names>DJ</given-names></name>
+<name><surname>Finkelstein</surname><given-names>NM</given-names></name>
+</person-group>. <article-title>Modifications of the Helbing-Molnar-Farkas-Vicsek social force model for pedestrian evolution</article-title>. <source>Simulation</source> <year>2005</year>; <volume>81</volume>: <fpage>339</fpage>–<lpage>352</lpage>.</citation>
+</ref>
+<ref id="bibr27-0037549711435950">
+<label>27.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hamagami</surname><given-names>T</given-names></name>
+<name><surname>Hirata</surname><given-names>H</given-names></name>
+</person-group>. <article-title>Method of crowd simulation by using multiagent on cellular automata</article-title>. In: <source>intelligent agent technology</source> <year>2003</year>, <volume>2003</volume>, pp.<fpage>46</fpage>–<lpage>52</lpage>.</citation>
+</ref>
+<ref id="bibr28-0037549711435950">
+<label>28.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Tecchia</surname><given-names>F</given-names></name>
+<name><surname>Loscos</surname><given-names>C</given-names></name>
+<name><surname>Conroy Dalton</surname><given-names>R</given-names></name><etal/>
+</person-group>. <article-title>Agent Behaviour Simulator (ABS): A platform for urban behaviour development</article-title>. In: <source>The First International Game Technology Conference and Idea Expo</source>, <conf-loc>Hong Kong, China</conf-loc>, <year>2001</year>, pp.<fpage>17</fpage>–<lpage>21</lpage>.</citation>
+</ref>
+<ref id="bibr29-0037549711435950">
+<label>29.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Quinn</surname><given-names>M</given-names></name>
+<name><surname>Metoyer</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Parallel implementation of the social forces model</article-title>. In: <conf-name>the second international conference in pedestrian and evacuation dynamics</conf-name>, <conf-loc>Greenwich, London</conf-loc>, <conf-date>2003</conf-date>, pp.<fpage>63</fpage>–<lpage>74</lpage>.</citation>
+</ref>
+<ref id="bibr30-0037549711435950">
+<label>30.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Richmond</surname><given-names>P</given-names></name>
+<name><surname>Romano</surname><given-names>D</given-names></name>
+</person-group>. <article-title>A high performance framework for agent based pedestrian dynamics on GPU hardware</article-title>. In: <conf-name>EUROSIS ESM 2008 (European Simulation and Modelling)</conf-name>, <conf-loc>Le Havre, France</conf-loc>, <conf-date>2008</conf-date>, pp.<fpage>213</fpage>–<lpage>221</lpage>.</citation>
+</ref>
+<ref id="bibr31-0037549711435950">
+<label>31.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Yilmaz</surname><given-names>E</given-names></name>
+<name><surname>Isler</surname><given-names>V</given-names></name>
+<name><surname>Cetin</surname><given-names>YY</given-names></name>
+</person-group>. <article-title>The virtual marathon: Parallel Computing supports crowd simulations</article-title>. <source>IEEE Comput Graphics Appl</source> <year>2009</year>; <volume>29</volume>: <fpage>26</fpage>–<lpage>33</lpage>.</citation>
+</ref>
+<ref id="bibr32-0037549711435950">
+<label>32.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Jammalamadaka</surname><given-names>R</given-names></name>
+</person-group>. <source>Activity characterization of spatial models: Application to the discrete event solution of partial differential equations</source>. MS Degree, <publisher-name>Electrical and Computer Engineering, University of Arizona</publisher-name>, <year>2003</year>.</citation>
+</ref>
+<ref id="bibr33-0037549711435950">
+<label>33.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Jammalamadaka</surname><given-names>R</given-names></name>
+</person-group>. <source>Multilevel methodology for simulation of spatio-temporal systems with heterogeneous activity: Application to spread of Valley Fever Fungus</source>. PhD Degree, <publisher-name>Electrical and Computer Engineering, University of Arizona</publisher-name>, <year>2008</year>.</citation>
+</ref>
+<ref id="bibr34-0037549711435950">
+<label>34.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Muzy</surname><given-names>A</given-names></name>
+<name><surname>Jammalamadaka</surname><given-names>R</given-names></name>
+<name><surname>Zeigler</surname><given-names>BP</given-names></name><etal/>
+</person-group>. <article-title>The activity tracking paradigm in discrete-event modeling and simulation: The case of spatially continuous distributed systems</article-title>. <source>Simulation</source> <year>2010</year>; <volume>10</volume>: <fpage>449</fpage>–<lpage>464</lpage>.</citation>
+</ref>
+<ref id="bibr35-0037549711435950">
+<label>35.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hu</surname><given-names>X</given-names></name>
+<name><surname>Zeigler</surname><given-names>BP</given-names></name>
+<name><surname>Mittal</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Variable structure in DEVS component-based modeling and simulation</article-title>. <source>Simulation</source> <year>2005</year>; <volume>81</volume>: <fpage>91</fpage>–<lpage>102</lpage>.</citation>
+</ref>
+<ref id="bibr36-0037549711435950">
+<label>36.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Qiu</surname><given-names>F</given-names></name>
+<name><surname>Hu</surname><given-names>X</given-names></name>
+</person-group>. <article-title>Modeling dynamic groups for agent-based pedestrian crowd simulations</article-title>. In: <source>web intelligence and intelligent agent technology</source>, <publisher-name>Toronto</publisher-name>, <publisher-loc>Canada</publisher-loc>, <year>2010</year>.</citation>
+</ref>
+<ref id="bibr37-0037549711435950">
+<label>37.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Qiu</surname><given-names>F</given-names></name>
+<name><surname>Hu</surname><given-names>X</given-names></name>
+</person-group>. <article-title>BehaviorSim: A learning environment for behavior based agent</article-title>. In: <conf-name>10th international conference on simulation of adaptive behavior: from animals to animats</conf-name>, <conf-loc>Osaka, Japan</conf-loc>, <conf-date>2008</conf-date>, pp.<fpage>499</fpage>–<lpage>508</lpage>.</citation>
+</ref>
+<ref id="bibr38-0037549711435950">
+<label>38.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Daamen</surname><given-names>W</given-names></name>
+<name><surname>Hoogendoorn</surname><given-names>SP</given-names></name>
+</person-group>. <article-title>Experimental research of pedestrian walking behavior</article-title>. <source>Transp Res Rec</source> <year>2003</year>; <volume>11</volume>: <fpage>20</fpage>–<lpage>30</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

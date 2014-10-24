@@ -1,0 +1,615 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PIC</journal-id>
+<journal-id journal-id-type="hwp">sppic</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part C: Journal of Mechanical Engineering Science</journal-title>
+<issn pub-type="ppub">0954-4062</issn>
+<issn pub-type="epub">2041-2983</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0954406212444508</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0954406212444508</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Mechatronics and Information Technology</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Solving the forward kinematics problem of six-DOF Stewart platform using multi-task Gaussian process</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>He</surname><given-names>Jianjun</given-names></name>
+<xref ref-type="corresp" rid="corresp1-0954406212444508"/>
+<xref ref-type="corresp" rid="corresp1-0954406212444508"/>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Gu</surname><given-names>Hong</given-names></name>
+<xref ref-type="corresp" rid="corresp1-0954406212444508"/>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Wang</surname><given-names>Zhelong</given-names></name>
+</contrib>
+</contrib-group>
+<aff id="aff1-0954406212444508">Faculty of Electronic Information and Electrical Engineering, Dalian University of Technology, Dalian, China</aff>
+<author-notes>
+<corresp id="corresp1-0954406212444508">Hong Gu, Faculty of Electronic Information and Electrical Engineering, Dalian University of Technology, Chuangxinyuan Building B712, Dalian, Liaoning, 116024, China. Email: <email>guhong@dlut.edu.cn</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>1</month>
+<year>2013</year>
+</pub-date>
+<volume>227</volume>
+<issue>1</issue>
+<fpage>161</fpage>
+<lpage>169</lpage>
+<history>
+<date date-type="received"><day>22</day><month>6</month><year>2011</year></date>
+<date date-type="accepted"><day>14</day><month>3</month><year>2012</year></date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>The forward kinematics problem of general six-degree-of-freedom Stewart platform is addressed in this article. Unlike the convention taking positional variables as independent ones and solving them individually, this article presents an alternative approach which takes the positional variables as multiple-related tasks and exploits the commonality between them using a multi-task Gaussian process learning method, as a result, a simple adaptive algorithm, which may satisfy the requirements for high accuracy and real-time processing, is established. Moreover, the proposed algorithm can achieve the desired accuracy using 1000 training samples at most, which is far less than those of other algorithms. Simulation results on a Stewart platform used in aircraft flight simulation system show that the proposed algorithm can achieve superior performance.</p>
+</abstract>
+<kwd-group>
+<kwd>Stewart platform</kwd>
+<kwd>forward kinematics</kwd>
+<kwd>multi-task learning</kwd>
+<kwd>Gaussian process</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="sec1-0954406212444508" sec-type="intro"><title>Introduction</title>
+<p>The six-degree-of-freedom (DOF) Stewart platform is a parallel mechanism that generally consists of six identical telescopic links, a mobile platform, and a base platform. As shown in <xref ref-type="fig" rid="fig1-0954406212444508">Figure 1</xref>, each link connects the base and the mobile platforms with universal and spherical joints respectively, and the link length is controlled by a prismatic joint. The base platform is generally fixed as a base and the mobile platform has six-DOF motion with respect to the base platform. Over the past years, six-DOF Stewart platform has received more and more attentions from researchers due to its extensive applications in various fields such as machine tool technology, medical robots, crane technology, underwater research, flight simulation systems, air-to-sea rescue, and telescopes.
+<fig id="fig1-0954406212444508" position="float"><label>Figure 1.</label><caption><p>An example of six-DOF Stewart platform. DOF: degree of freedom.</p></caption><graphic xlink:href="10.1177_0954406212444508-fig1.tif"/>
+</fig></p>
+<p>The forward kinematics problem (FKP) of Stewart platform is to compute the position and orientation (pose) of mobile platform when link lengths are given. Because it involves a set of highly coupled nonlinear equations and in general there is no closed form and unique solution, this problem has never been fully solved and researchers have to explore new algorithms. Approaches for solving FKP may be classified into two categories.</p>
+<p>The first category mainly focuses on finding all the possible solutions of FKP for a certain Stewart platform. Some representative approaches of this category are polynomial, continuation, and interval analysis methods. Polynomial methods<sup><xref ref-type="bibr" rid="bibr1-0954406212444508">1</xref>,<xref ref-type="bibr" rid="bibr2-0954406212444508">2</xref></sup> usually use different variable elimination techniques to generate a high degree of polynomial equation with a single unknown. Also, all the possible solutions can be found by solving this polynomial equation. In continuation methods,<sup><xref ref-type="bibr" rid="bibr3-0954406212444508">3</xref>,<xref ref-type="bibr" rid="bibr4-0954406212444508">4</xref></sup> a solvable start system of equations is transformed into a target system of equations incrementally, while all the solutions of the target system can be found by tracking the solutions of start system. The main idea of interval analysis method<sup><xref ref-type="bibr" rid="bibr5-0954406212444508">5</xref></sup> is to obtain convergence region of all solutions by subdividing the solution space of equations.</p>
+<p>The other category tries to find a unique actual pose of mobile platform in real time using numerical techniques. Neural network is one of the popular approaches of this category. In Yurt et al.,<sup><xref ref-type="bibr" rid="bibr6-0954406212444508">6</xref></sup> a feed-forward neural network was trained using backpropagation algorithm to solve the FKP of 6-3 Stewart platform. Parikh and Lam<sup><xref ref-type="bibr" rid="bibr7-0954406212444508">7</xref></sup> proposed a neural network based hybrid approach where they obtained an initial solution to the Newton–Raphson method through a neural network. Considering the hybrid approach may be time consuming, they developed an iterative neural network approach<sup><xref ref-type="bibr" rid="bibr8-0954406212444508">8</xref></sup> which consists of a trained neural network and an error compensation algorithm in the feedback loop. Some other approaches also have been introduced. Wang<sup><xref ref-type="bibr" rid="bibr9-0954406212444508">9</xref></sup> presented a numerical method that utilizes the relationship between the small change in link lengths and the small motion of mobile platform to generate a unique solution. Liu et al.<sup><xref ref-type="bibr" rid="bibr10-0954406212444508">10</xref></sup> discussed the solution of FKP of general Stewart platform using hybrid immune genetic algorithm. In Chen et al.,<sup><xref ref-type="bibr" rid="bibr11-0954406212444508">11</xref></sup> the FKP was solved using a nonlinear observer designed to estimate the system states including three-axis translations and rotations. Principal component analysis (PCA) was used to establish an iterative algorithm for FKP by Wang et al.<sup><xref ref-type="bibr" rid="bibr12-0954406212444508">12</xref></sup> Since the PCA-based algorithm can hardly be used in real-time situation, recently, they presented an improved algorithm using independent component analysis.<sup><xref ref-type="bibr" rid="bibr13-0954406212444508">13</xref></sup> Though many approaches have been developed and promising results have been achieved for certain simplified configurations of Stewart platform, it is still a challenging problem to devise a methodology that can solve the FKP for general Stewart platform in real time and with high accuracy.</p>
+<p>Researchers have found that in many situations, learning multiple-related tasks simultaneously can achieve better performance than learning each of them independently.<sup><xref ref-type="bibr" rid="bibr14-0954406212444508">14</xref>,<xref ref-type="bibr" rid="bibr15-0954406212444508">15</xref></sup> In machine learning field, this subject is approached through multi-task learning, which aims to improve the performance of learning tasks using a shared model. Since many real-world problems can be solved in the framework of it, multi-task learning has received extensive attentions of researchers and many algorithms have been developed using the strategies such as sharing hidden nodes in neural networks,<sup><xref ref-type="bibr" rid="bibr14-0954406212444508">14</xref></sup> placing a common prior in Bayesian models,<sup><xref ref-type="bibr" rid="bibr15-0954406212444508">15</xref>,<xref ref-type="bibr" rid="bibr16-0954406212444508">16</xref></sup> sharing parameters of Gaussian processes,<sup><xref ref-type="bibr" rid="bibr17-0954406212444508">17</xref>–<xref ref-type="bibr" rid="bibr19-0954406212444508">19</xref></sup> and structured regularization in kernels methods.<sup><xref ref-type="bibr" rid="bibr20-0954406212444508">20</xref></sup></p>
+<p>In the previous approaches for solving FKP of Stewart platform, the six positional variables (i.e. variables represent the position and orientation of the mobile platform) are taken as independent ones and individually solved. However, it is attractive if one can exploit commonality in these variables to improve performance. The aim of this article is to show how this can be carried out. Using a multi-task Gaussian process (MTGP) learning method, link lengths are transformed into other six variables called intermediate variables, each of which is only related to one of the positional variables. Then, six one-to-one relationships between these intermediate and positional variables may be identified. As a result, a simple iterative algorithm for solving the FKP can be established using these one-to-one relationships.</p>
+<p>The structure of the remainder of this article is as follows: ‘The kinematic model of Stewart platform’ is illustrated in <xref ref-type="sec" rid="sec2-0954406212444508">the following section</xref>. Next, ‘Multi-task Gaussian process’ is used to get a set of intermediate variables. Thereafter, ‘Iterative algorithm’ is presented. Then, ‘Simulations’ are carried out. The ‘Conclusions’ make up the final <xref ref-type="sec" rid="sec6-0954406212444508">section</xref>.</p>
+</sec>
+<sec id="sec2-0954406212444508"><title>The kinematic model of Stewart platform</title>
+<p>For the convenience of a establishing kinematic model, two right-handed Cartesian coordinate systems were set up for the Stewart platform. As shown in <xref ref-type="fig" rid="fig1-0954406212444508">Figure 1</xref>, the B-frame <italic>Oxyz</italic> has its origin at the centroid of the base platform and the M-frame <italic>Ox</italic>′<italic>y</italic>′<italic>z</italic>′ at the centroid of the mobile platform. The <italic>z</italic>- and <italic>z</italic>′-axes are vertically directed out of the plane of base and mobile platforms, respectively. The axes of the two coordinate systems are aligned when the mobile platform is at its initial position. The terms <italic>b</italic><sub><italic>i</italic></sub> and <italic>t</italic><sub><italic>i</italic></sub> are the joints of <italic>i</italic>th link on the base and mobile platforms, respectively. The pose of the mobile platform can be represented by six positional variables (<italic>x</italic>, <italic>y</italic>, <italic>z</italic>, α, β, and γ). Here, (<italic>x</italic>, <italic>y</italic>, <italic>z</italic>) are the coordinates of <italic>O</italic>′ in the B-frame and α, β, and γ the rotational angles of the mobile platform relative to <italic>z</italic>-, <italic>y</italic>-, and <italic>x</italic>-axes of B-frame, respectively. Let (<italic>b</italic><sub><italic>i</italic>1</sub>, <italic>b</italic><sub><italic>i</italic>2</sub>, <italic>b</italic><sub><italic>i</italic>3</sub>)<sup>T</sup> denote the coordinate of joint <italic>b</italic><sub><italic>i</italic></sub> in B-frame and (<italic>t</italic><sub><italic>i</italic>1</sub>, <italic>t</italic><sub><italic>i</italic>2</sub>, <italic>t</italic><sub><italic>i</italic>3</sub>)<sup>T</sup> be the coordinate of <italic>t</italic><sub><italic>i</italic></sub> in M-frame. Here, <italic>l</italic><sub><italic>i</italic></sub> is the length of <italic>i</italic>th link (<italic>i</italic> = 1, … , 6). The inverse kinematic model of Stewart platform may be established as follows
+<disp-formula id="disp-formula1-0954406212444508"><label>(1)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math1-0954406212444508"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo>|</mml:mo><mml:mo>|</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>x</mml:mi><mml:mo>,</mml:mo><mml:mi>y</mml:mi><mml:mo>,</mml:mo><mml:mi>z</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:mo>+</mml:mo><mml:mi>R</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>t</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>t</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>t</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi><mml:mn>3</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:mo>-</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>b</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>b</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>b</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi><mml:mn>3</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:mo>|</mml:mo><mml:mo>|</mml:mo><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>l</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo>,</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mn>6</mml:mn></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula1-0954406212444508" xlink:href="10.1177_0954406212444508-eq1.tif"/></disp-formula>
+where <italic>R</italic> is a rotation matrix defined as
+<disp-formula id="disp-formula2-0954406212444508"><label>(2)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math2-0954406212444508"><mml:mrow><mml:mi>h</mml:mi><mml:mi>cos</mml:mi><mml:mi>α</mml:mi><mml:mo>+</mml:mo><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mrow><mml:mo/><mml:mo>{</mml:mo></mml:mrow><mml:mtable align="left"><mml:mtr><mml:mtd columnalign="center"><mml:mrow><mml:msub><mml:mrow><mml:mi>γ</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mrow><mml:mo/><mml:mo>(</mml:mo></mml:mrow><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:mi>f</mml:mi><mml:mrow><mml:mo/><mml:mo>(</mml:mo></mml:mrow><mml:mi>a</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mtext>S</mml:mtext></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:mi>δ</mml:mi><mml:mo>-</mml:mo><mml:mn>2</mml:mn><mml:mi>i</mml:mi><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mrow><mml:mo/><mml:mo>)</mml:mo></mml:mrow><mml:mrow><mml:mo/><mml:mo>)</mml:mo></mml:mrow><mml:mo>,</mml:mo><mml:mrow><mml:mo/><mml:mo>|</mml:mo></mml:mrow><mml:mi>δ</mml:mi><mml:mo>-</mml:mo><mml:mn>2</mml:mn><mml:mi>i</mml:mi><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mrow><mml:mo/><mml:mo>|</mml:mo></mml:mrow><mml:mo>≤</mml:mo><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="center" columnspan="1"><mml:mrow><mml:msub><mml:mrow><mml:mi>γ</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mrow><mml:mo/><mml:mo>(</mml:mo></mml:mrow><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:mi>g</mml:mi><mml:mrow><mml:mo/><mml:mo>(</mml:mo></mml:mrow><mml:mi>b</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mtext>L</mml:mtext></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:mi>δ</mml:mi><mml:mo>-</mml:mo><mml:mn>2</mml:mn><mml:mi>i</mml:mi><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mrow><mml:mo/><mml:mo>)</mml:mo></mml:mrow><mml:mrow><mml:mo/><mml:mo>)</mml:mo></mml:mrow><mml:mo>,</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="center" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mrow><mml:mo/><mml:mo>|</mml:mo></mml:mrow><mml:mi>δ</mml:mi><mml:mo>-</mml:mo><mml:mn>2</mml:mn><mml:mi>i</mml:mi><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mrow><mml:mo/><mml:mo>|</mml:mo></mml:mrow><mml:mo>≤</mml:mo><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mn>3</mml:mn></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr></mml:mtable><mml:mrow><mml:mo/><mml:mo/></mml:mrow></mml:mrow></mml:math><graphic alternate-form-of="disp-formula2-0954406212444508" xlink:href="10.1177_0954406212444508-eq2.tif"/></disp-formula></p>
+<p>Thus, the FKP of Stewart platform is to find a set of functions {<italic>x</italic> = <italic>f</italic><sub>1</sub>(<italic>L</italic>), <italic>y</italic> = <italic>f</italic><sub>2</sub>(<italic>L</italic>), … , γ = <italic>f</italic><sub>6</sub>(<italic>L</italic>)} using equation (<xref ref-type="disp-formula" rid="disp-formula1-0954406212444508">1</xref>); here, <italic>L</italic> = (<italic>l</italic><sub>1</sub>, … , <italic>l</italic><sub>6</sub>)<sup>T</sup>.</p>
+<p>The proposed algorithm will be described based on a real-world six-DOF Stewart platform used in aircraft flight simulation system.<sup><xref ref-type="bibr" rid="bibr21-0954406212444508">21</xref></sup> This Stewart platform includes a fixed base and a payload platform upon which a cockpit and a visual display are mounted. The payload platform is a six-DOF motion system drove by six hydraulically powered position servomechanisms. Its geometrical parameters are given in Dieudonne et al.<sup><xref ref-type="bibr" rid="bibr21-0954406212444508">21</xref></sup></p>
+</sec>
+<sec id="sec3-0954406212444508"><title>Multi-task Gaussian process</title>
+<p>It can be seen from the above section that the FKP of Stewart platform is to find functions {<italic>f</italic><sub>1</sub>, … , <italic>f</italic><sub>6</sub>}. In this section, MTGP is used to find an approximation function <inline-formula id="ilm1-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math1-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> of <italic>f</italic><sub><italic>i</italic></sub> (<italic>i</italic> = 1, … , 6), which will be used to establish an iterative algorithm for solving FKP.</p>
+<p>MTGP is a multi-task learning model recently proposed by Bonilla et al.<sup><xref ref-type="bibr" rid="bibr19-0954406212444508">19</xref></sup> in the context of Gaussian processes. Let {<italic>g</italic><sub><italic>i</italic></sub>(<italic>x</italic>)|<italic>i</italic> = 1, … , <italic>m</italic>} be <italic>m</italic> related task functions that cannot be described by any explicit expression. It is typical for more realistic modeling situations that we do not have access to function value <italic>g</italic><sub><italic>i</italic></sub>(<italic>x</italic>) itself, but only noisy version thereof <italic>y</italic><sub><italic>i</italic></sub>(<italic>x</italic>) = <italic>g</italic><sub><italic>i</italic></sub>(<italic>x</italic>) + ε<sub><italic>i</italic></sub>, <italic>i</italic> = 1, … , <italic>m</italic>. Let <italic>X</italic> = {<italic>x</italic><sub>1</sub>, … , <italic>x</italic><sub><italic>n</italic></sub>} be a set of inputs and <italic>Y</italic> = {<italic>Y</italic><sub>1</sub>, … , <italic>Y</italic><sub><italic>n</italic></sub>} be the set that consists of the observations of {<italic>g</italic><sub><italic>i</italic></sub>(<italic>x</italic>)|<italic>i</italic> = 1, … , <italic>m</italic>} on the input set <italic>X</italic>, where <italic>Y</italic><sub><italic>k</italic></sub> = {<italic>y</italic><sub><italic>i</italic></sub>(<italic>x</italic><sub><italic>k</italic></sub>)|<italic>i</italic> = 1, … , <italic>m</italic>}. For notional convenience, <italic>S</italic> = {(<italic>x</italic><sub>1</sub>, <italic>Y</italic><sub>1</sub>), … , (<italic>x</italic><sub><italic>n</italic></sub>, <italic>Y</italic><sub><italic>n</italic></sub>)} is named ‘training set,’ and <italic>Y</italic> is represented by a vector (<italic>y</italic><sub>1</sub>(<italic>x</italic><sub>1</sub>), … , <italic>y</italic><sub>1</sub>(<italic>x</italic><sub><italic>n</italic></sub>), … , <italic>y</italic><sub><italic>m</italic></sub>(<italic>x</italic><sub>1</sub>), … , <italic>y</italic><sub><italic>m</italic></sub>(<italic>x</italic><sub><italic>n</italic></sub>))<sup>T</sup> rather than the set {<italic>Y</italic><sub>1</sub>, … , <italic>Y</italic><sub><italic>n</italic></sub>}. The purpose of multi-task learning is to predict the function values {<italic>g</italic><sub>1</sub>(<italic>x</italic><sub>*</sub>), … , <italic>g</italic><sub><italic>m</italic></sub>(<italic>x</italic><sub>*</sub>)} for a new input <italic>x</italic><sub>*</sub> based on the training set <italic>S</italic>. To this end, the basic idea of MTGP is to place a Gaussian process prior over the functions {<italic>g</italic><sub><italic>i</italic></sub>(<italic>x</italic>)|<italic>i</italic> = 1, … , <italic>m</italic>, i.e. suppose {<italic>g</italic><sub><italic>i</italic></sub>(<italic>x</italic>)|<italic>i</italic> = 1, … , <italic>m</italic>} are Gaussian processes with zero mean and the following covariance
+<disp-formula id="disp-formula3-0954406212444508"><label>(3)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math3-0954406212444508"><mml:mrow><mml:mtext>cov</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>g</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>x</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>g</mml:mi></mml:mrow><mml:mrow><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>x</mml:mi><mml:mo>'</mml:mo><mml:mo stretchy="false">)</mml:mo><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:msubsup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>ij</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msubsup><mml:mi>k</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>x</mml:mi><mml:mo>,</mml:mo><mml:mi>x</mml:mi><mml:mo>'</mml:mo><mml:mo stretchy="false">)</mml:mo><mml:mo>,</mml:mo><mml:mi> </mml:mi><mml:mi> </mml:mi><mml:mi> </mml:mi><mml:mi>i</mml:mi><mml:mo>,</mml:mo><mml:mi> </mml:mi><mml:mi>j</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mi>m</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula3-0954406212444508" xlink:href="10.1177_0954406212444508-eq3.tif"/></disp-formula>
+where <italic>K</italic><sup><italic>g</italic></sup> is a positive semi-definite matrix that specifies the correlations among {<italic>g</italic><sub><italic>i</italic></sub>|<italic>i</italic> = 1, … , <italic>m</italic>} and <italic>k</italic>(·,·) a covariance function over input <italic>x</italic>; <italic>k</italic>(<italic>x, x</italic>′)= <inline-formula id="ilm2-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math2-0954406212444508"><mml:mrow><mml:mtext>exp</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mo>-</mml:mo><mml:mo>|</mml:mo><mml:mo>|</mml:mo><mml:mi>x</mml:mi><mml:mo>-</mml:mo><mml:mi>x</mml:mi><mml:mo>'</mml:mo><mml:mo>|</mml:mo><mml:mo>|</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:msup><mml:mrow><mml:mi>θ</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula> is used in this study.</p>
+<p>Let <italic>G</italic> = (<italic>g</italic><sub>1</sub>(<italic>x</italic><sub>1</sub>), … , <italic>g</italic><sub>1</sub>(<italic>x</italic><sub><italic>n</italic></sub>), … , <italic>g</italic><sub><italic>m</italic></sub>(<italic>x</italic><sub>1</sub>), … , <italic>g</italic><sub><italic>m</italic></sub>(<italic>x</italic><sub><italic>n</italic></sub>))<sup>T</sup> and <italic>G</italic><sub>*</sub> = (<italic>g</italic><sub>1</sub>(<italic>x</italic><sub>*</sub>), … , <italic>g</italic><sub><italic>m</italic></sub>(<italic>x</italic><sub>*</sub>))<sup>T</sup> be two vectors that, respectively, consist of the values of functions {<italic>g</italic><sub><italic>i</italic></sub>(<italic>x</italic>)|<italic>i</italic> = 1, … , <italic>m</italic>} on <italic>X</italic> and <italic>x</italic><sub>*</sub>. The following prior distributions over <italic>G</italic> and <italic>G</italic><sub>*</sub> can be obtained using equation (<xref ref-type="disp-formula" rid="disp-formula3-0954406212444508">3</xref>),
+<disp-formula id="disp-formula4-0954406212444508"><label>(4)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block" id="math4-0954406212444508"><mml:mrow><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>G</mml:mi><mml:mo>|</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mrow><mml:mi mathvariant="helvetica">N</mml:mi></mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mi>G</mml:mi><mml:mo>|</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:mi>K</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula4-0954406212444508" xlink:href="10.1177_0954406212444508-eq4.tif"/></disp-formula>
+<disp-formula id="disp-formula5-0954406212444508"><label>(5)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block" id="math5-0954406212444508"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>G</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:mi>G</mml:mi><mml:mo>|</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>x</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mrow><mml:mi mathvariant="helvetica">N</mml:mi></mml:mrow><mml:mrow><mml:mo/><mml:mo>(</mml:mo></mml:mrow><mml:mrow><mml:mo/><mml:mo>[</mml:mo></mml:mrow><mml:mtable align="left"><mml:mtr><mml:mtd columnalign="center"><mml:mrow><mml:msub><mml:mrow><mml:mi>G</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="center" columnspan="1"><mml:mrow><mml:mi>G</mml:mi></mml:mrow></mml:mtd></mml:mtr></mml:mtable><mml:mrow><mml:mo/><mml:mo>]</mml:mo></mml:mrow><mml:mo>|</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:mrow><mml:mo/><mml:mo>[</mml:mo></mml:mrow><mml:mtable align="left"><mml:mtr><mml:mtd columnalign="center"><mml:mrow><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo><mml:mo>*</mml:mo></mml:mrow></mml:msub></mml:mrow></mml:mtd><mml:mtd columnalign="center"><mml:mrow><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:msubsup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msubsup></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="center" columnspan="1"><mml:mrow><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub></mml:mrow></mml:mtd><mml:mtd columnalign="center"><mml:mrow><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:mi>K</mml:mi></mml:mrow></mml:mtd></mml:mtr></mml:mtable><mml:mrow><mml:mo/><mml:mo>]</mml:mo></mml:mrow><mml:mrow><mml:mo/><mml:mo>)</mml:mo></mml:mrow></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula5-0954406212444508" xlink:href="10.1177_0954406212444508-eq5.tif"/></disp-formula>
+where <italic>K</italic> is the covariance matrix of <italic>X</italic>, <italic>K</italic><sub>**</sub> = <italic>k</italic>(<italic>x</italic><sub>*</sub>, <italic>x</italic><sub>*</sub>), <italic>K</italic><sub>*</sub> is the covariance vector between <italic>X</italic> and <italic>x</italic><sub>*</sub>. Thus, the conditional prior
+<disp-formula id="disp-formula6-0954406212444508"><label>(6)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block" id="math6-0954406212444508"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>G</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>|</mml:mo><mml:mi>G</mml:mi><mml:mo>,</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>x</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mrow><mml:mi mathvariant="helvetica">N</mml:mi></mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>G</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>|</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msup><mml:mrow><mml:mi>I</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:msubsup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msubsup><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:mo stretchy="false">)</mml:mo><mml:mi>G</mml:mi><mml:mo>,</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mo>×</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:msubsup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msubsup><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula6-0954406212444508" xlink:href="10.1177_0954406212444508-eq6.tif"/></disp-formula>
+may be analytically deduced, where <italic>I</italic><sup><italic>g</italic></sup> is an identity matrix with the same order as <italic>K</italic><sup><italic>g</italic></sup>.</p>
+<p>We have assumed that the observation <italic>y</italic><sub><italic>i</italic></sub>(<italic>x</italic>) differs from the function value <italic>g</italic><sub><italic>i</italic></sub>(<italic>x</italic>) by additive noise ε<sub><italic>i</italic></sub>, and we will further assume that this noise follows an independent, identically distributed Gaussian distribution with zero mean and variance <inline-formula id="ilm3-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math3-0954406212444508"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>σ</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula>, i.e.
+<disp-formula id="disp-formula7-0954406212444508"><label>(7)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block" id="math7-0954406212444508"><mml:mrow><mml:msub><mml:mrow><mml:mi>ɛ</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo>~</mml:mo><mml:mrow><mml:mi mathvariant="helvetica">N</mml:mi></mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mi>σ</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup><mml:mo stretchy="false">)</mml:mo><mml:mo>,</mml:mo><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mi>m</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula7-0954406212444508" xlink:href="10.1177_0954406212444508-eq7.tif"/></disp-formula>
+Thus, we can obtain the likelihood
+<disp-formula id="disp-formula8-0954406212444508"><label>(8)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block" id="math8-0954406212444508"><mml:mrow><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>Y</mml:mi><mml:mo>|</mml:mo><mml:mi>G</mml:mi><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mrow><mml:mi mathvariant="helvetica">N</mml:mi></mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mi>Y</mml:mi><mml:mo>|</mml:mo><mml:mi>G</mml:mi><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo>⊗</mml:mo><mml:mi>I</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula8-0954406212444508" xlink:href="10.1177_0954406212444508-eq8.tif"/></disp-formula>
+where <inline-formula id="ilm4-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math4-0954406212444508"><mml:mrow><mml:mi>D</mml:mi><mml:mo>=</mml:mo><mml:mtext>diag</mml:mtext><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>σ</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mi>σ</mml:mi></mml:mrow><mml:mrow><mml:mi>m</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> and <italic>I</italic> is an identity matrix.</p>
+<p>Equipped with the prior (<xref ref-type="disp-formula" rid="disp-formula4-0954406212444508">4</xref>) and the likelihood (<xref ref-type="disp-formula" rid="disp-formula8-0954406212444508">8</xref>), a close-form of the posterior distribution <italic>p</italic>(<italic>G</italic>|<italic>Y</italic>, <italic>X</italic>, <italic>K</italic><sup><italic>g</italic></sup>, θ, <italic>D</italic>) can be deduced using Bayes' rule
+<disp-formula id="disp-formula9-0954406212444508"><label>(9)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block" id="math9-0954406212444508"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>G</mml:mi><mml:mo>|</mml:mo><mml:mi>Y</mml:mi><mml:mo>,</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>Y</mml:mi><mml:mo>|</mml:mo><mml:mi>G</mml:mi><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>G</mml:mi><mml:mo>|</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>Y</mml:mi><mml:mo>|</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mo>=</mml:mo><mml:mrow><mml:mi mathvariant="helvetica">N</mml:mi></mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mi>G</mml:mi><mml:mo>|</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:mi>K</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mrow><mml:mi>Σ</mml:mi></mml:mrow><mml:mrow><mml:mo>-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:mi>Y</mml:mi><mml:mo>,</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:mi>K</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mrow><mml:mi>Σ</mml:mi></mml:mrow><mml:mrow><mml:mo>-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:mo stretchy="false">(</mml:mo><mml:mi>D</mml:mi><mml:mo>⊗</mml:mo><mml:mi>I</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula9-0954406212444508" xlink:href="10.1177_0954406212444508-eq9.tif"/></disp-formula>
+where Σ = <italic>K</italic><sup><italic>g</italic></sup>⊗ <italic>K</italic> + <italic>D</italic>⊗ <italic>I</italic>, and
+<disp-formula id="disp-formula10-0954406212444508"><label>(10)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math10-0954406212444508"><mml:mrow><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>Y</mml:mi><mml:mo>|</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mo>∫</mml:mo><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>Y</mml:mi><mml:mo>|</mml:mo><mml:mi>G</mml:mi><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>G</mml:mi><mml:mo>|</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi>G</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula10-0954406212444508" xlink:href="10.1177_0954406212444508-eq10.tif"/></disp-formula>
+denotes the marginal likelihood for the hyperparameter θ, <italic>K</italic><sup><italic>g</italic></sup> and <italic>D</italic>.</p>
+<p>Using the conditional prior (<xref ref-type="disp-formula" rid="disp-formula6-0954406212444508">6</xref>) and the posterior (<xref ref-type="disp-formula" rid="disp-formula9-0954406212444508">9</xref>), we can obtain the predictive distribution of <italic>G</italic><sub>*</sub>
+<disp-formula id="disp-formula11-0954406212444508"><label>(11)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block" id="math11-0954406212444508"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>G</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>|</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:mi>Y</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>x</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mo>=</mml:mo><mml:mo>∫</mml:mo><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>G</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>|</mml:mo><mml:mi>G</mml:mi><mml:mo>,</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>X</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>G</mml:mi><mml:mo>|</mml:mo><mml:mi>Y</mml:mi><mml:mo>,</mml:mo><mml:mi>X</mml:mi><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>θ</mml:mi><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi>G</mml:mi></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mo>=</mml:mo><mml:mrow><mml:mi mathvariant="helvetica">N</mml:mi></mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>G</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>|</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:msup><mml:mrow><mml:mi>Σ</mml:mi></mml:mrow><mml:mrow><mml:mo>-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:mi>Y</mml:mi><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo><mml:mo>*</mml:mo></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>      </mml:mi><mml:mo>-</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:msup><mml:mrow><mml:mi>Σ</mml:mi></mml:mrow><mml:mrow><mml:mo>-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:mo stretchy="false">(</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula11-0954406212444508" xlink:href="10.1177_0954406212444508-eq11.tif"/></disp-formula>
+</p>
+<p>Thus, the mean prediction on a new input <italic>x</italic><sub>*</sub> for the <italic>i</italic>th task <italic>g</italic><sub><italic>i</italic></sub>(<italic>x</italic>) is
+<disp-formula id="disp-formula12-0954406212444508"><label>(12)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math12-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>g</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>x</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msubsup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msubsup><mml:mo>⊗</mml:mo><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:msup><mml:mrow><mml:mi>Σ</mml:mi></mml:mrow><mml:mrow><mml:mo>-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:mi>Y</mml:mi><mml:mo>,</mml:mo><mml:mi> </mml:mi><mml:mi>Σ</mml:mi><mml:mo>=</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:mi>K</mml:mi><mml:mo>+</mml:mo><mml:mi>D</mml:mi><mml:mo>⊗</mml:mo><mml:mi>I</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula12-0954406212444508" xlink:href="10.1177_0954406212444508-eq12.tif"/></disp-formula>
+where <inline-formula id="ilm5-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math5-0954406212444508"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> selects the <italic>i</italic>th column of <italic>K</italic><sup><italic>g</italic></sup>, and the hyperparameter θ, <italic>K</italic><sup><italic>g</italic></sup> and <italic>D</italic> can be obtained by maximizing the marginal likelihood <italic>p</italic>(<italic>Y</italic>|<italic>X</italic>, θ, <italic>K</italic><sup><italic>f</italic></sup>, <italic>D</italic>) (<xref ref-type="disp-formula" rid="disp-formula10-0954406212444508">10</xref>) using a gradient-based method. Until now, the whole MTGP algorithm has been presented.</p>
+<p>Let {<italic>Q</italic><sub><italic>k</italic></sub> = (<italic>x</italic><sub><italic>k</italic></sub>, <italic>y</italic><sub><italic>k</italic></sub>, <italic>z</italic><sub><italic>k</italic></sub>, α<sub><italic>k</italic></sub>, β<sub><italic>k</italic></sub>, γ<sub><italic>k</italic></sub>)<sup>T</sup>| <italic>k</italic> = 1, … , <italic>n</italic>} be a sample set of positional variables, the corresponding sample set {<italic>L</italic><sub><italic>k</italic></sub> = (<italic>l</italic><sub><italic>k</italic>1</sub>, … , <italic>l</italic><sub><italic>k</italic>6</sub>)<sup>T</sup> | <italic>k</italic> = 1, … , <italic>n</italic>} of link lengths can be computed using equation (<xref ref-type="disp-formula" rid="disp-formula1-0954406212444508">1</xref>). Taking <italic>S</italic> = {(<italic>L</italic><sub><italic>k</italic></sub>, <italic>Q</italic><sub><italic>k</italic></sub>)| <italic>k</italic> = 1, … , <italic>n</italic>} as a training set, we can obtain an approximation function <inline-formula id="ilm6-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math6-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> of <italic>f</italic><sub><italic>i</italic></sub> using equation (<xref ref-type="disp-formula" rid="disp-formula3-0954406212444508">12</xref>), <italic>i</italic> = 1, … , 6, i.e.
+<disp-formula id="disp-formula13-0954406212444508"><label>(13)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math13-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>L</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msubsup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msubsup><mml:mo>⊗</mml:mo><mml:msub><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:msup><mml:mrow><mml:mi>Σ</mml:mi></mml:mrow><mml:mrow><mml:mo>-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:mi>Y</mml:mi><mml:mo>,</mml:mo><mml:mi> </mml:mi><mml:mi>Σ</mml:mi><mml:mo>=</mml:mo><mml:msup><mml:mrow><mml:mi>K</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi></mml:mrow></mml:msup><mml:mo>⊗</mml:mo><mml:mi>K</mml:mi><mml:mo>+</mml:mo><mml:mi>D</mml:mi><mml:mo>⊗</mml:mo><mml:mi>I</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula13-0954406212444508" xlink:href="10.1177_0954406212444508-eq13.tif"/></disp-formula>
+It can be seen that the computational cost of equation (<xref ref-type="disp-formula" rid="disp-formula3-0954406212444508">13</xref>) is in proportion to <italic>n</italic>. Although <inline-formula id="ilm7-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math7-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>|</mml:mo><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mn>6</mml:mn><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> may also be taken as a solution of FKP, it usually cannot satisfy the requirement of real-time processing because it needs a big training set to obtain the desired accuracy. In the following section, we will first analyze the relationships between <inline-formula id="ilm8-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math8-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>|</mml:mo><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mn>6</mml:mn><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> and {<italic>x</italic>, <italic>y</italic>, <italic>z</italic>, α, β, γ}, and then use the obtained relationships to establish a simple iterative algorithm for solving FKP, which can satisfy the requirements for real-time processing and high accuracy.</p>
+</sec>
+<sec id="sec4-0954406212444508"><title>Iterative algorithm</title>
+<p>Equation (<xref ref-type="disp-formula" rid="disp-formula14-0954406212444508">14</xref>) may be obtained by substituting equation (<xref ref-type="disp-formula" rid="disp-formula1-0954406212444508">1</xref>) into equation (<xref ref-type="disp-formula" rid="disp-formula3-0954406212444508">13</xref>),
+<disp-formula id="disp-formula14-0954406212444508"><label>(14)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math14-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>x</mml:mi><mml:mo>,</mml:mo><mml:mi>y</mml:mi><mml:mo>,</mml:mo><mml:mi>z</mml:mi><mml:mo>,</mml:mo><mml:mi>α</mml:mi><mml:mo>,</mml:mo><mml:mi>β</mml:mi><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula14-0954406212444508" xlink:href="10.1177_0954406212444508-eq14.tif"/></disp-formula>
+For the convenience of expression, <inline-formula id="ilm9-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math9-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>|</mml:mo><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mn>6</mml:mn><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> are called intermediate variables. In order to analyze the relationships between <inline-formula id="ilm10-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math10-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>|</mml:mo><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mn>6</mml:mn><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> and {<italic>x</italic>, <italic>y</italic>, <italic>z</italic>, α, β, γ}, two sample sets <inline-formula id="ilm11-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math11-0954406212444508"><mml:mrow><mml:msup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msup><mml:mo>=</mml:mo><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>|</mml:mo><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm12-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math12-0954406212444508"><mml:mrow><mml:msup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msup><mml:mo>=</mml:mo><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>|</mml:mo><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> of positional variables are generated from the uniform distribution on the range of these positional variables; here, <italic>n</italic><sub>1</sub> = 500 and <italic>n</italic><sub>2</sub> = 1000. A sample set <inline-formula id="ilm13-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math13-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>L</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>|</mml:mo><mml:mi> </mml:mi><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> of link lengths corresponding to <italic>Q</italic><sup>(1)</sup> can be computed using equation (<xref ref-type="disp-formula" rid="disp-formula1-0954406212444508">1</xref>). Taking <inline-formula id="ilm14-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math14-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msubsup><mml:mrow><mml:mi>L</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo stretchy="false">)</mml:mo><mml:mo>|</mml:mo><mml:mi> </mml:mi><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> as a training set of equation (<xref ref-type="disp-formula" rid="disp-formula3-0954406212444508">13</xref>), we can obtain a sample set <italic>F</italic> = {<italic>F</italic><sub><italic>k</italic></sub>| <italic>k</italic> = 1, … , <italic>n</italic><sub>2</sub>} of <inline-formula id="ilm15-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math15-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>|</mml:mo><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mn>6</mml:mn><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> corresponding to <italic>Q</italic><sup>(2)</sup> from equation (<xref ref-type="disp-formula" rid="disp-formula14-0954406212444508">14</xref>); here, <italic>F<sub>k</sub></italic>= <inline-formula id="ilm16-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math16-0954406212444508"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>k</mml:mi><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>k</mml:mi><mml:mn>6</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula>, <inline-formula id="ilm17-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math17-0954406212444508"><mml:mrow><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>ki</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula>. <xref ref-type="fig" rid="fig2-0954406212444508">Figure 2</xref> visualizes the relationships between intermediate variables { <overline><italic>f<sub>i</sub></italic></overline>|<italic>i</italic>= 1, …, 6} and positional variables {<italic>x</italic>, <italic>y</italic>, <italic>z</italic>, α, β, γ} by plotting all the samples <inline-formula id="ilm18-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math18-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>F</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo stretchy="false">)</mml:mo><mml:mo>|</mml:mo><mml:mi> </mml:mi><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula>. The relationship between <inline-formula id="ilm19-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math19-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> and <italic>x</italic> may be concluded as follows: (1) <inline-formula id="ilm20-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math20-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> is mainly related to <italic>x</italic> and the other five positional variables do not have much effect on it. (2) <inline-formula id="ilm21-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math21-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>x</mml:mi><mml:mo>,</mml:mo><mml:mi>y</mml:mi><mml:mo>,</mml:mo><mml:mi>z</mml:mi><mml:mo>,</mml:mo><mml:mi>α</mml:mi><mml:mo>,</mml:mo><mml:mi>β</mml:mi><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula> is a monotone increasing continuous function of <italic>x</italic> if other positional variables are given. The relationships <inline-formula id="ilm22-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math22-0954406212444508"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>,</mml:mo><mml:mi>y</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula>, <inline-formula id="ilm23-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math23-0954406212444508"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>3</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>,</mml:mo><mml:mi>z</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula>, … , and <inline-formula id="ilm24-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math24-0954406212444508"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>6</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula> are the same as <inline-formula id="ilm25-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math25-0954406212444508"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>,</mml:mo><mml:mi>x</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula> and will not be repeated here.
+<fig id="fig2-0954406212444508" position="float"><label>Figure 2.</label><caption><p>The relationships between positional variables and <inline-formula id="ilm26-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math26-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>|</mml:mo><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mn>6</mml:mn><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula>.</p></caption><graphic xlink:href="10.1177_0954406212444508-fig2.tif"/>
+</fig></p>
+<p>Let <italic>L</italic><sub>*</sub> = (<italic>l</italic><sub>*1</sub>, … , <italic>l</italic><sub>*6</sub>)<sup>T</sup> be the given values of link lengths, the FKP of Stewart platform is to find the corresponding values of positional variables. The proposed algorithm includes two steps: (1) computing the values <inline-formula id="ilm27-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math27-0954406212444508"><mml:mrow><mml:msub><mml:mrow><mml:mi>F</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mo>*</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mo>*</mml:mo><mml:mn>6</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula> of intermediate variables corresponding to <italic>L</italic>_* using equation (<xref ref-type="disp-formula" rid="disp-formula3-0954406212444508">13</xref>). (2) Solving the equations <inline-formula id="ilm28-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math28-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mo>*</mml:mo><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>x</mml:mi><mml:mo>,</mml:mo><mml:mi>y</mml:mi><mml:mo>,</mml:mo><mml:mi>z</mml:mi><mml:mo>,</mml:mo><mml:mi>α</mml:mi><mml:mo>,</mml:mo><mml:mi>β</mml:mi><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>|</mml:mo><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mn>6</mml:mn><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula>, the solution (<italic>x</italic><sub>*</sub>, <italic>y</italic><sub>*</sub>, <italic>z</italic><sub>*</sub>, α<sub>*</sub>, β<sub>*</sub>, γ<sub>*</sub>) is the desired values of positional variables. Because <inline-formula id="ilm29-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math29-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>6</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> are mainly related to <italic>x</italic>, <italic>y</italic>, <italic>z</italic>, α, β, and γ, respectively, the equations <inline-formula id="ilm30-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math30-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mo>*</mml:mo><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>x</mml:mi><mml:mo>,</mml:mo><mml:mi>y</mml:mi><mml:mo>,</mml:mo><mml:mi>z</mml:mi><mml:mo>,</mml:mo><mml:mi>α</mml:mi><mml:mo>,</mml:mo><mml:mi>β</mml:mi><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>|</mml:mo><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:mn>6</mml:mn><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> can be solved using a simple iterative method. The flowchart of the proposed algorithm is shown in <xref ref-type="fig" rid="fig3-0954406212444508">Figure 3</xref>. The termination condition of the algorithm is that the difference <inline-formula id="ilm31-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math31-0954406212444508"><mml:mrow><mml:mo>|</mml:mo><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mo>*</mml:mo><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>x</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>y</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>z</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>α</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>β</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>γ</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo>|</mml:mo></mml:mrow></mml:math></inline-formula> is smaller than ε<sub><italic>i</italic></sub> for all <italic>i</italic> = 1, … , 6. Here, ε<sub>1</sub>, … , ε<sub>6</sub> are the critical values of the allowable errors of <italic>x</italic>, <italic>y</italic>, <italic>z</italic>, α, β, and γ, respectively. Because <inline-formula id="ilm32-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math32-0954406212444508"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>x</mml:mi><mml:mo>,</mml:mo><mml:mi>y</mml:mi><mml:mo>,</mml:mo><mml:mi>z</mml:mi><mml:mo>,</mml:mo><mml:mi>α</mml:mi><mml:mo>,</mml:mo><mml:mi>β</mml:mi><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula> is a monotone increasing continuous function of <italic>x</italic> if other positional variables are given, Nelder–Mead algorithm can be used to search <italic>x</italic><sub>*</sub> that satisfies <inline-formula id="ilm33-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math33-0954406212444508"><mml:mrow><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>f</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mo>*</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>x</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>y</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>z</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>α</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>β</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>γ</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula>. The detailed description of the algorithm searching for <italic>x</italic><sub>*</sub> is shown in <xref ref-type="fig" rid="fig4-0954406212444508">Figure 4</xref>. The algorithms searching for <italic>y</italic><sub>*</sub>, <italic>z</italic><sub>*</sub>, α<sub>*</sub>, β<sub>*</sub>, and γ<sub>*</sub> are the same as the algorithm of <italic>x</italic><sub>*</sub>. Hence, they will not be repeated here.
+<fig id="fig3-0954406212444508" position="float"><label>Figure 3.</label><caption><p>The flowchart of the proposed iterative algorithm.</p></caption><graphic xlink:href="10.1177_0954406212444508-fig3.tif"/>
+</fig>
+<fig id="fig4-0954406212444508" position="float"><label>Figure 4.</label><caption><p>The algorithm for searching <italic>x</italic><sub>*</sub>.</p></caption><graphic xlink:href="10.1177_0954406212444508-fig4.tif"/>
+</fig></p>
+</sec>
+<sec id="sec5-0954406212444508"><title>Simulations</title>
+<p>For investigating the performance of the proposed algorithm, a training set <inline-formula id="ilm34-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math34-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msubsup><mml:mrow><mml:mi>L</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo stretchy="false">)</mml:mo><mml:mo>|</mml:mo><mml:mi> </mml:mi><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> and a test set <inline-formula id="ilm35-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math35-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msubsup><mml:mrow><mml:mi>L</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo stretchy="false">)</mml:mo><mml:mo>|</mml:mo><mml:mi> </mml:mi><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> are created, where <inline-formula id="ilm36-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math36-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>|</mml:mo><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm37-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math37-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>|</mml:mo><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> are two sample sets of positional variables generated from the uniform distribution on their ranges; <inline-formula id="ilm38-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math38-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>L</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>|</mml:mo><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm39-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math39-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>L</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>|</mml:mo><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula>, which can be obtained using equation (<xref ref-type="disp-formula" rid="disp-formula1-0954406212444508">1</xref>), are the sample sets of link lengths corresponding to <inline-formula id="ilm40-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math40-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>|</mml:mo><mml:mi>k</mml:mi><mml:mo>=</mml:mo></mml:mrow></mml:math></inline-formula> <inline-formula id="ilm41-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math41-0954406212444508"><mml:mrow><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm42-0954406212444508"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math42-0954406212444508"><mml:mrow><mml:mo stretchy="false">{</mml:mo><mml:msubsup><mml:mrow><mml:mi>Q</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup><mml:mo>|</mml:mo><mml:mi>k</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula>, respectively. In the simulations, <italic>n</italic><sub>2</sub> is set to 5000; the training and test sets, respectively, are generated 10 times, and the average performance is recorded. In addition, the simulations are conducted on a 1.5 GHz CPU, 256 MB RAM computer system based on a Matlab implementation of the proposed algorithm.</p>
+<p><xref ref-type="table" rid="table1-0954406212444508">Table 1</xref> presents the computed results of proposed algorithm with different numbers of training samples when ε<sub>1</sub>, ε<sub>2</sub>, ε<sub>3</sub> = 0.01 mm and ε<sub>4</sub>, ε<sub>5</sub>, ε<sub>6</sub> = 0.003°. Here, MAE stands for mean absolute error and Perc stands for the percentage of samples that meet the allowable error. It can be seen that the performance of the proposed algorithm evidently improves when the number of training samples changes from 200 to 500 and then tends to level up in interval [500, 900]. <xref ref-type="table" rid="table2-0954406212444508">Table 2</xref> presents the computed results of the proposed algorithm with different allowable errors when <italic>n</italic><sub>1</sub> = 800. It could be observed that Perc is mainly related to the ratio of ε<sub>1</sub>, ε<sub>2</sub>, ε<sub>3</sub> to ε<sub>4</sub>, ε<sub>5</sub>, ε<sub>6</sub> and the computing time, and average number of iterations are related to the scale of allowable errors.
+<table-wrap id="table1-0954406212444508" position="float"><label>Table 1.</label><caption><p>The performance of the proposed algorithm with different numbers of training samples.</p></caption>
+<graphic alternate-form-of="table1-0954406212444508" xlink:href="10.1177_0954406212444508-table1.tif"/>
+<table frame="hsides"><thead>
+<tr><th/>
+<th/>
+<th>Average</th>
+<th/>
+<th colspan="6">MAE of positional variables<hr/></th>
+</tr>
+<tr><th>Number of training samples</th>
+<th>Time (s)</th>
+<th>number of iterations</th>
+<th>Perc (%)</th>
+<th><italic>x</italic> (10<sup>−2</sup> mm)</th>
+<th><italic>y</italic> (10<sup>−2</sup> mm)</th>
+<th><italic>z</italic> (10<sup>−2</sup> mm)</th>
+<th>α (10<sup>−3o</sup>)</th>
+<th>β (10<sup>−3o</sup>)</th>
+<th>γ (10<sup>−3o</sup>)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>0.3522</td>
+<td>4.8683</td>
+<td>77.26</td>
+<td>0.6190</td>
+<td>0.6793</td>
+<td>0.8101</td>
+<td>0.7603</td>
+<td>0.7712</td>
+<td>0.7873</td>
+</tr>
+<tr>
+<td>300</td>
+<td>0.2940</td>
+<td>4.1264</td>
+<td>86.83</td>
+<td>0.4443</td>
+<td>0.4904</td>
+<td>0.5788</td>
+<td>0.7172</td>
+<td>0.7370</td>
+<td>0.7571</td>
+</tr>
+<tr>
+<td>400</td>
+<td>0.2681</td>
+<td>3.7785</td>
+<td>90.93</td>
+<td>0.3418</td>
+<td>0.3877</td>
+<td>0.4494</td>
+<td>0.6930</td>
+<td>0.7224</td>
+<td>0.7328</td>
+</tr>
+<tr>
+<td>500</td>
+<td>0.2593</td>
+<td>3.5536</td>
+<td>92.53</td>
+<td>0.2938</td>
+<td>0.3338</td>
+<td>0.3849</td>
+<td>0.6877</td>
+<td>0.7130</td>
+<td>0.7194</td>
+</tr>
+<tr>
+<td>600</td>
+<td>0.2646</td>
+<td>3.4640</td>
+<td>93.26</td>
+<td>0.2754</td>
+<td>0.3230</td>
+<td>0.3740</td>
+<td>0.6924</td>
+<td>0.7127</td>
+<td>0.7206</td>
+</tr>
+<tr>
+<td>700</td>
+<td>0.2546</td>
+<td>3.2674</td>
+<td>94.64</td>
+<td>0.2545</td>
+<td>0.2896</td>
+<td>0.3319</td>
+<td>0.6841</td>
+<td>0.7151</td>
+<td>0.7216</td>
+</tr>
+<tr>
+<td>800</td>
+<td>0.2475</td>
+<td>3.1198</td>
+<td>95.89</td>
+<td>0.2256</td>
+<td>0.2639</td>
+<td>0.2927</td>
+<td>0.6842</td>
+<td>0.7045</td>
+<td>0.7124</td>
+</tr>
+<tr>
+<td>900</td>
+<td>0.2447</td>
+<td>2.9877</td>
+<td>96.68</td>
+<td>0.2180</td>
+<td>0.2462</td>
+<td>0.2781</td>
+<td>0.6843</td>
+<td>0.6928</td>
+<td>0.7032</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn>
+<p>MAE: mean absolute error.</p></fn></table-wrap-foot>
+</table-wrap>
+<table-wrap id="table2-0954406212444508" position="float"><label>Table 2.</label><caption><p>The performance of the proposed algorithm with different allowable errors.</p></caption>
+<graphic alternate-form-of="table2-0954406212444508" xlink:href="10.1177_0954406212444508-table2.tif"/>
+<table frame="hsides"><thead>
+<tr><th colspan="2">Allowable errors<hr/></th>
+<th rowspan="2">Time</th>
+<th rowspan="3">Average number of iterations</th>
+<th rowspan="2">Perc</th>
+<th colspan="6">MAE of positional variables<hr/></th>
+</tr>
+<tr><th>ϵ<sub>1</sub>, ϵ<sub>2</sub>, ϵ<sub>3</sub></th>
+<th>ϵ<sub>4</sub>, ϵ<sub>5</sub>, ϵ<sub>6</sub></th>
+<th><italic>x</italic></th>
+<th><italic>y</italic></th>
+<th><italic>z</italic></th>
+<th>α</th>
+<th>β</th>
+<th>γ</th>
+</tr>
+<tr><th>(mm)</th>
+<th>(°)</th>
+<th>(s)</th>
+<th>(%)</th>
+<th>(mm)</th>
+<th>(mm)</th>
+<th>(mm)</th>
+<th>(°)</th>
+<th>(°)</th>
+<th>(°)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>0.25</td>
+<td>0.01</td>
+<td>0.1244</td>
+<td>2.2260</td>
+<td>99.23</td>
+<td>3.8 × 10<sup>−2</sup></td>
+<td>4.2 × 10<sup>−2</sup></td>
+<td>4.6 × 10<sup>−2</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.8 × 10<sup>−2</sup></td>
+</tr>
+<tr>
+<td>0.1</td>
+<td>0.01</td>
+<td>0.1526</td>
+<td>2.4589</td>
+<td>98.62</td>
+<td>1.7 × 10<sup>−2</sup></td>
+<td>2.0 × 10<sup>−2</sup></td>
+<td>2.2 × 10<sup>−2</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.6 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>0.05</td>
+<td>0.01</td>
+<td>0.1662</td>
+<td>2.5780</td>
+<td>97.83</td>
+<td>9.8 × 10<sup>−3</sup></td>
+<td>1.1 × 10<sup>−2</sup></td>
+<td>1.2 × 10<sup>−2</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>0.025</td>
+<td>0.01</td>
+<td>0.1849</td>
+<td>2.7827</td>
+<td>93.90</td>
+<td>7.0 × 10<sup>−3</sup></td>
+<td>7.8 × 10<sup>−3</sup></td>
+<td>8.7 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>0.01</td>
+<td>0.01</td>
+<td>0.2166</td>
+<td>3.0461</td>
+<td>78.50</td>
+<td>5.2 × 10<sup>−3</sup></td>
+<td>6.1 × 10<sup>−3</sup></td>
+<td>6.2 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>0.01</td>
+<td>0.001</td>
+<td>0.2859</td>
+<td>3.1859</td>
+<td>98.86</td>
+<td>1.6 × 10<sup>−3</sup></td>
+<td>1.9 × 10<sup>−3</sup></td>
+<td>2.1 × 10<sup>−3</sup></td>
+<td>2.3 × 10<sup>−4</sup></td>
+<td>2.5 × 10<sup>−4</sup></td>
+<td>2.5 × 10<sup>−4</sup></td>
+</tr>
+<tr>
+<td>0.001</td>
+<td>0.0001</td>
+<td>0.4435</td>
+<td>3.6863</td>
+<td>98.93</td>
+<td>1.6 × 10<sup>−4</sup></td>
+<td>1.7 × 10<sup>−4</sup></td>
+<td>1.9 × 10<sup>−4</sup></td>
+<td>2.4 × 10<sup>−5</sup></td>
+<td>2.4 × 10<sup>−5</sup></td>
+<td>2.5 × 10<sup>−5</sup></td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn>
+<p>MAE: mean absolute error.</p></fn></table-wrap-foot>
+</table-wrap></p>
+<p>In order to evaluate the relative performance of the proposed algorithm, it is compared with three published algorithms. Because the codes are difficult to be implemented or obtained, all the information of the published algorithms is taken from their original literatures. The second column in <xref ref-type="table" rid="table3-0954406212444508">Table 3</xref> presents the reported best accuracy of each algorithm. It can be seen, as far as the accuracy is concerned, the proposed algorithm can achieve superior performance to the published algorithms. The third and the fourth columns in <xref ref-type="table" rid="table3-0954406212444508">Table 3</xref>, respectively, present the computed time of each algorithm and the configuration of the computer system on which the simulations are conducted, it can be seen that the proposed algorithm will spend more computing time than iterative artificial neural network algorithm<sup><xref ref-type="bibr" rid="bibr8-0954406212444508">8</xref></sup> and Parikh's algorithm<sup><xref ref-type="bibr" rid="bibr7-0954406212444508">7</xref></sup>. However, today, a common personal computer has been with 2.7 GHz CPU, 2 GB RAM, which is enough to make the proposed algorithm satisfy the requirements for real-time processing of many applications.
+<table-wrap id="table3-0954406212444508" position="float"><label>Table 3.</label><caption><p>Comparison of different algorithms.</p></caption>
+<graphic alternate-form-of="table3-0954406212444508" xlink:href="10.1177_0954406212444508-table3.tif"/>
+<table frame="hsides"><thead>
+<tr><th>Algorithms</th>
+<th>Accuracy</th>
+<th>Time (s)</th>
+<th>Computer systems</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Parikh's algorithm<sup><xref ref-type="bibr" rid="bibr7-0954406212444508">7</xref></sup></td>
+<td>0.01 mm, 0.01°</td>
+<td>0.02</td>
+<td>0.5 GHz CPU, 128 MB RAM</td>
+</tr>
+<tr>
+<td>PCA-based algorithm<sup><xref ref-type="bibr" rid="bibr12-0954406212444508">12</xref></sup></td>
+<td>0.01 mm, 0.0003°</td>
+<td>&gt;1</td>
+<td>1.8 GHz CPU, 512 MB RAM</td>
+</tr>
+<tr>
+<td>Iterative ANN<sup><xref ref-type="bibr" rid="bibr8-0954406212444508">8</xref></sup></td>
+<td>0.25 mm, 0.01°</td>
+<td>0.1</td>
+<td>0.5 GHz CPU, 128 MB RAM</td>
+</tr>
+<tr>
+<td>The proposed algorithm</td>
+<td>0.001 mm, 0.0001°</td>
+<td>0.4</td>
+<td>1.5 GHz CPU, 256 MB RAM</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn>
+<p>PCA: principal component analysis and ANN: artificial neural network.</p></fn></table-wrap-foot>
+</table-wrap></p>
+<p>At last, in order to evaluate the performance of the proposed algorithm on the Stewart platform adopting other geometrical parameters, it is applied to a 6-3 Stewart platform used by Yurt et al.<sup><xref ref-type="bibr" rid="bibr6-0954406212444508">6</xref></sup> <xref ref-type="table" rid="table4-0954406212444508">Table 4</xref> presents some results of the proposed algorithm using 800 training samples. It can be seen that the proposed algorithm also can achieve superior performance.
+<table-wrap id="table4-0954406212444508" position="float"><label>Table 4.</label><caption><p>The performance of the proposed algorithm on the Setwart platform used by Yurt et al.<sup><xref ref-type="bibr" rid="bibr6-0954406212444508">6</xref></sup></p></caption>
+<graphic alternate-form-of="table4-0954406212444508" xlink:href="10.1177_0954406212444508-table4.tif"/>
+<table frame="hsides"><thead>
+<tr><th colspan="2">Allowable error<hr/></th>
+<th rowspan="2">Time</th>
+<th rowspan="3">Average number of iterations</th>
+<th rowspan="2">Perc</th>
+<th colspan="6">MAE of positional variables<hr/></th>
+</tr>
+<tr><th>ϵ<sub>1</sub>, ϵ<sub>2</sub>, ϵ<sub>3</sub></th>
+<th>ϵ<sub>4</sub>, ϵ<sub>5</sub>, ϵ<sub>6</sub></th>
+<th><italic>x</italic></th>
+<th><italic>y</italic></th>
+<th><italic>z</italic></th>
+<th>α</th>
+<th>β</th>
+<th>γ</th>
+</tr>
+<tr><th>(mm)</th>
+<th>(°)</th>
+<th>(s)</th>
+<th>(%)</th>
+<th>(mm)</th>
+<th>(mm)</th>
+<th>(mm)</th>
+<th>(°)</th>
+<th>(°)</th>
+<th>(°)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>(0.1</td>
+<td>0.01</td>
+<td>0.0565</td>
+<td>1.768</td>
+<td>100</td>
+<td>1.4 × 10<sup>−2</sup></td>
+<td>1.5 × 10<sup>−2</sup></td>
+<td>1.2 × 10<sup>−2</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>0.05</td>
+<td>0.01</td>
+<td>0.0613</td>
+<td>1.1573</td>
+<td>100</td>
+<td>7.6 × 10<sup>−3</sup></td>
+<td>7.7 × 10<sup>−3</sup></td>
+<td>5.7 × 10<sup>−3</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>0.01</td>
+<td>0.01</td>
+<td>0.0907</td>
+<td>1.6279</td>
+<td>100</td>
+<td>1.6 × 10<sup>−3</sup></td>
+<td>1.6 × 10<sup>−3</sup></td>
+<td>1.4 × 10<sup>−3</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>0.002</td>
+<td>0.01</td>
+<td>0.1318</td>
+<td>2.0172</td>
+<td>99.03</td>
+<td>4.5 × 10<sup>−4</sup></td>
+<td>4.0 × 10<sup>−4</sup></td>
+<td>2.9 × 10<sup>−4</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>0.001</td>
+<td>0.01</td>
+<td>0.1445</td>
+<td>2.0657</td>
+<td>92.36</td>
+<td>3.3 × 10<sup>−4</sup></td>
+<td>3.1 × 10<sup>−4</sup></td>
+<td>1.9 × 10<sup>−4</sup></td>
+<td>2.5 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+<td>2.4 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>0.001</td>
+<td>0.001</td>
+<td>0.1653</td>
+<td>2.065</td>
+<td>100</td>
+<td>1.4 × 10<sup>−4</sup></td>
+<td>1.4 × 10<sup>−4</sup></td>
+<td>1.3 × 10<sup>−4</sup></td>
+<td>2.5 × 10<sup>−4</sup></td>
+<td>2.3 × 10<sup>−4</sup></td>
+<td>2.3 × 10<sup>−4</sup></td>
+</tr>
+<tr>
+<td>0.0001</td>
+<td>0.0001</td>
+<td>0.2523</td>
+<td>2.3965</td>
+<td>100</td>
+<td>1.5 × 10<sup>−5</sup></td>
+<td>1.6 × 10<sup>−5</sup></td>
+<td>1.4 × 10<sup>−5</sup></td>
+<td>2.3 × 10<sup>−5</sup></td>
+<td>2.4 × 10<sup>−5</sup></td>
+<td>2.4 × 10<sup>−5</sup></td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn>
+<p>MAE: mean absolute error.</p></fn></table-wrap-foot>
+</table-wrap></p>
+</sec>
+<sec id="sec6-0954406212444508" sec-type="conclusions"><title>Conclusions</title>
+<p>The forward kinematics is essential for the applications of Stewart platform. Although many approaches have been developed, it is still a challenge to devise a methodology for general Stewart platform that satisfies the requirements for high accuracy and real-time processing. Unlike the convention taking the positional variables as independent ones and solving them individually, this article presents an alternative approach which considers the variables as multiple-related tasks and solves them simultaneously. Simulation results show that the proposed algorithm can achieve superior performance.</p>
+</sec>
+</body>
+<back>
+<sec id="sec7-0954406212444508"><title>Funding</title>
+<p>This study was supported by China Earthquake Research Funds (grant no. 200808075) and Liaoning Provincial Natural Science Foundation of China (grant no. 20102025).</p>
+</sec>
+<sec>
+<title>Conflict of interests</title>
+<p>None Declared.</p>
+</sec>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Lee</surname><given-names>TY</given-names></name><name><surname>Shim</surname><given-names>JK</given-names></name></person-group>. <article-title>Forward kinematics of the general 6-6 Stewart platform using algebraic elimination</article-title>. <source>Mech Mach Theory</source> <year>2001</year>; <volume>36</volume>: <fpage>1073</fpage>–<lpage>1085</lpage>.</citation></ref>
+<ref id="bibr2-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Lee</surname><given-names>TY</given-names></name><name><surname>Shim</surname><given-names>JK</given-names></name></person-group>. <article-title>Improved dialytic elimination algorithm for the forward kinematics of the general Stewart-Gough platform</article-title>. <source>Mech Mach Theory</source> <year>2003</year>; <volume>38</volume>: <fpage>563</fpage>–<lpage>577</lpage>.</citation></ref>
+<ref id="bibr3-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Mu</surname><given-names>Z</given-names></name><name><surname>Kazerounian</surname><given-names>K</given-names></name></person-group>. <article-title>A real parameter continuation method for complete solution of forward position analysis of the general Stewart</article-title>. <source>J Mech Des</source> <year>2002</year>; <volume>124</volume>: <fpage>236</fpage>–<lpage>244</lpage>.</citation></ref>
+<ref id="bibr4-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Dong</surname><given-names>B</given-names></name><name><surname>Zhang</surname><given-names>X</given-names></name></person-group>. <article-title>Continuation method applied in kinematics of parallel robot</article-title>. <source>Appl Math Mech</source> <year>2001</year>; <volume>22</volume>: <fpage>1278</fpage>–<lpage>1284</lpage>.</citation></ref>
+<ref id="bibr5-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Merlet</surname><given-names>JP</given-names></name></person-group>. <article-title>Solving the forward kinematics of a Gough-type parallel manipulator with interval analysis</article-title>. <source>Int J Rob Res</source> <year>2004</year>; <volume>23</volume>: <fpage>221</fpage>–<lpage>235</lpage>.</citation></ref>
+<ref id="bibr6-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Yurt</surname><given-names>SN</given-names></name><name><surname>Anli</surname><given-names>E</given-names></name><name><surname>Ozkol</surname><given-names>I</given-names></name></person-group>. <article-title>Forward kinematics analysis of the 6-3 SPM by using neural networks</article-title>. <source>Meccanica</source> <year>2007</year>; <volume>42</volume>: <fpage>187</fpage>–<lpage>196</lpage>.</citation></ref>
+<ref id="bibr7-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Parikh</surname><given-names>PJ</given-names></name><name><surname>Lam</surname><given-names>SS</given-names></name></person-group>. <article-title>A hybrid strategy to solve the forward kinematics problem in parallel manipulators</article-title>. <source>IEEE Trans Rob</source> <year>2005</year>; <volume>21</volume>(<issue>1</issue>): <fpage>18</fpage>–<lpage>25</lpage>.</citation></ref>
+<ref id="bibr8-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Parikh</surname><given-names>PJ</given-names></name><name><surname>Lam</surname><given-names>SS</given-names></name></person-group>. <article-title>Solving the forward kinematics problem in parallel manipulators using an iterative artificial neural network strategy</article-title>. <source>Int J Adv Manuf Technol</source> <year>2009</year>; <volume>40</volume>: <fpage>595</fpage>–<lpage>606</lpage>.</citation></ref>
+<ref id="bibr9-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Wang</surname><given-names>YF</given-names></name></person-group>. <article-title>A direct numerical solution to forward kinematics of general Stewart-Gough platforms</article-title>. <source>Robotica</source> <year>2007</year>; <volume>25</volume>: <fpage>121</fpage>–<lpage>128</lpage>.</citation></ref>
+<ref id="bibr10-0954406212444508"><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Liu</surname><given-names>S</given-names></name><name><surname>Li</surname><given-names>W</given-names></name><name><surname>Du</surname><given-names>Y</given-names></name><etal/></person-group>. <article-title>Forward kinematics of the Stewart platform using hybrid immune genetic algorithm</article-title>. <source>IEEE international conference on mechatronics and automation</source>, <publisher-loc>Luoyang, China</publisher-loc>, <year>25–28 June 2006</year>, pp.<fpage>2330</fpage>–<lpage>2335</lpage>. <publisher-name>United States: Inst. of Elec. and Elec. Eng. Computer Society</publisher-name>.</citation></ref>
+<ref id="bibr11-0954406212444508"><citation citation-type="book"><person-group person-group-type="author"><name><surname>Chen</surname><given-names>S</given-names></name><name><surname>Huang</surname><given-names>C</given-names></name><name><surname>Fu</surname><given-names>L</given-names></name></person-group>. <article-title>Applying a nonlinear observer to solve forward kinematics of a Stewart platform</article-title>. <source>The 17th IEEE international conference on control applications</source> <publisher-loc>San Antonio, TX, United states</publisher-loc>, <year>3–5 September 2008</year>, pp.<fpage>1183</fpage>–<lpage>1188</lpage>.</citation></ref>
+<ref id="bibr12-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Wang</surname><given-names>ZL</given-names></name><name><surname>He</surname><given-names>JJ</given-names></name><name><surname>Shang</surname><given-names>H</given-names></name><etal/></person-group>. <article-title>Forward kinematics analysis of a six-DOF Stewart platform using PCA and NM algorithm</article-title>. <source>Ind Rob: Int J</source> <year>2009</year>; <volume>36</volume>(<issue>5</issue>): <fpage>448</fpage>–<lpage>460</lpage>.</citation></ref>
+<ref id="bibr13-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Wang</surname><given-names>ZL</given-names></name><name><surname>He</surname><given-names>JJ</given-names></name><name><surname>Gu</surname><given-names>H</given-names></name></person-group>. <article-title>Forward kinematics analysis of a six-degree-of-freedom Stewart platform based on independent component analysis and Nelder-Mead algorithm</article-title>. <source>IEEE Trans Syst Man Cybern Part A Syst Humans</source> <year>2011</year>; <volume>41</volume>(<issue>3</issue>): <fpage>589</fpage>–<lpage>597</lpage>.</citation></ref>
+<ref id="bibr14-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Caruana</surname><given-names>R</given-names></name></person-group>. <article-title>Multitask learning</article-title>. <source>Mach Learn</source> <year>1997</year>; <volume>28</volume>(<issue>1</issue>): <fpage>41</fpage>–<lpage>75</lpage>.</citation></ref>
+<ref id="bibr15-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Bakker</surname><given-names>B</given-names></name><name><surname>Heskes</surname><given-names>T</given-names></name></person-group>. <article-title>Task clustering and gating for Bayesian multitask learning</article-title>. <source>J Mach Learn Res</source> <year>2003</year>; <volume>4</volume>: <fpage>83</fpage>–<lpage>99</lpage>.</citation></ref>
+<ref id="bibr16-0954406212444508"><citation citation-type="book"><person-group person-group-type="author"><name><surname>Zhang</surname><given-names>J</given-names></name><name><surname>Ghahramani</surname><given-names>Z</given-names></name><name><surname>Yang</surname><given-names>Y</given-names></name></person-group>. <article-title>Learning multiple related tasks using latent independent component analysis</article-title>. In: <source>Advances in neural information processing systems 18</source> (<person-group person-group-type="editor"><name><surname>Weiss</surname><given-names>Y</given-names></name><name><surname>Schölkopf</surname><given-names>B</given-names></name><name><surname>Platt</surname><given-names>J</given-names></name></person-group> eds). <publisher-loc>Cambridge, MA</publisher-loc>: <publisher-name>MIT Press</publisher-name>, <year>2006</year>, pp.<fpage>1585</fpage>–<lpage>1592</lpage>.</citation></ref>
+<ref id="bibr17-0954406212444508"><citation citation-type="book"><person-group person-group-type="author"><name><surname>Lawrence</surname><given-names>ND</given-names></name><name><surname>Platt</surname><given-names>IC</given-names></name></person-group>. <article-title>Learning to learn with the informative vector machine</article-title>. In: <source>Proceedings of the 21st International Conference on Machine Learning</source>, <year>2004</year>.</citation></ref>
+<ref id="bibr18-0954406212444508"><citation citation-type="book"><person-group person-group-type="author"><name><surname>Alvarez</surname><given-names>MA</given-names></name><name><surname>Lawrence</surname><given-names>ND</given-names></name></person-group>. <article-title>Sparse convolved Gaussian processes for multioutput regression</article-title>. In: <person-group person-group-type="editor"><name><surname>Koller</surname><given-names>D</given-names></name><name><surname>Schuurmans</surname><given-names>D</given-names></name><name><surname>Bengio</surname><given-names>Y Bottou</given-names></name></person-group> (eds) <source>Advances in neural information processing systems 21</source>. <publisher-loc>Cambridge, MA</publisher-loc>: <publisher-name>MIT Press</publisher-name>, <year>2009</year>, pp.<fpage>57</fpage>–<lpage>64</lpage>.</citation></ref>
+<ref id="bibr19-0954406212444508"><citation citation-type="book"><person-group person-group-type="author"><name><surname>Bonilla</surname><given-names>EV</given-names></name><name><surname>Chai</surname><given-names>KMA</given-names></name><name><surname>Williams</surname><given-names>CKI</given-names></name></person-group>. <article-title>Multi-task Gaussian process prediction</article-title>. In: <person-group person-group-type="editor"><name><surname>Platt</surname><given-names>J</given-names></name><name><surname>Koller</surname><given-names>D</given-names></name><name><surname>Singer</surname><given-names>Y</given-names></name><name><surname>Roweis</surname><given-names>S</given-names></name></person-group> (eds) <source>Advances in neural information processing systems 20</source>. <publisher-loc>Cambridge, MA</publisher-loc>: <publisher-name>MIT Press</publisher-name>, <year>2008</year>, pp.<fpage>153</fpage>–<lpage>160</lpage>.</citation></ref>
+<ref id="bibr20-0954406212444508"><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Evgeniou</surname><given-names>T</given-names></name><name><surname>Micchelli</surname><given-names>C</given-names></name><name><surname>Pontil</surname><given-names>M</given-names></name></person-group>. <article-title>Learning multiple tasks with kernel methods</article-title>. <source>J Mach Learn Res</source> <year>2005</year>; <volume>6</volume>: <fpage>615</fpage>–<lpage>637</lpage>.</citation></ref>
+<ref id="bibr21-0954406212444508"><citation citation-type="book"><person-group person-group-type="author"><name><surname>Dieudonne</surname><given-names>JE</given-names></name><name><surname>Parrish</surname><given-names>RV</given-names></name><name><surname>Bardusch</surname><given-names>RE</given-names></name></person-group>. <article-title>An actuator extension transformation for a motion simulator and an inverse transformation applying Newton-Raphsons method</article-title>. <source>NASA Technical Report TND-7067</source>. <publisher-loc>NASA Langley Research Center</publisher-loc>: <publisher-name>Hampton, VA</publisher-name>, <year>1972</year>.</citation></ref>
+</ref-list>
+<app-group>
+<app>
+<title/>
+<sec>
+<title>Appendix</title>
+<sec>
+<title>Notation</title><def-list><def-item><term>cov(<italic>x</italic>, <italic>y</italic>)</term><def>
+<p>covariance between two random variables (processes) <italic>x</italic> and <italic>y</italic></p></def></def-item><def-item><term>diag{<italic>a</italic><sub>1</sub>, … , <italic>a</italic><sub><italic>n</italic></sub>}</term><def>
+<p>diagonal matrix with <italic>a</italic><sub>1</sub>, … , <italic>a</italic><sub><italic>n</italic></sub> on its diagonal</p></def></def-item><def-item><term>exp(·)</term><def>
+<p>exponential function</p></def></def-item><def-item><term>𝒩(<italic>x</italic>|μ, σ)</term><def>
+<p>the variable <italic>x</italic> has a Gaussian</p></def></def-item><def-item><term>or <italic>x</italic>∼𝒩(μ, σ)</term><def>
+<p>distribution with mean μ and covariance σ</p></def></def-item><def-item><term><italic>p</italic> (<italic>A</italic>|<italic>B</italic>)</term><def>
+<p>conditional probability of <italic>A</italic> given <italic>B</italic></p></def></def-item><def-item><term>||<italic>v</italic>||</term><def>
+<p><italic>l</italic><sup>2</sup>-norm (Euclidean norm) of the vector <italic>v</italic></p></def></def-item><def-item><term><italic>v</italic><sup>T</sup></term><def>
+<p>transpose of the vector (matrix) <italic>v</italic></p></def></def-item><def-item><term>⊗</term><def>
+<p>Kronecker product</p></def></def-item></def-list>
+</sec>
+</sec></app>
+</app-group>
+</back>
+</article>

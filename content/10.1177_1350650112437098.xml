@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PIJ</journal-id>
+<journal-id journal-id-type="hwp">sppij</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part J: Journal of Engineering Tribology</journal-title>
+<issn pub-type="ppub">1350-6501</issn>
+<issn pub-type="epub">2041-305X</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1350650112437098</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1350650112437098</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>On the linear finite element analysis of fully coupled point contact elastohydrodynamic lubrication problems</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Ahmed</surname><given-names>Sarfraz</given-names></name>
+<xref ref-type="corresp" rid="corresp1-1350650112437098"/>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Goodyer</surname><given-names>Christopher E</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Jimack</surname><given-names>Peter K</given-names></name>
+</contrib>
+</contrib-group>
+<aff id="aff1-1350650112437098">School of Computing, University of Leeds, UK</aff>
+<author-notes>
+<corresp id="corresp1-1350650112437098">Sarfraz Ahmed, School of Computing, University of Leeds, Leeds LS2 9JT, UK. Email: <email>scsa@leeds.ac.uk</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>5</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>5</issue>
+<fpage>350</fpage>
+<lpage>361</lpage>
+<history>
+<date date-type="received"><day>28</day><month>7</month><year>2011</year></date>
+<date date-type="accepted"><day>6</day><month>1</month><year>2012</year></date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>The fully coupled approach for the solution of elastohydrodynamic lubrication point contact problems requires the numerical solution of the elasticity problem on a large 3D domain. A sufficiently fine computational mesh is required to obtain the elastic deformation solution to the necessary accuracy, and hence, a sufficiently accurate elastohydrodynamic lubrication point contact solution. This article discusses the accuracy of an elastohydrodynamic lubrication point contact solution over different finite element meshes. We present a family of efficient 3D meshes which can be used to calculate accurate elastohydrodynamic lubrication point contact solutions at a minimal computational cost. This article also illustrates the fact that the unstructured hierarchical meshes can lead to a poor quality elastohydrodynamic lubrication solution unless an appropriate post-processing, smoothing technique is applied.</p>
+</abstract>
+<kwd-group>
+<kwd>Elastohydrodynamic lubrication</kwd>
+<kwd>finite element method</kwd>
+<kwd>linear elasticity</kwd>
+<kwd>fully coupled approach</kwd>
+<kwd>efficient meshes</kwd>
+<kwd>hierarchical meshes</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="sec1-1350650112437098" sec-type="intro"><title>Introduction</title>
+<p>Elastohydrodynamic lubrication (EHL) deals with the behaviour of lubricant film between the moving components of mechanical systems. The shape of the lubricant film is determined by the geometry of the contacting elements as well as the lubricant properties. If the pressure generated inside the lubricant film is sufficient, then the contacting elements will deform elastically, and hence, define a new shape of lubricant film. This class of problem is known as EHL.</p>
+<p>Since the shape of an EHL film depends only upon the elastic deformation of contact surfaces, if we are only interested in the film thickness, and the associated pressure profile through the contact, then we only need to compute the elastic deformation of the surfaces themselves. Most traditional approaches<xref ref-type="bibr" rid="bibr1-1350650112437098">1</xref><sup>–</sup><xref ref-type="bibr" rid="bibr5-1350650112437098">5</xref> exploit this by computing the elastic deformation of the contact surfaces using a half-space approach which is based upon an analytical solution of the elasticity equations on a semi-infinite domain. A number of efficient numerical techniques have been developed, such as the multigrid technique<xref ref-type="bibr" rid="bibr1-1350650112437098">1</xref> which provided a faster convergence rate and hence reduced the computational cost. Further computation time reductions were achieved by Brandt and Lubrecht<xref ref-type="bibr" rid="bibr2-1350650112437098">2</xref> introducing the multilevel multi-integration (MLMI) technique, in which computation of the elastic deformation integral was accelerated. This was further developed by Venner,<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref><sup>,</sup><xref ref-type="bibr" rid="bibr6-1350650112437098">6</xref> Nurgat<xref ref-type="bibr" rid="bibr4-1350650112437098">4</xref> and Goodyer.<xref ref-type="bibr" rid="bibr5-1350650112437098">5</xref> These methods limit the discretization process to regular structured rectangular meshes using low-order (usually finite difference) approximations. Furthermore, these methods are also based on a loose coupling between the governing equations (the Reynolds equation, the film thickness equation and a load balance equation), which can lead to a relatively slow convergence rate due to loss of information during the iterative link between the pressure and film thickness solutions. Nevertheless, an efficient multigrid and MLMI combination still represents one of the most effective numerical procedures for computing the pressure and film thickness to date.</p>
+<p>An alternative to the loose coupling is the full-system approach, which consists of solving the discretized governing EHL equations simultaneously. A Newton–Raphson full-system approach was first used by Oh and Rohde.<xref ref-type="bibr" rid="bibr7-1350650112437098">7</xref> This method ensures the convergence of the solution in few outer iterations, still based on the half-space approach for the elastic deflection. The drawback of this approach, however, is that use of the half-space solution requires information from all points in the domain to calculate the deflection at each point, which makes the Jacobian matrix dense. Finally, for heavy loads, the Jacobian matrix becomes almost singular, which can make it very hard to reach the solution. From 2000, a ‘differential deflection method’, also based on the half-space approach, was introduced by Evans, Hughes and co-workers.<xref ref-type="bibr" rid="bibr8-1350650112437098">8</xref><sup>–</sup><xref ref-type="bibr" rid="bibr11-1350650112437098">11</xref> Here, derivatives are taken of the deflection to represent it as a second-order differential system. The advantage of this method is that it requires information from comparatively fewer points in the domain to calculate the elastic deflection at each point. This leads to a less dense matrix. Recently, Habchi<xref ref-type="bibr" rid="bibr12-1350650112437098">12</xref><sup>–</sup><xref ref-type="bibr" rid="bibr14-1350650112437098">14</xref> extended this full-system approach further by discarding the half-space approximation and solving a classical linear elasticity equation on a finite domain to calculate the elastic deflection. This equation only uses the information at the neighbouring points to calculate the elastic deflection at a point in the domain, so the resultant matrix is highly sparse and it is possible to reach the solution (even up to moderately high loads) without any special treatment for convergence.</p>
+<p>It is important to note that this full-system approach is significantly more expensive than the classical MLMI/multigrid approach due to the additional dimension of the linear elasticity model. However, the numerical solution of the classical linear elasticity system provides considerably more information about the solution than is available from the half-space approximation. In particular, the elastic deformation is computed throughout the contacting elements: it can, therefore, be used to provide engineers with further information such as stresses, which are not available using the traditional half-space approach. The reason for the increased computational cost is that the linear elasticity equation needs to be solved in a two-dimensional (2D) domain for line contact problems and a 3D domain for point contact problems. In a finite element (FE) solution of the linear elasticity equations, the greater the number of mesh points, the more precise the solution. This, however, leads to a significant increase in the size of the discrete algebraic system to be solved. It should also be noted that a fine mesh is required in the regions where the solution requires the greatest resolution. Therefore, special attention is required to choose different mesh sizes in different parts of the domain, especially in point contact problems in order to get a precise solution with minimal computational cost. In Habchi,<xref ref-type="bibr" rid="bibr14-1350650112437098">14</xref> this issue is addressed by dividing the elasticity domain into three distinct regions.</p>
+<p>In this article, we seek to address the issue of the high computational cost of the point-contact EHL case using the elasticity approach with an optimal preconditioning strategy.<xref ref-type="bibr" rid="bibr15-1350650112437098">15</xref> In particular, we investigate the use of different mesh sizes in different parts of the 3D domain to get a sufficiently accurate elastic deformation with as few degrees of freedom (DOFs) as possible. This investigation is empirical and is based upon the comparison of numerical solutions computed on different meshes. In conclusion, we present a family of efficient meshes which provide a sufficiently accurate elastic deformation at a minimal cost. The efficiency of these meshes are further justified by comparing the EHL solution with the previously published results.<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref> Finally, this article also addresses a number of important issues that arise regarding the quality of unstructured hierarchical meshes.</p>
+</sec>
+<sec id="sec2-1350650112437098"><title>Mathematical model and discretization techniques</title>
+<p>In this section, we present the mathematical model of EHL point contact problems. Following the work of Habchi,<xref ref-type="bibr" rid="bibr12-1350650112437098">12</xref><sup>–</sup><xref ref-type="bibr" rid="bibr14-1350650112437098">14</xref> the linear elasticity equation is used to compute the elastic deformation of the contacting elements. These equations are presented in the non-dimensional form. An FE discretization of the Reynolds equation, the linear elasticity equation and the load balance equation is discussed separately.</p>
+<sec id="sec3-1350650112437098"><title>Mathematical model</title>
+<p>In this section, we present an EHL model in a non-dimensional form.<xref ref-type="bibr" rid="bibr6-1350650112437098">6</xref> Moreover, an equivalent geometry of an EHL model is considered in this study. The equivalent geometry models the contact between two surfaces by an elastic surface and a plane where the elastic surface contains the total elastic properties of both contacting elements, and hence, the solution will provide a total elastic deformation of both contacting surfaces.</p>
+<p>Our isothermal EHL model consist of three equations: the Reynolds equation, the film thickness equation and the load balance equation.</p>
+<p>The Reynolds equation, which governs the pressure distribution through the contact reads
+<disp-formula id="disp-formula1-1350650112437098"><label>(1)</label><graphic xlink:href="10.1177_1350650112437098-eq1.tif"/></disp-formula>
+where <inline-formula id="ilm1-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math1-1350650112437098"><mml:mrow><mml:mi>ε</mml:mi><mml:mo>=</mml:mo><mml:mover><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:msup><mml:mrow><mml:mi>H</mml:mi></mml:mrow><mml:mrow><mml:mn>3</mml:mn></mml:mrow></mml:msup><mml:mover><mml:mrow><mml:mi>η</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mover><mml:mrow><mml:mi>λ</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>,</mml:mo></mml:mrow></mml:math></inline-formula> <italic>P</italic> and <italic>H</italic> are the dimensionless, unknown, pressure and film thickness, respectively. Also, <inline-formula id="ilm2-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math2-1350650112437098"><mml:mrow><mml:mover><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm3-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math3-1350650112437098"><mml:mrow><mml:mover><mml:mrow><mml:mi>η</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> are, respectively, the dimensionless density and viscosity of the lubricant and <inline-formula id="ilm4-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math4-1350650112437098"><mml:mrow><mml:mover><mml:mrow><mml:mi>λ</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> a dimensionless speed parameter. In this study, the Roelands<xref ref-type="bibr" rid="bibr16-1350650112437098">16</xref> viscosity model and the Dowson and Higginson<xref ref-type="bibr" rid="bibr17-1350650112437098">17</xref> density model are used; however, there is nothing that limits our approach to these models. In this study, Moes parameters <italic>L</italic> and <italic>M</italic> are used to describe an EHL case. A detailed description of these parameters can be found, for example, in Venner.<xref ref-type="bibr" rid="bibr6-1350650112437098">6</xref></p>
+<p>Generally, it is assumed that, at the boundary of the contact region Ω<sub><italic>c</italic></sub>, the pressure inside the lubricant is equal to the ambient pressure. Pressure lower than the vapour pressure is physically unacceptable; thus, the fluid will evaporate and the pressure will remain equal to the vapour pressure. This process is called cavitation,<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref><sup>,</sup><xref ref-type="bibr" rid="bibr18-1350650112437098">18</xref><sup>,</sup><xref ref-type="bibr" rid="bibr19-1350650112437098">19</xref> and since both the vapour and the atmospheric pressures are very small compared to the pressure generated inside an EHL contact, they can be treated as zero; hence, the pressure is limited from below by zero. Thus, the Reynolds boundary conditions reads
+<disp-formula id="disp-formula18-1350650112437098"><graphic xlink:href="10.1177_1350650112437098-eq18.tif"/></disp-formula>
+where <inline-formula id="ilm5-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math5-1350650112437098"><mml:mrow><mml:mover><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mi>→</mml:mi></mml:mover></mml:mrow></mml:math></inline-formula> is the outward normal vector to the cavitation boundary. Since the exact location of this boundary is unknown prior to computing the pressure, this is known as a free boundary problem. A specific treatment is required to handle the free boundary problem and is discussed in the next section. See also references,<xref ref-type="bibr" rid="bibr18-1350650112437098">18</xref><sup>–</sup><xref ref-type="bibr" rid="bibr23-1350650112437098">23</xref> for example, for a more comprehensive discussion of treatments of cavitation at the boundary and within the Reynolds' domain.</p>
+<p>The film thickness equation determines the shape of the lubricant film in the contact. For a circular point contact, it reads
+<disp-formula id="disp-formula2-1350650112437098"><label>(2)</label><graphic xlink:href="10.1177_1350650112437098-eq2.tif"/></disp-formula>
+where <italic>D</italic> is the elastic deformation and <italic>H</italic><sub>0</sub> a central offset film thickness, while the middle term on the right-hand side defines the shape of the undeformed surface.</p>
+<p>Finally, the load balance equation is a conservation law, which ensures that the total pressure generated balances the applied load and is given by
+<disp-formula id="disp-formula3-1350650112437098"><label>(3)</label><graphic xlink:href="10.1177_1350650112437098-eq3.tif"/></disp-formula>
+</p>
+</sec>
+<sec id="sec4-1350650112437098"><title>Linear elasticity equation</title>
+<p>In the film thickness equation, the elastic deformation <italic>D</italic> of the contacting bodies can be modelled by solving the classical linear elasticity equation on a 3D domain Ω (for point contact), see <xref ref-type="fig" rid="fig1-1350650112437098">Figure 1</xref>, with appropriate boundary conditions
+<disp-formula id="disp-formula4-1350650112437098"><label>(4)</label><graphic xlink:href="10.1177_1350650112437098-eq4.tif"/></disp-formula>
+where repeated suffices imply summation (over the three space dimensions)
+<disp-formula id="disp-formula19-1350650112437098"><graphic xlink:href="10.1177_1350650112437098-eq19.tif"/></disp-formula>
+and λ and μ are material properties given by
+<disp-formula id="disp-formula20-1350650112437098"><graphic xlink:href="10.1177_1350650112437098-eq20.tif"/></disp-formula>
+Here, δ<sub><italic>ij</italic></sub> is the Kronecker delta, while <italic>E</italic> is the reduced Young's modulus and ν the reduced Poisson ratio of the material used. A detailed description is provided, for example, in references.<xref ref-type="bibr" rid="bibr12-1350650112437098">12</xref><sup>–</sup><xref ref-type="bibr" rid="bibr14-1350650112437098">14</xref> Note that the equation (<xref ref-type="disp-formula" rid="disp-formula4-1350650112437098">4</xref>) is solved subject to the boundary conditions
+<disp-formula id="disp-formula5-1350650112437098"><label>(5)</label><graphic xlink:href="10.1177_1350650112437098-eq5.tif"/></disp-formula>
+<fig id="fig1-1350650112437098" position="float"><label>Figure 1.</label><caption><p>A view of the 3D elasticity domain Ω showing Ω<sub><italic>c</italic></sub> (the contact boundary) and Ω<sub><italic>D</italic></sub> (the bottom boundary).</p></caption><graphic xlink:href="10.1177_1350650112437098-fig1.tif"/></fig></p>
+</sec>
+<sec id="sec5-1350650112437098"><title>Discretization</title>
+<p>As stated earlier, the linear elasticity equation needs to be solved on a 3D domain Ω for the point contact problems. In this study, we follow Habchi et al.<xref ref-type="bibr" rid="bibr12-1350650112437098">12</xref> and select a cubic domain for the reduced geometry. In Habchi et al.<xref ref-type="bibr" rid="bibr12-1350650112437098">12</xref> it is demonstrated that a geometry of size 60 × 60 × 60 is sufficiently large to provide accurate solutions, so this is adopted throughout this study. Let ∂Ω be boundary of the domain Ω and Ω<sub><italic>c</italic></sub> a part of ∂Ω that corresponds to the contact region. In this study, a standard Galerkin discretization of the Reynolds equation (in Ω<sub><italic>c</italic></sub>) and the linear elasticity equation (in Ω) is considered. It should be noted that a penalty method<xref ref-type="bibr" rid="bibr20-1350650112437098">20</xref> is used to handle the cavitation boundary; thus, the Reynolds equation takes the following form
+<disp-formula id="disp-formula6-1350650112437098"><label>(6)</label><graphic xlink:href="10.1177_1350650112437098-eq6.tif"/></disp-formula>
+where we impose <italic>P</italic> = 0 on ∂Ω<sub><italic>c</italic></sub>, ξ a suitably large positive number and <italic>P</italic><sup>−</sup> = min(<italic>P</italic>, 0). Note that this term has no effect where <italic>P</italic> ≥ 0; however, it dominates only in the regions where <italic>P</italic> &lt; 0. This term has an effect of forcing the negative pressure towards zero provided that ξ is sufficiently large. In this study, ξ is chosen to be <inline-formula id="ilm6-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math6-1350650112437098"><mml:mrow><mml:msup><mml:mrow><mml:mn>10</mml:mn></mml:mrow><mml:mrow><mml:mn>6</mml:mn></mml:mrow></mml:msup><mml:mo>×</mml:mo><mml:msubsup><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>e</mml:mi> </mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> as suggested in Habchi et al.,<xref ref-type="bibr" rid="bibr13-1350650112437098">13</xref> where <italic>h</italic><sub><italic>e</italic></sub> is the characteristic length of an element. An increase in this factor will lead to an increase in the computational work for minimal change in the solution. Moreover, while updating the density and viscosity, the very small negative pressures in the cavitation regions are treated as zero.</p>
+<p>For a weighting function <italic>W</italic><sub><italic>p</italic></sub>, the weak form of the Reynolds equation is
+<disp-formula id="disp-formula7-1350650112437098"><label>(7)</label><graphic xlink:href="10.1177_1350650112437098-eq7.tif"/></disp-formula>
+</p>
+<p>Similarly, for a weighting function <italic>W</italic><sub><italic>u</italic></sub>, the weak form of the linear elasticity equation is
+<disp-formula id="disp-formula8-1350650112437098"><label>(8)</label><graphic xlink:href="10.1177_1350650112437098-eq8.tif"/></disp-formula>
+where Γ<sub><italic>t</italic></sub> is a part of ∂Ω that corresponds to the traction boundary. As shown in equation (<xref ref-type="disp-formula" rid="disp-formula5-1350650112437098">5</xref>), <inline-formula id="ilm7-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math7-1350650112437098"><mml:mrow><mml:msub><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>ijkl</mml:mi></mml:mrow></mml:msub><mml:mo>∂</mml:mo><mml:msub><mml:mrow><mml:mi>U</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow></mml:msub><mml:mo>∂</mml:mo><mml:msub><mml:mrow><mml:mi>X</mml:mi></mml:mrow><mml:mrow><mml:mi>l</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> represents the normal traction and is given as
+<disp-formula id="disp-formula21-1350650112437098"><graphic xlink:href="10.1177_1350650112437098-eq21.tif"/></disp-formula>
+Equation (<xref ref-type="disp-formula" rid="disp-formula8-1350650112437098">8</xref>) can, therefore, be written as
+<disp-formula id="disp-formula9-1350650112437098"><label>(9)</label><graphic xlink:href="10.1177_1350650112437098-eq9.tif"/></disp-formula>
+</p>
+<p>Consider a partition of Ω into <italic>N</italic><sub><italic>u</italic></sub> tetrahedral elements, {Ω<sub><italic>e</italic></sub>}, such that <italic>N</italic><sub><italic>p</italic></sub> of these elements have triangular faces on Ω<sub><italic>c</italic></sub> (and these triangular faces form a partition of Ω<sub><italic>c</italic></sub>). Let {Ω<sub><italic>ce</italic></sub>} be the set of these <italic>N</italic><sub><italic>p</italic></sub> triangles and define <inline-formula id="ilm8-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math8-1350650112437098"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>P</mml:mi></mml:mrow><mml:mrow><mml:mi>u</mml:mi> </mml:mrow><mml:mrow><mml:mi>h</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm9-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math9-1350650112437098"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>P</mml:mi></mml:mrow><mml:mrow><mml:mi>p</mml:mi> </mml:mrow><mml:mrow><mml:mi>h</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> to be piecewise linear FE spaces over {Ω<sub><italic>e</italic></sub>} and {Ω<sub><italic>ce</italic></sub>}, respectively.</p>
+<p>Equations (<xref ref-type="disp-formula" rid="disp-formula7-1350650112437098">7</xref>) and (<xref ref-type="disp-formula" rid="disp-formula9-1350650112437098">9</xref>) can be written as a sum over these elements
+<disp-formula id="disp-formula10-1350650112437098"><label>(10)</label><graphic xlink:href="10.1177_1350650112437098-eq10.tif"/></disp-formula>
+<disp-formula id="disp-formula11-1350650112437098"><label>(11)</label><graphic xlink:href="10.1177_1350650112437098-eq11.tif"/></disp-formula>
+</p>
+<p>In each element Ω<sub><italic>ce</italic></sub>, <italic>P</italic> in equation (<xref ref-type="disp-formula" rid="disp-formula10-1350650112437098">10</xref>) is approximated by
+<disp-formula id="disp-formula12-1350650112437098"><label>(12)</label><graphic xlink:href="10.1177_1350650112437098-eq12.tif"/></disp-formula>
+where <inline-formula id="ilm10-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math10-1350650112437098"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>N</mml:mi></mml:mrow><mml:mrow><mml:mi>j</mml:mi> </mml:mrow><mml:mrow><mml:mi>e</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> are local linear basis functions and <inline-formula id="ilm11-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math11-1350650112437098"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>P</mml:mi></mml:mrow><mml:mrow><mml:mi>j</mml:mi> </mml:mrow><mml:mrow><mml:mi>e</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> nodal values of <italic>P</italic> within the element. So, replacing <italic>P</italic> in equation (<xref ref-type="disp-formula" rid="disp-formula10-1350650112437098">10</xref>) with the approximation given in equation (<xref ref-type="disp-formula" rid="disp-formula12-1350650112437098">12</xref>) and <italic>W</italic><sub><italic>p</italic></sub> with <inline-formula id="ilm12-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math12-1350650112437098"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>N</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi> </mml:mrow><mml:mrow><mml:mi>e</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> for <italic>i</italic> = 1, … 3, followed by the usual FE assembly process, leads to a discrete system of <italic>n</italic><sub><italic>p</italic></sub> non-linear equations, where <italic>n</italic><sub><italic>p</italic></sub> is a total number of nodes in Ω<sub><italic>c</italic></sub>, excluding boundary nodes.</p>
+<p>Similarly, in each element Ω<sub><italic>e</italic></sub>, <italic>U</italic> in equation (<xref ref-type="disp-formula" rid="disp-formula11-1350650112437098">11</xref>) is approximated by
+<disp-formula id="disp-formula13-1350650112437098"><label>(13)</label><graphic xlink:href="10.1177_1350650112437098-eq13.tif"/></disp-formula>
+where <inline-formula id="ilm13-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math13-1350650112437098"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>W</mml:mi></mml:mrow><mml:mrow><mml:mi>q</mml:mi> </mml:mrow><mml:mrow><mml:mi>e</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> are local linear basis functions and <inline-formula id="ilm14-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math14-1350650112437098"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>U</mml:mi></mml:mrow><mml:mrow><mml:mi>q</mml:mi> </mml:mrow><mml:mrow><mml:mi>e</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> nodal values of the displacement <italic>U</italic> within the element. So, replacing <italic>U</italic> in equation (<xref ref-type="disp-formula" rid="disp-formula11-1350650112437098">11</xref>) with the approximation given in equation (<xref ref-type="disp-formula" rid="disp-formula13-1350650112437098">13</xref>), <italic>P</italic> with the approximation given in equation (<xref ref-type="disp-formula" rid="disp-formula12-1350650112437098">12</xref>) and <italic>W</italic><sub><italic>u</italic></sub> with <inline-formula id="ilm15-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math15-1350650112437098"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msubsup><mml:mrow><mml:mi>W</mml:mi></mml:mrow><mml:mrow><mml:mi>q</mml:mi> </mml:mrow><mml:mrow><mml:mi>e</mml:mi></mml:mrow></mml:msubsup><mml:mo>,</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:mn>0</mml:mn><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mi>T</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula>, <inline-formula id="ilm16-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math16-1350650112437098"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mi>W</mml:mi></mml:mrow><mml:mrow><mml:mi>q</mml:mi> </mml:mrow><mml:mrow><mml:mi>e</mml:mi></mml:mrow></mml:msubsup><mml:mo>,</mml:mo><mml:mn>0</mml:mn><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mi>T</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula> and then <inline-formula id="ilm17-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math17-1350650112437098"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mi>W</mml:mi></mml:mrow><mml:mrow><mml:mi>q</mml:mi> </mml:mrow><mml:mrow><mml:mi>e</mml:mi></mml:mrow></mml:msubsup><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mi>T</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula> for <italic>q</italic> = 1, … 4, leads to a discrete system of 3 × <italic>n</italic><sub><italic>u</italic></sub> linear equations, where <italic>n</italic><sub><italic>u</italic></sub> is the total number of nodes in Ω excluding Dirichlet boundary nodes.</p>
+<p>Finally, the discrete form of the load balance equation is obtained by using the FE assembly of the approximation given in equation (<xref ref-type="disp-formula" rid="disp-formula12-1350650112437098">12</xref>)
+<disp-formula id="disp-formula14-1350650112437098"><label>(14)</label><graphic xlink:href="10.1177_1350650112437098-eq14.tif"/></disp-formula>
+</p>
+</sec>
+<sec id="sec6-1350650112437098"><title>Solution procedure</title>
+<p>In this study, a fully coupled solution approach is considered. This involves the direct coupling of all the discrete systems arising from the FE discretization of the EHL equations to form a non-linear system of equations for all unknowns. This is solved in one pass. Thus, no under-relaxation or extra treatment is required to achieve convergence for the heavily loaded cases (provided a sufficiently good initial guess is used). The discretized systems discussed in the previous section can be written in the following matrix form
+<disp-formula id="disp-formula15-1350650112437098"><label>(15)</label><graphic xlink:href="10.1177_1350650112437098-eq15.tif"/></disp-formula>
+where <bold>R</bold><sub><italic>P</italic></sub> represents the system of <italic>n</italic><sub><italic>p</italic></sub> non-linear equations arising from the discretization of Reynolds equation, <bold>R</bold><sub><italic>U</italic></sub> the linear system of 3 × <italic>n</italic><sub><italic>u</italic></sub> equations arising from discretization of the linear elasticity equation and <inline-formula id="ilm18-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math18-1350650112437098"><mml:mrow><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:msub><mml:mrow><mml:mi>H</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> the scalar residual of the discretized load balance equation (<xref ref-type="disp-formula" rid="disp-formula14-1350650112437098">14</xref>). Similarly, <bold>P</bold> is a vector of the <italic>n</italic><sub><italic>p</italic></sub> unknown pressure coefficients, <bold>U</bold> a vector of the 3 × <italic>n</italic><sub><italic>u</italic></sub> unknown displacement components and <italic>H</italic><sub>0</sub> the unknown central offset. In this study, a Newton procedure is applied to system (<xref ref-type="disp-formula" rid="disp-formula15-1350650112437098">15</xref>) to yield the following linear system at each outer iteration
+<disp-formula id="disp-formula16-1350650112437098"><label>(16)</label><graphic xlink:href="10.1177_1350650112437098-eq16.tif"/></disp-formula>
+Starting with an initial estimate for the solution, the Newton procedure consists of solving the linearized system (<xref ref-type="disp-formula" rid="disp-formula16-1350650112437098">16</xref>) at each Newton iteration and this update is added to the solution obtained at the previous iteration, to provide an improved solution. This process is repeated until convergence is achieved. If the initial guess is not sufficiently accurate, then some under-relaxation may be required to achieve the convergence. In this study, we only used a Hertzian pressure profile as an initial guess for pressure and no under-relaxation was required to reach the converged solution for the loads reported here.</p>
+<p>Since the Reynolds equation exhibits an oscillatory behaviour in the pressure solution for heavily loaded cases (see Lubrecht<xref ref-type="bibr" rid="bibr1-1350650112437098">1</xref> and Venner<xref ref-type="bibr" rid="bibr6-1350650112437098">6</xref> for example), in order to get a stabilized solution a streamline upwind Petrov Galerkin (SUPG) method<xref ref-type="bibr" rid="bibr24-1350650112437098">24</xref> has been used. To explain the implementation, let us rewrite equation (<xref ref-type="disp-formula" rid="disp-formula1-1350650112437098">1</xref>) in the classical convection–diffusion form as follows
+<disp-formula id="disp-formula22-1350650112437098"><graphic xlink:href="10.1177_1350650112437098-eq22.tif"/></disp-formula>
+which may be expressed as
+<disp-formula id="disp-formula17-1350650112437098"><label>(17)</label><graphic xlink:href="10.1177_1350650112437098-eq17.tif"/></disp-formula>
+where <inline-formula id="ilm19-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math19-1350650112437098"><mml:mrow><mml:mi>V</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>H</mml:mi><mml:mo>∂</mml:mo><mml:mover><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>∂</mml:mo><mml:mi>P</mml:mi><mml:mo>,</mml:mo><mml:mn>0</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm20-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math20-1350650112437098"><mml:mrow><mml:mi>Q</mml:mi><mml:mo>=</mml:mo><mml:mover><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover><mml:mo>∂</mml:mo><mml:mi>H</mml:mi><mml:mo>∂</mml:mo><mml:mi>X</mml:mi></mml:mrow></mml:math></inline-formula>. The terms in equation (<xref ref-type="disp-formula" rid="disp-formula17-1350650112437098">17</xref>) are known as the diffusion, convection and source terms, respectively. The SUPG method applied to this kind of problem consists of choosing the weighting function <italic>W</italic><sub><italic>p</italic></sub> in equation (<xref ref-type="disp-formula" rid="disp-formula10-1350650112437098">10</xref>) (excluding penalty term) of the form
+<disp-formula id="disp-formula23-1350650112437098"><graphic xlink:href="10.1177_1350650112437098-eq23.tif"/></disp-formula>
+with
+<disp-formula id="disp-formula24-1350650112437098"><graphic xlink:href="10.1177_1350650112437098-eq24.tif"/></disp-formula>
+where <italic>h</italic><sub><italic>e</italic></sub> is the characteristic length of an element and <italic>P</italic><sub><italic>e</italic></sub> the local Peclet number of the element <italic>e</italic>. In the Galerkin procedure, oscillations will occur whenever |<italic>P</italic><sub><italic>e</italic></sub>| &gt; 1; however, these are damped by the SUPG approach. For more details, see for example Habchi et al.,<xref ref-type="bibr" rid="bibr13-1350650112437098">13</xref> Brooks and Hughes<xref ref-type="bibr" rid="bibr24-1350650112437098">24</xref> and Zienkiewicz and Taylor.<xref ref-type="bibr" rid="bibr25-1350650112437098">25</xref> Note that the extra terms (introduced by the SUPG approach) have no effect on the accuracy of a converged solution in the limit as the mesh size goes to zero.</p>
+<p>Note that the solution of the coupled linear system (<xref ref-type="disp-formula" rid="disp-formula16-1350650112437098">16</xref>) is the most expensive part of the solution procedure. In Habchi,<xref ref-type="bibr" rid="bibr14-1350650112437098">14</xref> a sparse direct method is used. While very efficient for line contact problems, this does require significant memory and CPU resource for point contact problems. Furthermore, since the solution of equation (<xref ref-type="disp-formula" rid="disp-formula16-1350650112437098">16</xref>) is only required as part of an outer iteration, it is not generally necessary to solve it exactly, i.e. it is only necessary to solve the linear system (<xref ref-type="disp-formula" rid="disp-formula16-1350650112437098">16</xref>) to a sufficient precision in order to determine a good Newton update to achieve convergence of the non-linear system (<xref ref-type="disp-formula" rid="disp-formula15-1350650112437098">15</xref>). In this study, therefore we have made use of a preconditioned generalized minimal residual (GMRES) method<xref ref-type="bibr" rid="bibr26-1350650112437098">26</xref> to solve equation (<xref ref-type="disp-formula" rid="disp-formula16-1350650112437098">16</xref>) at each Newton iteration. The key feature that makes this approach computationally competitive is the choice of preconditioner and in Ahmed et al.,<xref ref-type="bibr" rid="bibr15-1350650112437098">15</xref> we describe a preconditioner which allows both very fast convergence and a very rapid application at each inner iteration. This is based upon approximating the <inline-formula id="ilm21-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math21-1350650112437098"><mml:mrow><mml:mo>∂</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">R</mml:mtext></mml:mrow><mml:mrow><mml:mi>U</mml:mi></mml:mrow></mml:msub><mml:mo>∂</mml:mo><mml:mtext mathvariant="bold">U</mml:mtext></mml:mrow></mml:math></inline-formula> block in equation (<xref ref-type="disp-formula" rid="disp-formula16-1350650112437098">16</xref>) by a single algebraic or geometric multigrid V-cycle<xref ref-type="bibr" rid="bibr27-1350650112437098">27</xref><sup>–</sup><xref ref-type="bibr" rid="bibr29-1350650112437098">29</xref> and using a fast sparse direct solver<xref ref-type="bibr" rid="bibr30-1350650112437098">30</xref> for the <inline-formula id="ilm22-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math22-1350650112437098"><mml:mrow><mml:mo>∂</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">R</mml:mtext></mml:mrow><mml:mrow><mml:mi>P</mml:mi></mml:mrow></mml:msub><mml:mo>∂</mml:mo><mml:mtext mathvariant="bold">P</mml:mtext></mml:mrow></mml:math></inline-formula> block of the preconditioner. Results presented in Ahmed et al.<xref ref-type="bibr" rid="bibr15-1350650112437098">15</xref> show that this approach substantially outperforms the application of a sparse direct solver to the whole of equation (<xref ref-type="disp-formula" rid="disp-formula16-1350650112437098">16</xref>), both in terms of memory and CPU requirements.</p>
+</sec>
+</sec>
+<sec id="sec7-1350650112437098"><title>EHL Results</title>
+<p>For the point contact problems considered here, the Reynolds equation needs to be solved on a 2D domain and the elasticity equation on a 3D domain. As previously mentioned, following Habchi et al.,<xref ref-type="bibr" rid="bibr12-1350650112437098">12</xref> we let Ω represent a 3D domain −30 ≤ <italic>X</italic> ≤ 30; −30 ≤ <italic>Y</italic> ≤ 30; −60 ≤ <italic>Z</italic> ≤ 0. In Habchi et al.,<xref ref-type="bibr" rid="bibr12-1350650112437098">12</xref> experiments were undertaken on different dimensions leading to the said dimension being adopted in their work. In this section, we first discuss the accuracy of the elastic deformation solution by defining suitable meshes and give a comparison against solutions obtained using very fine meshes. These tests have been carried out first using a Hertzian pressure profile and then assuming a typical EHL pressure profile, though the results presented here are only for the EHL pressure profile. The test cases considered in this study are described in the <xref ref-type="table" rid="table1-1350650112437098">Table 1</xref>. These test cases are taken from Venner<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref> in order to establish a comparison of the current model with a finite difference based model so as to validate the calculated point contact results.
+<table-wrap id="table1-1350650112437098" position="float"><label>Table 1.</label><caption><p>Non-dimensional parameters for the contact between steel surfaces.<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref></p></caption>
+<graphic alternate-form-of="table1-1350650112437098" xlink:href="10.1177_1350650112437098-table1.tif"/>
+<table frame="hsides"><thead>
+<tr><th>Parameters</th>
+<th>Test case 1</th>
+<th>Test case 2</th></tr></thead>
+<tbody>
+<tr>
+<td>Moes parameter, <italic>L</italic></td>
+<td>10</td>
+<td>10</td></tr>
+<tr>
+<td>Moes parameter, <italic>M</italic></td>
+<td>20</td>
+<td>200</td></tr>
+<tr>
+<td>Maximum Hertzian pressure, <italic>p</italic><sub><italic>h</italic></sub></td>
+<td>0.45 GPa</td>
+<td>0.97 GPa</td></tr>
+<tr>
+<td>Viscosity index, α</td>
+<td>2.2 × 10<sup>−8</sup> Pa<sup>−1</sup></td>
+<td>2.2 × 10<sup>−8</sup> Pa<sup>−1</sup></td></tr>
+<tr>
+<td>Viscosity at ambient pressure, η<sub>0</sub></td>
+<td>0.04 Pa s</td>
+<td>0.04 Pa s</td></tr>
+<tr>
+<td>Total speed, <italic>u</italic><sub><italic>s</italic></sub></td>
+<td>1.6 m/s</td>
+<td>1.6 m/s</td></tr>
+</tbody>
+</table>
+</table-wrap></p>
+<p>It should be noted that the fine mesh cases used for comparison of solutions lead to very large computational problems and it has only been practical to solve these large problems by developing an efficient preconditioned GMRES solver.<xref ref-type="bibr" rid="bibr15-1350650112437098">15</xref> This solver uses a block-wise preconditioning strategy. The preconditioning of the elasticity block is done using the algebraic multigrid (AMG) preconditioning which is designed to be of order <italic>O</italic>(<italic>n</italic>) and the preconditioning of the Reynolds block is done using an efficient sparse direct solver. We discuss full details of the performance of this solver in Ahmed et al.<xref ref-type="bibr" rid="bibr15-1350650112437098">15</xref></p>
+<p>The term Ω<sub><italic>c</italic></sub> is the part of the boundary of the 3D domain which corresponds to the contact region and is chosen to be of dimension −4.5 ≤ <italic>X</italic> ≤ 1.5; −3 ≤ <italic>Y</italic> ≤ 3. Note that three resolution cases, named resolution 1, 2 and 3, are used in this study, corresponding to regular grids of 64 × 64, 128 × 128 and 256 × 256 points in Ω<sub><italic>c</italic></sub>, respectively.</p>
+<p>Throughout this section, meshes have been generated using the open source software NETGEN.<xref ref-type="bibr" rid="bibr31-1350650112437098">31</xref> This allows meshes of a given local spacing to be defined as well as permitting hierarchical mesh refinement to take place. Moreover, it allows one to perform mesh optimization over the meshes resulting from hierarchical mesh refinement.</p>
+<sec id="sec8-1350650112437098"><title>Accuracy of the elastic deformation</title>
+<p>The pressure generated inside the lubricant film is high enough in the contact region to lead to a significant elastic deformation while, on the other hand, the pressure outside the contact region is relatively low. Moreover, the precision of the computed elastic deformation is most important in the contact region, since this is where it has the most effect on the Reynolds equation. Hence, we propose that a fine 3D mesh is required in the contact region up to a certain depth, but not in the whole elasticity domain. Nevertheless, a suitable mesh size needs to be defined outside the contact region in order to get a sufficiently accurate solution throughout the whole domain.</p>
+<p>Here, we present selected meshes which give a sufficiently accurate elastic deformation solution at as low a cost as possible. In order to show the effectiveness of these meshes, the elastic deformation solution is compared against the solution obtained on very fine meshes. In the case of fine meshes, we split the 3D domain into two regions. The first region is of dimension −4.5 ≤ <italic>X</italic> ≤ 4.5; −3 ≤ <italic>Y</italic> ≤ 3; −3 ≤ <italic>Z</italic> ≤ 0 and the second region is the remainder of the domain. A mesh size corresponding to different resolution cases is adopted everywhere in the first region and a mesh size of 0.5 is used in the remaining region. A view (<italic>XY</italic> plane, where <italic>Z</italic> = 0) of the top of the domain is shown in <xref ref-type="fig" rid="fig2-1350650112437098">Figure 2</xref>. For the sake of simplicity, notations <italic>R</italic>1 and <italic>R</italic>2 are used to represent these two different regions in the domain, <italic>R</italic>1 representing the whole domain and <italic>R</italic>2 the central region of dimension −4.5 ≤ <italic>X</italic> ≤ 4.5; −3 ≤ <italic>Y</italic> ≤ 3; −3 ≤ <italic>Z</italic> ≤ 0. It should be noted that the length of <italic>R</italic>2 is chosen −4.5 ≤ <italic>X</italic> ≤ 4.5 instead of −4.5 ≤ <italic>X</italic> ≤ 1.5 (see definition of Ω<sub><italic>c</italic></sub> above) in order to get a sufficiently accurate elastic deformation solution. We carried out different experiments to ensure that any increase in the depth of <italic>R</italic>2 and any further decrease in the mesh size adopted in the remaining region does not lead to any significant improvement in the accuracy of the elastic deformation solution. Note that this two-region strategy for defining fine meshes for the three resolution cases considered leads to 3,505,403, 4,950,405 and 15,802,299 nodes in the mesh, respectively.
+<fig id="fig2-1350650112437098" position="float"><label>Figure 2.</label><caption><p>A view of the top of the 3D domain.</p></caption><graphic xlink:href="10.1177_1350650112437098-fig2.tif"/></fig></p>
+<p>Having established meshes to act as a benchmark for each of the three resolutions to be considered, we now seek to define meshes with fewer DOFs that are able to yield results of similar accuracy. To do this, we split the 3D domain into four regions. The first two regions are hemispherical regions with radii ‘1.5’ and ‘15’, respectively. The third region is a cube of dimensions −20 ≤ <italic>X</italic> ≤ 20; −20 ≤ <italic>Y</italic> ≤ 20; −40 ≤ <italic>Z</italic> ≤ 0, while the fourth region is the remaining region of the domain. The choice of first region is based on the fact that this includes the region where the pressure values are most significant (especially in the inlet region). The choices of regions 2 and 3 are based upon a large number of different computational experiments that are not repeated here. A selected resolution (mesh size 1) is specified for all points inside the region 1 and a suitable mesh size (mesh size 2) is defined for points on the curved boundary of region 2. For all other interior points of region 2, linear interpolation is used to define a mesh size for each point. It should be noted that in the remaining regions of the domain (outside of region 2), different large mesh sizes (mesh size 3 in region 3 and mesh size 4 in region 4) are used depending upon the resolution used in the most central region. The mesh sizes 1–4 (for the four regions, respectively) for each resolution case are given in <xref ref-type="table" rid="table2-1350650112437098">Table 2</xref>, defining the proposed meshes. Note that the purpose of defining region 3 (particularly for resolution 3) is to control the huge increase in number of nodes in the mesh without significantly affecting the overall accuracy of solution.
+<table-wrap id="table2-1350650112437098" position="float"><label>Table 2.</label><caption><p>A set of mesh sizes defining the selected mesh for each resolution case.</p></caption>
+<graphic alternate-form-of="table2-1350650112437098" xlink:href="10.1177_1350650112437098-table2.tif"/>
+<table frame="hsides"><thead>
+<tr><th>Selected case</th>
+<th>Mesh size 1</th>
+<th>Mesh size 2</th>
+<th>Mesh size 3</th>
+<th>Mesh size 4</th></tr></thead>
+<tbody>
+<tr>
+<td>Resolution 1</td>
+<td>0.09375</td>
+<td>1.0</td>
+<td>4.0</td>
+<td>4.0</td></tr>
+<tr>
+<td>Resolution 2</td>
+<td>0.04688</td>
+<td>1.0</td>
+<td>2.0</td>
+<td>2.0</td></tr>
+<tr>
+<td>Resolution 3</td>
+<td>0.02344</td>
+<td>0.7</td>
+<td>1.0</td>
+<td>2.0</td></tr>
+</tbody>
+</table>
+</table-wrap></p>
+<p>The root mean square error (RMSE) for the displacement in all three selected resolution cases, along with their fine (benchmark) cases, are calculated with respect to the fine case of resolution 3 and are given in <xref ref-type="table" rid="table3-1350650112437098">Table 3</xref>. These figures are obtained by comparing the computed solution on the given mesh against the best available solution, on the finest available mesh. One can see that the selected cases lead to a small fraction of the nodes compared to their corresponding fine cases (with the same resolution in the contact region) without significantly affecting the accuracy of the solution. In particular, for resolutions 1 and 2, the errors in the selected cases are of the same order of magnitude (less than a factor of 2 difference) as those based on the benchmark meshes of the same resolution. Moreover, a view of the elastic deformation solution using the fine and selected cases at resolution 1 along the central line in Ω<sub><italic>c</italic></sub> (where <italic>Y</italic> = 0) is given in <xref ref-type="fig" rid="fig3-1350650112437098">Figure 3</xref>, which also shows that both results are extremely close to each other.
+<fig id="fig3-1350650112437098" position="float"><label>Figure 3.</label><caption><p>Elastic deformation solution along the central line in Ω<sub><italic>c</italic></sub> (where <italic>Y</italic> = 0): fine and selected cases of resolution 1 (test case 1).</p></caption><graphic xlink:href="10.1177_1350650112437098-fig3.tif"/></fig>
+<table-wrap id="table3-1350650112437098" position="float"><label>Table 3.</label><caption><p>RMSE for the displacement in all three selected resolution cases along with their fine cases: test case 1.</p></caption>
+<graphic alternate-form-of="table3-1350650112437098" xlink:href="10.1177_1350650112437098-table3.tif"/>
+<table frame="hsides"><thead>
+<tr><th/>
+<th colspan="2">Fine cases<hr/></th>
+<th colspan="2">Selected cases<hr/></th></tr>
+<tr><th>Case</th>
+<th>Nodes</th>
+<th>RMSE</th>
+<th>Nodes</th>
+<th>RMSE</th></tr></thead>
+<tbody>
+<tr>
+<td>Resolution 1</td>
+<td>3,505,403</td>
+<td align="center">1.64 × 10<sup>−3</sup></td>
+<td>97,687</td>
+<td>2.43 × 10<sup>−3</sup></td></tr>
+<tr>
+<td>Resolution 2</td>
+<td>4,950,405</td>
+<td align="center">6.25 × 10<sup>−4</sup></td>
+<td>221,260</td>
+<td>9.85 × 10<sup>−4</sup></td></tr>
+<tr>
+<td>Resolution 3</td>
+<td>15,802,299</td>
+<td>−</td>
+<td>705,860</td>
+<td>4.80 × 10<sup>−4</sup></td></tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-1350650112437098"><p>RMSE: root mean square error.</p></fn>
+</table-wrap-foot>
+</table-wrap></p>
+</sec>
+<sec id="sec9-1350650112437098"><title>Point contact results</title>
+<p>In this section, a comparison of the fully coupled FE solver is made with published results using the integral approach in a finite difference based model. This will enable us to validate the calculated point contact results. We have split this comparison into two phases, one using the very fine meshes and the other the more efficient meshes described above.</p>
+<p>In the first part, our benchmark meshes lead to the same mesh size (corresponding to three different resolutions) everywhere in the contact region (Ω<sub><italic>c</italic></sub>), which therefore provides a fair comparison with the finite difference based model.<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref> A comparison of these results obtained for the test case 1 with the finite difference based model is given in <xref ref-type="table" rid="table4-1350650112437098">Table 4</xref> in terms of central and minimum film thicknesses (this is the data provided in Venner and Lubrecht<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref>). It should be noted that the number marked ‘<italic>n</italic><sub><italic>p</italic></sub>’ represents the number of pressure unknowns in the contact region and ‘Total DOF’ represents total unknowns of the fully coupled system. It can be seen that the calculated results are very close to that of the finite difference based model. The difference in the two solutions gets smaller and smaller as we switch to higher resolutions. Moreover, it should be noted that both models use totally different approaches; therefore, a small difference in the solutions is expected even though they appear to converge to the same result. The main drawback of these results is the use of very fine meshes, leading to very large discrete problems, which are very expensive from a computational point of view.
+<table-wrap id="table4-1350650112437098" position="float"><label>Table 4.</label><caption><p>Validation of point contact results: test case 1.</p></caption>
+<graphic alternate-form-of="table4-1350650112437098" xlink:href="10.1177_1350650112437098-table4.tif"/>
+<table frame="hsides"><thead>
+<tr><th colspan="3">Venner<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref><hr/></th>
+<th colspan="4">This model<hr/></th></tr>
+<tr>
+<th><italic>n</italic><sub><italic>x</italic></sub> × <italic>n</italic><sub><italic>y</italic></sub></th>
+<th><italic>H</italic><sub><italic>c</italic></sub></th>
+<th><italic>H</italic><sub><italic>m</italic></sub></th>
+<th><italic>n</italic><sub><italic>p</italic></sub></th>
+<th>Total DOF</th>
+<th><italic>H</italic><sub><italic>c</italic></sub></th>
+<th><italic>H</italic><sub><italic>m</italic></sub></th></tr></thead>
+<tbody>
+<tr>
+<td>64 × 64 (=4096)</td>
+<td>0.41904</td>
+<td>0.28622</td>
+<td>4450</td>
+<td>10,486,550</td>
+<td>0.42306</td>
+<td>0.28921</td></tr>
+<tr>
+<td>128 × 128 (=16,384)</td>
+<td>0.42872</td>
+<td>0.29094</td>
+<td>17,732</td>
+<td>14,834,838</td>
+<td>0.42999</td>
+<td>0.29123</td></tr>
+<tr>
+<td>256 × 256 (=65,536)</td>
+<td>0.43116</td>
+<td>0.29218</td>
+<td>67,350</td>
+<td>47,440,138</td>
+<td>0.43129</td>
+<td>0.29202</td></tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn2-1350650112437098"><p>DOF: degree of freedom.</p></fn>
+</table-wrap-foot>
+</table-wrap></p>
+<p>In the second part, we are comparing the previous computed results with those computed over the selected meshes which were determined, as described in the previous section, based upon numerical experiments to ensure a sufficiently accurate elastic deformation solution with a significantly reduced computational cost. This comparison is given in <xref ref-type="table" rid="table5-1350650112437098">Table 5</xref>. One can see that the accuracy of the solution is not significantly affected (relative to the overall discretization error) while keeping in mind the total decrease in the size of problem. For example, in case 3 of <xref ref-type="table" rid="table5-1350650112437098">Table 5</xref>, a reduction of 45M DOFs leads to a very small drop in the accuracy of the solution. In particular, in the selected cases, the same order of magnitude in error is observed as with the fine cases.
+<table-wrap id="table5-1350650112437098" position="float"><label>Table 5.</label><caption><p>A comparison of point contact results over fine and selected meshes: test case 1.</p></caption>
+<graphic alternate-form-of="table5-1350650112437098" xlink:href="10.1177_1350650112437098-table5.tif"/>
+<table frame="hsides"><thead>
+<tr><th colspan="4">This model (fine meshes)<hr/></th>
+<th colspan="4">This model (selected meshes)<hr/></th></tr>
+<tr>
+<th><italic>n</italic><sub><italic>p</italic></sub></th>
+<th>Total DOF</th>
+<th><italic>H</italic><sub><italic>c</italic></sub></th>
+<th><italic>H</italic><sub><italic>m</italic></sub></th>
+<th><italic>n</italic><sub><italic>p</italic></sub></th>
+<th>Total DOF</th>
+<th><italic>H</italic><sub><italic>c</italic></sub></th>
+<th><italic>H</italic><sub><italic>m</italic></sub></th></tr></thead>
+<tbody>
+<tr>
+<td>4450</td>
+<td>10,486,550</td>
+<td>0.42306</td>
+<td>0.28921</td>
+<td>1690</td>
+<td>294,056</td>
+<td>0.42242</td>
+<td>0.28603</td></tr>
+<tr>
+<td>17,732</td>
+<td>14,834,838</td>
+<td>0.42999</td>
+<td>0.29123</td>
+<td>4854</td>
+<td>666,160</td>
+<td>0.42842</td>
+<td>0.28996</td></tr>
+<tr>
+<td>67,350</td>
+<td>47,440,138</td>
+<td>0.43129</td>
+<td>0.29202</td>
+<td>16,776</td>
+<td>2,131,882</td>
+<td>0.43059</td>
+<td>0.29167</td></tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn3-1350650112437098"><p>DOF: degree of freedom.</p></fn>
+</table-wrap-foot>
+</table-wrap></p>
+<p>A similar trend in the solutions is observed for test case 2 which is a comparatively more heavily loaded case. <xref ref-type="table" rid="table6-1350650112437098">Table 6</xref> provides a comparison of results obtained on fine meshes against the finite difference based results.<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref> It is evident that the calculated values are again close to those of finite difference based model and that they again appear to converge to the same result. Similarly, <xref ref-type="table" rid="table7-1350650112437098">Table 7</xref> provides a comparison of fine-case results with those computed over the selected meshes. Again, it can be seen that the accuracy of the solution is not significantly affected for this loaded case (test case 2) while computing the solution over the selected meshes. This experiment (and further experiments undertaken but not repeated here) provides further evidence that the mesh selection approach proposed in this study may be applied across a range of EHL cases.
+<table-wrap id="table6-1350650112437098" position="float"><label>Table 6.</label><caption><p>Validation of point contact results: test case 2.</p></caption>
+<graphic alternate-form-of="table6-1350650112437098" xlink:href="10.1177_1350650112437098-table6.tif"/>
+<table frame="hsides"><thead>
+<tr><th colspan="3">Venner<xref ref-type="bibr" rid="bibr3-1350650112437098">3</xref><hr/></th>
+<th colspan="4">This model<hr/></th></tr>
+<tr><th><italic>n</italic><sub><italic>x</italic></sub> × <italic>n</italic><sub><italic>y</italic></sub></th>
+<th><italic>H</italic><sub><italic>c</italic></sub></th>
+<th><italic>H</italic><sub><italic>m</italic></sub></th>
+<th><italic>n</italic><sub><italic>p</italic></sub></th>
+<th>Total DOF</th>
+<th><italic>H</italic><sub><italic>c</italic></sub></th>
+<th><italic>H</italic><sub><italic>m</italic></sub></th></tr></thead>
+<tbody>
+<tr>
+<td>64 × 64 (=4096)</td>
+<td>0.070686</td>
+<td>0.033080</td>
+<td>4450</td>
+<td>10,486,550</td>
+<td>0.070251</td>
+<td>0.028999</td></tr>
+<tr>
+<td>128 × 128 (=16,384)</td>
+<td>0.078872</td>
+<td>0.037120</td>
+<td>17,732</td>
+<td>14,834,838</td>
+<td>0.078987</td>
+<td>0.036286</td></tr>
+<tr>
+<td>256 × 256 (=65,536)</td>
+<td>0.080935</td>
+<td>0.038480</td>
+<td>67,350</td>
+<td>47,440,138</td>
+<td>0.081202</td>
+<td>0.038426</td></tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn4-1350650112437098"><p>DOF: degree of freedom.</p></fn>
+</table-wrap-foot>
+</table-wrap>
+<table-wrap id="table7-1350650112437098" position="float"><label>Table 7.</label><caption><p>A comparison of point contact results over fine and selected meshes: test case 2.</p></caption>
+<graphic alternate-form-of="table7-1350650112437098" xlink:href="10.1177_1350650112437098-table7.tif"/>
+<table frame="hsides"><thead>
+<tr><th colspan="4">This model (fine meshes)<hr/></th>
+<th colspan="4">This model (selected meshes)<hr/></th></tr>
+<tr><th><italic>n</italic><sub><italic>p</italic></sub></th>
+<th>Total DOF</th>
+<th><italic>H</italic><sub><italic>c</italic></sub></th>
+<th><italic>H</italic><sub><italic>m</italic></sub></th>
+<th><italic>n</italic><sub><italic>p</italic></sub></th>
+<th>Total DOF</th>
+<th><italic>H</italic><sub><italic>c</italic></sub></th>
+<th><italic>H</italic><sub><italic>m</italic></sub></th></tr></thead>
+<tbody>
+<tr>
+<td>4450</td>
+<td>10,486,550</td>
+<td>0.070251</td>
+<td>0.028999</td>
+<td>1690</td>
+<td>294,056</td>
+<td>0.070361</td>
+<td>0.027603</td></tr>
+<tr>
+<td>17,732</td>
+<td>14,834,838</td>
+<td>0.078987</td>
+<td>0.036286</td>
+<td>4854</td>
+<td>666,160</td>
+<td>0.078910</td>
+<td>0.035759</td></tr>
+<tr>
+<td>67,350</td>
+<td>47,440,138</td>
+<td>0.081202</td>
+<td>0.038426</td>
+<td>16,776</td>
+<td>2,131,882</td>
+<td>0.081243</td>
+<td>0.037901</td></tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn5-1350650112437098"><p>DOF: degree of freedom.</p></fn>
+</table-wrap-foot>
+</table-wrap></p>
+</sec>
+<sec id="sec10-1350650112437098"><title>Hierarchical meshes</title>
+<p>In addition to the local mesh resolution, another important factor which affects the accuracy of a solution of a problem is the quality of mesh used.<xref ref-type="bibr" rid="bibr32-1350650112437098">32</xref><sup>,</sup><xref ref-type="bibr" rid="bibr33-1350650112437098">33</xref> In other words, optimizing the quality of a mesh prior to computing the solution of a problem can improve the accuracy of the solution. In this section, this aspect of the solution process is considered by computing the EHL solution over different meshes of resolution 2. In mesh optimization, some measure of the quality of the mesh is improved by modifying the mesh in different ways. The mesh optimization in NETGEN<xref ref-type="bibr" rid="bibr31-1350650112437098">31</xref> includes local reconnection via edge and face swaps, local node movement and some collapsing of elements. The metric used is based upon minimizing an error functional which quantifies the quality of the mesh.</p>
+<p>For this study, an experiment is carried out for test case 1 in which an optimized coarse mesh is chosen as an initial mesh. Three cases are then considered. In the first case (case 1), two levels of uniform refinement are applied to the initial mesh. Each refinement involves the division of each tetrahedral element into eight child tetrahedra, growing the number of elements eight times at each refinement level. The division of each tetrahedron is done in two phases, the first leading to the removal of four corners, leaving an octahedron behind. This octahedron is further divided to produce four new tetrahedra. There are three choices of diagonals which can be used to divide this octahedron. In this case, we have used the longest diagonal;<xref ref-type="bibr" rid="bibr34-1350650112437098">34</xref> however, other choices<xref ref-type="bibr" rid="bibr35-1350650112437098">35</xref> are possible. In the second case (case 2), the two levels of refinement are carried out using NETGEN.<xref ref-type="bibr" rid="bibr31-1350650112437098">31</xref> Finally, an optimization is performed (within NETGEN<xref ref-type="bibr" rid="bibr31-1350650112437098">31</xref>) over the mesh obtained in case 2 leading to case 3.</p>
+<p>It may be observed that case 1 leads to a poor quality solution since unphysical oscillations are clearly visible in the pressure solution (<xref ref-type="fig" rid="fig4-1350650112437098">Figure 4</xref>). On the other hand, case 2 yields a slightly better solution (with fewer oscillations) than that of case 1, while case 3 leads to a smooth pressure profile. It should be noted that the number of DOFs for the first two cases are the same (710,906) as a result of the uniform refinement procedures, while in case 3, this number is 670,577. This slight reduction is due to the collapsing of nodes, edges, faces and elements that takes place during the mesh optimization process. The key observation, however, is that the smoother, optimized mesh can yield a better accuracy in the solution than that of a non-optimized mesh with more nodes. Moreover, in this example, we have selected the initial mesh such that two levels of refinement produce an equivalent mesh to the selected case of resolution 2 (see previous section). The RMSE of the pressure and film thickness solutions for these different resolution 2 cases are calculated with respect to the fine case of resolution 3 and are given in <xref ref-type="table" rid="table8-1350650112437098">Table 8</xref>. It can be seen that the RMSE of each of the film thickness solutions are smaller and comparatively more closer to each other than the pressure RMSEs. The accuracy of the pressure profile increases while switching from case 1 to case 3, and in case 3, it is even slightly improved than that of the selected case. Moreover, it is apparent that the accuracy of the pressure and film thickness solutions is not significantly affected as compared to the solutions computed on the very fine reference mesh with a huge number of DOFs (14,834,838).
+<fig id="fig4-1350650112437098" position="float"><label>Figure 4.</label><caption><p>The shapes of pressure profile along the central line (where <italic>Y</italic> = 0) computed over optimized and non-optimized meshes: (a) pressure profile, case 1; (b) a close-up of the pressure profile, case 1; (c) a close-up of the pressure profile, case 2; and (d) a close-up of the pressure profile, case 3.</p></caption><graphic xlink:href="10.1177_1350650112437098-fig4.tif"/></fig>
+<table-wrap id="table8-1350650112437098" position="float"><label>Table 8.</label><caption><p>RMSE of pressure and film thickness solutions of various resolution 2 cases with respect to the fine case of resolution 3: test case 1.</p></caption>
+<graphic alternate-form-of="table8-1350650112437098" xlink:href="10.1177_1350650112437098-table8.tif"/>
+<table frame="hsides"><thead>
+<tr><th>Case</th>
+<th>DOF</th>
+<th>Pressure RMSE</th>
+<th>Film thickness RMSE</th>
+<th><italic>t</italic> (s)</th>
+<th><italic>t</italic>/iteration</th>
+<th>Memory (≈Gb)</th></tr></thead>
+<tbody>
+<tr>
+<td>Case 1</td>
+<td>710,906</td>
+<td>3.27 × 10<sup>−2</sup></td>
+<td>3.10 × 10<sup>−3</sup></td>
+<td>1421</td>
+<td>203.0</td>
+<td>1.6</td></tr>
+<tr>
+<td>Case 2</td>
+<td>710,906</td>
+<td>2.71 × 10<sup>−2</sup></td>
+<td>3.31 × 10<sup>−3</sup></td>
+<td>1397</td>
+<td>199.57</td>
+<td>1.6</td></tr>
+<tr>
+<td>Case 3</td>
+<td>670,577</td>
+<td>2.42 × 10<sup>−2</sup></td>
+<td>3.48 × 10<sup>−3</sup></td>
+<td>1343</td>
+<td>191.86</td>
+<td>1.5</td></tr>
+<tr>
+<td>Selected case (resolution 2)</td>
+<td>666,160</td>
+<td>2.56 × 10<sup>−2</sup></td>
+<td>3.12 × 10<sup>−3</sup></td>
+<td>1242</td>
+<td>177.43</td>
+<td>1.5</td></tr>
+<tr>
+<td>Fine case (resolution 2)</td>
+<td>14,834,838</td>
+<td>1.39 × 10<sup>−2</sup></td>
+<td>1.68 × 10<sup>−3</sup></td>
+<td>31,681</td>
+<td>4525.86</td>
+<td>34</td></tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn6-1350650112437098"><p>DOF: degree of freedom; RMSE: root mean square error.</p></fn>
+</table-wrap-foot>
+</table-wrap></p>
+</sec>
+</sec>
+<sec id="sec11-1350650112437098" sec-type="conclusions"><title>Conclusion</title>
+<p>In this study, we used a fully coupled approach for the solution of EHL point contact problems with an FE approximation to the linear elasticity problem as an alternate to the analytic half-space method. This approach was first used by Habchi et al.<xref ref-type="bibr" rid="bibr12-1350650112437098">12</xref><sup>–</sup><xref ref-type="bibr" rid="bibr14-1350650112437098">14</xref> though they used a direct solver for the linearized system (<xref ref-type="disp-formula" rid="disp-formula16-1350650112437098">16</xref>) at each Newton step. They also used higher order elements in order to get a reduced system with a desired accuracy. In order to overcome the memory and CPU restrictions for the larger 3D problems, we have developed a preconditioned iterative fully coupled solver<xref ref-type="bibr" rid="bibr15-1350650112437098">15</xref> and applied it in this study, with low-order FEs.</p>
+<p>The contribution of this study is to investigate the accuracy of the elastic deformation solution, as well as the complete point contact EHL results, over a number of different FE meshes for the linear elasticity problem. It has been possible to show that a judicious choice of these FE meshes can allow a substantial reduction in the total number of DOFs without reducing the overall accuracy relative to the discretization error in the Reynolds equation solution. In the specific example included here, this results in a reduction in CPU of about 96% (from 31,681 s to 1242 s) and a reduction in memory of about 96% (from 34 Gb to 1.5 Gb). The results presented in this study have been found to be accurate over a relatively small range of EHL problems. However, it requires a systematic study over a wider range of cases to demonstrate; as we expect, its applicability in full. Moreover, by defining four regions of the elasticity domain, we have provided a general methodology for selecting a suitable elastic mesh for a range of EHL point contact problems. Note that if the surface roughness is taken into account then a finer mesh in the contact region (high-pressure region) may be required and this may, therefore, affect the mesh sizes close to the central contact region accordingly. Nevertheless the approach used here would still be applicable.</p>
+<p>The solution algorithm<xref ref-type="bibr" rid="bibr15-1350650112437098">15</xref> used here is based upon the use of linear elements since AMG methods are well developed and much more efficient for linear elements than higher order elements. The reduced problem sizes reported here are quite promising; however, a large number of elements were still required to achieve a desired accuracy. On the other hand, the use of higher order elements would be more accurate<xref ref-type="bibr" rid="bibr14-1350650112437098">14</xref> and thus would allow the use of coarse elements throughout the domain to achieve the equivalent accuracy. However, the development of an efficient solution algorithm, like preconditioned GMRES presented in Ahmed et al.,<xref ref-type="bibr" rid="bibr15-1350650112437098">15</xref> is required in order to fully benefit from the use of higher order elements in further mesh density optimization. Nevertheless, this study should extend to higher order elements since it has been shown in a recent work<xref ref-type="bibr" rid="bibr36-1350650112437098">36</xref> that the AMG approach works well for linear elasticity with higher order FEs.</p>
+<p>A further observation that we provide in this study is that the use of unstructured hierarchical meshes without appropriate mesh optimization can lead to poor-quality EHL results. This is likely to be an important observation in future work when we will seek to make use of local error estimation to control the mesh refinement locally in order to automate the generation of the linear elasticity FE meshes.</p>
+</sec>
+</body>
+<back>
+<sec id="sec12-1350650112437098"><title>Funding</title>
+<p>Author Sarfraz Ahmed thanks the Higher Education Commission, Pakistan, for providing financial support that has allowed this research to be undertaken at the University of Leeds.</p>
+</sec>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1350650112437098"><label>1</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Lubrecht</surname><given-names>AA</given-names></name></person-group>. <source><italic>Numerical solution of the EHL line and point contact problem using multigrid techniques</italic>. PhD Thesis</source>. <publisher-name>University of Twente</publisher-name>, <publisher-loc>Endschende, The Netherlands</publisher-loc>, <year>1987</year>.</citation></ref>
+<ref id="bibr2-1350650112437098"><label>2</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Brandt</surname><given-names>A</given-names></name><name><surname>Lubrecht</surname><given-names>AA</given-names></name></person-group>. <article-title>Multilevel matrix multiplication and fast solution of integral equations</article-title>. <source>J Comput Phys</source> <year>1990</year>; <volume>90</volume>(<issue>2</issue>): <fpage>348</fpage>–<lpage>370</lpage>.</citation></ref>
+<ref id="bibr3-1350650112437098"><label>3</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Venner</surname><given-names>CH</given-names></name><name><surname>Lubrecht</surname><given-names>AA</given-names></name></person-group>. <source>Multilevel methods in lubrication</source>. <publisher-loc>Netherlands</publisher-loc>: <publisher-name>Elsevier</publisher-name>, <year>2000</year>.</citation></ref>
+<ref id="bibr4-1350650112437098"><label>4</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Nurgat</surname><given-names>E</given-names></name></person-group>. <source><italic>Numerical methods in lubrication modelling</italic>. PhD Thesis</source>. <publisher-name>University of Leeds</publisher-name>, <publisher-loc>Leeds, UK</publisher-loc>, <year>1997</year>.</citation></ref>
+<ref id="bibr5-1350650112437098"><label>5</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Goodyer</surname><given-names>CE</given-names></name></person-group>. <source>Adaptive numerical methods for elastohydrodynamic lubrication. PhD Thesis</source>. <publisher-loc>Leeds, UK</publisher-loc>: <publisher-name>University of Leeds</publisher-name>, <year>2001</year>.</citation></ref>
+<ref id="bibr6-1350650112437098"><label>6</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Venner</surname><given-names>CH</given-names></name></person-group>. <source>Multilevel solution of the EHL line and point contact problems. PhD Thesis</source>. <publisher-loc>Endschende, The Netherlands</publisher-loc>: <publisher-name>University of Twente</publisher-name>, <year>1991</year>.</citation></ref>
+<ref id="bibr7-1350650112437098"><label>7</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Oh</surname><given-names>KP</given-names></name><name><surname>Rohde</surname><given-names>SM</given-names></name></person-group>. <article-title>Numerical solution of the point contact problem using the finite element method</article-title>. <source>Int J Numer Methods Eng</source> <year>1977</year>; <volume>11</volume>: <fpage>1507</fpage>–<lpage>1518</lpage>.</citation></ref>
+<ref id="bibr8-1350650112437098"><label>8</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Evans</surname><given-names>HP</given-names></name><name><surname>Hughes</surname><given-names>TG</given-names></name></person-group>. <article-title>Evaluation of deflection in semi-infinite bodies by a differential method</article-title>. <source>Proc IMechE Part C: J Mechanical Engineering Science</source> <year>2000</year>; <volume>214</volume>: <fpage>563</fpage>–<lpage>584</lpage>.</citation></ref>
+<ref id="bibr9-1350650112437098"><label>9</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Hughes</surname><given-names>TG</given-names></name><name><surname>Elcoate</surname><given-names>CD</given-names></name><name><surname>Evans</surname><given-names>HP</given-names></name></person-group>. <article-title>Coupled solution of the elastohydrodynamic line contact problem using a differential deflection method</article-title>. <source>Proc IMechE Part C: J Mechanical Engineering Science</source> <year>2000</year>; <volume>214</volume>: <fpage>585</fpage>–<lpage>598</lpage>.</citation></ref>
+<ref id="bibr10-1350650112437098"><label>10</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Holmes</surname><given-names>MJA</given-names></name><name><surname>Evans</surname><given-names>HP</given-names></name><name><surname>Hughes</surname><given-names>TG</given-names></name><etal/></person-group>. <article-title>Transient elastohydrodynamic point contact analysis using a new coupled differential deflection method. Part I: Theory and validation</article-title>. <source>Proc IMechE Part J: J Engineering Tribology</source> <year>2003</year>; <volume>217</volume>: <fpage>289</fpage>–<lpage>303</lpage>.</citation></ref>
+<ref id="bibr11-1350650112437098"><label>11</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Holmes</surname><given-names>MJA</given-names></name><name><surname>Evans</surname><given-names>HP</given-names></name><name><surname>Hughes</surname><given-names>TG</given-names></name><etal/></person-group>. <article-title>Transient elastohydrodynamic point contact analysis using a new coupled differential deflection method. Part II: Results</article-title>. <source>Proc IMechE Part J: J Engineering Tribology</source> <year>2003</year>; <volume>217</volume>: <fpage>305</fpage>–<lpage>321</lpage>.</citation></ref>
+<ref id="bibr12-1350650112437098"><label>12</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Habchi</surname><given-names>W</given-names></name><name><surname>Eyheramendy</surname><given-names>D</given-names></name><name><surname>Vergne</surname><given-names>P</given-names></name><etal/></person-group>. <article-title>A full-system approach of the elastohydrodynamic line/point contact problem</article-title>. <source>ASME J Tribol</source> <year>2008</year>; <volume>130</volume>: <fpage>021501</fpage>–<lpage>021501</lpage>.</citation></ref>
+<ref id="bibr13-1350650112437098"><label>13</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Habchi</surname><given-names>W</given-names></name><name><surname>Eyheramendy</surname><given-names>D</given-names></name><name><surname>Vergne</surname><given-names>P</given-names></name><etal/></person-group>. <article-title>Stabilized fully-coupled finite elements for elastohydrodynamic lubrication problems</article-title>. <source>Adv Eng Softw</source>. <comment><italic>Epub ahead of print 13 November</italic></comment> <year>2010</year>.</citation></ref>
+<ref id="bibr14-1350650112437098"><label>14</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Habchi</surname><given-names>W</given-names></name></person-group>. <source>A full-system finite element approach to elastohydrodynamic lubrication problem: application to ultra-low-viscosity fluids. PhD Thesis</source>. <publisher-loc>France</publisher-loc>: <publisher-name>University of Lyon</publisher-name>, <year>2008</year>.</citation></ref>
+<ref id="bibr15-1350650112437098"><label>15</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Ahmed</surname><given-names>S</given-names></name><name><surname>Goodyer</surname><given-names>CE</given-names></name><name><surname>Jimack</surname><given-names>PK</given-names></name></person-group>. <article-title>An efficient preconditioned iterative solution of fully-coupled elastohydrodynamic lubrication problems</article-title>. <source>Appl Numer Math</source> <year>2011</year> <comment>(submitted)</comment>.</citation></ref>
+<ref id="bibr16-1350650112437098"><label>16</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Roelands</surname><given-names>CJA</given-names></name></person-group>. <source>Correlational aspects of the viscosity-temperature-pressure relationship of lubricating oils. PhD Thesis</source>. <publisher-loc>The Netherlands</publisher-loc>: <publisher-name>Technische Hogeschool, Delft</publisher-name>, <year>1966</year>.</citation></ref>
+<ref id="bibr17-1350650112437098"><label>17</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Dowson</surname><given-names>D</given-names></name><name><surname>Higginson</surname><given-names>GR</given-names></name></person-group>. <source>Elastohydrodynamic lubrication</source>. <publisher-loc>Oxford</publisher-loc>: <publisher-name>Pergamon Press</publisher-name>, <year>1977</year>.</citation></ref>
+<ref id="bibr18-1350650112437098"><label>18</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Floberg</surname><given-names>L</given-names></name></person-group>. <source>Cavitation in lubricating oil films</source>. <publisher-loc>Amsterdam</publisher-loc>: <publisher-name>Elsevier</publisher-name>, <year>1964</year>.</citation></ref>
+<ref id="bibr19-1350650112437098"><label>19</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Elrod</surname><given-names>HG</given-names></name></person-group>. <article-title>A cavitation algorithm</article-title>. <source>J Lubri Technol Trans ASME</source> <year>1981</year>; <volume>103</volume>: <fpage>350</fpage>–<lpage>354</lpage>.</citation></ref>
+<ref id="bibr20-1350650112437098"><label>20</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Wu</surname><given-names>SR</given-names></name></person-group>. <article-title>A penalty formulation and numerical approximation of the Reynolds-Hertz problem of elastohydrodynamic lubrication</article-title>. <source>Int J Eng Sci</source> <year>1986</year>; <volume>24</volume>(<issue>6</issue>): <fpage>1001</fpage>–<lpage>1013</lpage>.</citation></ref>
+<ref id="bibr21-1350650112437098"><label>21</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Thatte</surname><given-names>A</given-names></name><name><surname>Salant</surname><given-names>RF</given-names></name></person-group>. <article-title>Transient EHL analysis of an elastomeric hydraulic seal</article-title>. <source>Tribol Int</source> <year>2009</year>; <volume>42</volume>(<issue>10</issue>): <fpage>1424</fpage>–<lpage>1432</lpage>.</citation></ref>
+<ref id="bibr22-1350650112437098"><label>22</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Thatte</surname><given-names>A</given-names></name><name><surname>Salant</surname><given-names>RF</given-names></name></person-group>. <article-title>Visco-elastohydrodynamic model of a hydraulic rod seal during transient operation</article-title>. <source>J Tribol</source> <year>2010</year>; <volume>132</volume>(<issue>4</issue>): <fpage>041501-1</fpage>–<lpage>041501-13</lpage>.</citation></ref>
+<ref id="bibr23-1350650112437098"><label>23</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Payvar</surname><given-names>P</given-names></name><name><surname>Salant</surname><given-names>RF</given-names></name></person-group>. <article-title>A computational method for cavitation in a wavy mechanical seal</article-title>. <source>J Tribol</source> <year>1992</year>; <volume>114</volume>(<issue>1</issue>): <fpage>199</fpage>–<lpage>204</lpage>.</citation></ref>
+<ref id="bibr24-1350650112437098"><label>24</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Brooks</surname><given-names>AN</given-names></name><name><surname>Hughes</surname><given-names>TJR</given-names></name></person-group>. <article-title>Streamline-upwind/Petrov-Galerkin formulations for convective dominated flows with particular emphasis on the incompressible navier-stokes equations</article-title>. <source>Comp Meth Appl Mech Eng</source> <year>1982</year>; <volume>32</volume>: <fpage>199</fpage>–<lpage>259</lpage>.</citation></ref>
+<ref id="bibr25-1350650112437098"><label>25</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Zienkiewicz</surname><given-names>OC</given-names></name><name><surname>Taylor</surname><given-names>RL</given-names></name></person-group>. <source>The finite element method. Volume 3: Fluid dynamics</source>, <edition>5th ed</edition>. <publisher-loc>Oxford</publisher-loc>: <publisher-name>Butterworth-Heinmann</publisher-name>, <year>2000</year>.</citation></ref>
+<ref id="bibr26-1350650112437098"><label>26</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Saad</surname><given-names>Y</given-names></name><name><surname>Schultz</surname><given-names>MH</given-names></name></person-group>. <article-title>GMRES: a generalized minimal residual algorithm for solving nonsymmetric linear systems</article-title>. <source>SIAM J Sci Stat Comput</source> <year>1986</year>; <volume>7</volume>: <fpage>856</fpage>–<lpage>869</lpage>.</citation></ref>
+<ref id="bibr27-1350650112437098"><label>27</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Boyle</surname><given-names>J</given-names></name><name><surname>Mihajlovic</surname><given-names>M</given-names></name><name><surname>Scott</surname><given-names>J</given-names></name></person-group>. <article-title>HSL MI20: An efficient AMG preconditioner for finite element problems in 3D</article-title>. <source>Int J Numer Meth Eng</source> <year>2010</year>; <volume>82</volume>(<issue>1</issue>): <fpage>64</fpage>–<lpage>98</lpage>.</citation></ref>
+<ref id="bibr28-1350650112437098"><label>28</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Briggs</surname><given-names>WL</given-names></name><name><surname>Henson</surname><given-names>VE</given-names></name><name><surname>McCormick</surname><given-names>SF</given-names></name></person-group>. <source>A multigrid tutorial</source>. <publisher-loc>Philadelphia, PA</publisher-loc>: <publisher-name>Society for Industrial and Applied Mathematics</publisher-name>, <year>2000</year>.</citation></ref>
+<ref id="bibr29-1350650112437098"><label>29</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Trottenberg</surname><given-names>U</given-names></name><name><surname>Oosterlee</surname><given-names>CW</given-names></name><name><surname>Schuller</surname><given-names>A</given-names></name></person-group>. <source>Multigrid</source>. <publisher-loc>Orlando, FL</publisher-loc>: <publisher-name>Academic Press</publisher-name>, <year>2001</year>.</citation></ref>
+<ref id="bibr30-1350650112437098"><label>30</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Davis</surname><given-names>TA</given-names></name></person-group>. <article-title>Algorithm 832: UMFPACK, an unsymmetric-pattern multifrontal method</article-title>. <source>ACM Trans Math Softw</source> <year>2004</year>; <volume>30</volume>(<issue>2</issue>): <fpage>196</fpage>–<lpage>199</lpage>.</citation></ref>
+<ref id="bibr31-1350650112437098"><label>31</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Schoeberl</surname><given-names>J</given-names></name></person-group>. <article-title>NETGEN, an advancing front 2D/3D-mesh generator based on abstract rules</article-title>. <source>Comput Visual Sci</source> <year>1997</year>; <volume>1</volume>: <fpage>41</fpage>–<lpage>52</lpage>.</citation></ref>
+<ref id="bibr32-1350650112437098"><label>32</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Berzins</surname><given-names>M</given-names></name></person-group>. <article-title>Solution-based mesh quality for triangular and tetrahedral meshes</article-title>. In: <source>Sixth international meshing roundtable</source>, <comment>Park City, UT, 13–15 October</comment> <year>1997</year>, pp.<fpage>427</fpage>–<lpage>436</lpage>. <publisher-loc>Albuquerque, NM</publisher-loc>: <publisher-name>Sandia National Laboratories</publisher-name>.</citation></ref>
+<ref id="bibr33-1350650112437098"><label>33</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Berzins</surname><given-names>M</given-names></name></person-group>. <article-title>Mesh quality – geometry, error estimates or both?</article-title> <source>Seventh international meshing roundtable</source>, <comment>Dearborn, MI, 26–28 October</comment> <year>1998</year>, pp.<fpage>229</fpage>–<lpage>237</lpage>. <publisher-loc>Albuquerque, NH</publisher-loc>: <publisher-name>Sandia National Laboratories</publisher-name>.</citation></ref>
+<ref id="bibr34-1350650112437098"><label>34</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Speares</surname><given-names>W</given-names></name><name><surname>Berzins</surname><given-names>M</given-names></name></person-group>. <article-title>A 3D unstructured mesh adaptation algorithm for time-dependent shockdominated problems</article-title>. <source>Int J Numer Meth Fluids</source> <year>1997</year>; <volume>25</volume>(<issue>1</issue>): <fpage>81</fpage>–<lpage>104</lpage>.</citation></ref>
+<ref id="bibr35-1350650112437098"><label>35</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Ong</surname><given-names>ME</given-names></name></person-group>. <article-title>Uniform refinement of tetrahedron</article-title>. <source>Siam J Sci Comput</source> <year>1994</year>; <volume>15</volume>(<issue>5</issue>): <fpage>1134</fpage>–<lpage>1144</lpage>.</citation></ref>
+<ref id="bibr36-1350650112437098"><label>36</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Xiao</surname><given-names>Y</given-names></name><name><surname>Shu</surname><given-names>S</given-names></name><name><surname>Zhao</surname><given-names>T</given-names></name></person-group>. <article-title>A geometric-based algebraic multigrid method for higher-order finite element equations in two-dimensional linear elasticity</article-title>. <source>Numer Linear Algebra Appl</source> <year>2009</year>; <volume>16</volume>: <fpage>535</fpage>–<lpage>559</lpage>.</citation></ref>
+</ref-list>
+<app-group>
+<app id="app1-1350650112437098"><title>Appendix</title>
+<sec id="sec13-1350650112437098"><title/>
+<sec id="sec14-1350650112437098"><title>Notation</title>
+<def-list>
+<def-item><term><italic>C</italic><sub><italic>ijkl</italic></sub></term><def><p>elasticity tensor</p></def></def-item>
+<def-item><term><italic>D</italic></term><def><p>elastic deformation</p></def></def-item>
+<def-item><term><italic>E</italic></term><def><p>equivalent Young's modulus</p></def></def-item>
+<def-item><term><italic>h</italic><sub><italic>e</italic></sub></term><def><p>element size</p></def></def-item>
+<def-item><term><italic>H</italic></term><def><p>dimensionless film thickness</p></def></def-item>
+<def-item><term><italic>H</italic><sub><italic>c</italic></sub></term><def><p>dimensionless central film thickness</p></def></def-item>
+<def-item><term><italic>H</italic><sub><italic>m</italic></sub></term><def><p>dimensionless minimum film thickness</p></def></def-item>
+<def-item><term><italic>H</italic><sub>0</sub></term><def><p>central offset film thickness</p></def></def-item>
+<def-item><term><italic>M</italic>, <italic>L</italic></term><def><p>moes parameters</p></def></def-item>
+<def-item><term><italic>n</italic><sub><italic>p</italic></sub></term><def><p>number of pressure unknowns</p></def></def-item>
+<def-item><term><italic>n</italic><sub><italic>u</italic></sub></term><def><p>number of nodes in Ω, excluding Dirichlet boundary nodes</p></def></def-item>
+<def-item><term><italic>p</italic><sub><italic>h</italic></sub></term><def><p>maximum Hertzian pressure</p></def></def-item>
+<def-item><term><italic>P</italic></term><def><p>dimensionless pressure</p></def></def-item>
+<def-item><term><italic>P</italic><sub><italic>e</italic></sub></term><def><p>Peclet number</p></def></def-item>
+<def-item><term><inline-formula id="ilm26-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math26-1350650112437098"><mml:mi mathvariant="script">P</mml:mi></mml:math></inline-formula><sub><italic>p</italic></sub>, <inline-formula id="ilm27-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math27-1350650112437098"><mml:mi mathvariant="script">P</mml:mi></mml:math></inline-formula><sub><italic>u</italic></sub></term><def><p>piecewise linear finite element spaces</p></def></def-item>
+<def-item><term><italic>P</italic><sup>−</sup></term><def><p>negative pressure</p></def></def-item>
+<def-item><term><italic>u</italic><sub><italic>s</italic></sub></term><def><p>total speed</p></def></def-item>
+<def-item><term><italic>U</italic></term><def><p>dimensionless displacement vector</p></def></def-item>
+<def-item><term><italic>V</italic></term><def><p>fluid velocity field</p></def></def-item>
+<def-item><term><italic>X</italic>, <italic>Y</italic>, <italic>Z</italic></term><def><p>dimensionless space dimensions</p></def></def-item>
+<def-item><term>α</term><def><p>viscosity index</p></def></def-item>
+<def-item><term>Γ<sub><italic>t</italic></sub></term><def><p>traction boundary of Ω</p></def></def-item>
+<def-item><term>δ<sub><italic>ij</italic></sub></term><def><p>Kronecker delta</p></def></def-item>
+<def-item><term>ϵ</term><def><p>diffusion coefficient</p></def></def-item>
+<def-item><term><inline-formula id="ilm23-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math23-1350650112437098"><mml:mrow><mml:mover><mml:mrow><mml:mi>η</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula></term><def><p>dimensionless viscosity</p></def></def-item>
+<def-item><term>η<sub>0</sub></term><def><p>viscosity at ambient pressure</p></def></def-item>
+<def-item><term>λ, μ</term><def><p>Lamé's coefficients</p></def></def-item>
+<def-item><term><inline-formula id="ilm24-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math24-1350650112437098"><mml:mrow><mml:mover><mml:mrow><mml:mi>λ</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula></term><def><p>dimensionless speed parameter</p></def></def-item>
+<def-item><term>ν</term><def><p>equivalent Poisson ratio</p></def></def-item>
+<def-item><term>ξ</term><def><p>penalty factor</p></def></def-item>
+<def-item><term><inline-formula id="ilm25-1350650112437098"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math25-1350650112437098"><mml:mrow><mml:mover><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula></term><def><p>dimensionless density</p></def></def-item>
+<def-item><term>σ<sub><italic>n</italic></sub></term><def><p>normal stress</p></def></def-item>
+<def-item><term>Ω</term><def><p>elasticity domain</p></def></def-item>
+<def-item><term>Ω<sub><italic>c</italic></sub></term><def><p>contact domain</p></def></def-item>
+<def-item><term>Ω<sub><italic>D</italic></sub></term><def><p>Dirichlet boundary of Ω</p></def></def-item></def-list>
+</sec>
+</sec></app></app-group>
+</back>
+</article>

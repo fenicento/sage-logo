@@ -1,0 +1,2491 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">HPC</journal-id>
+<journal-id journal-id-type="hwp">sphpc</journal-id>
+<journal-title>The International Journal of High Performance Computing Applications</journal-title>
+<issn pub-type="ppub">1094-3420</issn>
+<issn pub-type="epub">1741-2846</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0734904113492410</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0734904113492410</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Special Issue Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Symbolic mapping and allocation for the Cholesky factorization on NUMA machines</article-title>
+<subtitle>Results and optimizations</subtitle>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name>
+<surname>Jeannot</surname>
+<given-names>Emmanuel</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-0734904113492410">1</xref>
+<xref ref-type="corresp" rid="corresp1-0734904113492410"/>
+</contrib>
+<bio>
+<title>Author biography</title>
+<p>
+<italic>Emmanuel Jeannot</italic> is a research scientist at INRIA (Institut National de Recherche en Informatique et en Automatique) and he has been conducting research at INRIA Bordeaux Sud-Ouest and at the LaBRI laboratory since September 2009. Before that, he held the same position at INRIA Nancy Grand-Est. From January 2006 to July 2006, he was a visiting researcher at the University of Tennessee, ICL laboratory. From September 1999 to September 2005, he was assistant professor at the Université Henry Poincaré, Nancy 1. During the period 2000–2009, he carried out research at the LORIA laboratory. He got his Master and PhD degrees in computer science in 1996 and 1999, respectively, both from Ecole Normale Supérieur de Lyon, at the LIP laboratory. After his PhD, he spent one year as a postdoc at the LaBRI laboratory in Bordeaux. His main research interests are scheduling for heterogeneous environments and grids, data redistribution, algorithms and models for parallel machines, grid computing software, adaptive online compression and programming models.</p>
+</bio>
+</contrib-group>
+<aff id="aff1-0734904113492410">Inria Bordeaux Sud-Ouest, LaBRI, France</aff>
+<author-notes>
+<corresp id="corresp1-0734904113492410">Emmanuel Jeannot, Inria Bordeaux Sud-Ouest, LaBRI, France. Email: <email>emmanuel.jeannot@inria.fr</email>
+</corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>8</month>
+<year>2013</year>
+</pub-date>
+<volume>27</volume>
+<issue>3</issue>
+<issue-title>Special Issue section on CCDSC 2012 Workshop</issue-title>
+<fpage>283</fpage>
+<lpage>290</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2013</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>We discuss some performance issues of the tiled Cholesky factorization on non-uniform memory access-time (NUMA) shared memory machines. We show how to optimize thread and data placement in order to improve performance. The final result is 50\% faster than PLASMA and 75\% faster than MKL.</p>
+</abstract>
+<kwd-group>
+<kwd>performance optimization</kwd>
+<kwd>symbolic data mapping and clustering</kwd>
+<kwd>Cholesky factorization</kwd>
+<kwd>NUMA machine</kwd>
+<kwd>PLASMA</kwd>
+<kwd>MKL</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0734904113492410">
+<title>1. Introduction</title>
+<p>Nowadays, parallel shared memory machines provide a unified view of the memory. A multi-threaded program can be executed on all the cores of the machine using all the memory available. However, due to the memory hierarchy (node, memory banks, cache), the access time to a memory page of a thread depends on both the location of this thread and the page. Therefore, these machines are often called non-uniform memory access-time (NUMA) to account for these effects. Hence, despite the fact that a process (and its own threads) has the illusion of a flat address space, thread placement, data placement and data movement may have a huge impact on the overall performance of the application.</p>
+<p>In this paper, we study the tiled version of the Cholesky factorization on such NUMA machines. We show that a simple data flow analysis of the code can provide a relevant placement of the threads and the tiles. Then, we study how threads need to be grouped according to the topology of the machine and we demonstrate that grouping threads by memory nodes has a huge impact on the performance especially for large matrices. Last, we study the conversion of the data storage from the standard LAPACK format to the tiled format. We show that the way a matrix is loaded into the memory has a huge impact when converting the format. At the end, for some matrices, the proposed optimizations result in execution time to 50\% faster than PLASMA a state-of-the-art implementation of the Cholesky factorization.</p>
+<p>The paper is organized as follows: first, we briefly describe the Cholesky factorization in Section 2. Then we show how to statically analyse the code and automatically determine the thread placement in Section 3. Then, in Section 4, we discuss the execution of the mapping according to the topology of the machine. Finally, we examine the conversion of the LAPACK format to the tiled format in Section 5 before concluding in Section 6. </p>
+</sec>
+<sec id="section2-0734904113492410">
+<title>2. The Cholesky factorization</title>
+<p>The Cholesky factorization takes a symmetric positive definite matrix <inline-formula id="inline-formula1-0734904113492410">
+<mml:math id="mml-inline1-0734904113492410">
+<mml:mi>A</mml:mi>
+</mml:math>
+</inline-formula> as input and finds a lower triangular matrix <inline-formula id="inline-formula2-0734904113492410">
+<mml:math id="mml-inline2-0734904113492410">
+<mml:mi>L</mml:mi>
+</mml:math>
+</inline-formula> such that <inline-formula id="inline-formula3-0734904113492410">
+<mml:math id="mml-inline3-0734904113492410">
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mrow>
+<mml:mtext>LL T</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula>.<inline-graphic xlink:href="10.1177_0734904113492410-img1.tif"/>
+</p>
+<p>In Algorithm 1, we depict the tiled version of the algorithm. The matrix is decomposed into <inline-formula id="inline-formula4-0734904113492410">
+<mml:math id="mml-inline4-0734904113492410">
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mi>T</mml:mi>
+</mml:math>
+</inline-formula> square tiles where <inline-formula id="inline-formula5-0734904113492410">
+<mml:math id="mml-inline5-0734904113492410">
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:math>
+</inline-formula> is the tile of row <inline-formula id="inline-formula6-0734904113492410">
+<mml:math id="mml-inline6-0734904113492410">
+<mml:mi>i</mml:mi>
+</mml:math>
+</inline-formula> and column <inline-formula id="inline-formula7-0734904113492410">
+<mml:math id="mml-inline7-0734904113492410">
+<mml:mi>j</mml:mi>
+</mml:math>
+</inline-formula>. At each step <inline-formula id="inline-formula8-0734904113492410">
+<mml:math id="mml-inline8-0734904113492410">
+<mml:mi>k</mml:mi>
+</mml:math>
+</inline-formula> (see <xref ref-type="fig" rid="fig1-0734904113492410">Figure 1(a)</xref>), we perform a Cholesky factorization of the tile on the diagonal of panel <inline-formula id="inline-formula9-0734904113492410">
+<mml:math id="mml-inline9-0734904113492410">
+<mml:mi>k</mml:mi>
+</mml:math>
+</inline-formula> (DPOTRF kernel).<sup>
+<xref ref-type="fn" rid="fn1-0734904113492410">1</xref>
+</sup> Then, we update the remaining tiles of the panel using triangular solve (DTRSM kernel). Then, we update the trailing sub-matrix using the DSYRK kernel for tiles on the diagonal, and matrix multiply (DGEMM kernel) for the remaining tiles.</p>
+<fig id="fig1-0734904113492410" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Cholesky factorization kernels and task graph.</p>
+</caption>
+<graphic xlink:href="10.1177_0734904113492410-fig1.tif"/>
+</fig>
+<p>The advantage of the tiled version is that it features a lot of parallelism. For instance, when <inline-formula id="inline-formula10-0734904113492410">
+<mml:math id="mml-inline10-0734904113492410">
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>6</mml:mn>
+</mml:math>
+</inline-formula> we have the task graph depicted in <xref ref-type="fig" rid="fig1-0734904113492410">Figure 1(b)</xref> where each node is a kernel and each directed edge describes the data dependencies between kernels.</p>
+</sec>
+<sec id="section3-0734904113492410">
+<title>3. Static analysis of the Cholesky factorization</title>
+<sec id="section4-0734904113492410">
+<title>3.1. Parameterized task graph of the Cholesky factorization</title>
+<p>The task graph displayed in <xref ref-type="fig" rid="fig1-0734904113492410">Figure 1(b)</xref> seems to express a lot of different dependencies. However, a careful look at the way kernels depend on each other exhibits only eight different kinds of dependency. We can therefore find a parameterized task graph (PTG) that is a compact and symbolic representation of the task graph. The PTG model was first proposed by <xref ref-type="bibr" rid="bibr3-0734904113492410">Loi (1995)</xref> for automatically building task graphs. It uses parameters that can be instantiated for building the corresponding task graph. In our case, we have only one parameter: <inline-formula id="inline-formula11-0734904113492410">
+<mml:math id="mml-inline11-0734904113492410">
+<mml:mi>T</mml:mi>
+</mml:math>
+</inline-formula>.</p>
+<p>A PTG is composed of rules formally defined as follows. Let <inline-formula id="inline-formula12-0734904113492410">
+<mml:math id="mml-inline12-0734904113492410">
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula13-0734904113492410">
+<mml:math id="mml-inline13-0734904113492410">
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>b</mml:mi>
+</mml:msub>
+</mml:math>
+</inline-formula> be two generic tasks with iteration vectors <inline-formula id="inline-formula14-0734904113492410">
+<mml:math id="mml-inline14-0734904113492410">
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula15-0734904113492410">
+<mml:math id="mml-inline15-0734904113492410">
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula>; let <inline-formula id="inline-formula16-0734904113492410">
+<mml:math id="mml-inline16-0734904113492410">
+<mml:mi>D</mml:mi>
+</mml:math>
+</inline-formula> be a data exchanged between <inline-formula id="inline-formula17-0734904113492410">
+<mml:math id="mml-inline17-0734904113492410">
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula18-0734904113492410">
+<mml:math id="mml-inline18-0734904113492410">
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>b</mml:mi>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula19-0734904113492410">
+<mml:math id="mml-inline19-0734904113492410">
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> be a vector of the same dimension as <inline-formula id="inline-formula20-0734904113492410">
+<mml:math id="mml-inline20-0734904113492410">
+<mml:mi>D</mml:mi>
+</mml:math>
+</inline-formula>; let <inline-formula id="inline-formula21-0734904113492410">
+<mml:math id="mml-inline21-0734904113492410">
+<mml:mi>P</mml:mi>
+</mml:math>
+</inline-formula> be a parameterized polyhedron. One rule has the following form:<disp-formula id="disp-formula1-0734904113492410">
+<mml:math id="mml-disp1-0734904113492410">
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>b</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0734904113492410" xlink:href="10.1177_0734904113492410-eq1.tif"/>
+</disp-formula>
+</p>
+<p>This rule reads ‘for all <inline-formula id="inline-formula22-0734904113492410">
+<mml:math id="mml-inline22-0734904113492410">
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> <inline-formula id="inline-formula23-0734904113492410">
+<mml:math id="mml-inline23-0734904113492410">
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula24-0734904113492410">
+<mml:math id="mml-inline24-0734904113492410">
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> in polyhedron <inline-formula id="inline-formula25-0734904113492410">
+<mml:math id="mml-inline25-0734904113492410">
+<mml:mi>P</mml:mi>
+</mml:math>
+</inline-formula>, task <inline-formula id="inline-formula26-0734904113492410">
+<mml:math id="mml-inline26-0734904113492410">
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> sends data <inline-formula id="inline-formula27-0734904113492410">
+<mml:math id="mml-inline27-0734904113492410">
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> to task <inline-formula id="inline-formula28-0734904113492410">
+<mml:math id="mml-inline28-0734904113492410">
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>b</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>’.</p>
+<p>For the Cholesky factorization, we have four generic tasks that correspond to the four kernels (DPOTRF, DSYRK, DTRSM and DGEMM) and eight rules. The four rules come from dependencies that occur during the same iteration. <xref ref-type="fig" rid="fig2-0734904113492410">Figure 2(a)</xref> describes some such dependencies. This corresponds to the following rules (with <inline-formula id="inline-formula29-0734904113492410">
+<mml:math id="mml-inline29-0734904113492410">
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">≥</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula>):<fig id="fig2-0734904113492410" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Cholesky factorization kernel dependencies.</p>
+</caption>
+<graphic xlink:href="10.1177_0734904113492410-fig2.tif"/>
+</fig>
+<disp-formula id="disp-formula2-0734904113492410">
+<mml:math id="mml-disp2-0734904113492410">
+<mml:mtable columnalign="right left" columnspacing="thickmathspace" displaystyle="true" rowspacing=".5em">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mi>P</mml:mi>
+<mml:mi>O</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>S</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+</mml:mtd>
+<mml:mtd>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>S</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>S</mml:mi>
+<mml:mi>Y</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>K</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">:</mml:mo>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>S</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>G</mml:mi>
+<mml:mi>E</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+</mml:mtd>
+<mml:mtd>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mi>R</mml:mi>
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">:</mml:mo>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>S</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>G</mml:mi>
+<mml:mi>E</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0734904113492410" xlink:href="10.1177_0734904113492410-eq2.tif"/>
+</disp-formula>
+</p>
+<p>We also have four rules between iteration <inline-formula id="inline-formula30-0734904113492410">
+<mml:math id="mml-inline30-0734904113492410">
+<mml:mi>k</mml:mi>
+</mml:math>
+</inline-formula> and iteration <inline-formula id="inline-formula31-0734904113492410">
+<mml:math id="mml-inline31-0734904113492410">
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula> as described in <xref ref-type="fig" rid="fig2-0734904113492410">Figure 2(b)</xref>. This corresponds to the following rules (with <inline-formula id="inline-formula32-0734904113492410">
+<mml:math id="mml-inline32-0734904113492410">
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">≥</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula>):<disp-formula id="disp-formula3-0734904113492410">
+<mml:math id="mml-disp3-0734904113492410">
+<mml:mtable columnalign="right left" columnspacing="thickmathspace" displaystyle="true" rowspacing=".5em">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>5</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">:</mml:mo>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>S</mml:mi>
+<mml:mi>Y</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>K</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>P</mml:mi>
+<mml:mi>O</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>F</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+</mml:mtd>
+<mml:mtd>
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>6</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>S</mml:mi>
+<mml:mi>Y</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>K</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>S</mml:mi>
+<mml:mi>Y</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>K</mml:mi>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>7</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">:</mml:mo>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>G</mml:mi>
+<mml:mi>E</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>S</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+</mml:mtd>
+<mml:mtd>
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0734904113492410" xlink:href="10.1177_0734904113492410-eq3.tif"/>
+</disp-formula>
+<disp-formula id="disp-formula4-0734904113492410">
+<mml:math id="mml-disp4-0734904113492410">
+<mml:mrow>
+<mml:mtable columnalign="right left" columnspacing="thickmathspace" displaystyle="true" rowspacing=".5em">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>8</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">:</mml:mo>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>G</mml:mi>
+<mml:mi>E</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mi>G</mml:mi>
+<mml:mi>E</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+</mml:mtd>
+<mml:mtd>
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">;</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0734904113492410" xlink:href="10.1177_0734904113492410-eq4.tif"/>
+</disp-formula>
+</p>
+<p>Such rules can automatically be found by statically analysing the sequential code with compiler tools such as PlusPyr of <xref ref-type="bibr" rid="bibr4-0734904113492410">Cosnard and Loi (1996)</xref> or DAGuE from <xref ref-type="bibr" rid="bibr2-0734904113492410">Bosilca et al. (2012)</xref>.</p>
+<p>To obtain such rules from a sequential program, the code must have static control (see <xref ref-type="bibr" rid="bibr7-0734904113492410">Feautrier, 1991</xref>).</p>
+<p>Many compute-intensive kernels found in the literature have static control. This is the case for the QR factorization and the LU factorization. See <xref ref-type="bibr" rid="bibr5-0734904113492410">Cosnard et al.(1999)</xref> for other examples.</p>
+</sec>
+<sec id="section5-0734904113492410">
+<title>3.2. Static data allocation and kernel mapping</title>
+<p>In this section, we propose an algorithm called symbolic mapping and allocation (SMA). SMA takes a PTG as input and outputs a mapping of the data and an allocation of the tasks in order to reduce communication costs while keeping parallelism.</p>
+<sec id="section6-0734904113492410">
+<title>3.2.1. Overview of SMA</title>
+<p>In our previous work (<xref ref-type="bibr" rid="bibr6-0734904113492410">Cosnard et al., 2004</xref>), we proposed an algorithm called symbolic linear clustering (SLC), for statically schedule a PTG (i.e. providing a task mapping before the execution). </p>
+<p>SMA finds, given a PTG, a mapping function (a clustering) for each generic task: a<italic> cluster ID</italic> such that each task with the same ID will be mapped on the same processor. This function depends only on the parameters of the program, the iteration vector of the generic task and the number of available processors for execution. The result is independent of the parameter value and therefore of the instantiated task graph. The memory gain is double: no full task graph is required and the schedule has a size proportional to the number of generic tasks.</p>
+<p>Starting from a PTG, SMA is composed of the following steps (the first one being directly inspired from SLC):
+<list list-type="order">
+<list-item>
+<p>
+<italic>Extracting bijection rules</italic>. We analyse the communication rules in order to extract bijection rules. Bijection rules describe point-to-point communications and are those that will be part of the clustering. In the Cholesky case, we have three broadcasts (rules <inline-formula id="inline-formula33-0734904113492410">
+<mml:math id="mml-inline33-0734904113492410">
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula34-0734904113492410">
+<mml:math id="mml-inline34-0734904113492410">
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula35-0734904113492410">
+<mml:math id="mml-inline35-0734904113492410">
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>4</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>) and five bijection rules (<inline-formula id="inline-formula36-0734904113492410">
+<mml:math id="mml-inline36-0734904113492410">
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula37-0734904113492410">
+<mml:math id="mml-inline37-0734904113492410">
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>5</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> to <inline-formula id="inline-formula38-0734904113492410">
+<mml:math id="mml-inline38-0734904113492410">
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>8</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>).</p>
+</list-item>
+<list-item>
+<p>
+<italic>Selecting non-conflicting rules</italic>. Given a set of bijection rules this step consists of selecting some of them in order to guarantee that, for all parameter values, the selected rules will always form a cluster with no join or fork operations. In our case, rule <inline-formula id="inline-formula39-0734904113492410">
+<mml:math id="mml-inline39-0734904113492410">
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and rule <inline-formula id="inline-formula40-0734904113492410">
+<mml:math id="mml-inline40-0734904113492410">
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>6</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> are in join conflict. Indeed, the same DSYRK kernel receives a tile from a DTRSM and from a DSYRK.</p>
+</list-item>
+<list-item>
+<p>
+<italic>Computing the symbolic allocation</italic>. The previous step does not always yield a unique solution. In order to reduce the solution space, we can enforce the owner-compute rule. The other advantage of the owner-compute rule is a better cache reuse in the context of shared memory machines. Based on the clustering and the owner-compute rule, we can construct a function that, once parameter values are known, computes the cluster number of a given task obeying these constraints.</p>
+</list-item>
+</list>
+</p>
+</sec>
+<sec id="section7-0734904113492410">
+<title>3.2.2. Symbolic mapping and allocation</title>
+<p>SMA works as follows:
+<list list-type="order">
+<list-item>
+<p>Let <inline-formula id="inline-formula41-0734904113492410">
+<mml:math id="mml-inline41-0734904113492410">
+<mml:mrow>
+<mml:mi mathvariant="script">Z</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> be a set of non conflicting rules and <inline-formula id="inline-formula42-0734904113492410">
+<mml:math id="mml-inline42-0734904113492410">
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> be the vector of parameters. Each rule <inline-formula id="inline-formula43-0734904113492410">
+<mml:math id="mml-inline43-0734904113492410">
+<mml:mi>R</mml:mi>
+<mml:mo stretchy="false">∈</mml:mo>
+<mml:mrow>
+<mml:mi mathvariant="script">Z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">i</mml:mi>
+<mml:mi mathvariant="normal">s</mml:mi>
+<mml:mo> </mml:mo>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">f</mml:mi>
+<mml:mo> </mml:mo>
+<mml:mi mathvariant="normal">t</mml:mi>
+<mml:mi mathvariant="normal">h</mml:mi>
+<mml:mi mathvariant="normal">e</mml:mi>
+<mml:mo> </mml:mo>
+<mml:mi mathvariant="normal">f</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">r</mml:mi>
+<mml:mi mathvariant="normal">m</mml:mi>
+<mml:mo mathvariant="normal" stretchy="false">:</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>b</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">:</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:math>
+</inline-formula>. </p>
+</list-item>
+<list-item>
+<p>We are going to build a clustering function <inline-formula id="inline-formula44-0734904113492410">
+<mml:math id="mml-inline44-0734904113492410">
+<mml:mi mathvariant="italic">κ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> and a data mapping function <inline-formula id="inline-formula45-0734904113492410">
+<mml:math id="mml-inline45-0734904113492410">
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>. In order for the problem to be tractable, we impose that both functions are affine (<xref ref-type="bibr" rid="bibr8-0734904113492410">Feautrier, 1994</xref>): <inline-formula id="inline-formula46-0734904113492410">
+<mml:math id="mml-inline46-0734904113492410">
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">α</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>D</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">β</mml:mi>
+<mml:mi>D</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>D</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula47-0734904113492410">
+<mml:math id="mml-inline47-0734904113492410">
+<mml:mi mathvariant="italic">κ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">α</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">β</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula>, where <inline-formula id="inline-formula48-0734904113492410">
+<mml:math id="mml-inline48-0734904113492410">
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> is the vector of parameters (<inline-formula id="inline-formula49-0734904113492410">
+<mml:math id="mml-inline49-0734904113492410">
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> for Cholesky).</p>
+</list-item>
+<list-item>
+<p>We first build equations for data mapping. When a rule sends data it is because it has updated it. Therefore, the mapping of the updated data must match the clustering of the task. Therefore, <inline-formula id="inline-formula50-0734904113492410">
+<mml:math id="mml-inline50-0734904113492410">
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">α</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">β</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">α</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>D</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>y</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">β</mml:mi>
+<mml:mi>D</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>D</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula>.</p>
+</list-item>
+<list-item>
+<p>Second, we build equations for the task allocation. If a rule is selected, this means that the sending task is going to be placed on the same cluster as the receiving task: <inline-formula id="inline-formula51-0734904113492410">
+<mml:math id="mml-inline51-0734904113492410">
+<mml:mi mathvariant="italic">κ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi mathvariant="italic">κ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>b</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>. Therefore, <inline-formula id="inline-formula52-0734904113492410">
+<mml:math id="mml-inline52-0734904113492410">
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">α</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">β</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">α</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>b</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>v</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">β</mml:mi>
+<mml:mi>b</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mi>b</mml:mi>
+</mml:msub>
+<mml:mover accent="true">
+<mml:mi>p</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula>.</p>
+</list-item>
+<list-item>
+<p>We build the equations for each rule leading to a linear system. The solution of the system defines the mapping of the data and the tasks.</p>
+</list-item>
+</list>
+</p>
+</sec>
+<sec id="section8-0734904113492410">
+<title>3.3. Example of the Cholesky factorization PTG</title>
+<p>We have two sets of non-conflicting rules <inline-formula id="inline-formula53-0734904113492410">
+<mml:math id="mml-inline53-0734904113492410">
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>5</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>7</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>8</mml:mn>
+</mml:msub>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula54-0734904113492410">
+<mml:math id="mml-inline54-0734904113492410">
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>5</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>6</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>7</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>8</mml:mn>
+</mml:msub>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:math>
+</inline-formula>. The first set leads to a trivial solution with no parallelism. The second set of rules leads to the diagonal solution that will be used in the remainder of the paper.</p>
+<p>
+<xref ref-type="table" rid="table1-0734904113492410">Table 1</xref> also presents the block-cyclic mapping on the <inline-formula id="inline-formula55-0734904113492410">
+<mml:math id="mml-inline55-0734904113492410">
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mi>Q</mml:mi>
+</mml:math>
+</inline-formula> processor array. DGEMM are tasks with low priority and are therefore executed by the runtime system only when no high priority tasks are ready.</p>
+<table-wrap id="table1-0734904113492410" position="float">
+<label>Table 1.</label>
+<caption>
+<p>SMA (diagonal) mapping, block-cyclic mapping and priority of all the Cholesky factorization tasks.</p>
+</caption>
+<graphic alternate-form-of="table1-0734904113492410" xlink:href="10.1177_0734904113492410-table1.tif"/>
+<table>
+<thead>
+<tr>
+<th>Mapping</th>
+<th>Diagonal</th>
+<th>Block-cyclic</th>
+<th>Priority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<inline-formula id="inline-formula56-0734904113492410">
+<mml:math id="mml-inline56-0734904113492410">
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula57-0734904113492410">
+<mml:math id="mml-inline57-0734904113492410">
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula58-0734904113492410">
+<mml:math id="mml-inline58-0734904113492410">
+<mml:mtable columnalign="right left" columnspacing="thickmathspace" displaystyle="true" rowspacing=".5em">
+<mml:mtr>
+<mml:mtd>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">m</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">d</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">m</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">d</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+</inline-formula>
+</td>
+<td>high</td>
+</tr>
+<tr>
+<td>
+<inline-formula id="inline-formula59-0734904113492410">
+<mml:math id="mml-inline59-0734904113492410">
+<mml:mi mathvariant="italic">κ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">D</mml:mi>
+<mml:mi mathvariant="normal">P</mml:mi>
+<mml:mi mathvariant="normal">O</mml:mi>
+<mml:mi mathvariant="normal">T</mml:mi>
+<mml:mi mathvariant="normal">R</mml:mi>
+<mml:mi mathvariant="normal">F</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula60-0734904113492410">
+<mml:math id="mml-inline60-0734904113492410">
+<mml:mn>2</mml:mn>
+<mml:mo>×</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula61-0734904113492410">
+<mml:math id="mml-inline61-0734904113492410">
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">m</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">d</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">m</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">d</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+</td>
+<td>high</td>
+</tr>
+<tr>
+<td>
+<inline-formula id="inline-formula62-0734904113492410">
+<mml:math id="mml-inline62-0734904113492410">
+<mml:mi mathvariant="italic">κ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">D</mml:mi>
+<mml:mi mathvariant="normal">S</mml:mi>
+<mml:mi mathvariant="normal">Y</mml:mi>
+<mml:mi mathvariant="normal">R</mml:mi>
+<mml:mi mathvariant="normal">K</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula63-0734904113492410">
+<mml:math id="mml-inline63-0734904113492410">
+<mml:mn>2</mml:mn>
+<mml:mo>×</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula64-0734904113492410">
+<mml:math id="mml-inline64-0734904113492410">
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">m</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">d</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">m</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">d</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+</td>
+<td>high</td>
+</tr>
+<tr>
+<td>
+<inline-formula id="inline-formula65-0734904113492410">
+<mml:math id="mml-inline65-0734904113492410">
+<mml:mi mathvariant="italic">κ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">D</mml:mi>
+<mml:mi mathvariant="normal">T</mml:mi>
+<mml:mi mathvariant="normal">R</mml:mi>
+<mml:mi mathvariant="normal">S</mml:mi>
+<mml:mi mathvariant="normal">M</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula66-0734904113492410">
+<mml:math id="mml-inline66-0734904113492410">
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula67-0734904113492410">
+<mml:math id="mml-inline67-0734904113492410">
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+</td>
+<td>high</td>
+</tr>
+<tr>
+<td>
+<inline-formula id="inline-formula68-0734904113492410">
+<mml:math id="mml-inline68-0734904113492410">
+<mml:mi mathvariant="italic">κ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">D</mml:mi>
+<mml:mi mathvariant="normal">G</mml:mi>
+<mml:mi mathvariant="normal">E</mml:mi>
+<mml:mi mathvariant="normal">M</mml:mi>
+<mml:mi mathvariant="normal">M</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula69-0734904113492410">
+<mml:math id="mml-inline69-0734904113492410">
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula70-0734904113492410">
+<mml:math id="mml-inline70-0734904113492410">
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">m</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">d</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">m</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">d</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+</sec>
+</sec>
+<sec id="section9-0734904113492410">
+<title>4. Efficient mapping of the kernels taking into account the machine topology</title>
+<sec id="section10-0734904113492410">
+<title>4.1. Grouping threads, clusters and tiles</title>
+<p>To execute the application, we have developed a simple runtime system, which works as follows. We have <inline-formula id="inline-formula71-0734904113492410">
+<mml:math id="mml-inline71-0734904113492410">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>c</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:math>
+</inline-formula> cores. Tasks (that execute the Cholesky kernels) are executed by threads. The number of threads (<inline-formula id="inline-formula72-0734904113492410">
+<mml:math id="mml-inline72-0734904113492410">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mi>h</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:math>
+</inline-formula>) is specified by the user (<inline-formula id="inline-formula73-0734904113492410">
+<mml:math id="mml-inline73-0734904113492410">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mi>h</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mrow>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>c</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:math>
+</inline-formula>). This number is given just before the execution. A given thread is bound to a given core. Task <inline-formula id="inline-formula74-0734904113492410">
+<mml:math id="mml-inline74-0734904113492410">
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> is mapped to cluster <inline-formula id="inline-formula75-0734904113492410">
+<mml:math id="mml-inline75-0734904113492410">
+<mml:mi mathvariant="italic">κ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mi>a</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover accent="true">
+<mml:mi>u</mml:mi>
+<mml:mo accent="true" stretchy="false">⃗</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>, as computed by the SMA algorithm. Cluster <inline-formula id="inline-formula76-0734904113492410">
+<mml:math id="mml-inline76-0734904113492410">
+<mml:mi>i</mml:mi>
+</mml:math>
+</inline-formula> is cyclically put in group <inline-formula id="inline-formula77-0734904113492410">
+<mml:math id="mml-inline77-0734904113492410">
+<mml:mi>i</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:math>
+</inline-formula>. Each group has its own logical memory and hence tiles are also mapped cyclically (i.e. tile <inline-formula id="inline-formula78-0734904113492410">
+<mml:math id="mml-inline78-0734904113492410">
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:math>
+</inline-formula> is bound to group <inline-formula id="inline-formula79-0734904113492410">
+<mml:math id="mml-inline79-0734904113492410">
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> mod <italic>G</italic>). Based on that, threads of a given group only execute the tasks belonging to the clusters bound to that specific group.</p>
+<p>The remaining questions are how to group clusters, cores and threads, and what the size of <inline-formula id="inline-formula80-0734904113492410">
+<mml:math id="mml-inline80-0734904113492410">
+<mml:mi>G</mml:mi>
+</mml:math>
+</inline-formula> should be. On a modern NUMA shared-memory machine, we can target three levels of the memory hierarchy: the machine level, the node level and the core level.</p>
+</sec>
+<sec id="section11-0734904113492410">
+<title>4.2. Experimental evaluation</title>
+<p>In order to compare the different ways of grouping threads, cores and clusters, we have tested the three levels experimentally on different settings. A representative result is depicted in <xref ref-type="fig" rid="fig3-0734904113492410">Figure 3</xref>. This is done on a 160 cores NUMA machine composed of 20 nodes of one eight cores socket Intel Nehalem Eagleton (E7–8837) at 2.67 GHz.<sup>
+<xref ref-type="fn" rid="fn2-0734904113492410">2</xref> </sup>
+</p>
+<fig id="fig3-0734904113492410" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Comparison of different grouping strategies for the Cholesky factorization on a 160 cores, 20 nodes machine. Grouping per machine, node and core correspond respectively to G=1, 20 and 160.</p>
+</caption>
+<graphic xlink:href="10.1177_0734904113492410-fig3.tif"/>
+</fig>
+<p>In <xref ref-type="fig" rid="fig3-0734904113492410">Figure 3</xref> we show the performance in Gflop/s versus the matrix size (<inline-formula id="inline-formula81-0734904113492410">
+<mml:math id="mml-inline81-0734904113492410">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>). Results show that grouping threads and clusters by NUMA memory node is the most efficient strategy. This helps to take into account the memory hierarchy: we have one pool of eight threads per node that execute the clusters mapped to this node (group). Thanks to this, we have two levels of parallelism that efficiently take into account the memory hierarchy of the machine. With one group for the whole machine, the performance is similar for small matrices up to <inline-formula id="inline-formula82-0734904113492410">
+<mml:math id="mml-inline82-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>10</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>240</mml:mn>
+</mml:math>
+</inline-formula>. But when the size of the input increases, all the parallelism generated by the application cannot be efficiently handled by such a flat view of the architecture and the performance degrades compared to node grouping. Core grouping displays the opposite behaviour. The efficiency, when compared to node grouping, increases as the generated parallelism increases: when few tasks/clusters are available, not all cores can be kept busy.</p>
+</sec>
+<sec id="section12-0734904113492410">
+<title>4.3. Comparison with MKL and PLASMA</title>
+<p>The Intel math kernel library (MKL) (<xref ref-type="bibr" rid="bibr9-0734904113492410">Intel, 2012</xref>) is a multithreaded library that provides many linear algebra kernels (BLAS, LAPACK, etc.). In this work, we use the MKL version shipped with the Intel C compiler version 11.1-075.</p>
+<p>PLASMA (<xref ref-type="bibr" rid="bibr1-0734904113492410">Agullo et al., 2010</xref>) is a multithreaded library based on task parallelism such as the work presented here. PLASMA offers two versions of the Cholesky factorization, one using the LAPACK format, which does not require data format conversion, and one using the tiled format, which is more efficient but requires data format conversion. In this paper, we use only the latter version. PLASMA features its own runtime system called QUARK (<xref ref-type="bibr" rid="bibr10-0734904113492410">YarKhan et al., 2011</xref>), which is far more developed than the simple one presented above. In these experiments, we use PLASMA version 2.4.5.<sup>
+<xref ref-type="fn" rid="fn3-0734904113492410">3</xref>
+</sup> Nevertheless, PLASMA and our simple runtime both rely on the same sequential BLAS kernels of MKL 11.1-075.</p>
+<p>In <xref ref-type="fig" rid="fig4-0734904113492410">Figure 4</xref>, we present the performance in Gflop/s versus the matrix size for the MKL version of Cholesky, the PLASMA version and the SMA version. The PLASMA version being more efficient for tile size <inline-formula id="inline-formula83-0734904113492410">
+<mml:math id="mml-inline83-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>256</mml:mn>
+</mml:math>
+</inline-formula> and the SMA version being more efficient for the tile size <inline-formula id="inline-formula84-0734904113492410">
+<mml:math id="mml-inline84-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula>, we present results for different tile sizes in each case (actually, we tested several tile sizes (64, 128, 256, 512), and we present only the best cases). For MKL, the blocking is handled automatically.</p>
+<fig id="fig4-0734904113492410" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Comparison of SMA with PLASMA and MKL for the Cholesky factorization on a 160 cores, 20 nodes machine (double precision, <inline-formula id="inline-formula85-0734904113492410">
+<mml:math id="mml-inline85-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mn>51</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>200</mml:mn>
+</mml:math>
+</inline-formula>). Format conversion included.</p>
+</caption>
+<graphic xlink:href="10.1177_0734904113492410-fig4.tif"/>
+</fig>
+<p>Lastly, we also present results with the static scheduling strategy of PLASMA, as the dynamic strategy is constantly outperformed by the static one.</p>
+<p>We also include in the timing the format conversion between the LAPACK format (matrix store in row-major order) to the tiled format (each tile is stored consecutively in the memory). We think it is important to measure the format conversion as most existing programs use the LAPACK format. However, this is in MKL’s favour as it uses the LAPACK format natively.</p>
+<p>Results show that our proposed version is far more efficient than the two reference libraries. For <inline-formula id="inline-formula86-0734904113492410">
+<mml:math id="mml-inline86-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>51</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>200</mml:mn>
+</mml:math>
+</inline-formula>, the SMA version reaches 872 Gflop/s, while MKL and PLASMA reach 637 and 710 Gflop/s respectively. The main difference between SMA and these two libraries is the NUMA awareness, as none of these libraries take into account the memory hierarchy for allocating threads and managing the memory.</p>
+</sec>
+<sec id="section13-0734904113492410">
+<title>4.4. Comparison with block-cyclic mapping</title>
+<p>Block-cyclic mapping with process layout <inline-formula id="inline-formula87-0734904113492410">
+<mml:math id="mml-inline87-0734904113492410">
+<mml:mi>P</mml:mi>
+<mml:mo>×</mml:mo>
+<mml:mi>Q</mml:mi>
+</mml:math>
+</inline-formula> is presented in Section 3.3. Here, we present experiments comparing SMA (which provides a diagonal mapping) against the block-cyclic mapping with different values of <inline-formula id="inline-formula88-0734904113492410">
+<mml:math id="mml-inline88-0734904113492410">
+<mml:mi>P</mml:mi>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula89-0734904113492410">
+<mml:math id="mml-inline89-0734904113492410">
+<mml:mi>Q</mml:mi>
+</mml:math>
+</inline-formula>. As we have 20 nodes, we need to have <inline-formula id="inline-formula90-0734904113492410">
+<mml:math id="mml-inline90-0734904113492410">
+<mml:mi>P</mml:mi>
+<mml:mo>×</mml:mo>
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>20</mml:mn>
+</mml:math>
+</inline-formula>. Special cases are when <inline-formula id="inline-formula91-0734904113492410">
+<mml:math id="mml-inline91-0734904113492410">
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula> (cyclic mapping by column) and <inline-formula id="inline-formula92-0734904113492410">
+<mml:math id="mml-inline92-0734904113492410">
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula> (cyclic mapping by row). Results are depicted in <xref ref-type="fig" rid="fig5-0734904113492410">Figure 5</xref>.</p>
+<fig id="fig5-0734904113492410" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Comparison of the SMA/diagonal mapping with block-cyclic mapping for different processor layouts and different tile sizes.</p>
+</caption>
+<graphic xlink:href="10.1177_0734904113492410-fig5.tif"/>
+</fig>
+<p>We see that the diagonal mapping outperforms all combinations of <inline-formula id="inline-formula93-0734904113492410">
+<mml:math id="mml-inline93-0734904113492410">
+<mml:mi>P</mml:mi>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula94-0734904113492410">
+<mml:math id="mml-inline94-0734904113492410">
+<mml:mi>Q</mml:mi>
+</mml:math>
+</inline-formula>. This is due to the fact that with SMA, almost all point-to-point communications are suppressed, which is not the case with block-cyclic mapping.</p>
+</sec>
+</sec>
+<sec id="section14-0734904113492410">
+<title>5. LAPACK to tiled format conversion</title>
+<p>In <xref ref-type="fig" rid="fig6-0734904113492410">Figure 6(a)</xref>, we show the performance in Gflop/s of the original version of SMA (called SMA-1 in this section) versus PLASMA and MKL when we include the format conversion timing, for matrix sizes up to 102,400 (the previous section was for <inline-formula id="inline-formula95-0734904113492410">
+<mml:math id="mml-inline95-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">≤</mml:mo>
+<mml:mn>51</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>200</mml:mn>
+</mml:math>
+</inline-formula>).</p>
+<fig id="fig6-0734904113492410" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Comparison of SMA with PLASMA and MKL for the Cholesky factorization on a 160 cores, 20 nodes machine (double precision).</p>
+</caption>
+<graphic xlink:href="10.1177_0734904113492410-fig6.tif"/>
+</fig>
+<p>We see here a big performance drop for SMA-1 around <inline-formula id="inline-formula96-0734904113492410">
+<mml:math id="mml-inline96-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>64</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> and beyond, while PLASMA and MKL continue to have roughly the same performance. When we analyse the timing, we see that a lot of time is lost by SMA-1 in format conversion. Indeed, if we plot the raw performance of SMA-1 and PLASMA (Cholesky factorization without format conversion) we see that the performances are far better, as shown in <xref ref-type="fig" rid="fig6-0734904113492410">Figure 6(b)</xref>. The increase in performance is due to the fact that such conversions can take up to 25% of the overall execution time. This is not the case for MKL as it only uses the LAPACK format (there is no conversion). We also see that at around <inline-formula id="inline-formula97-0734904113492410">
+<mml:math id="mml-inline97-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>64</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> the performance drop for SMA-1 is much smaller when we do not take into account format conversion. This means that the performance lost is mainly due to this conversion step.</p>
+<p>To better understand what is going on at <inline-formula id="inline-formula98-0734904113492410">
+<mml:math id="mml-inline98-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>64</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>, we have measured the number of major page faults made by the system for PLASMA and SMA-1 when <inline-formula id="inline-formula99-0734904113492410">
+<mml:math id="mml-inline99-0734904113492410">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> is increasing using the /usr/bin/time UNIX command. Results are shown in <xref ref-type="fig" rid="fig7-0734904113492410">Figure 7(a)</xref>.</p>
+<fig id="fig7-0734904113492410" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Performance analysis and final result (format conversion included).</p>
+</caption>
+<graphic xlink:href="10.1177_0734904113492410-fig7.tif"/>
+</fig>
+<p>We see that, for SMA-1, the number of page faults suddenly increases at the same point that its performance decreases. Moreover, there is no page fault for the PLASMA version. This means that after <inline-formula id="inline-formula100-0734904113492410">
+<mml:math id="mml-inline100-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>64</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>, the system does not have enough memory for the SMA-1 version and starts using the disk as secondary storage.</p>
+<p>The reason is the following: despite the fact that the whole machine has 600 GB of memory, each of the 20 nodes has 30 GB. When <inline-formula id="inline-formula101-0734904113492410">
+<mml:math id="mml-inline101-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">≥</mml:mo>
+<mml:mn>64</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> the size of the matrix requires more than <inline-formula id="inline-formula102-0734904113492410">
+<mml:math id="mml-inline102-0734904113492410">
+<mml:mn>64</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:msup>
+<mml:mn>000</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:mo>×</mml:mo>
+<mml:mn>8</mml:mn>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>3.2710</mml:mn>
+<mml:mrow>
+<mml:mn>10</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula> bytes or 30.5 GB. In our code, the matrix is allocated and filled by a single thread using the malloc function of the standard C library. This means that all the pages of the matrix are put on the memory node of this thread. Starting for <inline-formula id="inline-formula103-0734904113492410">
+<mml:math id="mml-inline103-0734904113492410">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">≈</mml:mo>
+<mml:mn>64</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>, the memory is not large enough to store the whole matrix and the system begins to swap. The problem increases with the matrix size as shown in <xref ref-type="fig" rid="fig6-0734904113492410">Figures 6</xref> and <xref ref-type="fig" rid="fig7-0734904113492410">7(a)</xref>.</p>
+<p>To solve this problem, there exist several solutions. First, as done in PLASMA, the filling of the matrix can be multithreaded: pages will be scattered in the memory in the same way that threads are. Another solution consists of forcing the allocation of the pages across memory banks. This can be done by using the numa_alloc_interleaved function of the NUMA policy library available in most systems. By doing so, the new version of SMA (SMA-2) does not exhibit page faults any more and has very good performance even for large matrix sizes, as shown in <xref ref-type="fig" rid="fig7-0734904113492410">Figure 7(b)</xref>. We see that the page-fault-aware version of SMA is able to continue to increase its performance for large matrix sizes, unlike the first version. Moreover, the gain against the other reference libraries (MKL and PLASMA) is very large. Results show that, in some cases, SMA is 74.7\% more effective than MKL and 49.1\% more effective than PLASMA. </p>
+</sec>
+<sec id="section15-0734904113492410">
+<title>6. Conclusion</title>
+<p>NUMA parallel machines are fairly simple to program as they offer a flat view of the memory. However, data placement, data movement and thread placement have a huge impact on the performance, as shown in this paper, where we have studied the tiled version of the Cholesky factorization.</p>
+<p>The paper is composed of three parts. In the first part, the dependencies between the four Cholesky kernels, expressed as a PTG, are statically analysed. We have proposed a new static algorithm to perform symbolic data allocation and kernel mapping, called SMA (symbolic mapping and allocation), inspired from our previous work.</p>
+<p>In the second part, we have implemented a simple runtime system as a proof-of-concept. We have shown that grouping them by node is more efficient than by core or on the whole machine. Moreover, despite its simple implementation but thanks to the NUMA-awareness of the grouping, this runtime system is able to outperform the MKL and PLASMA tiled versions. However, we have seen a degradation of performance for large matrix sizes.</p>
+<p>This performance issue is studied in the third part of the paper. We have seen that the problem comes from the way memory pages are allocated onto memory banks. A careful allocation of the memory allows us to solve the problem and the final version of our runtime (SMA-2) does not suffer from performance degradation.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure" id="fn4-0734904113492410">
+<label>Funding</label>
+<p>This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.</p>
+</fn>
+</fn-group>
+<ack>
+<title>Acknowledgements</title>
+<p>We would like to thank Guillaume Mercier, Brice Goglin, Emmanuel Agullo and Georges Bosilca for very helpful discussions about the ideas and results of this paper.</p>
+</ack>
+<notes>
+<title>Notes</title>
+<fn-group>
+<fn fn-type="other" id="fn1-0734904113492410">
+<label>1.</label>
+<p>In this paper, kernel names are prefixed by D to account for double precision computation. However, this work applies to any other precision: simple, complex, etc.</p>
+</fn>
+<fn fn-type="other" id="fn2-0734904113492410">
+<label>2.</label>
+<p>Experiments presented in this paper were carried out using the PLAFRIM experimental testbed being developed under the Inria PlaFRIM development action with support from LABRI and IMB and other entities: Conseil Régional d’Aquitaine, FeDER, Université de Bordeaux and CNRS (see <ext-link ext-link-type="uri" xlink:href="https://plafrim.bordeaux.inria.fr/">https://plafrim.bordeaux.inria.fr/</ext-link>).</p>
+</fn>
+<fn fn-type="other" id="fn3-0734904113492410">
+<label>3.</label>
+<p>Early experiments with version 2.5.0 do not show a significant difference.</p>
+</fn>
+</fn-group>
+</notes>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0734904113492410">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Agullo</surname>
+<given-names>E</given-names>
+</name>
+<name>
+<surname>Dongarra</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Hadri</surname>
+<given-names>B</given-names>
+</name>
+<etal/>
+</person-group> (<year>2010</year>) <article-title>PLASMA users guide</article-title>. <comment>Technical Report, Innovative Computing Laboratory, </comment>
+<comment>University of Tennessee</comment>
+<comment>, TN.</comment>
+</citation>
+</ref>
+<ref id="bibr2-0734904113492410">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Bosilca</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Bouteiller</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Danalis</surname>
+<given-names>A</given-names>
+</name>
+<etal/>
+</person-group> (<year>2012</year>) <article-title>DAGuE: A generic distributed DAG engine for high performance computing</article-title>. <source>Parallel Computing</source> <volume>38</volume>
+<issue>(1–2)</issue>: <fpage>27</fpage>–<lpage>51</lpage>.</citation>
+</ref>
+<ref id="bibr3-0734904113492410">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Cosnard</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Loi</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>1995</year>) <article-title>Automatic task graph generation techniques</article-title>. <source>Parallel Processing Letters</source> <volume>5</volume>(<issue>4</issue>): <fpage>527</fpage>–<lpage>538</lpage>.</citation>
+</ref>
+<ref id="bibr4-0734904113492410">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Cosnard</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Loi</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>1996</year>) <article-title>A simple algorithm for the generation of efficient loop structures</article-title>. <source>International Journal of Parallel Programming</source> <volume>24</volume>(<issue>3</issue>): <fpage>265</fpage>–<lpage>289</lpage>.</citation>
+</ref>
+<ref id="bibr5-0734904113492410">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Cosnard</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Jeannot</surname>
+<given-names>E</given-names>
+</name>
+<name>
+<surname>Yang</surname>
+<given-names>T</given-names>
+</name>
+</person-group> (<year>1999</year>) <article-title>SLC: Symbolic scheduling for executing parameterized task graphs on multiprocessors</article-title>. In: <source>International conference on parallel processing (ICPP’99)</source>, <publisher-loc>Aizu Wakamatsu, Japan</publisher-loc>.</citation>
+</ref>
+<ref id="bibr6-0734904113492410">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Cosnard</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Jeannot</surname>
+<given-names>E</given-names>
+</name>
+<name>
+<surname>Yang</surname>
+<given-names>T</given-names>
+</name>
+</person-group> (<year>2004</year>) <article-title>Compact DAG representation and its symbolic scheduling</article-title>. <source>Journal of Parallel and Distributed Computing</source> <volume>64</volume>(<issue>8</issue>): <fpage>921</fpage>–<lpage>935</lpage>.</citation>
+</ref>
+<ref id="bibr7-0734904113492410">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Feautrier</surname>
+<given-names>P</given-names>
+</name>
+</person-group> (<year>1991</year>) <article-title>Dataflow analysis of array and scalar references</article-title>. <source>International Journal of Parallel Programming</source> <volume>20</volume>(<issue>1</issue>): <fpage>23</fpage>–<lpage>53</lpage>.</citation>
+</ref>
+<ref id="bibr8-0734904113492410">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Feautrier</surname>
+<given-names>P</given-names>
+</name>
+</person-group> (<year>1994</year>) <article-title>Toward automatic distribution</article-title>. <source>Parallel Processing Letters</source> <volume>4</volume>(<issue>3</issue>): <fpage>233</fpage>–<lpage>244</lpage>.</citation>
+</ref>
+<ref id="bibr9-0734904113492410">
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name>
+<surname>Intel</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>2012</year>) <article-title>Intel math kernel library reference manual. Technical report no. 630813-051US</article-title>. <comment>Available at</comment>: <ext-link ext-link-type="uri" xlink:href="http://software.intel.com/sites/products/documentation/hpc/mkl/mklman/mklman.pdf">http://software.intel.com/sites/products/documentation/hpc/mkl/mklman/mklman.pdf</ext-link> <comment>(accessed 7 June 2013)</comment>. </citation>
+</ref>
+<ref id="bibr10-0734904113492410">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>YarKhan</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Kurzak</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Dongarra</surname>
+<given-names>J</given-names>
+</name>
+</person-group> (<year>2011</year>) <article-title>QUARK users’ guide: Queueing and runtime for kernels</article-title>. <comment>Technical report no. ICL-UT-11-02, Innovative Computing Laboratory, </comment>
+<comment>University of Tennessee</comment>
+<comment>, TN.</comment>
+</citation>
+</ref>
+</ref-list>
+</back>
+</article>

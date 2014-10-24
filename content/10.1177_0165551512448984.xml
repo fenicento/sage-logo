@@ -1,0 +1,1907 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JIS</journal-id>
+<journal-id journal-id-type="hwp">spjis</journal-id>
+<journal-title>Journal of Information Science</journal-title>
+<issn pub-type="ppub">0165-5515</issn>
+<issn pub-type="epub">1741-6485</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0165551512448984</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0165551512448984</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Keyphrase extraction through query performance prediction</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Ercan</surname><given-names>Gonenc</given-names></name>
+<aff id="aff1-0165551512448984">Bilkent University, Turkey</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Cicekli</surname><given-names>Ilyas</given-names></name>
+<aff id="aff2-0165551512448984">Hacettepe University, Turkey</aff>
+</contrib>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0165551512448984">Gonenc Ercan, Department of Computer Engineering, Bilkent University P.O. 06800 Ankara Turkey. Email: <email>ercangu@cs.bilkent.edu.tr</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>10</month>
+<year>2012</year>
+</pub-date>
+<volume>38</volume>
+<issue>5</issue>
+<fpage>476</fpage>
+<lpage>488</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">Chartered Institute of Library and Information Professionals</copyright-holder>
+</permissions>
+<abstract>
+<p>Previous research shows that keyphrases are useful tools in document retrieval and navigation. While these point to a relation between keyphrases and document retrieval performance, no other work uses this relationship to identify keyphrases of a given document. This work aims to establish a link between the problems of query performance prediction (QPP) and keyphrase extraction. To this end, features used in QPP are evaluated in keyphrase extraction using a naïve Bayes classifier. Our experiments indicate that these features improve the effectiveness of keyphrase extraction in documents of different length. More importantly, commonly used features of frequency and first position in text perform poorly on shorter documents, whereas QPP features are more robust and achieve better results.</p>
+</abstract>
+<kwd-group>
+<kwd>keyphrase extraction</kwd>
+<kwd>query performance prediction</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0165551512448984" sec-type="intro">
+<title>1. Introduction</title>
+<p>Keyphrases are phrases formed of one or more terms that reflect the salient content of a document. The term ‘keyphrase’ is used instead of the more common expression ‘keyword’ to emphasize that keyphrases can be formed of multiple terms. A user attempting to fulfil an information need issues a query to a full-text search engine and scans each retrieved document to have at least a basic understanding of its contents. In this context, keyphrases are helpful in terms of shortening the time spent, as they are concise representations of the content. Nonetheless, most of the electronically available documents do not have keyphrases assigned to them. One approach to this problem is to build a keyphrase extraction system that automatically determines the keyphrases for a given document.</p>
+<p>A typical keyphrase extraction system forms a list of candidates from the phrases that appear in the original document, and evaluates each candidate using features acquired from the text. Two commonly used features are the frequency and first occurrence position of the phrase, which are referred to as in-document features in this article. This research shows, through experiments, that in-document features are not as effective in short documents as they are in long documents. Following from this, it proposes a method using novel features to achieve more robust results for documents of different lengths.</p>
+<p>Our method is motivated by the observation that, when a keyphrase is searched in a corpus, the retrieved set of documents is relatively focused on a single domain with high similarity. For example, while ‘machine’ and ‘learning’ are two ambiguous terms that appear in documents from different domains, the phrase ‘machine learning’ appears in a document set that is more concentrated on a single domain. In this context, keyphrases are expected to be good queries, and are utilized in document retrieval and browsing. Phrasier [<xref ref-type="bibr" rid="bibr1-0165551512448984">1</xref>] creates an index using only the keyphrases of documents instead of the full text, and reports no negative impact on document retrieval performance. Furthermore, Gutwin et al. [<xref ref-type="bibr" rid="bibr2-0165551512448984">2</xref>] discuss the use of keyphrases as a tool for browsing a digital library. The results of both works indicate that keyphrases perform well in document retrieval. This has encouraged us to determine a phrase’s keyphraseness by measuring its query performance in document retrieval.</p>
+<p>Ideally, evaluating the retrieval performance of a query requires manual judgements of each returned document’s relevance to the user’s information need. As it is not possible to obtain relevance judgements for all possible queries, a prediction of query performance is used instead. Query performance prediction (QPP) [<xref ref-type="bibr" rid="bibr3-0165551512448984">3</xref>] is a research problem in information retrieval that aims to estimate how good a query is. That is to say, in QPP a well-performing query is expected to retrieve a document set relevant to the topic that the user is interested in. If a query issued to retrieve documents about topic A retrieves documents for two different topics A and B, then documents relevant to topic B are irrelevant, and this degrades the query performance. As in this example, ambiguous queries retrieving documents from different topics are not good queries, since they present documents irrelevant to the user’s information need. This is very similar to our observation about keyphrases, that a keyphrase should represent a document’s content clearly, without any ambiguity.</p>
+<p>QPP gained popularity as its applications proved beneficial for search engines by improving document retrieval performance. Its major applications are selective query expansion [<xref ref-type="bibr" rid="bibr3-0165551512448984">3</xref>, <xref ref-type="bibr" rid="bibr4-0165551512448984">4</xref>], merging results in a distributed retrieval system, and missing content detection [<xref ref-type="bibr" rid="bibr5-0165551512448984">5</xref>] to improve the efficiency and effectiveness of document retrieval systems. This work contributes to the keyphrase extraction literature by showing that methods used in QPP improve keyphrase extraction. Most of the previous research uses features that are intrinsic properties of the given document, whereas the features introduced in this article are calculated using a background corpus. Furthermore, we show empirically that QPP features are more effective in shorter documents, compared to in-document features.</p>
+<p>Section 2 introduces the related works on keyphrase extraction. Following this, in Section 3 we give the details of our algorithm. In Section 4 we present the corpus used in our experiments, the evaluation metrics, and the results. Finally, we conclude in Section 5 with a discussion of the results and possible future work.</p>
+</sec>
+<sec id="section2-0165551512448984">
+<title>2. Related works</title>
+<p>Keyphrase extraction algorithms typically score each candidate phrase with a keyphraseness scoring function, and sort the candidates accordingly. This function is implemented by either a supervised or an unsupervised learning algorithm. Supervised keyphrase extraction algorithms train a keyphraseness function automatically from observations in a corpus, whereas unsupervised keyphrase extraction algorithms depend on scoring functions built on assumptions and observations. Our keyphrase extraction algorithm is a supervised learning algorithm that uses QPP features.</p>
+<p>GenEx [<xref ref-type="bibr" rid="bibr6-0165551512448984">6</xref>] is a supervised keyphrase extraction algorithm formed of two components: an extractor and a genetic algorithm. The extractor is a text-processing tool controlled by parameters and rules. For example, the aggressiveness of the stemmer and maximum number of the terms allowed in an extracted keyphrase are two parameters of the extractor. GenEx uses a genetic algorithm and a training set to find the most suitable parameter values for a domain. The population of the genetic algorithm is formed of parameter sets representing a configuration of the extractor. The fitness function is the precision of the extractor executed with the processed parameter-set/configuration. The output of the genetic algorithm is the set of rules suitable for the corpus domain and genre. GenEx uses the frequency and first occurrence position of terms in order to score each phrase’s importance.</p>
+<p>The Kea algorithm uses naïve Bayes to learn a keyphraseness probability from the in-document features’ distribution in the training data. The outline of the Kea algorithm is identical to the outline of the system used in our experiments. Frank et al. [<xref ref-type="bibr" rid="bibr7-0165551512448984">7</xref>] report the results of Kea and GenEx [<xref ref-type="bibr" rid="bibr6-0165551512448984">6</xref>] to be statistically indifferent. We also use naïve Bayes in order to learn the keyphraseness probabilities of our QPP features. In order to evaluate the QPP features in a systematic manner, we compare our method with the Kea [<xref ref-type="bibr" rid="bibr7-0165551512448984">7</xref>] algorithm’s effectiveness.</p>
+<p>Recent research aims to improve the effectiveness of keyphrase extraction by integrating additional features such as those exploiting the structural patterns of a document, syntactic patterns of phrases, semantic knowledge, and the relationships between extracted keyphrases. For instance, syntactic features are able to eliminate candidate phrases that are unlikely to be keyphrases (as in the example of the phrase ‘machine learning introduces’, which ends with a verb, and is uncommon for a keyphrase). Hulth [<xref ref-type="bibr" rid="bibr8-0165551512448984">8</xref>] investigates the effectiveness of using part of speech (PoS) tags in keyphrase extraction. She evaluates several candidate phrase extraction strategies with and without PoS tags. Using a rule induction method, PoS tag patterns for keyphrases are learned. Hulth’s experiments indicate that keyphrases have common PoS tag patterns. Furthermore, Barker et al. [<xref ref-type="bibr" rid="bibr9-0165551512448984">9</xref>] use a chunker to detect noun phrases using simple syntactic patterns, and assign a score to each phrase depending on the <italic>tf*idf</italic> value of each phrase’s head noun. The in-document features are used to evaluate phrases extracted from the document by a noun phrase chunker. Recent work [<xref ref-type="bibr" rid="bibr10-0165551512448984">10</xref><xref ref-type="bibr" rid="bibr11-0165551512448984"/>–<xref ref-type="bibr" rid="bibr12-0165551512448984">12</xref>], including ours, uses syntactic filters in finding the candidate keyphrases.</p>
+<p>The cohesive ties between keyphrases are exploited in keyphrase extraction by using external knowledge obtained either from thesauri or from statistical information extracted from corpora. Turney [<xref ref-type="bibr" rid="bibr13-0165551512448984">13</xref>] notes that there should be cohesion between the extracted keyphrases. He measures the pairwise semantic relatedness between two keyphrases by mining the results of a search engine. The cohesion between the keyphrases produced by Kea is reclassified with a second classifier using the cohesion features. This method depends on the output of Kea and in-document features. For extracting keywords, Ercan and Cicekli [<xref ref-type="bibr" rid="bibr14-0165551512448984">14</xref>] use the WordNet thesaurus [<xref ref-type="bibr" rid="bibr15-0165551512448984">15</xref>] to integrate semantic relationships between phrases and features extracted from the lexical chains of the original document. Thus their method is not able to handle keyphrases of length greater than one, and is limited to keyword extraction. Nguyen et al. [<xref ref-type="bibr" rid="bibr10-0165551512448984">10</xref>] integrate both PoS tags and structural features in the feature set of Kea, where the distinguished structural properties of research articles are important cues for keyphrase extraction. They use the occurrence distribution of phrases with respect to the sections of the processed article. For example, a phrase appearing in the title or abstract is more likely to be a keyphrase than a phrase appearing only in the middle of the document. This method is designed specifically for research articles, and is not a generic solution.</p>
+<p>Mihalcea et al. [<xref ref-type="bibr" rid="bibr11-0165551512448984">11</xref>] model the text as a graph, where the vertices are terms appearing in the given text, and an edge exists between two terms if they co-occur within a distance. Keyphrases are extracted using a social ranking algorithm called TextRank on this network, which is based on the PageRank algorithm [<xref ref-type="bibr" rid="bibr16-0165551512448984">16</xref>]. The phrase co-occurrence graph is usually very sparse, especially in short documents where term frequencies are low. Recently, Wan et al. [<xref ref-type="bibr" rid="bibr12-0165551512448984">12</xref>] have enriched this graph by integrating co-occurrence statistics observed in similar documents, that is, the nearest neighbours of the processed text (NN-TextRank). They evaluate their algorithm using news articles that are shorter than research articles, and report improvement over TextRank and a baseline algorithm that scores phrases using <italic>tf*idf</italic> values. Although both QPP features and NN-TextRank use a background corpus in order to handle short documents, these algorithms differ both in their methods and in the features applied.</p>
+</sec>
+<sec id="section3-0165551512448984">
+<title>3. Keyphrase extraction</title>
+<p>The general components of our supervised keyphrase extraction system are depicted in <xref ref-type="fig" rid="fig1-0165551512448984">Figure 1</xref>. These are similar to some of those in the previous works [<xref ref-type="bibr" rid="bibr6-0165551512448984">6</xref><xref ref-type="bibr" rid="bibr7-0165551512448984"/>–<xref ref-type="bibr" rid="bibr8-0165551512448984">8</xref>, <xref ref-type="bibr" rid="bibr10-0165551512448984">10</xref>], as they all perform feature extraction and supervised classification. The first step in keyphrase extraction is tokenization of the text into words and punctuations. Using the token stream, a candidate keyphrase list is formed from the phrases appearing in the text of the original document. For each candidate phrase <italic>w</italic> the feature extraction component extracts a feature set from the background corpus and the original document <italic>d</italic><sub>0</sub>. A naïve Bayes classifier trained with documents of the same genre and their associated keyphrase lists calculates the probability of keyphraseness for each candidate phrase <italic>w</italic>. Keyphrases are selected using these scores, and the output of the system is a set of keyphrases. The keyphrase selection component simply sorts the phrases according to the keyphraseness score and returns the top keyphrases.</p>
+<fig id="fig1-0165551512448984" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Components of the keyphrase extraction system.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512448984-fig1.tif"/>
+</fig>
+<p>The feature extraction component is what distinguishes our keyphrase extraction system from the others. The feature extractor uses a background corpus to determine some intrinsic properties of each phrase <italic>w</italic>, as depicted in the flowchart in <xref ref-type="fig" rid="fig2-0165551512448984">Figure 2</xref>. The feature extractor operates on a phrase <italic>w</italic>, finding the document set <italic>D</italic>′ formed of all the documents that <italic>w</italic> appears in. Both for efficiency and for effectiveness, a subset of <italic>D</italic>′ is selected by a sampling procedure. Features are extracted from this subset <italic>D</italic> and the original document <italic>d</italic><sub>0</sub>.</p>
+<fig id="fig2-0165551512448984" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Flowchart of feature extractor.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512448984-fig2.tif"/>
+</fig>
+<sec id="section4-0165551512448984">
+<title>3.1. Candidate keyphrase list creation</title>
+<p>Keyphrases usually appear as noun phrases in documents. Hulth [<xref ref-type="bibr" rid="bibr8-0165551512448984">8</xref>] reports that nouns preceded by nouns or adjectives are the most common part of speech (PoS) tag patterns observed for keyphrases. In fact, the majority of keyphrases in our corpora can be extracted with a simple grammar rule for finding noun phrases. In our system, in order to create a candidate keyphrase list, the text of the given document <italic>d</italic><sub>0</sub> is tokenized, and the PoS tags are assigned using the Stanford PoS tagger [<xref ref-type="bibr" rid="bibr17-0165551512448984">17</xref>]. Each sequence of PoS tags satisfying the regular expression <italic>‘</italic>(<italic>JJ|NN</italic>) *<italic>NN</italic>’ is included in the candidate phrase list, where <italic>NN</italic> represents nouns and <italic>JJ</italic> represents adjectives. For example, in the sentence ‘This is a good\<italic>JJ</italic> machine\<italic>NN</italic> learning\<italic>NN</italic> algorithm\<italic>NN</italic>’; ‘good machine learning algorithm’, ‘good machine learning’, ‘machine learning algorithm’, ‘machine learning’, ‘learning algorithm’, ‘machine’, ‘learning’, ‘algorithm’ match the regular expression and are extracted as candidate phrases. Only the candidate keyphrases matching the regular expression are retained and evaluated by the classification algorithm.</p>
+<p>The PoS pattern method can detect more than 80% of all keyphrases in the research article corpus used in our experiments as candidate keyphrases. We compared this method with an exhaustive candidate keyphrase extraction method, which returns all consecutive terms that do not contain punctuations as candidate keyphrases. The exhaustive method extracts all the keyphrases appearing in the text as candidate keyphrases. It detects 82% of the keyphrases in the research article corpus, which is only 2% more than from the PoS pattern method. However, this method produces more candidates than the PoS pattern method where most candidates are unlikely to be keyphrases or even phrases. For example, in the corpus the exhaustive method produces approximately 35,000 candidate phrases whereas the PoS method produces approximately 2000 candidates per document. When the former method is used, the system must process a larger number of candidate keyphrases, which degrades the efficiency of the system. In addition, the effectiveness of the system is not improved, as having more candidate keyphrases creates noise for the classification algorithm. Since the PoS pattern method is as effective as the exhaustive method, we opted to use the PoS pattern method as our candidate phrase producer in our keyphrase extraction system.</p>
+</sec>
+<sec id="section5-0165551512448984">
+<title>3.2. Information retrieval from Wikipedia</title>
+<p>The information retrieval component (IRC) performs full-text search in the background corpus, which is composed of Wikipedia articles. Since the keyphrase extraction algorithm processes the document vectors and language models of retrieved documents by accessing their full texts, an offline indexing system is preferred. Document retrieval is an important factor for both the efficiency and the effectiveness of the keyphrase extraction system. This section describes how full-text search is performed from the background corpus for a candidate keyphrase given as a query, and how the returned documents are subsampled.</p>
+<p>Given a term as a query, the IRC returns the set of articles that contain the searched term. Given a phrase (i.e. multiple terms) as a query, the IRC returns the set of articles in which the terms of the phrase appear in exactly the same configuration. In order for an IRC to support such phrase queries, either a phrase or a positional index must be maintained [<xref ref-type="bibr" rid="bibr18-0165551512448984">18</xref>]. For example, for the phrase ‘machine learning’, documents containing ‘machine learning’ are returned, whereas those containing ‘learning machine’ are not. Implementation of the IRC uses the indexing mechanisms of the Lucene search engine.<sup><xref ref-type="fn" rid="fn1-0165551512448984">1</xref></sup> A Lucene inverted index supports positional indices. For each term, a sorted list of articles containing the term and its position within the text are stored.</p>
+<p>Given a phrase <italic>w</italic> formed of one or more terms, let <italic>D</italic>′ = {<italic>d</italic><sub>1</sub>, <italic>d</italic><sub>2</sub>, …, <italic>d</italic><sub><italic>m</italic></sub>} be the set of documents that contain <italic>w</italic>. If <italic>w</italic> occurs at least once in all indexed articles of the background corpus, the size of <italic>D</italic>′ may be as large as the length of the collection queried. Since in-depth analysis of the <italic>m</italic> returned documents is not efficient, and may result in noise due to variations in <italic>|D</italic>′<italic>|</italic> for different phrases, a subset <italic>D</italic> is sampled from <italic>D</italic>′. The sample size <italic>µ</italic> is a parameter of the system, and the size of the sample set denoted as <italic>|D|</italic> is min(<italic>|D</italic>′<italic>|, µ</italic>). Higher values of <italic>µ</italic> increase the variance of <italic>|D|</italic> for different phrases, and thus create a bias towards phrases that appear in a smaller number of documents in the background corpus. A lower value of <italic>µ</italic> is not able to represent the set <italic>|D</italic>′<italic>|</italic>. Our empirical evaluations show that using a sample size <italic>µ</italic> = 20 avoids problems caused both by the variations in <italic>|D|</italic> and by the underrepresentation of the set <italic>D</italic>′.</p>
+<p>Two sampling strategies were evaluated: random and rank-based. Random sampling simply selects <italic>µ</italic> documents from <italic>D</italic>′ randomly. Rank-based sampling reduces the noise caused by documents with low frequencies of <italic>w</italic>. Accordingly, documents are ranked using a function of the frequency of phrase <italic>w</italic>, and only the <italic>µ</italic> top-scoring documents are retained. Since the ranked sampling strategy achieves better results than the uniform sampling strategy, only the result of the ranked sampling strategy is reported in this article. In our experiments, the Okapi BM25 ranking function is used:</p>
+<p><disp-formula id="disp-formula1-0165551512448984">
+<label>(1)</label>
+<mml:math display="block" id="math1-0165551512448984">
+<mml:mrow>
+<mml:mtext>BM</mml:mtext>
+<mml:mn>25</mml:mn>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>/</mml:mo>
+<mml:mi>avgDocLen</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0165551512448984" xlink:href="10.1177_0165551512448984-eq1.tif"/>
+</disp-formula></p>
+<p>where <italic>c</italic>(<italic>w, d</italic><sub><italic>i</italic></sub>) is the frequency of the phrase <italic>w</italic> in the document <italic>d</italic><sub><italic>i</italic></sub>, and the parameters <italic>b</italic> and <italic>k</italic><sub>1</sub> control the scoring function’s behaviour: <italic>b</italic> controls the weight of the document length, and <italic>k</italic><sub>1</sub> controls the weight of term frequency in the ranking. The values <italic>k</italic><sub>1</sub> = 2 and <italic>b</italic> = 0.75 are used in our experiments, as Jones [<xref ref-type="bibr" rid="bibr1-0165551512448984">1</xref>] reports that these values correlate with human relevance judgements. The average document length in the background corpus is denoted by <italic>avgDocLen</italic>, and <italic>|d</italic><sub><italic>i</italic></sub><italic>|</italic> denotes the length of the document <italic>d</italic><sub><italic>i</italic></sub>.<sup><xref ref-type="fn" rid="fn2-0165551512448984">2</xref></sup></p>
+<p>The background corpus used in our experiments is composed of English Wikipedia<sup><xref ref-type="fn" rid="fn3-0165551512448984">3</xref></sup> articles that are longer than 200 characters. The number of Wikipedia articles indexed is 3,326,028, containing a total of approximately 1 billion terms. The average document length of the corpus is 237.89 non-stop words.<sup><xref ref-type="fn" rid="fn4-0165551512448984">4</xref></sup> Wikipedia is a generic background corpus, since it is a comprehensive encyclopaedia relating to different topics. In practice, the background corpus can be domain specific. For instance, in a digital library, an index of all the articles stored can be preferred instead of the generic Wikipedia articles corpus. We chose to use Wikipedia to have a domain-independent system.</p>
+</sec>
+<sec id="section6-0165551512448984">
+<title>3.3. QPP measures</title>
+<p>This section defines the QPP measures utilized in this article on the basis of the assumption that keyphrases are unambiguous query phrases that retrieve documents tied to each other by a specific domain or topic. Note that this assumption is also important for a retrieval system. For example, for the query ‘learning’ a diverse set of documents is returned, whereas for the query ‘machine learning’ a more refined set of documents is returned. The QPP problem [<xref ref-type="bibr" rid="bibr3-0165551512448984">3</xref>] tries to predict the effectiveness of a query, and should encourage the query ‘machine learning’ over ‘learning’. The experiments discussed in this paper evaluate the effects of different QPP techniques [<xref ref-type="bibr" rid="bibr3-0165551512448984">3</xref>, <xref ref-type="bibr" rid="bibr4-0165551512448984">4</xref>, <xref ref-type="bibr" rid="bibr19-0165551512448984">19</xref><xref ref-type="bibr" rid="bibr20-0165551512448984"/><xref ref-type="bibr" rid="bibr21-0165551512448984"/>–<xref ref-type="bibr" rid="bibr22-0165551512448984">22</xref>] in keyphrase extraction.</p>
+<p><xref ref-type="table" rid="table1-0165551512448984">Table 1</xref> lists the features used in keyphrase extraction. The first two of these features, <italic>firstPosition</italic> and <italic>tf*idf</italic>, are in-document features, and the last seven are QPP features, which can be grouped in two categories depending on the methods used in their extraction. The first category uses the geometrical properties of the retrieved documents when represented by vector space models (VSM). The second class of methods uses ideas from language models (LM) and information theory. The extraction of each feature is explained for a single phrase <italic>w</italic>, using two inputs: the document set <italic>D</italic> and the original document <italic>d</italic><sub>0</sub>. Features from 3 to 7 are calculated using vector space models, and the last two are based on language models.</p>
+<table-wrap id="table1-0165551512448984" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Features used in keyphrase extraction</p>
+</caption>
+<graphic alternate-form-of="table1-0165551512448984" xlink:href="10.1177_0165551512448984-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">ID</th>
+<th align="left">Feature name</th>
+<th align="left">Value range</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><italic>firstPosition</italic></td>
+<td>[0, 1]</td>
+<td>Distance of first occurrence of phrase from top of <italic>d</italic><sub>0</sub></td>
+</tr>
+<tr>
+<td>2</td>
+<td><italic>tf</italic>*<italic>idf</italic></td>
+<td>[0, ∞]</td>
+<td>Term frequency times inverse document frequency</td>
+</tr>
+<tr>
+<td>3</td>
+<td><italic>CosCentrTod</italic><sub>0</sub></td>
+<td>[0, 1]</td>
+<td>Cosine similarity of centroid of <italic>D</italic> to <italic>d</italic><sub>0</sub></td>
+</tr>
+<tr>
+<td>4</td>
+<td><italic>avgCosTod</italic><sub>0</sub></td>
+<td>[0, 1]</td>
+<td>Average cosine similarity of documents in <italic>D</italic> to <italic>d</italic><sub>0</sub></td>
+</tr>
+<tr>
+<td>5</td>
+<td><italic>interSim</italic></td>
+<td>[0, 1]</td>
+<td>Mean of pairwise cosine similarities of documents in <italic>D</italic></td>
+</tr>
+<tr>
+<td>6</td>
+<td><italic>CoxLewisTest</italic></td>
+<td>[0, 1]</td>
+<td>Cox–Lewis clustering tendency test</td>
+</tr>
+<tr>
+<td>7</td>
+<td><italic>DocPertub</italic></td>
+<td>[−|<italic>D</italic>|, |<italic>D</italic>|]</td>
+<td>Average rank change in <italic>D</italic> under document perturbation</td>
+</tr>
+<tr>
+<td>8</td>
+<td><italic>Clarity</italic></td>
+<td>[0, ∞]</td>
+<td>KL divergence of <italic>D</italic> language model from background corpora language model</td>
+</tr>
+<tr>
+<td>9</td>
+<td><italic>KLDocsFromd</italic><sub>0</sub></td>
+<td>[0, ∞]</td>
+<td>KL divergence of <italic>D</italic> language model from <italic>d</italic><sub>0</sub> language model</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>Both VSM-based and LM based methods use a bag-of-words assumption to simplify the analysis. In order to create a bag or set of words, documents are tokenized to words (terms). Words are processed with a Porter stemmer [<xref ref-type="bibr" rid="bibr23-0165551512448984">23</xref>] to conflate inflected forms of words with their base forms. In our presentations, the set <italic>V</italic> denotes the vocabulary formed of conflated words occurring in the background corpus and <italic>d</italic><sub>0</sub>, the function <italic>c</italic>(<italic>t</italic><sub><italic>k</italic></sub>, <italic>d</italic><sub><italic>i</italic></sub>) returns the number of occurrences of the <italic>k</italic>th word of <italic>V</italic> in the <italic>i</italic>th document, and <italic>f</italic><sub><italic>k</italic></sub> is the number of documents containing the word <italic>t</italic><sub><italic>k</italic></sub>. The retrieved documents in the set <italic>D</italic> and the original document <italic>d</italic><sub>0</sub> are tokenized using this method.</p>
+<sec id="section7-0165551512448984">
+<title>3.3.1. Vector space model based features</title>
+<p>A vector space model defines each document as a vector in a <italic>|V|</italic>-dimensional space, where each dimension corresponds to a word in the vocabulary <italic>V</italic>. Let <italic>d</italic><sub><italic>ik</italic></sub> represent the <italic>k</italic>th term’s weight in the <italic>i</italic>th document, where the original document is indexed by 0 and the documents in the set <italic>D</italic> are indexed from 1 to <italic>|D|</italic>. The weight <italic>d</italic><sub><italic>ik</italic></sub> is calculated as shown in <xref ref-type="disp-formula" rid="disp-formula2-0165551512448984">equation (2)</xref>, where <italic>N</italic> is the number of documents in the background corpora, and <italic>f</italic><sub><italic>k</italic></sub> is the number of documents in which the <italic>k</italic>th term occurs. The weighting function <italic>d</italic><sub><italic>ik</italic></sub> is the term frequency (<italic>tf</italic> = <italic>c</italic>(<italic>t</italic><sub><italic>k</italic></sub>,<italic>d</italic><sub><italic>i</italic></sub>)) times inverse document frequency (<italic>idf</italic> = log(<italic>N</italic>/<italic>f</italic><sub><italic>k</italic></sub>)), and is termed the <italic>tf*idf</italic> weighting.</p>
+<p><disp-formula id="disp-formula2-0165551512448984">
+<label>(2)</label>
+<mml:math display="block" id="math2-0165551512448984">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ik</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>log</mml:mi>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0165551512448984" xlink:href="10.1177_0165551512448984-eq2.tif"/>
+</disp-formula></p>
+<p>A document vector <italic>d</italic><sub><italic>i</italic></sub> consists of the weights of all terms of the vocabulary <italic>V</italic> in the <italic>i</italic>th document. Two document vectors can be compared with each other through different similarity metrics. The cosine of the angle between two vectors is one such similarity function, called the cosine similarity. The cosine similarity between documents <italic>d</italic><sub><italic>i</italic></sub> and <italic>d</italic><sub><italic>j</italic></sub> is calculated using the equation</p>
+<p><disp-formula id="disp-formula3-0165551512448984">
+<label>(3)</label>
+<mml:math display="block" id="math3-0165551512448984">
+<mml:mrow>
+<mml:mi>cosSim</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ik</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>jk</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msqrt>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ik</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:msqrt>
+<mml:msqrt>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>jk</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0165551512448984" xlink:href="10.1177_0165551512448984-eq3.tif"/>
+</disp-formula></p>
+<p>In this model, our assumption is that a keyphrase <italic>w</italic> has to retrieve a document set that is geometrically closer to <italic>d</italic><sub>0</sub>, cohesive, less scattered and more concentrated. When defined in terms of similarity, all documents in <italic>D</italic> and the original document <italic>d</italic><sub>0</sub> should be similar to each other. The average similarity of the retrieved documents to <italic>d</italic><sub>0</sub> (<italic>avgCosTod</italic><sub>0</sub>) is calculated using</p>
+<p><disp-formula id="disp-formula4-0165551512448984">
+<label>(4)</label>
+<mml:math display="block" id="math4-0165551512448984">
+<mml:mrow>
+<mml:mi>avgCosTo</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>cosSim</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0165551512448984" xlink:href="10.1177_0165551512448984-eq4.tif"/>
+</disp-formula></p>
+<p>The inter-similarity feature (<italic>interSim</italic>) calculates the average pairwise similarity of the retrieved documents using</p>
+<p><disp-formula id="disp-formula5-0165551512448984">
+<label>(5)</label>
+<mml:math display="block" id="math5-0165551512448984">
+<mml:mrow>
+<mml:mi>interSim</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>cosSim</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0165551512448984" xlink:href="10.1177_0165551512448984-eq5.tif"/>
+</disp-formula></p>
+<p>Kwok et al. [<xref ref-type="bibr" rid="bibr25-0165551512448984">25</xref>] use a similar metric to predict the performance of queries. Since cosine similarity function is symmetric, the average can be calculated using only <inline-formula id="inline-formula1-0165551512448984">
+<mml:math display="inline" id="math6-0165551512448984">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+<mml:mo>/</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> similarities.</p>
+<p>Calculation of <italic>avgCosTod</italic><sub>0</sub> requires pairwise similarity calculations of each document with document <italic>d</italic><sub>0</sub>. Another method used in text categorization and summarization [<xref ref-type="bibr" rid="bibr24-0165551512448984">24</xref>, <xref ref-type="bibr" rid="bibr25-0165551512448984">25</xref>] calculates the centroid of documents, and uses the similarity to the centroid instead. The centroid of <italic>D</italic>, denoted by <italic>D</italic>, is the arithmetic mean of the document vectors, and is calculated using</p>
+<p><disp-formula id="disp-formula6-0165551512448984">
+<label>(6)</label>
+<mml:math display="block" id="math7-0165551512448984">
+<mml:mrow>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>⌣</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0165551512448984" xlink:href="10.1177_0165551512448984-eq6.tif"/>
+</disp-formula></p>
+<p>The <italic>CosCentrTod</italic><sub>0</sub> measure is just the cosine similarity of document <italic>d</italic><sub>0</sub> and <inline-formula id="inline-formula2-0165551512448984">
+<mml:math display="inline" id="math8-0165551512448984">
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>⌣</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula>. <italic>CosCentrTod</italic><sub>0</sub> and <italic>avgCosTod</italic><sub>0</sub> are two similar measures. They are equal if all the input document vectors are unit vectors, that is, if the norms of vectors are 1. In our case they are not unit vectors, and thus these two values are not equal but only similar. The <italic>CosCentrTod</italic><sub>0</sub> feature can be interpreted as a comparison of <italic>d</italic><sub>0</sub> with a virtual document formed by concatenating all the retrieved documents in <italic>D</italic>. The <italic>avgCosTod</italic><sub>0</sub> feature takes into account the local relationships between each retrieved document and <italic>d</italic><sub>0</sub>, whereas <italic>CosCentrTod</italic><sub>0</sub> is based on a more global view of the term usage in <italic>D</italic>. Furthermore, our experiments have shown that using both <italic>CosCentrTod</italic><sub>0</sub> and <italic>avgCosTod</italic><sub>0</sub> together achieves the best results.</p>
+<p>Although measuring the similarity between documents is a good indicator for QPP, a coherent set may not always have a high average similarity, because of outliers and noise in <italic>D</italic>. Vinay et al. [<xref ref-type="bibr" rid="bibr21-0165551512448984">21</xref>] define three measures: the Cox–Lewis clustering tendency, query perturbation, and document perturbation. Through a modified version of the Cox–Lewis clustering tendency test, the first measure evaluates <italic>D</italic> for the existence of either natural groupings or randomness. Vinay et al. [<xref ref-type="bibr" rid="bibr21-0165551512448984">21</xref>] introduce query and document perturbation. The former modifies the query issued by a random noise, and observes the rank change in retrieval results. In our work we apply this measure by using <italic>d</italic><sub>0</sub> as the issued query. Vinay et al. [<xref ref-type="bibr" rid="bibr21-0165551512448984">21</xref>] report that this measure is not able to predict the query performance effectively. In an affirming manner, we observe that this feature is not effective in keyphrase extraction. For this reason, we are not reporting the results of the query perturbation feature.</p>
+<p>Different tests of clustering tendency exist in the literature. The Hopkins test [<xref ref-type="bibr" rid="bibr27-0165551512448984">27</xref>] and the Cox–Lewis statistic [<xref ref-type="bibr" rid="bibr28-0165551512448984">28</xref>] are two such tests in which the points in the original set and the randomly generated points are compared to determine the randomness of the set. If a higher similarity to random points is observed, then the original set is randomly distributed in the space.</p>
+<p>These tests are suitable when there are only a few dimensions, but they are not directly applicable to high-dimensional hyperspaces. In a high-dimensional space such as <italic>|V|</italic> dimensions, where <italic>V</italic> is typically in the order of thousands, a randomly generated point will most probably be distant from <italic>D</italic> as the probability space is large. In order to limit the probability space, Vinay et al. [<xref ref-type="bibr" rid="bibr21-0165551512448984">21</xref>] propose using a document in <italic>D</italic> as a skeleton for the random generation, and avoid creating a random document composed of unlikely term combinations. The Cox–Lewis test selects a document randomly from <italic>D</italic>, and assigns random term weights to its non-zero dimensions to form a random document vector <italic>rd</italic><sub><italic>i</italic></sub>. Random weights are between 0 and the maximum term weight appearing in set <italic>D</italic>. This generation strategy keeps the randomly generated points in a minimal hyper-rectangle containing all the documents in <italic>D</italic>.</p>
+<p>Let <italic>nd</italic><sub><italic>i</italic>1</sub> denote the nearest neighbour of the random vector <italic>rd</italic><sub><italic>i</italic></sub> in <italic>D</italic>, and let <italic>nd</italic><sub><italic>i</italic>2</sub> be the nearest neighbour of <italic>nd</italic><sub><italic>i</italic>1</sub> in <italic>D</italic>. The proportion of the similarity <italic>cosSim</italic>(<italic>nd</italic><sub><italic>i</italic>1</sub>, <italic>nd</italic><sub><italic>i</italic>2</sub>) to <italic>cosSim</italic>(<italic>nd</italic><sub><italic>i</italic>1</sub>, <italic>rd</italic><sub><italic>i</italic></sub>) tests whether the injected random vector can be more similar to a document in <italic>D</italic> than any other document in <italic>D</italic>. This test is repeated with <italic>|D|</italic>/<italic>2</italic> random numbers, and the average of these tests is used as the Cox–Lewis score:</p>
+<p><disp-formula id="disp-formula7-0165551512448984">
+<label>(7)</label>
+<mml:math display="block" id="math9-0165551512448984">
+<mml:mrow>
+<mml:mi>CoxLewisTest</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>cosSim</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cosSim</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>r</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0165551512448984" xlink:href="10.1177_0165551512448984-eq7.tif"/>
+</disp-formula></p>
+<p>Document perturbation was first described by Vinay et al. [<xref ref-type="bibr" rid="bibr21-0165551512448984">21</xref>] using VSM, and has recently been adapted to language models as rank robustness [<xref ref-type="bibr" rid="bibr22-0165551512448984">22</xref>]. Similar to the Cox–Lewis test, the effect of adding random noise to the documents in <italic>D</italic> is tested. Given the document set <italic>D</italic>, when the documents are in descending order according to <italic>cosSim</italic>(<italic>d</italic><sub><italic>i</italic></sub>, <italic>d</italic><sub><italic>j</italic></sub>) values – that is, numbered from the most similar to the least – the function <italic>rank</italic>(<italic>d</italic><sub><italic>i</italic></sub>, <italic>D, d</italic><sub><italic>j</italic></sub>) is the rank of document <italic>d</italic><sub><italic>j</italic></sub> with respect to document <italic>d</italic><sub><italic>i</italic></sub>. The value of <italic>rank</italic>(<italic>d</italic><sub><italic>i</italic></sub>, <italic>D, d</italic><sub><italic>i</italic></sub>) is equal to 1 with similarity 1.0 when documents are unique in <italic>D</italic>. The test modifies <italic>d</italic><sub><italic>i</italic></sub> by adding noise, and checks whether the set <italic>D</italic> contains documents more similar than <italic>d</italic><sub><italic>i</italic></sub> to perturbed <italic>d</italic><sub><italic>i</italic></sub> (<italic>noise</italic>(<italic>d</italic><sub>i</sub>, <italic>α</italic>)). In a document set formed of unrelated documents, the rank of <italic>d</italic><sub><italic>i</italic></sub> does not change, whereas in a coherent set, rank change is expected to be high. Let <italic>α</italic> be a parameter controlling <italic>noise</italic>(<italic>d</italic><sub><italic>i</italic></sub>, <italic>α</italic>), and the function <italic>noise</italic>(<italic>d</italic><sub><italic>i</italic></sub>, <italic>α</italic>) return a vector perturbed by adding noise to each dimension of vector <italic>d</italic><sub><italic>i</italic></sub>. The noise is generated using a Gaussian distribution with mean equal to 0, and deviation equal to <italic>α</italic>. The overall rank change for a noise level is calculated by repeating the test 10 times for all documents in <italic>D</italic></p>
+<p><disp-formula id="disp-formula8-0165551512448984">
+<label>(8)</label>
+<mml:math display="block" id="math10-0165551512448984">
+<mml:mrow>
+<mml:mi>docPerturb</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>α</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>10</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>rank</mml:mi>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mi>noise</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>α</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0165551512448984" xlink:href="10.1177_0165551512448984-eq8.tif"/>
+</disp-formula></p>
+<p>The overall <italic>docPerturb</italic> feature is the slope of the line that best fits the <italic>docPerturb</italic>(<italic>α</italic>) values. The document perturbation test uses the noise levels <italic>α</italic> = {0.1, 1, 10, 100}. If the slope is positive, then the rank changes as the noise level increases, and the set is assumed to be coherent.</p>
+</sec>
+<sec id="section8-0165551512448984">
+<title>3.3.2. Language model based features</title>
+<p>Language models are used in different applications of information retrieval research [<xref ref-type="bibr" rid="bibr28-0165551512448984">28</xref>, <xref ref-type="bibr" rid="bibr29-0165551512448984">29</xref>]. Unigram language models are formulated by a bag-of-words assumption, and ordering of words is not taken into account. A simple estimate of the probability of generating a term <italic>t</italic><sub><italic>i</italic></sub> from a document <italic>d</italic><sub><italic>j</italic></sub> is the maximum likelihood estimate (MLE) – that is, the relative frequency of <italic>t</italic><sub><italic>i</italic></sub> in <italic>d</italic><sub><italic>j</italic></sub>.</p>
+<p>MLE usually results in a probability distribution with sharp changes, which assigns zero probability to terms not appearing in the document. Smoothing is a technique applied to resolve these problems. The probabilities of low or non-occurring terms are increased, and the probabilities of frequent terms are degraded. Jelinek–Mercer smoothing combines the MLE of the whole document collection with a document’s MLE, providing a smoother probability distribution. Two language models are combined by a weighted average controlled by the parameter <italic>λ</italic>. We used the same value as utilized in Townsend et al. [<xref ref-type="bibr" rid="bibr3-0165551512448984">3</xref>], which is 0.6. The linear combination of MLE of a document <italic>d</italic><sub><italic>j</italic></sub> with the whole background collection (all the Wikipedia articles) is given by</p>
+<p><disp-formula id="disp-formula9-0165551512448984">
+<label>(9)</label>
+<mml:math display="block" id="math11-0165551512448984">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ML</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ML</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>Wiki</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0165551512448984" xlink:href="10.1177_0165551512448984-eq9.tif"/>
+</disp-formula></p>
+<p>With the above probability estimate for each term, we derive a simplified clarity score motivated by the score defined by Townsend et al. [<xref ref-type="bibr" rid="bibr3-0165551512448984">3</xref>]. The relevance of a term <italic>t</italic> to the query phrase <italic>w</italic> and original document <italic>d</italic><sub>0</sub>, <italic>P</italic>(<italic>t|w, d</italic><sub><italic>j</italic></sub>), is modelled by</p>
+<p><disp-formula id="disp-formula10-0165551512448984">
+<label>(10)</label>
+<mml:math display="block" id="math12-0165551512448984">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0165551512448984" xlink:href="10.1177_0165551512448984-eq10.tif"/>
+</disp-formula></p>
+<p>where <italic>P</italic>(<italic>t</italic> | <italic>d</italic><sub><italic>j</italic></sub>) reflects the probability of observing term <italic>t</italic> in the document <italic>d</italic><sub><italic>j</italic></sub> in the set <italic>D</italic>. The probability <italic>P</italic>(<italic>d</italic><sub><italic>j</italic></sub>) is uniform for all documents in <italic>D</italic>, and is equal to 1/<italic>|D|</italic>.</p>
+<p>The clarity measure is the Kullback–Leibler (KL) divergence [<xref ref-type="bibr" rid="bibr31-0165551512448984">31</xref>] of the retrieved set <italic>D</italic> from the whole background corpus, defined as</p>
+<p><disp-formula id="disp-formula11-0165551512448984">
+<label>(11)</label>
+<mml:math display="block" id="math13-0165551512448984">
+<mml:mrow>
+<mml:mi>Clarity</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mtext>log</mml:mtext>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ML</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>Wiki</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0165551512448984" xlink:href="10.1177_0165551512448984-eq11.tif"/>
+</disp-formula></p>
+<p>KL divergence compares two different probability models. It is used as a document similarity function in various information retrieval tasks, such as text clustering and categorization [<xref ref-type="bibr" rid="bibr32-0165551512448984">32</xref>, <xref ref-type="bibr" rid="bibr33-0165551512448984">33</xref>]. In a similar fashion to <italic>CosCentrTod</italic><sub>0</sub> and <italic>avgCosTod</italic><sub>0</sub> features, the relationship of the retrieved set <italic>D</italic> to the original document <italic>d</italic><sub>0</sub> is investigated using the <italic>KLDocsFromd</italic><sub>0</sub> feature. This feature is simply the KL divergence of the language model <italic>P</italic>(<italic>t</italic>|<italic>w,D</italic>) from <italic>d</italic><sub>0</sub>, calculated according to</p>
+<p><disp-formula id="disp-formula12-0165551512448984">
+<label>(12)</label>
+<mml:math display="block" id="math14-0165551512448984">
+<mml:mrow>
+<mml:mi>KLDocsFrom</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mtext>log</mml:mtext>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ML</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0165551512448984" xlink:href="10.1177_0165551512448984-eq12.tif"/>
+</disp-formula></p>
+</sec>
+</sec>
+<sec id="section9-0165551512448984">
+<title>3.4. Learning to classify keyphrases</title>
+<p>Keyphrase extraction can be considered as a classification task with two classes: keyphrase or non-keyphrase. For a specific domain or genre, a supervised machine learning algorithm analyses, learns and classifies keyphrases. Previous work on keyphrase extraction suggests that different types of corpora behave differently, and thus should be trained for each applied domain [<xref ref-type="bibr" rid="bibr6-0165551512448984">6</xref>, <xref ref-type="bibr" rid="bibr7-0165551512448984">7</xref>].</p>
+<p>The naïve Bayes learning algorithm uses a Bayesian rule to infer the probability of class membership, given the features. Using the independence assumption, the probability of keyphraseness <italic>P</italic>(<italic>keyphrase | F</italic><sub><italic>w</italic></sub>) is calculated, where <italic>F</italic><sub><italic>w</italic></sub> is the feature set of phrase <italic>w</italic>. This probability is estimated from the training corpus using the Bayesian rule as given by</p>
+<p><disp-formula id="disp-formula13-0165551512448984">
+<label>(13)</label>
+<mml:math display="block" id="math15-0165551512448984">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>keyphrase</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>keyphrase</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:munder>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>f</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>keyphrase</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0165551512448984" xlink:href="10.1177_0165551512448984-eq13.tif"/>
+</disp-formula></p>
+<p>The class prior <italic>P</italic>(<italic>keyphrase</italic>) is low, since the proportion of keyphrases to non-keyphrases in a document is very low. As a result of this imbalance between the classes, the probability <italic>P</italic>(<italic>keyphrase</italic>|<italic>F</italic><sub><italic>w</italic></sub>) is low, and it is not possible to use strict thresholds for classification. For this reason, in contrast to other classification methods, thresholds are not applied for keyphraseness scores. When the target keyphrase size is 5, the top five ranking keyphrases are returned as the output, no matter how low the probability value is. Using this method, the prior probability can be neglected in calculations, as it will be the same for each candidate <italic>w</italic>.</p>
+<p>Kea [<xref ref-type="bibr" rid="bibr7-0165551512448984">7</xref>] reports a higher precision when the feature values are discretized using the minimum discrimination length (MDL) [<xref ref-type="bibr" rid="bibr34-0165551512448984">34</xref>]. The features we have introduced behave similarly, and their precision decreases when supervised discretization is not applied to the features. Discretization is done by splitting the value ranges so as to minimize the entropy of the training population with respect to the probability of keyphraseness. For this reason, we apply MDL discretization to all the features.</p>
+</sec>
+</sec>
+<sec id="section10-0165551512448984">
+<title>4. Experiments and evaluation</title>
+<sec id="section11-0165551512448984">
+<title>4.1. Corpus</title>
+<p>In this article, a corpus composed of 75 journal articles is used. The same corpus has previously been used in other keyphrase extraction research [<xref ref-type="bibr" rid="bibr6-0165551512448984">6</xref>, <xref ref-type="bibr" rid="bibr7-0165551512448984">7</xref>, <xref ref-type="bibr" rid="bibr14-0165551512448984">14</xref>]. The corpus is composed of journal articles from different domains, as shown in <xref ref-type="table" rid="table2-0165551512448984">Table 2</xref>. About 82% of the keyphrases appear in the articles, so 18% of the keyphrases cannot be extracted.</p>
+<table-wrap id="table2-0165551512448984" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Corpus of journal articles and its attributes</p>
+</caption>
+<graphic alternate-form-of="table2-0165551512448984" xlink:href="10.1177_0165551512448984-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Journal name</th>
+<th align="left">No. of articles</th>
+<th align="left">Keyphrases/document</th>
+<th align="left">Words/document</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><italic>Journal of the International Academy of Hospitality Research</italic></td>
+<td>6</td>
+<td>6.2</td>
+<td>6,299</td>
+</tr>
+<tr>
+<td><italic>Psycholoquy</italic></td>
+<td>20</td>
+<td>8.4</td>
+<td>4,350</td>
+</tr>
+<tr>
+<td><italic>The Neuroscientist</italic></td>
+<td>2</td>
+<td>6.0</td>
+<td>7,476</td>
+</tr>
+<tr>
+<td><italic>Journal of Computer-aided Molecular Design</italic></td>
+<td>14</td>
+<td>4.7</td>
+<td>6,474</td>
+</tr>
+<tr>
+<td><italic>Behavioral &amp; Brain Sciences Preprint Archive</italic></td>
+<td>33</td>
+<td>8.4</td>
+<td>17,522</td>
+</tr>
+<tr>
+<td>All</td>
+<td>75</td>
+<td>7.5</td>
+<td>10,781</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>In order to highlight the disadvantages of the systems that depend solely on in-document features, an experiment using a corpus of shorter documents is conducted. To this end, the abstracts of the same journal articles are used. The average document length of the abstracts is 156 words, and 44.8% of the keyphrases appear in the abstracts – that is, 55.2% of keyphrases cannot be extracted.</p>
+<p>Furthermore, not all of the keyphrases occur in the background corpus: 14.17% never appear in Wikipedia, and 16.6% appear in less than five different Wikipedia articles. It is possible to solve this problem by using a larger knowledge base such as a search engine, or a domain-specific corpus stored in a digital library. Also, in practical applications of extracted keyphrases, the importance of detecting such uncommon keyphrases is low.</p>
+</sec>
+<sec id="section12-0165551512448984">
+<title>4.2. Results</title>
+<p>Keyphrase extraction systems are usually evaluated using precision and recall, which are defined in terms of sets of phrases. In a processed source document, let the set <italic>A</italic> be the author-assigned phrases, and let <italic>A</italic>′ be the subset of <italic>A</italic> formed of phrases appearing in the document. Let <italic>E</italic> be the set of phrases extracted automatically by the system. The recall is calculated according to</p>
+<p><disp-formula id="disp-formula14-0165551512448984">
+<label>(14)</label>
+<mml:math display="block" id="math16-0165551512448984">
+<mml:mrow>
+<mml:mi>Recall</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>E</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo>∩</mml:mo>
+<mml:mi>E</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0165551512448984" xlink:href="10.1177_0165551512448984-eq14.tif"/>
+</disp-formula></p>
+<p>To avoid penalizing keyphrase extraction systems for keyphrases that cannot be extracted, the recall value is calculated with respect to the set <italic>A</italic>′. The precision is calculated from</p>
+<p><disp-formula id="disp-formula15-0165551512448984">
+<label>(15)</label>
+<mml:math display="block" id="math17-0165551512448984">
+<mml:mrow>
+<mml:mi>Precision</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>E</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo>∩</mml:mo>
+<mml:mi>E</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>E</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0165551512448984" xlink:href="10.1177_0165551512448984-eq15.tif"/>
+</disp-formula></p>
+<p>The test and training data are chosen so as to be compatible with the experiments performed by Turney [<xref ref-type="bibr" rid="bibr6-0165551512448984">6</xref>] and Frank et al. [<xref ref-type="bibr" rid="bibr7-0165551512448984">7</xref>]. Of the journal articles, 20 are reserved for testing and the remaining 55 documents are used for training. In the corpus of abstracts, 53 documents are used for training and 19 for testing; three have been omitted, as they lack an abstract.</p>
+<p><xref ref-type="table" rid="table3-0165551512448984">Tables 3</xref> and <xref ref-type="table" rid="table4-0165551512448984">4</xref> present the results of the full-text and abstract experiments respectively. For both the experiments, the precision, recall and average number of correct keyphrases per document are given when 5, 10 and 15 keyphrases are extracted for each article. The results of Kea [<xref ref-type="bibr" rid="bibr7-0165551512448984">7</xref>]<sup><xref ref-type="fn" rid="fn5-0165551512448984">5</xref></sup> are also provided for comparison. In <xref ref-type="table" rid="table3-0165551512448984">Tables 3</xref> and <xref ref-type="table" rid="table4-0165551512448984">4</xref>, <italic>inDoc</italic>+<italic>QPP</italic> denotes the experiments using all of the features defined in <xref ref-type="table" rid="table1-0165551512448984">Table 1</xref>. The feature set <italic>inDoc</italic> denotes <italic>tf*idf</italic> and <italic>firstPosition. QPPFeats</italic> denotes all features, excluding those of <italic>inDoc</italic>.</p>
+<table-wrap id="table3-0165551512448984" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Keyphrase extraction full-text experiment results</p>
+</caption>
+<graphic alternate-form-of="table3-0165551512448984" xlink:href="10.1177_0165551512448984-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Algorithms</th>
+<th align="left" colspan="3">Recall<hr/></th>
+<th align="left" colspan="3">Precision<hr/></th>
+<th align="left" colspan="3">KeyPerDoc<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">5</th>
+<th align="left">10</th>
+<th align="left">15</th>
+<th align="left">5</th>
+<th align="left">10</th>
+<th align="left">15</th>
+<th align="left">5</th>
+<th align="left">10</th>
+<th align="left">15</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kea</td>
+<td>0.19</td>
+<td>0.32</td>
+<td>0.38</td>
+<td>0.25</td>
+<td>0.20</td>
+<td>0.17</td>
+<td>1.25</td>
+<td>2.05</td>
+<td>2.50</td>
+</tr>
+<tr>
+<td><italic>inDoc + QPPFeats</italic></td>
+<td>0.24</td>
+<td>0.32</td>
+<td>0.40</td>
+<td>0.34</td>
+<td>0.22</td>
+<td>0.19</td>
+<td>1.70</td>
+<td>2.20</td>
+<td>2.80</td>
+</tr>
+<tr>
+<td><italic>QPPFeats</italic></td>
+<td>0.11</td>
+<td>0.21</td>
+<td>0.28</td>
+<td>0.16</td>
+<td>0.15</td>
+<td>0.13</td>
+<td>0.80</td>
+<td>1.45</td>
+<td>1.95</td>
+</tr>
+<tr>
+<td><italic>inDoc</italic></td>
+<td>0.11</td>
+<td>0.27</td>
+<td>0.36</td>
+<td>0.15</td>
+<td>0.19</td>
+<td>0.17</td>
+<td>0.75</td>
+<td>1.85</td>
+<td>2.50</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table4-0165551512448984" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Keyphrase extraction abstracts experiment results</p>
+</caption>
+<graphic alternate-form-of="table4-0165551512448984" xlink:href="10.1177_0165551512448984-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Algorithms</th>
+<th align="left" colspan="3">Recall<hr/></th>
+<th align="left" colspan="3">Precision<hr/></th>
+<th align="left" colspan="3">KeyPerDoc<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">5</th>
+<th align="left">10</th>
+<th align="left">15</th>
+<th align="left">5</th>
+<th align="left">10</th>
+<th align="left">15</th>
+<th align="left">5</th>
+<th align="left">10</th>
+<th align="left">15</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kea</td>
+<td>0.16</td>
+<td>0.22</td>
+<td>0.29</td>
+<td>0.13</td>
+<td>0.17</td>
+<td>0.07</td>
+<td>0.63</td>
+<td>0.84</td>
+<td>1.10</td>
+</tr>
+<tr>
+<td><italic>inDoc + QPPFeats</italic></td>
+<td>0.27</td>
+<td>0.44</td>
+<td>0.53</td>
+<td>0.21</td>
+<td>0.17</td>
+<td>0.14</td>
+<td>1.05</td>
+<td>1.68</td>
+<td>2.05</td>
+</tr>
+<tr>
+<td><italic>QPPFeats</italic></td>
+<td>0.29</td>
+<td>0.47</td>
+<td>0.55</td>
+<td>0.22</td>
+<td>0.18</td>
+<td>0.14</td>
+<td>1.11</td>
+<td>1.79</td>
+<td>2.11</td>
+</tr>
+<tr>
+<td><italic>inDoc</italic></td>
+<td>0.18</td>
+<td>0.29</td>
+<td>0.40</td>
+<td>0.14</td>
+<td>0.11</td>
+<td>0.10</td>
+<td>0.68</td>
+<td>1.11</td>
+<td>1.53</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>In full-text articles, the Kea algorithm is able to extract 38% of the keyphrases appearing in the articles, when 15 keyphrases are extracted for each document. Journal articles concisely define the contribution of the document in early sections, and keyphrases are used more frequently in abstracts and introductory portions of the document. This is why the <italic>firstPosition</italic> feature achieves high accuracy in scientific articles.</p>
+<p>As seen in <xref ref-type="table" rid="table3-0165551512448984">Table 3</xref>, the effectiveness of <italic>QPPFeats</italic> is lower than that of Kea and <italic>inDoc</italic>. We have observed that QPP features tend to have similar values for domain-specific phrases, keyphrases and sub- or superphrases of keyphrases. In fact, for a superset of a keyphrase, a similar set of documents is usually retrieved from the background corpus. For example, for the keyphrase ‘obsessive compulsive disorder’ and the subphrases ‘obsessive compulsive’, ‘compulsive disorder’ as well as the superphrase ‘obsessive compulsive personality disorder’, similar sets of documents are retrieved from the background corpus. Since all QPP features are calculated using the retrieved documents, the feature values are almost identical to each other. In order to tackle this problem, and to improve the effectiveness of the system, we integrated QPP features with in-document features in full-text articles. As a result, the <italic>inDoc</italic>+<italic>QPPFeats</italic> system achieves the best recall values when compared with the <italic>Kea</italic> and <italic>inDoc</italic> algorithms.</p>
+<p>The results of the experiment using abstracts, as shown in <xref ref-type="table" rid="table4-0165551512448984">Table 4</xref>, reveal a defect of <italic>inDoc</italic> features in shorter documents. Whereas <italic>tf*idf</italic> and <italic>firstPosition</italic> are able to achieve high precision and recall values in full-text experiments, their performance is poor in the abstract corpus. As indicated previously, the <italic>firstPosition</italic> feature, depending on the structure of the document, is effective in full-text articles. However, in shorter documents, the <italic>firstPosition</italic>, which is the normalized distance from the start of the document to the word, is subject to more noise. Whereas a change in distance by a few words does not change the value of <italic>firstPosition</italic> in long documents, it changes the distance value significantly in short documents. <italic>tf*idf</italic> values are formed of two components of term frequency and inverse document frequency. Inverse document frequency gets larger values when the phrase occurs in fewer documents. In short texts, most phrases occur once or a couple of times. Since frequencies of terms are similar, a high value of <italic>tf*idf</italic> is assigned to a phrase that appears infrequently in the corpus. Thus for short documents it is even possible to observe the highest <italic>tf*idf</italic> values in spelling errors and typos.</p>
+<p>The QPP features are not extracted directly from the document, and can be calculated for any phrase, regardless of how many times it occurs in the text, if it ever does. This makes them more robust to changes in the length of the documents. For abstracts, the recall values of <italic>QPPFeats</italic>+<italic>inDoc</italic> and <italic>QPPFeats</italic> are better than those of the Kea algorithm. On the one hand, <italic>QPPFeats</italic>+<italic>inDoc</italic> correctly identifies 53% of author-assigned keyphrases appearing in the abstract when 15 keyphrases per article are extracted. On the other hand, it can be observed that in-document features degrade the effectiveness of <italic>QPPFeats</italic>+<italic>inDoc</italic> in short documents, since 55% of the keyphrases are identified when only <italic>QPPFeats</italic> are used. Both the <italic>inDoc</italic> and <italic>Kea</italic> algorithms are able to extract only a maximum of 40% of the keyphrases, which is 15% less than <italic>QPPFeats</italic> when 15 keyphrases are extracted. Their recall is about half of the QPP features when only five keyphrases are extracted.</p>
+<p>One important advantage of <italic>QPPFeats</italic> is that it is possible to calculate them for phrases not appearing in the original document. In the keyphrase generation problem, in contrast to extraction, the algorithm should be able to generate phrases not appearing in the text, and should add keyphrase candidates from a prior knowledge, such as a background corpus or taxonomy. Expanding the extracted candidate keyphrases is a research topic by itself, and is left as a future work. However, in order to demonstrate the fact that <italic>QPPFeats</italic> can be used in keyphrase generation, we have performed an additional experiment. In the abstracts corpus we have manually added the 55% of the keyphrases that do not occur in their respective abstract to extracted candidate phrase lists, and repeated the experiment. In this setting, when the 15 top-scoring keyphrase candidates are selected, the number of correct keyphrases generated is improved by 42.5%, and the recall value is increased to 78%, with a precision of 20%. The precision value is even higher than the result of <italic>inDoc</italic>+<italic>QPPFeats</italic> in the full-text article experiments: that is, the <italic>QPPFeats</italic> can extract more keyphrases only by observing the abstracts.</p>
+<p>When the QPP features are studied individually, it is observed that the two features <italic>CosCentrTod</italic><sub>0</sub> and <italic>avgCosTod</italic><sub>0</sub> have the greatest impact on keyphrase extraction. Our experiments suggest that using these two features provides the greatest improvement in keyphrase extraction. Two features – document perturbation (i.e. ranking robustness) and clarity – can be successfully used to improve the results in both QPP [<xref ref-type="bibr" rid="bibr21-0165551512448984">21</xref>,<xref ref-type="bibr" rid="bibr22-0165551512448984">22</xref>] and keyphrase extraction.</p>
+</sec>
+</sec>
+<sec id="section13-0165551512448984" sec-type="conclusions">
+<title>5. Conclusion</title>
+<p>Most of the earlier work on keyphrase extraction focuses on research articles. However, there is an increasing interest in applying keyphrase extraction in shorter documents, such as Twitter messages [<xref ref-type="bibr" rid="bibr35-0165551512448984">35</xref>] and news articles [<xref ref-type="bibr" rid="bibr12-0165551512448984">12</xref>]. In this research, the potential problems of features commonly used in keyphrase extraction were shown through experiments. Although these features are useful in full-text articles, their effectiveness drops in short documents. Features extracted from a background corpus are able to solve this problem. We have shown that while the introduced QPP features improve keyphrase extraction in full-text articles, the improvement is much more significant for shorter documents like abstracts.</p>
+<p>Furthermore, our features are not dependent on the occurrences of the phrases in the original document, and can be calculated for phrases that never appear in the document. All in all, this work aimed to establish a link between the problems of QPP and keyphrase extraction. We believe that this work contributes to the research on finding keyphrases by removing the constraints imposed by features directly extracted from the occurrences in the original document. A careful investigation of techniques for creating candidate keyphrase lists by mining related articles or semantically related phrases enables our algorithm to generate keyphrases. The techniques used in this article may lead to more general methods that are able to operate on different genres and perform generation instead of extraction.</p>
+</sec>
+</body>
+<back>
+<notes>
+<fn-group>
+<fn fn-type="other" id="fn1-0165551512448984">
+<label>1.</label>
+<p>Available at <ext-link ext-link-type="uri" xlink:href="http://lucene.apache.org">http://lucene.apache.org</ext-link></p>
+</fn>
+<fn fn-type="other" id="fn2-0165551512448984">
+<label>2.</label>
+<p>The IDF component is used to weigh the effect of the terms, when the query is formed of multiple terms. <xref ref-type="disp-formula" rid="disp-formula1-0165551512448984">Equation (1)</xref> differs from Jones [<xref ref-type="bibr" rid="bibr1-0165551512448984">1</xref>], as it does not use the IDF component.</p>
+</fn>
+<fn fn-type="other" id="fn3-0165551512448984">
+<label>3.</label>
+<p>The dump file of 30 July 2010 retrieved from <ext-link ext-link-type="uri" xlink:href="http://download.wikimedia.org">http://download.wikimedia.org</ext-link> is used.</p>
+</fn>
+<fn fn-type="other" id="fn4-0165551512448984">
+<label>4.</label>
+<p>Common English propositions and articles are excluded, and a stopword list of 452 words is employed.</p>
+</fn>
+<fn fn-type="other" id="fn5-0165551512448984">
+<label>5.</label>
+<p>Kea 3.0 version, downloaded from; <ext-link ext-link-type="uri" xlink:href="http://www.nzdl.org/Kea/download.html">http://www.nzdl.org/Kea/download.html</ext-link></p></fn>
+</fn-group>
+</notes>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0165551512448984">
+<label>[1]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jones</surname><given-names>KS</given-names></name>
+<name><surname>Walker</surname><given-names>S</given-names></name>
+<name><surname>Robertson</surname><given-names>SE</given-names></name>
+</person-group>. <article-title>A probabilistic model of information retrieval: development and comparative experiments</article-title>. <source>Information Processing and Management</source> <year>2000</year>; <volume>36</volume>(<issue>6</issue>): <fpage>809</fpage>–<lpage>840</lpage>.</citation>
+</ref>
+<ref id="bibr2-0165551512448984">
+<label>[2]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Gutwin</surname><given-names>C</given-names></name>
+<name><surname>Paynter</surname><given-names>G</given-names></name>
+<name><surname>Witten</surname><given-names>I</given-names></name>
+<name><surname>Nevill-Manning</surname><given-names>C</given-names></name>
+<name><surname>Frank</surname><given-names>E</given-names></name>
+</person-group>. <article-title>Improving browsing in digital libraries with keyphrase indexes</article-title>. <source>Journal of Decision Support Systems</source> <year>1999</year>; <volume>27</volume>(<issue>1–2</issue>): <fpage>81</fpage>–<lpage>104</lpage>.</citation>
+</ref>
+<ref id="bibr3-0165551512448984">
+<label>[3]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Cronen-Townsend</surname><given-names>S</given-names></name>
+<name><surname>Zhou</surname><given-names>Y</given-names></name>
+<name><surname>Croft</surname><given-names>WB</given-names></name>
+</person-group>. <article-title>Predicting query performance</article-title>. In: <conf-name>Proceedings of the 25th annual international ACM SIGIR conference on research and development in information retrieval (SIGIR)</conf-name>, <conf-date>2002</conf-date>. <conf-loc>New York: ACM</conf-loc>; <year>2002</year>, pp. <fpage>299</fpage>–<lpage>306</lpage>.</citation>
+</ref>
+<ref id="bibr4-0165551512448984">
+<label>[4]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Amati</surname><given-names>G</given-names></name>
+<name><surname>Carpineto</surname><given-names>C</given-names></name>
+<name><surname>Romano</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Query difficulty, robustness, and selective application of query expansion</article-title>. In: <source>Advances in information retrieval</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2004</year>, pp. <fpage>127</fpage>–<lpage>137</lpage>.</citation>
+</ref>
+<ref id="bibr5-0165551512448984">
+<label>[5]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Yom-Tov</surname><given-names>E</given-names></name>
+<name><surname>Carmel</surname><given-names>D</given-names></name>
+<name><surname>Darlow</surname><given-names>A</given-names></name>
+<name><surname>Pelleg</surname><given-names>D</given-names></name>
+<name><surname>Errera-Yaakov</surname><given-names>S</given-names></name>
+<name><surname>Fine</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Juru at TREC 2005: query prediction in the terabyte and the robust tracks</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Voorhees</surname><given-names>EM</given-names></name>
+<name><surname>Buckland</surname><given-names>LP</given-names></name>
+</person-group> (eds) <conf-name>Proceedings of the 2005 text retrieval conference (TREC)</conf-name>. <conf-loc>NIST</conf-loc>; <conf-date>2005</conf-date>.</citation>
+</ref>
+<ref id="bibr6-0165551512448984">
+<label>[6]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Turney</surname><given-names>PD</given-names></name>
+</person-group>. <article-title>Learning algorithms for keyphrase extraction</article-title>. <source>Information Retrieval</source> <year>2000</year>; <volume>2</volume>(<issue>4</issue>): <fpage>303</fpage>–<lpage>336</lpage>.</citation>
+</ref>
+<ref id="bibr7-0165551512448984">
+<label>[7]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Frank</surname><given-names>E</given-names></name>
+<name><surname>Paynter</surname><given-names>GW</given-names></name>
+<name><surname>Witten</surname><given-names>IH</given-names></name>
+<name><surname>Gutwin</surname><given-names>C</given-names></name>
+<name><surname>Nevill-Manning</surname><given-names>CG</given-names></name>
+</person-group>. <article-title>Domain-specific keyphrase extraction</article-title>. In: <conf-name>Proceedings of the 16th international joint conference on artificial intelligence (IJCAI)</conf-name>, <conf-date>1999</conf-date>. <conf-loc>San Francisco, CA: Morgan Kaufmann Publishers</conf-loc>, pp. <fpage>668</fpage>–<lpage>673</lpage>.</citation>
+</ref>
+<ref id="bibr8-0165551512448984">
+<label>[8]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Hulth</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Improved automatic keyword extraction given more linguistic knowledge</article-title>. In: <conf-name>Proceedings of the 2003 conference on empirical methods in natural language processing (EMNLP)</conf-name>. <conf-loc>Morristown: ACL</conf-loc>; <conf-date>2003</conf-date>, pp. <fpage>216</fpage>–<lpage>223</lpage>.</citation>
+</ref>
+<ref id="bibr9-0165551512448984">
+<label>[9]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Barker</surname><given-names>K</given-names></name>
+<name><surname>Cornacchia</surname><given-names>N</given-names></name>
+</person-group>. <article-title>Using noun phrase heads to extract document keyphrases</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Hamilton</surname><given-names>HJ</given-names></name>
+</person-group> (ed.) <source>Proceedings of the 13th biennial conference of the Canadian Society on Computational Studies of Intelligence: Advances in artificial intelligence</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>; <year>2000</year>, pp. <fpage>40</fpage>–<lpage>52</lpage>.</citation>
+</ref>
+<ref id="bibr10-0165551512448984">
+<label>[10]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Nguyen</surname><given-names>TD</given-names></name>
+<name><surname>Kan</surname><given-names>M-Y</given-names></name>
+</person-group>. <article-title>Keyphrase extraction for scientific publications</article-title>. In: <source>Asian digital libraries: Looking back 10 years and forging new frontiers</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>; <year>2007</year>, pp. <fpage>317</fpage>–<lpage>326</lpage>.</citation>
+</ref>
+<ref id="bibr11-0165551512448984">
+<label>[11]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Mihalcea</surname><given-names>R</given-names></name>
+<name><surname>Tarau</surname><given-names>P</given-names></name>
+</person-group>. <article-title>TextRank: bringing order into texts</article-title>. In: <conf-name>Proceedings of 2004 conference on empirical methods in natural language processing (EMNLP)</conf-name>. <conf-loc>Morristown: ACL</conf-loc>; <conf-date>2004</conf-date>, pp. <fpage>404</fpage>–<lpage>411</lpage>.</citation>
+</ref>
+<ref id="bibr12-0165551512448984">
+<label>[12]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wan</surname><given-names>X</given-names></name>
+<name><surname>Xiao</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Exploiting neighborhood knowledge for single document summarization and keyphrase extraction</article-title>. <source>ACM Transactions on Information Systems</source> <year>2010</year>; <volume>28</volume>(<issue>2</issue>). doi: <pub-id pub-id-type="doi">10.1145/1740592.1740596</pub-id>.</citation>
+</ref>
+<ref id="bibr13-0165551512448984">
+<label>[13]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Turney</surname><given-names>PD</given-names></name>
+</person-group>. <article-title>Coherent keyphrase extraction via web mining</article-title>. In: <conf-name>Proceedings of the 18th international joint conferences on artificial intelligence (IJCAI)</conf-name>. <conf-loc>San Francisco, CA: Morgan Kauffman Publishers</conf-loc>, <conf-date>2003</conf-date>, pp. <fpage>434</fpage>–<lpage>442</lpage>.</citation>
+</ref>
+<ref id="bibr14-0165551512448984">
+<label>[14]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ercan</surname><given-names>G</given-names></name>
+<name><surname>Cicekli</surname><given-names>I</given-names></name>
+</person-group>. <article-title>Using lexical chains for keyword extraction</article-title>. <source>Information Processing and Management</source> <year>2007</year>; <volume>43</volume>(<issue>6</issue>): <fpage>1705</fpage>–<lpage>1714</lpage>.</citation>
+</ref>
+<ref id="bibr15-0165551512448984">
+<label>[15]</label>
+<citation citation-type="book">
+<person-group person-group-type="editor">
+<name><surname>Fellbaum</surname><given-names>C</given-names></name>
+</person-group> (ed.). <source>WordNet: An electronic lexical database (language, speech, and communication)</source>. <publisher-loc>Cambridge, MA</publisher-loc>: <publisher-name>MIT Press</publisher-name>, <year>1998</year>.</citation>
+</ref>
+<ref id="bibr16-0165551512448984">
+<label>[16]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Brin</surname><given-names>S</given-names></name>
+<name><surname>Page</surname><given-names>L</given-names></name>
+</person-group>. <article-title>The anatomy of a large-scale hypertextual web search engine</article-title>. <source>Computer Networks and ISDN Systems</source> <year>1998</year>; <volume>30</volume>(<issue>1–7</issue>): <fpage>107</fpage>–<lpage>117</lpage>.</citation>
+</ref>
+<ref id="bibr17-0165551512448984">
+<label>[17]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Toutanova</surname><given-names>K</given-names></name>
+<name><surname>Klein</surname><given-names>D</given-names></name>
+<name><surname>Manning</surname><given-names>CD</given-names></name>
+<name><surname>Singer</surname><given-names>Y</given-names></name>
+</person-group>. <article-title>Feature-rich part-of-speech tagging with a cyclic dependency network</article-title>. In: <conf-name>Proceedings of the 2003 conference of the North American chapter of the Association for Computational Linguistics on Human Language Technology</conf-name>, <conf-date>2003</conf-date>. <volume>Vol. 1</volume>, pp. <fpage>173</fpage>–<lpage>180</lpage>.</citation>
+</ref>
+<ref id="bibr18-0165551512448984">
+<label>[18]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Manning</surname><given-names>CD</given-names></name>
+<name><surname>Raghavan</surname><given-names>P</given-names></name>
+<name><surname>Schütze</surname><given-names>H</given-names></name>
+</person-group>. <source>Introduction to information retrieval</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>Cambridge University Press</publisher-name>; <year>2008</year>.</citation>
+</ref>
+<ref id="bibr19-0165551512448984">
+<label>[19]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Cronen-Townsend</surname><given-names>S</given-names></name>
+<name><surname>Zhou</surname><given-names>Y</given-names></name>
+<name><surname>Croft</surname><given-names>WB</given-names></name>
+</person-group>. <article-title>A framework for selective query expansion</article-title>. In: <conf-name>Proceedings of the 13th ACM international conference on information and knowledge management (CIKM)</conf-name>. <conf-loc>New York: ACM</conf-loc>, <conf-date>2004</conf-date>. pp. <fpage>236</fpage>–<lpage>237</lpage>.</citation>
+</ref>
+<ref id="bibr20-0165551512448984">
+<label>[20]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>He</surname><given-names>B</given-names></name>
+<name><surname>Ounis</surname><given-names>I</given-names></name>
+</person-group>. <article-title>Query performance prediction</article-title>. <source>Information Systems</source> <year>2006</year>; <volume>31</volume>(<issue>7</issue>): <fpage>585</fpage>–<lpage>594</lpage>.</citation>
+</ref>
+<ref id="bibr21-0165551512448984">
+<label>[21]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Vinay</surname><given-names>V</given-names></name>
+<name><surname>Cox</surname><given-names>IJ</given-names></name>
+<name><surname>Milic-Frayling</surname><given-names>N</given-names></name>
+<name><surname>Wood</surname><given-names>KR</given-names></name>
+</person-group>. <article-title>On ranking the effectiveness of searches</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Efthimiadis</surname><given-names>EN</given-names></name>
+<name><surname>Dumais</surname><given-names>ST</given-names></name>
+<name><surname>Hawking</surname><given-names>D</given-names></name>
+<name><surname>Javelin</surname><given-names>K</given-names></name>
+</person-group> (eds) <conf-name>Proceedings of the 29th annual international ACM SIGIR conference on research and development in information retrieval (SIGIR)</conf-name>. <conf-loc>New York: ACM</conf-loc>, <year>2006</year>. pp. <fpage>398</fpage>–<lpage>404</lpage>.</citation>
+</ref>
+<ref id="bibr22-0165551512448984">
+<label>[22]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zhou</surname><given-names>Y</given-names></name>
+<name><surname>Croft</surname><given-names>WB</given-names></name>
+</person-group>. <article-title>Ranking robustness: a novel framework to predict query performance</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Yu</surname><given-names>PS</given-names></name>
+<name><surname>Tsotras</surname><given-names>VJ</given-names></name>
+<name><surname>Fox</surname><given-names>EA</given-names></name>
+<name><surname>Liu</surname><given-names>B</given-names></name>
+</person-group> (eds) <conf-name>Proceedings of the 15th ACM international conference on information and knowledge management (CIKM)</conf-name>. <conf-loc>New York: ACM</conf-loc>, <year>2006</year>, pp. <fpage>567</fpage>–<lpage>574</lpage>.</citation>
+</ref>
+<ref id="bibr23-0165551512448984">
+<label>[23]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Porter</surname><given-names>MF</given-names></name>
+</person-group>. <article-title>An algorithm for suffix stripping</article-title>. <source>Program</source> <year>1980</year>; <volume>14</volume>(<issue>3</issue>): <fpage>130</fpage>–<lpage>137</lpage>.</citation>
+</ref>
+<ref id="bibr24-0165551512448984">
+<label>[24]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Radev</surname><given-names>DR</given-names></name>
+<name><surname>Jing</surname><given-names>H</given-names></name>
+<name><surname>Sty</surname><given-names>M</given-names></name>
+<name><surname>Tam</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Centroid-based summarization of multiple documents</article-title>. <source>Information Processing and Management</source> <year>2004</year>; <volume>40</volume>(<issue>6</issue>): <fpage>919</fpage>–<lpage>938</lpage>.</citation>
+</ref>
+<ref id="bibr25-0165551512448984">
+<label>[25]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Han</surname><given-names>E-H</given-names></name>
+<name><surname>Karypis</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Centroid-based document classification: analysis and experimental results</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Zighed</surname><given-names>DA</given-names></name>
+<name><surname>Komorowski</surname><given-names>HJ</given-names></name>
+<name><surname>Zytkow</surname><given-names>JM</given-names></name>
+</person-group> (eds) <source>Principles and practice of knowledge discovery in databases (PPKDD)</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2000</year>, pp. <fpage>424</fpage>–<lpage>431</lpage>.</citation>
+</ref>
+<ref id="bibr26-0165551512448984">
+<label>[26]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kwok</surname><given-names>K-L</given-names></name>
+<name><surname>Grunfeld</surname><given-names>L</given-names></name>
+<name><surname>Dinstl</surname><given-names>N</given-names></name>
+<name><surname>Deng</surname><given-names>P</given-names></name>
+</person-group>. <article-title>TREC 2005 robust track experiments using PIRCS</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Voorhees</surname><given-names>EM</given-names></name>
+<name><surname>Buckland</surname><given-names>LP</given-names></name>
+</person-group> (eds) <conf-name>Proceedings of the 2005 text retrieval conference (TREC)</conf-name>. <conf-loc>NIST</conf-loc>; <conf-date>2005</conf-date>.</citation>
+</ref>
+<ref id="bibr27-0165551512448984">
+<label>[27]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hopkins</surname><given-names>B</given-names></name>
+<name><surname>Skellam</surname><given-names>JG</given-names></name>
+</person-group>. <article-title>A new method for determining the type of distribution of plant individuals</article-title>. <source>Annals of Botany</source> <year>1954</year>; <volume>18</volume>(<issue>2</issue>): <fpage>213</fpage>–<lpage>227</lpage>.</citation>
+</ref>
+<ref id="bibr28-0165551512448984">
+<label>[28]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cox</surname><given-names>TF</given-names></name>
+<name><surname>Lewis</surname><given-names>T</given-names></name>
+</person-group>. <article-title>A conditioned distance ratio method for analyzing spatial patterns</article-title>. <source>Biometrika</source> <year>1976</year>; <volume>63</volume>(<issue>3</issue>): <fpage>483</fpage>–<lpage>491</lpage>.</citation>
+</ref>
+<ref id="bibr29-0165551512448984">
+<label>[29]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Ponte</surname><given-names>JM</given-names></name>
+<name><surname>Croft</surname><given-names>WB</given-names></name>
+</person-group>. <article-title>A language modeling approach to information retrieval</article-title>. In: <conf-name>Proceedings of the 21st annual international ACM SIGIR conference on research and development in information retrieval (SIGIR)</conf-name>. <conf-loc>New York: ACM</conf-loc>, <conf-date>1998</conf-date>. pp. <fpage>275</fpage>–<lpage>281</lpage>.</citation>
+</ref>
+<ref id="bibr30-0165551512448984">
+<label>[30]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Lavrenko</surname><given-names>V</given-names></name>
+<name><surname>Allan</surname><given-names>J</given-names></name>
+<name><surname>DeGuzman</surname><given-names>E</given-names></name>
+<name><surname>LaFlamme</surname><given-names>D</given-names></name>
+<name><surname>Pollard</surname><given-names>V</given-names></name>
+<name><surname>Thomas</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Relevance models for topic detection and tracking</article-title>. In: <conf-name>Proceedings of the 2nd international conference on human language technology research (HLT)</conf-name>. <conf-loc>San Francisco, CA: Morgan Kaufmann Publishers</conf-loc>, <conf-date>2002</conf-date>, pp. <fpage>115</fpage>–<lpage>121</lpage>.</citation>
+</ref>
+<ref id="bibr31-0165551512448984">
+<label>[31]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kullback</surname><given-names>S</given-names></name>
+<name><surname>Leibler</surname><given-names>RA</given-names></name>
+</person-group>. <article-title>On information and sufficiency</article-title>. <source>Annals of Mathematical Statistics</source> <year>1951</year>; <volume>22</volume>(<issue>1</issue>): <fpage>79</fpage>–<lpage>86</lpage>.</citation>
+</ref>
+<ref id="bibr32-0165551512448984">
+<label>[32]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Bigi</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Using Kullback–Leibler distance for text categorization</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Sebastiani</surname><given-names>F</given-names></name>
+</person-group> (ed.) <conf-name>Proceedings of the European conference on information retrieval (ECIR)</conf-name>. <conf-loc>Berlin: Springer</conf-loc>, <conf-date>2003</conf-date>, pp. <fpage>305</fpage>–<lpage>319</lpage>.</citation>
+</ref>
+<ref id="bibr33-0165551512448984">
+<label>[33]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pinto</surname><given-names>D</given-names></name>
+<name><surname>Benedi</surname><given-names>J-M</given-names></name>
+<name><surname>Rosso</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Clustering narrow-domain short texts by using the Kullback–Leibler distance</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Gelbukh</surname><given-names>AF</given-names></name>
+</person-group> (ed.) <conf-name>Proceedings of the conference on computational linguistics and intelligent text processing (CICLING)</conf-name>. <conf-loc>Berlin: Springer</conf-loc>, <conf-date>2007</conf-date>, pp. <fpage>611</fpage>–<lpage>622</lpage>.</citation>
+</ref>
+<ref id="bibr34-0165551512448984">
+<label>[34]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Fayyad</surname><given-names>UM</given-names></name>
+<name><surname>Irani</surname><given-names>KB</given-names></name>
+</person-group>. <article-title>Multi-interval discretization of continuous-valued attributes for classification learning</article-title>. In: <conf-name>Proceedings of the international joint conference on artificial intelligence (IJCAI)</conf-name>. <conf-loc>San Francisco, CA: Morgan Kaufmann Publishers</conf-loc>, <conf-date>1993</conf-date>, pp. <fpage>1022</fpage>–<lpage>1029</lpage>.</citation>
+</ref>
+<ref id="bibr35-0165551512448984">
+<label>[35]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zhao</surname><given-names>WX</given-names></name>
+<name><surname>Jiang</surname><given-names>J</given-names></name>
+<name><surname>He</surname><given-names>J</given-names></name>
+<name><surname>Song</surname><given-names>Y</given-names></name>
+<name><surname>Achananuparp</surname><given-names>P</given-names></name>
+<name><surname>Lim</surname><given-names>EP</given-names></name>
+<name><surname>Li</surname><given-names>X</given-names></name>
+</person-group>. <article-title>Topical keyphrase extraction from Twitter</article-title>. In: <conf-name>Proceedings of the 49th annual meeting of the Association for Computational Linguistics: Human language technologies</conf-name>. <conf-loc>Stroudsburg, PA: Association for Computational Linguistics</conf-loc>, <conf-date>2011</conf-date>, <volume>Vol. 1</volume>, pp. <fpage>379</fpage>–<lpage>388</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

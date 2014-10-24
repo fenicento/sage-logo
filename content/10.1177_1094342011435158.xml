@@ -1,0 +1,1911 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">HPC</journal-id>
+<journal-id journal-id-type="hwp">sphpc</journal-id>
+<journal-title>The International Journal of High Performance Computing Applications</journal-title>
+<issn pub-type="ppub">1094-3420</issn>
+<issn pub-type="epub">1741-2846</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1094342011435158</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1094342011435158</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Large-scale fast Fourier transform on a heterogeneous multi-core system</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name>
+<surname>Li</surname>
+<given-names>Yan</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342011435158">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Diamond</surname>
+<given-names>Jeffrey R</given-names>
+</name>
+<xref ref-type="aff" rid="aff2-1094342011435158">2</xref>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name>
+<surname>Wang</surname>
+<given-names>Xu</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342011435158">1</xref>
+<xref ref-type="corresp" rid="corresp1-1094342011435158"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Lin</surname>
+<given-names>Haibo</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342011435158">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Yang</surname>
+<given-names>Yudong</given-names>
+</name>
+<xref ref-type="aff" rid="aff3-1094342011435158">3</xref>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Han</surname>
+<given-names>Zhenxing</given-names>
+</name>
+<xref ref-type="aff" rid="aff3-1094342011435158">3</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-1094342011435158">
+<label>1</label>IBM China Research Lab, China</aff>
+<aff id="aff2-1094342011435158">
+<label>2</label>University of Texas at Austin, Austin, TX, USA</aff>
+<aff id="aff3-1094342011435158">
+<label>3</label>IBM Systems Technology Group, China</aff>
+<author-notes>
+<corresp id="corresp1-1094342011435158">Xu Wang, IBM Building 19 Zhongguancun Software Park, 8 Dongbeiwang WestRoad Haidian District Beijing, 100094 China Email: <email>wangxuwx@cn.ibm.com</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>5</month>
+<year>2012</year>
+</pub-date>
+<volume>26</volume>
+<issue>2</issue>
+<issue-title>Issues in Large Scale Computing Environments: Heterogeneous Computing and Operating Systems - two subjects, one special issue</issue-title>
+<fpage>148</fpage>
+<lpage>158</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>As interest in hybrid computing systems increases, people are eager to find new ways to exploit the unique and efficient computational power of the heterogeneous multi-core systems. Although there has been much interest in implementing high-performance fast Fourier transform (FFT) libraries on this kind of system, most existing libraries focus on small-scale FFTs whose data can fit in the local storage of a single accelerator. Real-world FFT applications often require much larger scale FFTs, but it is extremely challenging for heterogeneous multi-core system with distributed architectures to make efficient large FFT implementations. In this paper, we introduce the first known FFT library for the heterogeneous multi-core system with distributed architecture that can solve one-dimensional FFTs larger than what fits in a single accelerator. Our implementation achieves 67% performance improvement of FFTW 3.2.2 (Fastest Fourier Transform in the West) and sustains over 36 single precision FFT GFLOPs ‘end-to-end’ Achieving such high performance requires novel schemes for large-scale FFT factorization, data permutation and all-to-all exchanges, and buffer designs to maximize use of the local storage while minimizing communication overhead. One important finding in this paper is that large-scale FFT on this kind of architecture behaves as data transfer bound which is quite different from other architectures. A significant contribution of this paper is that for each major component of our algorithm, we explore many possible design options and present quantitative performance comparisons. This provides value beyond specific architecture, as it illustrates the fundamental features associated with different communication paradigms and mechanisms for the heterogeneous multi-core system. Today’s computer systems are increasingly being designed to include general purpose accelerators. The techniques in this paper can also be applied to these architectures especially when they have limited local storage or steep cache hierarchies. We also provide insights on applying techniques in this paper to similar architectures.</p>
+</abstract>
+<kwd-group>
+<kwd>FFT</kwd>
+<kwd>heterogeneous multi-core system</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1094342011435158">
+<title>1 Introduction</title>
+<p>The history of FFT can be tracked back to Gauss (<xref ref-type="bibr" rid="bibr13-1094342011435158">Heideman et al. 1984</xref>) in the early 19th century. The fast Fourier transform (FFT) has been one of the most widely used algorithms for decades. It plays a role as a fundamental kernel for many science and engineering application fields, such as signal processing, data analysis, and fluid dynamics.</p>
+<p>The topic of how to improve FFT performance on heterogeneous multi-core systems has gained considerable attention in recent years. Many studies have been devoted to it, ranging from auto-tuning the FFT library to FFT kernel generation. However, most of these studies are limited to small-scale FFT. Here small and large are loose definitions. For an <inline-formula id="inline-formula1-1094342011435158">
+<mml:math id="mml-inline1-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-point FFT, if the total dataset can be held in single accelerator local storage, we can name <inline-formula id="inline-formula2-1094342011435158">
+<mml:math id="mml-inline2-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> as a small scale; otherwise, we consider <inline-formula id="inline-formula3-1094342011435158">
+<mml:math id="mml-inline3-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> to be of large scale. Because most of the studies are focused on reaching the peak FFT performance number, their focus is limited to small-scale FFT, which make it easier to reach the peak, or to just a single fixed-size FFT. So, to the best of the authors’ knowledge, there has been little work reported on how to implement a complete FFT library with a large-size FFT.</p>
+<p>Today’s computer systems are moving forward to a heterogeneous architecture with a combination of CPUs and accelerators. Furthermore, one important change is that accelerators in systems released in previous years can only do fixed functions, such as encryption, while accelerators in the emerging systems tend to be general purpose. Here we take Cell/B.E. as a study example. Although there are many different views of the Cell Broadband Engine Architecture (CBEA), the extremely strong computational power of the Cell/B.E. is unquestionable. RoadRunner has been approved to be a successful hybrid cluster which is composed of x18 and Cell/B.E. processors. The Cell/B.E. processor also demonstrates good power efficiency by making applications run faster but cooler, which is a yardstick for the emerging green world. It is a good research platform for heterogeneous multi-core systems with limited accelerator storage.</p>
+<p>There are several reasons why a large-scale FFT is necessary. First, applications can call for large-scale FFTs. In many real industry applications, 64,000-point FFTs or even larger ones are more frequently used than 1,000-point FFTs. These requests should be taken into account. For example, <xref ref-type="bibr" rid="bibr16-1094342011435158">Manolopoulos et al. (2007</xref>) argued that a large number of signal processing applications requires input size greater than 8,000 complex points. Second, from the point of view of a FFT library, it is not reasonable to set the one-dimensional FFT size limit too small.</p>
+<p>Implementing large-scale FFTs is quite different from small ones. The heterogeneous multi-core system represents a challenge to large-scale FFTs because the limited size of the accelerator local storage makes it impossible to put all input data on a single accelerator, which creates many problems, such as parallelizing schema, factorization, communication and code size. We obtained valuable experience while addressing these problems and we will summarize and present the key techniques in this paper that we invented to solve them.</p>
+<sec id="section2-1094342011435158">
+<title>1.1 Contribution</title>
+<p>We have implemented the first known complete ‘end-to-end’ FFT library for heterogeneous multi-core system with limited accelerator storage that can solve one-dimensional FFTs larger than fit in a single accelerator local storage. Our implementation achieves 1.67<inline-formula id="inline-formula4-1094342011435158">
+<mml:math id="mml-inline4-1094342011435158">
+<mml:mo stretchy="false">×</mml:mo>
+</mml:math>
+</inline-formula> the performance of FFTW 3.2.2 and sustains over 36 GFLOPs for single precision FFT. In this paper, we outline several novel design choices that led to such high performance including the large-scale FFT factorization scheme which is tailored for the platform and data transfer scheme and a novel buffer design which more efficiently utilizes the limited accelerator local stores. A significant contribution of this paper is that for each major component of our algorithm, we explore many possible design options and present quantitative performance comparisons. Although this implementation is done on the Cell/B.E, the value goes far beyond this specifies platform. The experience can be applied not only to large clusters composed of Cell/B.E. processors, but also to any heterogeneous multi-core system especially those with limited accelerator storage. Detailed suggestions on applying these techniques to other architectures are also given.</p>
+</sec>
+<sec id="section3-1094342011435158">
+<title>1.2 Organization</title>
+<p>In Section <inline-formula id="inline-formula5-1094342011435158">
+<mml:math id="mml-inline5-1094342011435158">
+<mml:mn>2</mml:mn>
+</mml:math>
+</inline-formula>, we present the necessary background for this paper, including some relevant architectural features and constraints of the Cell/B.E. processor, the Cooley–Tukey algorithm, and prime-size FFT implementation steps. Section <inline-formula id="inline-formula6-1094342011435158">
+<mml:math id="mml-inline6-1094342011435158">
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula> introduces the overall parallelism strategy of large-scale FFTs. Different design choices are discussed in Section <inline-formula id="inline-formula7-1094342011435158">
+<mml:math id="mml-inline7-1094342011435158">
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula>. Performance results and the profiling analysis are given in Section <inline-formula id="inline-formula8-1094342011435158">
+<mml:math id="mml-inline8-1094342011435158">
+<mml:mn>5</mml:mn>
+</mml:math>
+</inline-formula>. Some related works are referenced in Section <inline-formula id="inline-formula9-1094342011435158">
+<mml:math id="mml-inline9-1094342011435158">
+<mml:mn>7</mml:mn>
+</mml:math>
+</inline-formula>. Finally, we conclude with a summary in Section <inline-formula id="inline-formula10-1094342011435158">
+<mml:math id="mml-inline10-1094342011435158">
+<mml:mn>8</mml:mn>
+</mml:math>
+</inline-formula>.</p>
+</sec>
+</sec>
+<sec id="section4-1094342011435158">
+<title>2 Background</title>
+<p>In this section, we summarize several architectural features of the Cell/B.E. processor that are relevant to our implementation. Then, we briefly introduce the Cooley–Tukey algorithm. Finally, we describe Rader’s prime-size FFT algorithm.</p>
+<sec id="section5-1094342011435158">
+<title>2.1 CBEA features</title>
+<p>The CBEA is a heterogeneous architecture that is composed of one 64-bit IBM PowerPC* processor element (PPE) and eight SPEs, all connected by a high-bandwidth element interconnect bus (EIB). The CBEA has been introduced and described in many publications and documents. Here we briefly list only the architectural features that are relevant to our implementation.</p>
+<p>Cell/B.E. processor is designed with a special four-ring architecture for its EIB. It connects all eight SPEs and the PPE. It can be seen from <xref ref-type="fig" rid="fig1-1094342011435158">Figure 1</xref> that the bandwidth between the PPE and SPE is limited to the maximum of 25.6 GB/s. However, this special ring design makes it possible for each SPE to send and receive data at 25.6 GB/s in each direction. This feature can be utilized to improve performance during our later large-size FFT design.</p>
+<fig id="fig1-1094342011435158" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>A high-level view of the Cell Broadband Engine Architecture.</p>
+</caption>
+<graphic alternate-form-of="fig1-1094342011435158" xlink:href="10.1177_1094342011435158-fig1.tif"/>
+</fig>
+<p>Each SPE has a private local store of 256 kB which is shared by text and code, data buffers, the software stack, and other miscellaneous usage. It is managed independently by the user, and there is no consistency insurance in the system. Each SPE local store address can be mapped to a main memory region and be accessed by the PPE and other SPEs.</p>
+<p>Direct memory access (DMA) engine operations can be used to transfer data between both the PPE and SPEs and also between SPEs. A key enabling feature of the DMA engine is the ability to do completely general scatters and gathers of data, as specified in a DMA list. The DMA command queue is processed in non-blocking mode, and multiple commands can be executed concurrently. DMA transfers can overlap SPE processing with little or no performance degradation, indicating that we can achieve better performance by overlapping computation and DMA transfers.</p>
+<p>Owing to the lack of shared memory, SPEs must communicate explicitly with others in the system using communication mechanisms. The CBEA provides three primary communication mechanisms: DMA transfers, mailbox messages, and signal-notification messages. All three communication mechanisms are implemented and controlled by the SPE memory flow controller (MFC). Details can be found in <xref ref-type="bibr" rid="bibr1-1094342011435158">IBM Corporation (2007</xref>)</p>
+</sec>
+<sec id="section6-1094342011435158">
+<title>2.2 Cooley–Tukey algorithm</title>
+<p>The FFT is an efficient algorithm to quickly evaluate the discrete Fourier transform (DFT). For completeness, we first introduce the definition of DFT as<disp-formula id="disp-formula1-1094342011435158">
+<mml:math id="mml-disp1-1094342011435158">
+<mml:msub>
+<mml:mi>X</mml:mi>
+<mml:mi>k</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mrow>
+<mml:munderover>
+<mml:mo movablelimits="false" stretchy="false">∑</mml:mo>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+</mml:mrow>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mi>n</mml:mi>
+</mml:msub>
+<mml:msup>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi mathvariant="italic">π</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mfrac>
+</mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mo stretchy="false">…</mml:mo>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1.</mml:mn>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1094342011435158" xlink:href="10.1177_1094342011435158-eq1.tif"/>
+</disp-formula>
+</p>
+<p>From this definition, we can see that DFT requires <inline-formula id="inline-formula11-1094342011435158">
+<mml:math id="mml-inline11-1094342011435158">
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> operations. Since the last century, methods to compute the DFT more efficiently have been extensively studied. The Cooley–Tukey algorithm is the most famous and considered the most common to use in a complete FFT library. The Cooley–Tukey is a divide and conquer algorithm named after JW Cooley and J Tukey proposed in 1965 (<xref ref-type="bibr" rid="bibr9-1094342011435158">Cooley and Tukey 1965</xref>). If an arbitrary composite size <inline-formula id="inline-formula12-1094342011435158">
+<mml:math id="mml-inline12-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>, it re-expresses the DFT of size <inline-formula id="inline-formula13-1094342011435158">
+<mml:math id="mml-inline13-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> in terms of smaller DFTs of size <inline-formula id="inline-formula14-1094342011435158">
+<mml:math id="mml-inline14-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula15-1094342011435158">
+<mml:math id="mml-inline15-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>. This step can be performed recursively in order to reduce the computation time to <inline-formula id="inline-formula16-1094342011435158">
+<mml:math id="mml-inline16-1094342011435158">
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo form="prefix" movablelimits="false">log</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> for highly composite <inline-formula id="inline-formula17-1094342011435158">
+<mml:math id="mml-inline17-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>. If <inline-formula id="inline-formula18-1094342011435158">
+<mml:math id="mml-inline18-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and the general Cooley–Tukey factorization rewrites the indices <inline-formula id="inline-formula19-1094342011435158">
+<mml:math id="mml-inline19-1094342011435158">
+<mml:mi>k</mml:mi>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula20-1094342011435158">
+<mml:math id="mml-inline20-1094342011435158">
+<mml:mi>n</mml:mi>
+</mml:math>
+</inline-formula> as <inline-formula id="inline-formula21-1094342011435158">
+<mml:math id="mml-inline21-1094342011435158">
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula22-1094342011435158">
+<mml:math id="mml-inline22-1094342011435158">
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>, the Cooley–Tukey algorithm is expressed by factoring the DFT as<disp-formula id="disp-formula2-1094342011435158">
+<mml:math id="mml-disp2-1094342011435158">
+<mml:msub>
+<mml:mi>X</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mrow>
+<mml:munderover>
+<mml:mo movablelimits="false" stretchy="false">∑</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+</mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msup>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi mathvariant="italic">π</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mfrac>
+</mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mrow>
+<mml:munderover>
+<mml:mo movablelimits="false" stretchy="false">∑</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+</mml:mrow>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi mathvariant="italic">π</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfenced>
+<mml:msup>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi mathvariant="italic">π</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo>.</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-1094342011435158" xlink:href="10.1177_1094342011435158-eq2.tif"/>
+</disp-formula>
+</p>
+<p>From this formula we can see that the Cooley–Tukey algorithm can be carried out in three steps:</p>
+<list list-type="order">
+<list-item>
+<p>Perform <inline-formula id="inline-formula23-1094342011435158">
+<mml:math id="mml-inline23-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> DFTs of size <inline-formula id="inline-formula24-1094342011435158">
+<mml:math id="mml-inline24-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>.</p>
+</list-item>
+<list-item>
+<p>Multiply by complex roots of unity called twiddle factors.</p>
+</list-item>
+<list-item>
+<p>Perform <inline-formula id="inline-formula25-1094342011435158">
+<mml:math id="mml-inline25-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> DFTs of size <inline-formula id="inline-formula26-1094342011435158">
+<mml:math id="mml-inline26-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>.</p>
+</list-item>
+</list>
+<p>In this way, the Cooley–Tukey algorithm re-expresses the original <inline-formula id="inline-formula27-1094342011435158">
+<mml:math id="mml-inline27-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> sized FFT into two pages of smaller <inline-formula id="inline-formula28-1094342011435158">
+<mml:math id="mml-inline28-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula29-1094342011435158">
+<mml:math id="mml-inline29-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> sized FFTs that can be done in parallel. However, there is one critical performance pitfall to deal with. Because the data points of decomposited smaller FFTs are interleaved across the whole dataset, the data access pattern of computations can be extremely inefficient on typical system’s memory architecture. In our case, we solve the problem by utilizing the scatter/gather capability of CBEA’s DMA engine and the true random access ability of accelerator’s local memory.</p>
+</sec>
+<sec id="section7-1094342011435158">
+<title>2.3 Prime sized FFT</title>
+<p>When implementing a complete FFT library, the case of prime sized problems cannot be avoided. Among several prime FFT algorithms, we chose the Rader algorithm proposed in 1968 (<xref ref-type="bibr" rid="bibr18-1094342011435158">Rader 1968</xref>). The key idea is to transform the original prime size to a composite size at the cost of additional FFT computations. This can still benefit performance significantly when <inline-formula id="inline-formula30-1094342011435158">
+<mml:math id="mml-inline30-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> is very large.</p>
+<p>Combined with the special hardware features of the SPEs, Rader’s algorithm can be implemented in six steps:</p>
+<list list-type="order">
+<list-item>
+<p>Compute <inline-formula id="inline-formula31-1094342011435158">
+<mml:math id="mml-inline31-1094342011435158">
+<mml:msub>
+<mml:mi>A</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>. <inline-formula id="inline-formula32-1094342011435158">
+<mml:math id="mml-inline32-1094342011435158">
+<mml:msub>
+<mml:mi>A</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mrow>
+<mml:msubsup>
+<mml:mo movablelimits="false" stretchy="false">∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+<mml:msub>
+<mml:mi>a</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+</mml:math>
+</inline-formula> so it is easy to obtain.</p>
+</list-item>
+<list-item>
+<p>Generate a primitive root <inline-formula id="inline-formula33-1094342011435158">
+<mml:math id="mml-inline33-1094342011435158">
+<mml:mi>g</mml:mi>
+</mml:math>
+</inline-formula>. For a prime size <inline-formula id="inline-formula34-1094342011435158">
+<mml:math id="mml-inline34-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>, a primitive root is any number <inline-formula id="inline-formula35-1094342011435158">
+<mml:math id="mml-inline35-1094342011435158">
+<mml:mi>g</mml:mi>
+</mml:math>
+</inline-formula> such that there is a one-to-one mapping of the integers <inline-formula id="inline-formula36-1094342011435158">
+<mml:math id="mml-inline36-1094342011435158">
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mo stretchy="false">…</mml:mo>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula> to integers <inline-formula id="inline-formula37-1094342011435158">
+<mml:math id="mml-inline37-1094342011435158">
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mo stretchy="false">…</mml:mo>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula>, given by <inline-formula id="inline-formula38-1094342011435158">
+<mml:math id="mml-inline38-1094342011435158">
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:msup>
+<mml:mi>g</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msup>
+</mml:mrow>
+</mml:mfenced>
+</mml:math>
+</inline-formula> mod <inline-formula id="inline-formula39-1094342011435158">
+<mml:math id="mml-inline39-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>. For example, for prime size <inline-formula id="inline-formula40-1094342011435158">
+<mml:math id="mml-inline40-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>7</mml:mn>
+</mml:math>
+</inline-formula>, we find one possibility is <inline-formula id="inline-formula41-1094342011435158">
+<mml:math id="mml-inline41-1094342011435158">
+<mml:mi>g</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula>, since <inline-formula id="inline-formula42-1094342011435158">
+<mml:math id="mml-inline42-1094342011435158">
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:msup>
+<mml:mn>3</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:msup>
+</mml:mrow>
+</mml:mfenced>
+</mml:math>
+</inline-formula> mod 7 produces all integers from 0 to 6 for some <inline-formula id="inline-formula43-1094342011435158">
+<mml:math id="mml-inline43-1094342011435158">
+<mml:mi>i</mml:mi>
+</mml:math>
+</inline-formula> (see <xref ref-type="table" rid="table1-1094342011435158">Table 1</xref>).</p>
+</list-item>
+<list-item>
+<p>Create the mapping table to map the original data array from <inline-formula id="inline-formula44-1094342011435158">
+<mml:math id="mml-inline44-1094342011435158">
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mo stretchy="false">…</mml:mo>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula> to a new array based on the primitive root. For <inline-formula id="inline-formula45-1094342011435158">
+<mml:math id="mml-inline45-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>7</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>g</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula>, the mapping table is listed in <xref ref-type="table" rid="table1-1094342011435158">table 1</xref>.</p>
+</list-item>
+<list-item>
+<p>Extend the FFT to a new size <inline-formula id="inline-formula46-1094342011435158">
+<mml:math id="mml-inline46-1094342011435158">
+<mml:msup>
+<mml:mi>N</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:math>
+</inline-formula> that is a power of 2. We choose the smallest power of 2 that satisfies the condition <inline-formula id="inline-formula47-1094342011435158">
+<mml:math id="mml-inline47-1094342011435158">
+<mml:msup>
+<mml:mi>N</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:mo stretchy="false">&gt;</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula>.</p>
+</list-item>
+<list-item>
+<p>Perform two FFTs and one inverse FFT (IFFT). In the same manner as a convolution in frequency space, the first two FFTs are computed. One is <inline-formula id="inline-formula48-1094342011435158">
+<mml:math id="mml-inline48-1094342011435158">
+<mml:mi>D</mml:mi>
+<mml:mi>F</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mi>e</mml:mi>
+<mml:mi>x</mml:mi>
+<mml:mi>p</mml:mi>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi mathvariant="italic">π</mml:mi>
+</mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mfrac>
+</mml:mrow>
+<mml:msup>
+<mml:mi>g</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msup>
+</mml:mrow>
+</mml:mfenced>
+</mml:mrow>
+</mml:mfenced>
+</mml:math>
+</inline-formula> and the other is <inline-formula id="inline-formula49-1094342011435158">
+<mml:math id="mml-inline49-1094342011435158">
+<mml:mi>D</mml:mi>
+<mml:mi>F</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:msub>
+<mml:mi>a</mml:mi>
+<mml:mrow>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:msup>
+<mml:mi>g</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mi>m</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>d</mml:mi>
+<mml:mi>u</mml:mi>
+<mml:mi>l</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:mfenced>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfenced>
+</mml:math>
+</inline-formula>. Then, the results are multiplied together (convolution) and the IFFT is taken. This works because Rader re-expressed the FFT as a clever factorization of these two terms:<disp-formula id="disp-formula3-1094342011435158">
+<mml:math id="mml-disp3-1094342011435158">
+<mml:mfenced close="}" open="{"><mml:mrow><mml:msub><mml:mi>A</mml:mi><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msup><mml:mi>g</mml:mi><mml:mi>k</mml:mi></mml:msup><mml:mo stretchy="false">)</mml:mo><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">−</mml:mo><mml:msub><mml:mi>a</mml:mi><mml:mn>0</mml:mn></mml:msub></mml:mrow></mml:mfenced><mml:mo stretchy="false">=</mml:mo><mml:mi>D</mml:mi><mml:mi>F</mml:mi><mml:msup><mml:mi>T</mml:mi><mml:mrow><mml:mo stretchy="false">−</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:mfenced close="}" open="{"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mi>D</mml:mi><mml:mi>F</mml:mi><mml:mi>T</mml:mi><mml:msub><mml:mi>a</mml:mi><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msup><mml:mi>g</mml:mi><mml:mrow><mml:mo stretchy="false">−</mml:mo><mml:mi>i</mml:mi></mml:mrow></mml:msup><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>D</mml:mi><mml:mi>F</mml:mi><mml:mi>T</mml:mi><mml:mfenced close="}" open="{"><mml:mrow><mml:mi>e</mml:mi><mml:mi>x</mml:mi><mml:mi>p</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mo stretchy="false">−</mml:mo><mml:mi>j</mml:mi><mml:mrow><mml:mfrac><mml:mrow><mml:mn>2</mml:mn><mml:mi mathvariant="italic">π</mml:mi></mml:mrow><mml:mi>N</mml:mi></mml:mfrac></mml:mrow><mml:msup><mml:mi>g</mml:mi><mml:mi>i</mml:mi></mml:msup><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mfenced><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mfenced>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-1094342011435158" xlink:href="10.1177_1094342011435158-eq3.tif"/>
+</disp-formula>
+</p>
+</list-item>
+<list-item>
+<p>Finally, permute these results into the correct order to recover the original FFT based on the mapping table.</p>
+</list-item>
+</list>
+<table-wrap id="table1-1094342011435158" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Mapping table example.</p>
+</caption>
+<graphic alternate-form-of="table1-1094342011435158" xlink:href="10.1177_1094342011435158-table1.tif"/>
+<table>
+<tbody>
+<tr>
+<td>
+<italic>i</italic>
+</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>5</td>
+<td>6</td>
+</tr>
+<tr>
+<td>
+<italic>j</italic>
+</td>
+<td>3</td>
+<td>2</td>
+<td>6</td>
+<td>4</td>
+<td>5</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>This implementation effectively reduces the computing complexity from <inline-formula id="inline-formula51-1094342011435158">
+<mml:math id="mml-inline51-1094342011435158">
+<mml:msup>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> to <inline-formula id="inline-formula52-1094342011435158">
+<mml:math id="mml-inline52-1094342011435158">
+<mml:mi>C</mml:mi>
+<mml:mi>N</mml:mi>
+<mml:mo form="prefix" movablelimits="false">log</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>. This implementation achieves relatively high performance for prime-sized FFTs while preserving the ability to apply the Cooley–Tukey factorization that is critical to dividing the data across different accelerator local stores.</p>
+</sec>
+</sec>
+<sec id="section8-1094342011435158">
+<title>3 Our large-scale FFT parallelism strategy</title>
+<p>In this section, we describe the overall strategy we ultimately used to parallelize the large-scale FFTs on the Cell/B.E. processor. The challenge is how to efficiently handle the complex memory access patterns using unique CBEA features.</p>
+<p>The first decision is how to factor the large FFT. This is a tradeoff between parallelism and memory access efficiency. Suppose that the factorization is <inline-formula id="inline-formula53-1094342011435158">
+<mml:math id="mml-inline53-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>, to maximize the parallelism, <inline-formula id="inline-formula54-1094342011435158">
+<mml:math id="mml-inline54-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula55-1094342011435158">
+<mml:math id="mml-inline55-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> should be larger than the number of SPEs. In addition, because the accelerator’s local store is limited in size and it takes much longer time to access data in global memory, it is better to select <inline-formula id="inline-formula56-1094342011435158">
+<mml:math id="mml-inline56-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula57-1094342011435158">
+<mml:math id="mml-inline57-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> such that the memory footprint of each smaller FFT can fit entirely into the local store of an accelerator.</p>
+<p>Following the well-known ‘six-step’ algorithm, but tailoring all of the parameters to the Cell’s architectural characteristics, we designed a custom parallelization of the Cooley–Tukey algorithm which leverages the Cell’s single input multiple data (SIMD) ability while minimizing communication overhead. <xref ref-type="fig" rid="fig2-1094342011435158">Figure 2</xref> illustrates this process using a simplified example where <inline-formula id="inline-formula58-1094342011435158">
+<mml:math id="mml-inline58-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>32</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> points, which we further describe below. The ‘six-step’ algorithm can best be visualized by interpreting a linear one-dimensional FFT as a two-dimensional matrix of rows and columns. In each of the six steps, we describe our adaption to exploit the Cell’s strengths.</p>
+<fig id="fig2-1094342011435158" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Our ‘six-step’ algorithm adapted to heterogeneous multi-core system: 1. Fine-grained DMA gather from DRAM; 2. Long row FFT; 4a. All-to-all bulk DMA exchange; 4b. Local transpose; 5. Short row FFT; 6. Bulk DMA scatter to DRAM.</p>
+</caption>
+<graphic alternate-form-of="fig2-1094342011435158" xlink:href="10.1177_1094342011435158-fig2.tif"/>
+</fig>
+<p>We assume that the one-dimensional data is initially stored in main memory in column major order. We view it as a two-dimensional matrix, factoring it into <inline-formula id="inline-formula59-1094342011435158">
+<mml:math id="mml-inline59-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>. Unlike most CPU implementations, which try to keep the aspect ratio as close to square as possible, we <italic>minimize</italic> the two-dimensional component, using it simply as a tool to utilize the four-wide SIMD of the Cell accelerator engines. In general, <inline-formula id="inline-formula60-1094342011435158">
+<mml:math id="mml-inline60-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> will only be four times the number of SPEs employed in the FFT, leaving <inline-formula id="inline-formula61-1094342011435158">
+<mml:math id="mml-inline61-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> <italic>uncharacteristically large</italic>. However, this offers no communication inefficiencies on the Cell and greatly simplifies the kernels. As a concrete example, when solving a 32,000-point FFT across four SPEs, we view the input data as a <inline-formula id="inline-formula62-1094342011435158">
+<mml:math id="mml-inline62-1094342011435158">
+<mml:mn>16</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>048</mml:mn>
+</mml:math>
+</inline-formula> matrix: an aspect ratio that would be shocking by conventional CPU standards. The following steps describe the illustration in <xref ref-type="fig" rid="fig2-1094342011435158">Figure 2</xref>:</p>
+<list list-type="order">
+<list-item>
+<p>
+<italic>First transpose</italic>: Each accelerator performs a fine-grained DMA gather from main memory. Each accelerator then holds four large rows (one-quarter of the total), which the one-dimensional FFT kernel will then operate on simultaneously in SIMD fashion. In the four-accelerator example, the original data was arranged as short columns of <inline-formula id="inline-formula63-1094342011435158">
+<mml:math id="mml-inline63-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>16</mml:mn>
+</mml:math>
+</inline-formula> (four-wide SIMD <inline-formula id="inline-formula64-1094342011435158">
+<mml:math id="mml-inline64-1094342011435158">
+<mml:mo stretchy="false">×</mml:mo>
+</mml:math>
+</inline-formula> four SPEs), so each large row (e.g. <inline-formula id="inline-formula65-1094342011435158">
+<mml:math id="mml-inline65-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>048</mml:mn>
+</mml:math>
+</inline-formula>) must be gathered with a stride of 16. However, since each accelerator holds four consecutive large rows, data can be gathered as short vectors of four consecutive numbers. The Cell’s DMA engine is used to gather <inline-formula id="inline-formula66-1094342011435158">
+<mml:math id="mml-inline66-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>048</mml:mn>
+</mml:math>
+</inline-formula> separate four-point groups, gathered 16 points apart. This requires a somewhat large DMA address list, an issue addressed later in this paper.</p>
+</list-item>
+<list-item>
+<p>
+<italic>First one-dimensional FFT</italic>: Each accelerator performs a large, <inline-formula id="inline-formula67-1094342011435158">
+<mml:math id="mml-inline67-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> sized one-dimensional FFT on all four rows simultaneously using SIMD. A barrier is used to synchronize the end of this computation.</p>
+</list-item>
+<list-item>
+<p>
+<italic>Twiddle factor multiply</italic>: Multiply by the twiddle factor in each accelerator.</p>
+</list-item>
+<list-item>
+<p>
+<italic>Second transpose</italic>: The SPEs must complete an all-to-all transfer. This is done as a blocking transpose, by first DMAing in bulk and then doing a local transpose. Each accelerator divides its data into four continuous quarters and sends it to the other SPEs (keeping one-quarter local). The end result is that each accelerator ends up with one-quarter of all 16 large rows, exactly what is needed for the local transpose. Another barrier is used to synchronize after the all-to-all exchange. <italic>Local transpose</italic>: Then, a local SIMD kernel is run to re-assemble contiguous rows of 16, ultimately leaving each accelerator with 512 short rows of length 16. This requires a significant local gather, which is efficient because the Cell’s local store provides true random access.</p>
+</list-item>
+<list-item>
+<p>
+<italic>Second one-dimensional FFT</italic>: Each accelerator performs a short, <inline-formula id="inline-formula68-1094342011435158">
+<mml:math id="mml-inline68-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>16</mml:mn>
+</mml:math>
+</inline-formula> point FFT on <inline-formula id="inline-formula69-1094342011435158">
+<mml:math id="mml-inline69-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mrow>
+<mml:mo>/</mml:mo>
+</mml:mrow>
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula> rows, doing four consecutive rows at a time using SIMD.</p>
+</list-item>
+<list-item>
+<p>
+<italic>Final transpose</italic>: As in the second transpose, each accelerator can complete the final transpose using efficient bulk DMA transfers interleaving each quarter of its data with the other SPEs, writing the final results out to main memory.</p>
+</list-item>
+</list>
+<p>We overlap computation of the first and last one-dimensional FFT kernels and twiddle factor multiplication with the off-chip DMA exchanges, because unlike conventional CPUs, on the Cell, the local transpose takes an insignificant amount of time. Our implementation is specially optimized for FFT sizes no larger than 128,000, which fills all of the local stores on all eight SPEs on two Cell chips, however, based on our investigation, a one-dimensional FFT with a range of 1,000 to 128,000 can cover most application requirements. To satisfy request of no size limitation, a flexible scheduler is needed. This FFT library framework can be modified to meet this requirement with a scheduler added. This summarizes our overall large-scale FFT parallelism strategy. The next section contains our evaluation of alternatives along with more implementation details.</p>
+</sec>
+<sec id="section9-1094342011435158">
+<title>4 Evaluating multiple approaches</title>
+<p>In this section, we show the implementation details and performance tradeoffs of different implementation strategies.</p>
+<sec id="section10-1094342011435158">
+<title>4.1 Data transfer topology</title>
+<p>As described in the Cooley–Tukey algorithm parallelism in Section 3, the special architecture requires explicit management of data transfers, which becomes a complex design issue for large-scale FFT implementation.</p>
+<p>Going back to the high-level algorithm described earlier in the paper, there are two fundamental types of data movement. The first involves the transfer of data back and forth between the main memory and each accelerator local store in the first and third transpose phases. The second involves the exchange of data between SPEs during the second transpose phase. There are generally two primary implementation topologies for Cell communication, as shown in <xref ref-type="fig" rid="fig3-1094342011435158">Figure 3</xref>. Option 1 is to centralize the control of all data exchange through main memory. At each stage, well-prepared data is distributed to the SPEs and collected from them after computation. No inter-SPE data exchange is involved. Option 2 also initially distributes data to the SPEs from main memory, but then a series of data exchanges between SPEs are performed. The final data is then collected and transferred back to main memory.</p>
+<fig id="fig3-1094342011435158" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Different data transfer schemes.</p>
+</caption>
+<graphic alternate-form-of="fig3-1094342011435158" xlink:href="10.1177_1094342011435158-fig3.tif"/>
+</fig>
+<p>Centralized communication through DRAM tends to be easier to implement and more flexible, which is important for handling an arbitrary amount of SPEs. Peer-to-peer communication can lead to much higher performance by utilizing the on-chip 200 GB/s of aggregate on-chip bandwidth instead of funneling all SPEs through the 25.6 GB/s off-chip bandwidth. However, since the data exchange pattern is explicit and fixed by the code, it would be hard for the program to extend to an arbitrary FFT size or number of SPEs.</p>
+<p>During our FFT library development work, we implemented both plans and compared their performance. <xref ref-type="fig" rid="fig4-1094342011435158">Figure 4</xref> shows that for our existing FFT code, option 2 delivered up to a 10% performance gain. Since for industry, FFT performance is the most important factor, we choose Option 2 at the cost of losing some flexibility and scalability.</p>
+<fig id="fig4-1094342011435158" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Performance advantage of peer communication over centralized communication.</p>
+</caption>
+<graphic alternate-form-of="fig4-1094342011435158" xlink:href="10.1177_1094342011435158-fig4.tif"/>
+</fig>
+<p>Once the basic communication topology is chosen, the optimization effort can then focus on actual factorization strategies, described next.</p>
+</sec>
+<sec id="section11-1094342011435158">
+<title>4.2 Factorization strategies</title>
+<p>In Section 2.2, we introduced the Cooley–Tukey algorithm, which can re-express size <inline-formula id="inline-formula70-1094342011435158">
+<mml:math id="mml-inline70-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> FFT into smaller <inline-formula id="inline-formula71-1094342011435158">
+<mml:math id="mml-inline71-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula72-1094342011435158">
+<mml:math id="mml-inline72-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>. However, for most high-composite <inline-formula id="inline-formula73-1094342011435158">
+<mml:math id="mml-inline73-1094342011435158">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>, the factorization is not unique. It is possible that <inline-formula id="inline-formula74-1094342011435158">
+<mml:math id="mml-inline74-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula75-1094342011435158">
+<mml:math id="mml-inline75-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>4</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>. For example, the size 16,000 can be factorized into <inline-formula id="inline-formula76-1094342011435158">
+<mml:math id="mml-inline76-1094342011435158">
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula77-1094342011435158">
+<mml:math id="mml-inline77-1094342011435158">
+<mml:mn>8</mml:mn>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula78-1094342011435158">
+<mml:math id="mml-inline78-1094342011435158">
+<mml:mn>16</mml:mn>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula79-1094342011435158">
+<mml:math id="mml-inline79-1094342011435158">
+<mml:mn>32</mml:mn>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula>. Different factorizations may lead to different performance results. In fact, the majority of FFTW’s auto-tuning exploration focuses on this one aspect of the algorithm, so it has received the most attention. As shown in <xref ref-type="bibr" rid="bibr15-1094342011435158">Li et al. (2009</xref>), for a smaller-scale FFT implementation on the Cell/B.E. processor, different factorizations can lead to performance gaps of up to 30%, and can be even larger for larger sized FFTs. So, choosing the right factorization is important to our implementation.</p>
+<p>Different factorizations result in totally different implementation topologies. After analyzing both the synchronization overhead and the data transfer cost, we found an optimal strategy. When factorizing size <inline-formula id="inline-formula80-1094342011435158">
+<mml:math id="mml-inline80-1094342011435158">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>, we choose the <inline-formula id="inline-formula81-1094342011435158">
+<mml:math id="mml-inline81-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula>, which is closest to <inline-formula id="inline-formula82-1094342011435158">
+<mml:math id="mml-inline82-1094342011435158">
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> and no larger than <inline-formula id="inline-formula83-1094342011435158">
+<mml:math id="mml-inline83-1094342011435158">
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>. First, this allows us to use the minimum number of SPEs possible for a single FFT computation, which is ideal in our case because we can perform multiple FFTs simultaneously, constrained only by the size of the local store. Second, since <inline-formula id="inline-formula84-1094342011435158">
+<mml:math id="mml-inline84-1094342011435158">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> is no larger than 2,000, a double buffer technique can be utilized which has been proved to be an effective method to improve performance.</p>
+<p>A comparison of the throughput performance of different factorizations is shown in <xref ref-type="fig" rid="fig5-1094342011435158">Figure 5</xref>. Here four columns represent four different individual sizes of FFT: <inline-formula id="inline-formula85-1094342011435158">
+<mml:math id="mml-inline85-1094342011435158">
+<mml:mn>8</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula86-1094342011435158">
+<mml:math id="mml-inline86-1094342011435158">
+<mml:mn>16</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula87-1094342011435158">
+<mml:math id="mml-inline87-1094342011435158">
+<mml:mn>32</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula88-1094342011435158">
+<mml:math id="mml-inline88-1094342011435158">
+<mml:mn>64</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>. We then implemented different factorization patterns for each and collected the performance results. The experimental results confirm our original analysis that individual FFT efficiency drops significantly with the number of SPEs per FFT. This further emphasizes that the future of FFT design lies outside the computation kernel.</p>
+<fig id="fig5-1094342011435158" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Comparison of different factorizations.</p>
+</caption>
+<graphic alternate-form-of="fig5-1094342011435158" xlink:href="10.1177_1094342011435158-fig5.tif"/>
+</fig>
+</sec>
+<sec id="section12-1094342011435158">
+<title>4.3 FFT: compute or memory bound?</title>
+<p>Because performance is a crucial requirement for most applications that make use of FFT, it is worth making a major investment in improving it. In the past, FFTs were viewed as computationally bound, and most effort went into optimizing the compute kernel. When developing a modern FFT library for a traditional SMP, the key rule is to improve data locality and computational efficiency. On such architectures, the cost of data transfer is much higher than the computational kernels, especially for large-size FFTs with multiple stages that require multiple rounds of data transfer. In order to tune the performance, the first step is to determine which factor is dominant: ‘computation’ (including local transpose operations) or data transfer.</p>
+<p>Normally, such questions are best answered by using instrumentation. Design hooks were placed in the code to isolate the execution times of the local computation and transpose operations from the DMA transfers. In order to achieve good performance, we need to apply huge page and pre-touch techniques. <xref ref-type="fig" rid="fig6-1094342011435158">Figure 6</xref> shows the total data transfer time versus computation time. It can be seen that data transfer takes a factor of 1.4 longer than the computation. For power of 2 sized FFT case, which is most frequently used, the gap between computation and data transfer is even larger, and data transfer still takes nearly twice as long as ‘computation’. An important observation is that since the off-chip data transfer time is still at least as long as the local accelerator activities, there is no need to optimize local activities, since they can be 100% overlapped with the DMA transfers with no performance impact, another advantage of the Cell architecture.</p>
+<fig id="fig6-1094342011435158" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Data transfer versus computation.</p>
+</caption>
+<graphic alternate-form-of="fig6-1094342011435158" xlink:href="10.1177_1094342011435158-fig6.tif"/>
+</fig>
+<p>This discovery is significant, because it is a reminder that the most time-consuming part of execution may lie outside any of the library code, and that second- or third-order effects may dominate performance, even to the point of dictating the algorithm.</p>
+<p>During investigation of this problem, we gained another useful experience. Touching the output buffer page by page before we make the FFT call is very important. Otherwise, the time spending on DMA final results to main memory may be one order longer than DMA input data from main memory. This is because of a policy quirk in the Linux kernel we are using. When the calling program created an output buffer using ‘malloc’, it invoked the standard GNU CLIB heap allocation, which requests ‘free pages’ from the Linux kernel. The Linux virtual memory manager, however, uses a delayed allocation strategy to manage the memory pool, waiting to allocate a page until it is actually accessed, after a memory fault and exception occurs. Touching the output buffer is completely reasonable for a FFT library, as most libraries overwrite the input with the result. Alternatively, another approach that could alleviate this operating system issue would be the use of huge pages, since the allocation exception would then only occur once instead of every 512 points. This experience not only helps us improve the performance but also ensures a correct understanding of FFT performance.</p>
+</sec>
+<sec id="section13-1094342011435158">
+<title>4.4 Synchronization schemes</title>
+<p>The standards ‘six-step’ FFT implementation is composed of several stages. Synchronization could be performed after each stage, but that would prevent the overlap of computation and communication. If sufficient buffering is available, the algorithm can be performed with just two hard (global) synchronization points. Even so, the mere act of synchronization can consume a surprisingly high percentage of total FFT time, so the implementation method is important. As described in Section <inline-formula id="inline-formula89-1094342011435158">
+<mml:math id="mml-inline89-1094342011435158">
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula>, we employ the minimum two synchronization points, and chose to place them before and after the all-to-all bulk transfer of the second transpose. The reason for this unusual design decision is that the majority of time is spent in the off-chip data transfers, and so the time of both FFT kernels is overlapped with those instead of the comparatively shorter all-to-all on-chip exchange.</p>
+<p>Each architecture has its own set of synchronization methods. The CBEA provides three barrier mechanisms for various applications. They are: atomic and DMA memory operations, mailbox and SIGNOTIFY. For our library we tested the synchronization cost for each FFT computation. <xref ref-type="table" rid="table2-1094342011435158">Table 2</xref> takes atomic barrier method as an example to show that the time spent on barriers takes nearly 20% of the total time. This number gives us a hint on how much time is spent on synchronization in large size FFT.</p>
+<table-wrap id="table2-1094342011435158" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Synchronization cost percentage.</p>
+</caption>
+<graphic alternate-form-of="table2-1094342011435158" xlink:href="10.1177_1094342011435158-table2.tif"/>
+<table>
+<tbody>
+<tr>
+<td>
+<bold>FFT size</bold>
+<bold>
+</bold>
+</td>
+<td>12,000</td>
+<td>16,000</td>
+<td>24,000</td>
+<td>32,000</td>
+<td>64,000</td>
+<td>96,000</td>
+<td>128,000</td>
+</tr>
+<tr>
+<td>
+<bold>Percentage (%)</bold>
+<bold>
+</bold>
+</td>
+<td>4.6</td>
+<td>19.2</td>
+<td>20.7</td>
+<td>22.8</td>
+<td>18.0</td>
+<td>12.3</td>
+<td>23.7</td>
+</tr>
+<tr>
+<td>
+<bold>Absolute time (μs)</bold>
+</td>
+<td>1.4</td>
+<td>6.6</td>
+<td>13.4</td>
+<td>15.5</td>
+<td>27.1</td>
+<td>41.2</td>
+<td>84.3</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>
+<xref ref-type="table" rid="table3-1094342011435158">Table 3</xref> shows the actual cost of each barrier mechanism, showing that the pure cost of the barrier takes a negligible percentage of the synchronization phase: most of the time is spent waiting for other SPE’s to finish. The synchronization cost increased significantly from 8 SPEs to 16 SPEs, which is understandable since this synchronization involves two chips. Since the actual method of synchronization was not significant, we chose the atomic method, because it was the most compatible with other libraries we were working with.</p>
+<table-wrap id="table3-1094342011435158" position="float">
+<label>Table 3.</label>
+<caption>
+<p>SPE to SPE synchronization cost.</p>
+</caption>
+<graphic alternate-form-of="table3-1094342011435158" xlink:href="10.1177_1094342011435158-table3.tif"/>
+<table>
+<thead>
+<tr>
+<th>SPE threads</th>
+<th>ATOMIC</th>
+<th>MEMORY</th>
+<th>SIGNOTIFY</th>
+<th>MAILBOX</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<bold>2</bold>
+</td>
+<td>0.73 <inline-formula id="inline-formula91-1094342011435158">
+<mml:math id="mml-inline91-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>0.57 <inline-formula id="inline-formula92-1094342011435158">
+<mml:math id="mml-inline92-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>0.10 <inline-formula id="inline-formula93-1094342011435158">
+<mml:math id="mml-inline93-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>0.28 <inline-formula id="inline-formula94-1094342011435158">
+<mml:math id="mml-inline94-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+</tr>
+<tr>
+<td>
+<bold>4</bold>
+</td>
+<td>1.88 <inline-formula id="inline-formula95-1094342011435158">
+<mml:math id="mml-inline95-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>1.11 <inline-formula id="inline-formula96-1094342011435158">
+<mml:math id="mml-inline96-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>0.22 <inline-formula id="inline-formula97-1094342011435158">
+<mml:math id="mml-inline97-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>0.58 <inline-formula id="inline-formula98-1094342011435158">
+<mml:math id="mml-inline98-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+</tr>
+<tr>
+<td>
+<bold>8</bold>
+</td>
+<td>6.78 <inline-formula id="inline-formula99-1094342011435158">
+<mml:math id="mml-inline99-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>2.17 <inline-formula id="inline-formula100-1094342011435158">
+<mml:math id="mml-inline100-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>0.45 <inline-formula id="inline-formula101-1094342011435158">
+<mml:math id="mml-inline101-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>1.12 <inline-formula id="inline-formula102-1094342011435158">
+<mml:math id="mml-inline102-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+</tr>
+<tr>
+<td>
+<bold>16</bold>
+</td>
+<td>27.94 <inline-formula id="inline-formula103-1094342011435158">
+<mml:math id="mml-inline103-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>9.14 <inline-formula id="inline-formula104-1094342011435158">
+<mml:math id="mml-inline104-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>4.89 <inline-formula id="inline-formula105-1094342011435158">
+<mml:math id="mml-inline105-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+<td>5.53 <inline-formula id="inline-formula106-1094342011435158">
+<mml:math id="mml-inline106-1094342011435158">
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:math>
+</inline-formula>s</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section14-1094342011435158">
+<title>4.5 FFT buffer allocation design</title>
+<p>The limited size of the accelerator local store creates the largest challenge in designing our FFT implementation. In order to better utilize the local store, we used two novel buffering techniques: a multimode twiddle buffer and dynamic code overlays.</p>
+<p>The accelerator local store has just 256 kB to store everything the program needs. Based on our goal of large-scale FFTs, we wanted to store as much data as possible, and we wanted to use double buffering to hide the DMA latency. So we initially dedicated three 64 kB buffers to primary data: input points, output points and incoming buffered points. We also needed 8 kB to store the input and output DMA lists to do the gathers. Add in 10 kB for the program stack, and we are down to 46 kB for twiddle factors and code.</p>
+<p>It would require 64 kB to store all of the twiddle factors, but rather than adopt a strategy that always computes the twiddle factors, we designed a novel dynamic scheme that makes the best use of the twiddle buffer based on the size needed. We allocate 16 kB to stored twiddle factors and then operate as follows:</p>
+<list list-type="order">
+<list-item>
+<p>1. <inline-formula id="inline-formula107-1094342011435158">
+<mml:math id="mml-inline107-1094342011435158">
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> - to <inline-formula id="inline-formula108-1094342011435158">
+<mml:math id="mml-inline108-1094342011435158">
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> -point FFTs: We can store all of the twiddle factors, and the FFT computations can use them directly. Twiddle factors are also complex, therefore, the size should be at least <inline-formula id="inline-formula109-1094342011435158">
+<mml:math id="mml-inline109-1094342011435158">
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">⋅</mml:mo>
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>16</mml:mn>
+</mml:math>
+</inline-formula> kB.</p>
+</list-item>
+<list-item>
+<p>2. <inline-formula id="inline-formula110-1094342011435158">
+<mml:math id="mml-inline110-1094342011435158">
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>001</mml:mn>
+</mml:math>
+</inline-formula> - to <inline-formula id="inline-formula111-1094342011435158">
+<mml:math id="mml-inline111-1094342011435158">
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> -point FFTs: We can store only half of the twiddle factors, and the FFT kernel has to compute the remaining factors based on these.</p>
+</list-item>
+<list-item>
+<p>3. <inline-formula id="inline-formula112-1094342011435158">
+<mml:math id="mml-inline112-1094342011435158">
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>001</mml:mn>
+</mml:math>
+</inline-formula> - to <inline-formula id="inline-formula113-1094342011435158">
+<mml:math id="mml-inline113-1094342011435158">
+<mml:mn>8</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula> -point FFTs: We can store only a quarter of the twiddle factors, and the FFT computations have to compute what is left based on these.</p>
+</list-item>
+</list>
+<p>To the best of the authors’ knowledge, this is the first FFT implementation that varies its twiddle factor computation scheme with the size of the FFT. By making clever use of sign swapping in the kernel, we are able to generate 75% of the twiddle factors on demand with only a <inline-formula id="inline-formula114-1094342011435158">
+<mml:math id="mml-inline114-1094342011435158">
+<mml:mo stretchy="false">~</mml:mo>
+<mml:mn>0.5</mml:mn>
+<mml:mi mathvariant="normal">%</mml:mi>
+</mml:math>
+</inline-formula> kernel performance penalty, and with no penalty for smaller sized FFTs.</p>
+<p>This leaves just 30 kB for all of the accelerator code needed by the library. Our actual code needed four times this amount. We could fit in the needed code by eliminating loop unrolling, but due to the Cell’s high cost of branching, this would greatly impact performance. Instead, we kept the high-performance code and implemented live code overlays. We partitioned our code into several parts based on the different size FFT kernels, and loaded code on demand. This technique does add some overhead when switching images, which definitely affects FFT performance. However, compared with the performance gain brought by having a kernel highly optimized by unrolling, it is worth it.</p>
+</sec>
+</sec>
+<sec id="section15-1094342011435158">
+<title>5 Performance results and analysis</title>
+<p>In this section, we discuss the performance results of our implementation. We focus here only on the performance of FFT sizes larger than <inline-formula id="inline-formula115-1094342011435158">
+<mml:math id="mml-inline115-1094342011435158">
+<mml:mn>10</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>000</mml:mn>
+</mml:math>
+</inline-formula>, which represents the most significant work introduced in this paper.</p>
+<p>We performed the following test on an IBM BladeCenter* blade with two IBM PowerXCell 8i processors at 3.2 GHz with 8 GB of double data rate 2 (DDR2) memory. The source code for these tests is included in the FFT package example directory in the Cell/B.E. processor SDK. Our code is compiled by the GNU compiler collection (GCC). The performance data collecting methodology adopts the same as FFTW.</p>
+<p>As shown in <xref ref-type="fig" rid="fig7-1094342011435158">Figure 7</xref>, we achieved state-of-the-art performance results, attaining a peak performance of <inline-formula id="inline-formula116-1094342011435158">
+<mml:math id="mml-inline116-1094342011435158">
+<mml:mn>36.13</mml:mn>
+</mml:math>
+</inline-formula> GFLOPs (end to end) for a 32,000-point FFT. Meanwhile, we obtained an average performance of 28.85 GFLOPs. Our library is released in Cell SDK, the latest version of FFTW is 3.2.1. We also present the performance results of FFTW on the Cell/B.E. processor. FFTW version 3.2.1 provides special support on the Cell/B.E. However, it does not take the specific architectural features of the Cell/B.E. processor into consideration, especially for large-size FFT. The average performance result of FFTW is only 9 GFLOPs, which is below most user requirements. In 2009, FFTW added special support to kernel on Cell, which greatly increased its performance as shown in FFTW version 3.2.2. From the result which is shown in <xref ref-type="fig" rid="fig7-1094342011435158">Figure 7</xref>, there is only one case that gets a performance degradation when the FFT size is 96,000. Based on the cell architecture features, the reason is that 96,000 causes a data unbalance on the two cell nodes. If we adopt the affinity in this case, the performance will be better than the one we have shown. However, we still maintains 67% performance improvement of this version FFTW.</p>
+<fig id="fig7-1094342011435158" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Performance result.</p>
+</caption>
+<graphic alternate-form-of="fig7-1094342011435158" xlink:href="10.1177_1094342011435158-fig7.tif"/>
+</fig>
+<p>On conventional CPUs, power of 2 FFT cases can be a factor of four slower, because they are pathological to cache associability, but on the Cell, the power of 2 cases are actually faster. Since the Cell’s local storage is fully associative, and the DMA transfers can be of arbitrary length, power of 2 sizes is not a disadvantage. One reason our implementation is even faster on power of 2 sizes is there is no code overlays because we package all power of 2 cases of the FFT kernel into one segment. In addition, since the FFT workload is memory intensive on the Cell/B.E. processor, DMA and DMA list generation is very important, and DMA-related code to handle power of 2 sizes is specially optimized by SIMD techniques.</p>
+<p>As explained in the related works section, other papers that may appear to show higher FFT speed are not actually measuring the end-to-end time of a complete FFT library, nor are they general-purpose kernels which handle any FFT size. Although our large-scale FFT performance is not as good as that of small-size FFTs, for this class of FFT, the performance is considered outstanding. The feedback from users of this library who are concerned with large-size FFT shows considerable excitement about this level of performance.</p>
+</sec>
+<sec id="section16-1094342011435158">
+<title>6 Related works</title>
+<p>FFT performance has always been a topic of great interest in the field of computer science research, especially in the area of supercomputers. As early as 1988, <xref ref-type="bibr" rid="bibr3-1094342011435158">Bailey (1987</xref>) proposed the following three-part algorithm for the Cray-2**. At the beginning of the 21st century, the introduction of the IBM Blue Gene/L system also attracted much interest. For example, <xref ref-type="bibr" rid="bibr14-1094342011435158">Krai et al. (2004</xref>) discussed how to automatically tune FFTs on the Blue Gene/L supercomputer. Their approach produces high-performance FFT kernels for the Blue Gene/L machine that are much faster than signal processing implementation research for adaptable libraries (SPIRAL) (<xref ref-type="bibr" rid="bibr17-1094342011435158">Püschel et al. 2005</xref>) and FFTW.</p>
+<p>Since the development of the CBEA, great interest has been shown at all research levels. Realizing high-performance FFT on the Cell/B.E. processor has become a topic of widespread interest.</p>
+<p>In 2005, <xref ref-type="bibr" rid="bibr7-1094342011435158">Chow et al. (2005</xref>) presented their work on FFT. They took one specific size FFT as an example and realized it on the Cell/B.E. processor. They achieved 46.8 GFLOPs for this size, which was an encouraging result for later researchers. In the same year, <xref ref-type="bibr" rid="bibr12-1094342011435158">Greene and Cooper (2005</xref>) at Mercury Computer Systems chose a 64,000-point FFT and analyzed its performance on the Cell/B.E. processor. <xref ref-type="bibr" rid="bibr19-1094342011435158">Williams et al. (2006</xref>) introduced a performance model for CBEA and applied it to several key scientific computing kernels, including FFT. <xref ref-type="bibr" rid="bibr15-1094342011435158">Li et al. (2009</xref>) introduced a FFT performance model on the Cell/B.E. processor with high accuracy and a fast search method for FFTW was included. However, this work was also limited to estimates of small-scale FFT.</p>
+<p>Meanwhile, some researchers are focusing on FFT program generation for the Cell/B.E. processor. By extending the program generation system SPIRAL (<xref ref-type="bibr" rid="bibr17-1094342011435158">Püschel et al. 2005</xref>) to CBEA, <xref ref-type="bibr" rid="bibr8-1094342011435158">Cico et al. (2006</xref>) gave performance estimates of FFT residing in the local store of one accelerator. This estimation methodology required that input data be shipped into the local store but did not need to transfer the output data back to main memory. Thus, it is obvious that it is limited to small-size FFT. In 2009, SPIRAL gave another update of their work in <xref ref-type="bibr" rid="bibr5-1094342011435158">Chellappa et al. (2009</xref>). In this work, for one-dimensional DFT on multiple SPEs and data in main memory case, which is the same scenario as us, they achieved similar peak performance as us. However, they are only limited to 16,000 size and they can only work for fixed point FFT. <xref ref-type="bibr" rid="bibr6-1094342011435158">Chow (2008</xref>) presented the algorithm of a special 256-point FFT SIMD code generator that can emit fully unrolled straight-line accelerator assembly code. Another FFT program generation work was published in 2008 by <xref ref-type="bibr" rid="bibr4-1094342011435158">Chellappa et al. (2008</xref>). They extended the program generation system SPIRAL <xref ref-type="bibr" rid="bibr17-1094342011435158">Püschel et al. (2005</xref>) to support the Cell/B.E. processor. FFTW 3.2.1 (<xref ref-type="bibr" rid="bibr11-1094342011435158">Frigo and Johnson 1988</xref>; <xref ref-type="bibr" rid="bibr10-1094342011435158">Frigo 1999</xref>) (see also http://www.fftw.org) supports CBEA.</p>
+<p>
+<xref ref-type="bibr" rid="bibr2-1094342011435158">Bader and Agarwal (2007</xref>) presented their fastest Fourier transform for the Cell/B.E. processor (FFTC) in 2007. They implemented FFT with 1,000 to 16,000 complex input samples and attained a single-precision performance of around 22 GFLOPs at 16,000. That compares with 33.1 GFLOPs achieved in our implementation at 16,000-point FFT and we also extended the size to larger than 16,000.</p>
+<p>Most published work has focused on small-scale FFT implementations or auto-generations. Little is discussed on how to implement large-scale FFT on the Cell/B.E. processor. However, large-scale FFT is used for many industry applications. Our work fills this void, and the experience and methodology introduced in this paper can also be applied to other workloads and similar architectures.</p>
+</sec>
+<sec id="section17-1094342011435158">
+<title>7 Conclusion</title>
+<p>We have described our performance leading implementation of large-scale FFT on heterogeneous multi-core system with limited accelerator storage. We take the Cell/B.E. implementation as an example platform. The special distributed architecture presents many challenges to implementing large-scale FFT that are different from small-scale FFT, and additionally highlights many differences and advantages when compared with conventional CPU-based FFT implementations. We described the many different design options we explored, and presented quantitative comparisons of different approaches.</p>
+<p>This work provides value beyond FFT programming. Techniques in this paper can be applied to other similar architectures with limited local storage and they can be applicable to implementing similar workloads with large datasets. Our future work will focus on extending these techniques to other platforms.</p>
+<p>Our work has been released as an open-source package in the IBM SDK for Multicore Acceleration since version 3.1.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure" id="fn1-1094342011435158">
+<p>This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1094342011435158">
+<citation citation-type="book">
+<collab collab-type="author">IBM Corporation</collab> (<year>2007</year>) <source>Cell Broadband Engine Programming Handbook</source>. <comment>Technical report, IBM Corporation</comment>.</citation>
+</ref>
+<ref id="bibr2-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Bader</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Agarwal</surname>
+<given-names>V</given-names>
+</name>
+</person-group> (<year>2007</year>) <article-title>FFTC: fastest Fourier transform for the IBM Cell Broadband Engine</article-title>. In <source>14th IEEE International Conference on High Performance Computing</source>.</citation>
+</ref>
+<ref id="bibr3-1094342011435158">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Bailey</surname>
+<given-names>DH</given-names>
+</name>
+</person-group> (<year>1987</year>) <article-title>A high-performance FFT algorithm for vector supercomputers</article-title>. <source>International Journal of Supercomputer Applications</source> <volume>2</volume>
+<issue>(1)</issue>: <fpage>82</fpage>–<lpage>87</lpage>.
+</citation>
+</ref>
+<ref id="bibr4-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Chellappa</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Franchetti</surname>
+<given-names>F</given-names>
+</name>
+<name>
+<surname>Püschel</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>FFT program generation for the Cell BE</article-title>. In <source>International Workshop on State-of-Art in Scientific and Parallel Computing (PARA)</source>.</citation>
+</ref>
+<ref id="bibr5-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Chellappa</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Franchetti</surname>
+<given-names>F</given-names>
+</name>
+<name>
+<surname>Püschel</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>2009</year>) <article-title>Computer generation of fast Fourier transforms for the Cell Broadband Engine</article-title>. In <source>Proceedings of the International Conference on Supercomputing (ICS)</source>.</citation>
+</ref>
+<ref id="bibr6-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Chow</surname>
+<given-names>AC</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>Fast Fourier transform simd code generator for synergistic processor element of Cell processor</article-title>. In <source>Application and Customer Experiences on Cell/BE</source>, White Paper.</citation>
+</ref>
+<ref id="bibr7-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Chow</surname>
+<given-names>AC</given-names>
+</name>
+<name>
+<surname>Fossum</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Brokenshire</surname>
+<given-names>D</given-names>
+</name>
+</person-group> (<year>2005</year>) <article-title>A programming example: Large fft on the cell broadband engine</article-title>. In <source>Proceedings of the GSPx 2005 Conference</source>.</citation>
+</ref>
+<ref id="bibr8-1094342011435158">
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name>
+<surname>Cico</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Cooper</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Greene</surname>
+<given-names>J</given-names>
+</name>
+</person-group> (<year>2006</year>). <comment>Performance and programmability of the IBM/Sony/Toshiba Cell Broadband Engine processor</comment>, White Paper.</citation>
+</ref>
+<ref id="bibr9-1094342011435158">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Cooley</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Tukey</surname>
+<given-names>J</given-names>
+</name>
+</person-group> (<year>1965</year>) <article-title>An algorithm for the machine computation of the complex Fourier series</article-title>. <source>Mathematics of Computation</source> <volume>19</volume>: <fpage>297</fpage>–<lpage>301</lpage>.</citation>
+</ref>
+<ref id="bibr10-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Frigo</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>1999</year>) <article-title>A fast Fourier transform compiler</article-title>. In <source>Proceedings 1999 ACM SIGPLAN Conference on Programming Language Design and Implementation</source>, <publisher-loc>Atlanta, GA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr11-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Frigo</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Johnson</surname>
+<given-names>SG</given-names>
+</name>
+</person-group> (<year>1998</year>) <article-title>FFTW: an adaptive software aachitecture for the fft</article-title>. In <source>Proceedings of ICASSP</source>, vol. <volume>3</volume>, pp. <fpage>1381</fpage>–<lpage>1384</lpage>.</citation>
+</ref>
+<ref id="bibr12-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Greene</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Cooper</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>2005</year>) <article-title>A parallel 64k complex FFT algorithm for the IBM/Sony/Toshba Cell Broadband Engine processor</article-title>. In <source>Technical Conference Proceedings of the Global Signal Processing Expo (GSPx)</source>.</citation>
+</ref>
+<ref id="bibr13-1094342011435158">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Heideman</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Johnson</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Burrus</surname>
+<given-names>C</given-names>
+</name>
+</person-group> (<year>1984</year>) <article-title>Gauss and the history of the fast Fourier transform</article-title>. <source>IEEE ASSP Magazine</source>.</citation>
+</ref>
+<ref id="bibr14-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Krai</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Franchetti</surname>
+<given-names>F</given-names>
+</name>
+<name>
+<surname>Lorenz</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Puschel</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Ueberhuber</surname>
+<given-names>CW</given-names>
+</name>
+<name>
+<surname>Wurzinger</surname>
+<given-names>P</given-names>
+</name>
+</person-group> (<year>2004</year>) <article-title>Automatically optimized FFT codes for the BlueGene/L supercomputer</article-title>. In <source>Proceedings of VecPar’04,6th International Conference on High Performance Computing for Computational Sciences</source>.</citation>
+</ref>
+<ref id="bibr15-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Li</surname>
+<given-names>Y</given-names>
+</name>
+<name>
+<surname>Zhao</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Lin</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Chow</surname>
+<given-names>AC</given-names>
+</name>
+<name>
+<surname>Diamond</surname>
+<given-names>JR</given-names>
+</name>
+</person-group> (<year>2009</year>) <article-title>A performance model for fast Fourier transform</article-title>. In <source>23rd IEEE International Parallel and Distributed Processing Symposium</source>.</citation>
+</ref>
+<ref id="bibr16-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Manolopoulos</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Nakos</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Reisis</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Vlassopoulos</surname>
+<given-names>N</given-names>
+</name>
+<name>
+<surname>Chouliaras</surname>
+<given-names>V</given-names>
+</name>
+</person-group> (<year>2007</year>). <article-title>High performance 16k, 64k, 256k complex points VLSI systolic FFT architectures</article-title>. In <source>14th IEEE International Conference on Electronics, Circuits and Systems</source>, pp. <fpage>146</fpage>–<lpage>149</lpage>.</citation>
+</ref>
+<ref id="bibr17-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Püschel</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Moura</surname>
+<given-names>JJMF</given-names>
+</name>
+<name>
+<surname>Johnson</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Padua</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Veloso</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Singer</surname>
+<given-names>B</given-names>
+</name>
+<etal/>
+</person-group>. (<year>2005</year>) <article-title>Spiral: code generation for DSP transforms</article-title>. In <source>Proceedings of the IEEE</source> <volume>93</volume>: <fpage>232</fpage>–<lpage>275</lpage>.</citation>
+</ref>
+<ref id="bibr18-1094342011435158">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Rader</surname>
+<given-names>CM</given-names>
+</name>
+</person-group> (<year>1968</year>) <article-title>Discrete Fourier transforms when the number of data samples is prime</article-title>. <source>Proceedings of the IEEE</source> <volume>56</volume>:<fpage>1107</fpage>–<lpage>1108</lpage>.</citation>
+</ref>
+<ref id="bibr19-1094342011435158">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Williams</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Shalf</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Oliker</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Kamil</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Husbands</surname>
+<given-names>P</given-names>
+</name>
+<name>
+<surname>Yelick</surname>
+<given-names>K</given-names>
+</name>
+</person-group> (<year>2006</year>) <article-title>The potential of the Cell processor for scientific computing</article-title>. In <source>Proceedings of the 3rd Conference on Computing Frontiers</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, pp. <fpage>9</fpage>–<lpage>20</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

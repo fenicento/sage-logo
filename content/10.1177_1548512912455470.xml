@@ -1,0 +1,1639 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">DMS</journal-id>
+<journal-id journal-id-type="hwp">spdms</journal-id>
+<journal-title>The Journal of Defense Modeling and Simulation: Applications, Methodology, Technology</journal-title>
+<issn pub-type="ppub">1548-5129</issn>
+<issn pub-type="epub">1557-380X</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1548512912455470</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1548512912455470</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Modeling terrorism culpability: An event-based approach</article-title>
+</title-group>
+<contrib-group content-type="issue">
+<contrib contrib-type="guest-editor">
+<name><surname>Henshaw</surname><given-names>Michael</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Brathen</surname><given-names>Karsten</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Isler</surname><given-names>Veysi</given-names></name>
+</contrib>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Hill</surname><given-names>Joshua B</given-names></name>
+<xref ref-type="aff" rid="aff1-1548512912455470">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Mabrey</surname><given-names>Daniel J</given-names></name>
+<xref ref-type="aff" rid="aff2-1548512912455470">2</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Miller</surname><given-names>John M</given-names></name>
+</contrib>
+<xref ref-type="aff" rid="aff3-1548512912455470">3</xref>
+</contrib-group>
+<aff id="aff1-1548512912455470"><label>1</label>Tiffin University, Tiffin, OH, USA</aff>
+<aff id="aff2-1548512912455470"><label>2</label>University of New Haven, West Haven, CT, USA</aff>
+<aff id="aff3-1548512912455470"><label>3</label>Researcher at Large, Huntsville, TX, USA</aff>
+<author-notes>
+<corresp id="corresp1-1548512912455470">Joshua B Hill, Tiffin University, 155 Miami Street, Tiffin, OH 44883, USA. Email: <email>HillJB@tiffin.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>10</volume>
+<issue>2</issue>
+<issue-title>Special Issue: Modelling and Simulation for NEC</issue-title>
+<fpage>181</fpage>
+<lpage>191</lpage>
+<permissions>
+<copyright-statement>© 2012 The Society for Modeling and Simulation International</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">The Society for Modeling and Simulation International</copyright-holder>
+</permissions>
+<abstract>
+<p>Recently, researchers have become interested in the issue of assessing culpability for terrorist attacks when no one group claims or multiple groups claim responsibility. Several new methods have been put forward for predicting culpability, traditionally assessed by intelligence analysts, using both machine learning and statistical classification models. These models have had varying degrees of success, with new ensemble classification models performing generally better than traditional statistical techniques. This paper applies a relatively new methodology, Random Forests, to the problem of predicting culpability and compares it to some of the more frequently used statistical classification techniques, including multinomial logistic regression and naïve Bayesian classification. Though generally outperforming other techniques, Random Forests struggles with unbalanced data, performing worse than either of the other models tested in the class with the least information. However, this evaluation of Random Forests for the assessment of terrorism culpability is positive. Implications of the model and comparison to other models are discussed and ways forward are suggested.</p>
+</abstract>
+<kwd-group>
+<kwd>Culpability</kwd>
+<kwd>data mining</kwd>
+<kwd>multinomial logistic</kwd>
+<kwd>CART</kwd>
+<kwd>Random Forests</kwd>
+<kwd>terrorism</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1548512912455470" sec-type="intro">
+<title>1. Introduction</title>
+<p>As regional and global conflicts become increasingly complex and terrorist and insurgent groups continue to intermingle, the issue of assessing responsibility for a given terrorist or extremist event is becoming a “wicked problem” with few solutions offered besides the general analytical tradecraft used by intelligence and defense agencies. This tradecraft generally involves an extensive investigation, usually attempting to make forensic matches of weapons, explosive types, and/or bomb components. Alternatively, counterterrorism analysts make expertise-based estimates of culpability based on their knowledge of terrorist groups’ tactics, operational histories, and targeting strategies.<sup><xref ref-type="bibr" rid="bibr1-1548512912455470">1</xref></sup> While anecdotally successful,<sup><xref ref-type="bibr" rid="bibr2-1548512912455470">2</xref></sup> these estimates of culpability are potentially susceptible to individual biases common in intelligence analysis.<sup><xref ref-type="bibr" rid="bibr3-1548512912455470">3</xref></sup></p>
+<p>As a method of overcoming these biases within the context of terrorism analysis, statistical techniques offer a unique ability to derive culpability estimates with a known error rate, allowing those responsible for assessing culpability to gauge how successful they are. Additionally, statistical techniques offer analysts important insights into what variables are most important in identifying culpability, something that may be masked by a researcher’s bias.<sup><xref ref-type="bibr" rid="bibr3-1548512912455470">3</xref></sup></p>
+<p>Despite this importance, there has been relatively little research in terms of the ability of statistical or machine-learning techniques, more commonly known as data-mining, to properly assess culpability and assist analysts examining terrorist culpability. This study seeks to rectify that gap in the literature by presenting an alternative statistical model for assessing culpability for terrorist attacks: Random Forests.<sup><xref ref-type="bibr" rid="bibr4-1548512912455470">4</xref></sup></p>
+</sec>
+<sec id="section2-1548512912455470">
+<title>2. Literature review</title>
+<p>The utilization of statistical techniques within the context of criminal justice applications is not new. Researchers frequently use varying techniques for many different types of analyses, from geospatial analysis to time-series analysis.<sup><xref ref-type="bibr" rid="bibr5-1548512912455470">5</xref></sup> Additionally, law enforcement practitioners utilize statistical techniques within paradigms like COMPSTAT to identify where criminal behavior is worst and to determine how to best approach eliminating crime.<sup><xref ref-type="bibr" rid="bibr6-1548512912455470">6</xref></sup> However, the use of more advanced statistical and data-mining techniques within the context of investigation is rare, perhaps because of a paucity of data.<sup><xref ref-type="bibr" rid="bibr1-1548512912455470">1</xref></sup></p>
+<p>Data-mining techniques overcome some of the particular problems associated with criminal justice data. Specifically, traditional statistical techniques often have significant limitations in regards to the number of variables that can be used because of two primary reasons: multicolinearity and the sometimes high number of independent variables relative to the number of predictors. Moreover, traditional statistical techniques tend to be heavily laden with assumptions, including normality, linearity, and homoscedasticity.<sup><xref ref-type="bibr" rid="bibr7-1548512912455470">7</xref></sup></p>
+<p>While, as mentioned above, many of the machine-learning techniques remain foreign to the criminal justice literature, they are widespread within other disciplines.<sup><xref ref-type="bibr" rid="bibr8-1548512912455470">8</xref>,<xref ref-type="bibr" rid="bibr9-1548512912455470">9</xref></sup> Of particular interest has been the use of learning techniques within the context of medicine, where machine-learning techniques have been better able to determine the absence of infarction than physicians.<sup><xref ref-type="bibr" rid="bibr10-1548512912455470">10</xref></sup> Moreover, governmental uses of data mining include a wide range of activities, from analyzing intelligence and detecting terrorist activities to improving services and performance of government agencies.<sup><xref ref-type="bibr" rid="bibr11-1548512912455470">11</xref></sup></p>
+<p>A few researchers within the field of criminal justice, however, have made significant contributions to the literature through the application of these techniques to a variety of problems. Notable among these is Richard Berk, who has utilized Random Forests, the same statistical technique utilized in this study, for several criminal justice applications, including inmate risk assessment, with Baek,<sup><xref ref-type="bibr" rid="bibr12-1548512912455470">12</xref></sup> and domestic violence.<sup><xref ref-type="bibr" rid="bibr13-1548512912455470">13</xref></sup> Further work has examined criminal psychological profiling,<sup><xref ref-type="bibr" rid="bibr14-1548512912455470">14</xref></sup> recidivism,<sup><xref ref-type="bibr" rid="bibr15-1548512912455470">15</xref></sup> and offender classification.<sup><xref ref-type="bibr" rid="bibr16-1548512912455470">16</xref></sup> However, despite these applications, the use of data-mining techniques to examine culpability within the context of terrorism is a relatively new approach.</p>
+<sec id="section3-1548512912455470">
+<title>2.1 Terrorist culpability</title>
+<p>Assessing culpability for terrorist attacks was first presented as an analytical challenge by Mabrey,<sup><xref ref-type="bibr" rid="bibr1-1548512912455470">1</xref></sup> although Hale<sup><xref ref-type="bibr" rid="bibr17-1548512912455470">17</xref></sup> proposed an initial empirical framework for this problem using Chi-Squared Automatic Interaction Detection (CHAID) to examine the factors that best predict terrorist group responsibility for attacks. After identifying likely biases affecting an analyst’s ability to assess culpability for terrorist attacks, several analytical scenarios were proposed and classical statistical (logistic regression) and machine-learning techniques (boosting, bagging, support vector machines, and hybrid models) were compared for their ability to accurately predict culpability for terrorist bombings in two low-intensity conflicts. Generally, the learning models outperformed the traditional statistical techniques, though the ability to classify culpability correctly was different across conflicts.<sup><xref ref-type="bibr" rid="bibr1-1548512912455470">1</xref></sup> The results from this analysis were highly suggestive in terms of the possibilities of statistical learning techniques being utilized as a methodology for assigning culpability.<sup><xref ref-type="bibr" rid="bibr1-1548512912455470">1</xref></sup></p>
+<p>Graham et al.<sup><xref ref-type="bibr" rid="bibr18-1548512912455470">18</xref></sup> expanded the classification of culpability by using a global dataset of terrorist activity (2002–2007) collected and provided by the Institute for the Study of Violent Groups (ISVG) to build operational taxonomic profiles of terrorist groups that were used to train a naïve Bayesian model on a sample of terrorist activities from the dataset. Unlike the efforts of Hale<sup><xref ref-type="bibr" rid="bibr17-1548512912455470">17</xref></sup> and Mabrey<sup><xref ref-type="bibr" rid="bibr1-1548512912455470">1</xref></sup> that sought to predict a single group’s culpability for a terrorist attack (point accuracy), Graham et al. predicted sets of potential actors who were probabilistically considered the most likely candidates to be responsible for a terrorist attack (set accuracy). They reported generally good results, with correct predictions in the set returned more than 81% of the time.</p>
+<p>The Graham et al. model makes a significant contribution to the literature of using empirical methods to assess culpability for terrorist attacks in that it is the first global model. This model also provides a fairly robust estimation of culpability with fairly high set-accuracy rates that withstand simulated error and shows a surprising robustness to violated assumptions. However, the model presents several difficulties that need to be resolved. First, by utilizing a naïve Bayesian approach, the model makes certain untenable assumptions. Foremost among these is the assumed independence of the predictor variables, something that is clearly violated by the data. (The mean variance inflation factor for the 87 variables used within the model was 7.0145, and the median was 2.8237 with a minimum of 1.1094 and a maximum value of 48.0027.) Additionally, however, there is the problem of error within the data, a problem that a Bayesian approach can compound.<sup><xref ref-type="bibr" rid="bibr19-1548512912455470">19</xref></sup> Moreover, interaction effects cannot be identified by a Bayesian model, whereas ensemble approaches, of which Random Forests is one, were designed to identify such interactions. Finally, there is the significant issue of how the model’s success is judged. By utilizing a set of potentially culpable groups based on taxonomically derived operational profiles, multiple group prediction skirts the true event culpability issue. Rarely is a set of potentially responsible groups unknown after an attack (as the naïve Bayesian approach provides analysts with an empirical confirmatory measure of suspected groups); it is the prediction of the specific group responsible that presents the challenge for the analyst.</p>
+<p>Given these shortcomings, this paper will propose an alternative model (Random Forests) for assessing terrorist culpability that overcomes many of these problems and will compare this model to both a multinomial logistic model and a Bayesian classification method.</p>
+</sec>
+<sec id="section4-1548512912455470">
+<title>2.2 Classic data-mining techniques</title>
+<p>Before the newer Random Forest technique is introduced, the two “classical” prediction tools against which it was compared are presented. These techniques were “naïve Bayes” and multinomial logistic regression. In both cases, the intent of these tools is to model directly the probability of any given value “<italic>g</italic><sub><italic>i</italic></sub>” of the predicted class “<italic>G</italic>,” or <italic>P(g</italic><sub><italic>i</italic></sub><italic>|X)</italic>, where <italic>X</italic> represents the value of the independent, or predictor, variables. In both cases, the techniques make theoretically indefensible assumptions to actually carry out their assignments; however, both perform surprisingly well when tested on standard data sets.</p>
+<p>Naïve Bayes does in fact utilize Bayes’ Theorem, and it does so once for each potential value for each predictor variable</p>
+<p>
+<disp-formula id="disp-formula1-1548512912455470">
+<label>(1)</label>
+<mml:math display="block" id="math1-1548512912455470">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>X</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>=</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>X</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>X</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1548512912455470" xlink:href="10.1177_1548512912455470-eq1.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>x</italic><sub><italic>i</italic></sub> is one particular value for the set of <italic>X</italic> predictors (usually one level for one of the predictor variables) and <italic>P(g</italic><sub><italic>i</italic></sub><italic>)</italic> represents the prior probability of the assignment of <italic>g</italic><sub><italic>i</italic></sub> to the situation <italic>x</italic><sub><italic>i</italic></sub> correctly, usually (estimated as) the proportion of <italic>g</italic><sub><italic>i</italic></sub> in the learning sample.</p>
+<p>So far, the process is quite straightforward. The difficulty arises when there is more than one predictor value. The approach usually taken is simply to multiply the probabilities obtained in <xref ref-type="disp-formula" rid="disp-formula1-1548512912455470">equation (1)</xref> above for each predictor value. This implicitly assumes that all the predictor values are independent of one another, an assumption violated perhaps more often than observed. The resulting probability should be poor, but many empirical studies and theoretical treatments have argued otherwise. As Hand and Yu<sup><xref ref-type="bibr" rid="bibr20-1548512912455470">20</xref></sup> argue, as long as the technique maintains the rank order of group assignments, no harm is done by the assumption of independence.</p>
+<p>The second of the older, but tested, techniques is logistic regression. Logistic regression is a “generalized linear” regression developed to improve the simplistic linear regression model in which the probability of group culpability is a linear function of the predictors</p>
+<p>
+<disp-formula id="disp-formula2-1548512912455470">
+<label>(2)</label>
+<mml:math display="block" id="math2-1548512912455470">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo>∑</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-1548512912455470" xlink:href="10.1177_1548512912455470-eq2.tif"/>
+</disp-formula>
+</p>
+<p>This has the unfortunate tendency to produce probabilities greater than 1.00 or even negative. By a transformation of the probability to a (natural) log odds form via the use of a special case of the generalized linear model (GLM), only legitimate probabilities will be predicted</p>
+<p>
+<disp-formula id="disp-formula3-1548512912455470">
+<label>(3)</label>
+<mml:math display="block" id="math3-1548512912455470">
+<mml:mrow>
+<mml:mi>ln</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mo>∑</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-1548512912455470" xlink:href="10.1177_1548512912455470-eq3.tif"/>
+</disp-formula>
+</p>
+<p>This technique has an additional benefit in that the coefficients (<italic>β</italic><sub><italic>j</italic></sub>), also transformed by the link-function used in the GLM, can be interpreted directly as indicators of the “importance” of the variable and in their exponentiated form (<inline-formula id="inline-formula1-1548512912455470"><mml:math display="inline" id="math4-1548512912455470"><mml:mrow><mml:msup><mml:mrow><mml:mi>e</mml:mi></mml:mrow><mml:mrow><mml:msub><mml:mrow><mml:mi>β</mml:mi></mml:mrow><mml:mrow><mml:mi>j</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula>)as a (multiplicative) contribution to the log odds of the correct assignment of culpability to group <italic>g</italic><sub><italic>i</italic></sub> by variable <italic>x</italic><sub><italic>j</italic></sub>.</p>
+<p>The relatively good performance of these two classic techniques cannot be overlooked, but the important improvements in performance of newer techniques should not be understated. When the error rate can be reduced to modest levels, the improvement of predictability using a newer technique may only be a handful of percentage points, but as a proportion of the remaining error, those few points may well represent a significant gain. In addition, that gain has come in the resolution of more difficult situations. It should also be noted that the supposed transparency of logistic regression, the interpretability of its coefficients, masks a liability that is more severe than the “black box” liability that many data-mining techniques fall victim to, and this property is shared by both classic techniques. In addition handle predictor variables cannot operate in nonlinear ways or act in combination with one another. In order to include interaction terms, for example, it is necessary for the researcher to uncover the relationships as well as to construct and include them. In a sense, complicated forms of the predictor variables, left out of both naïve Bayes and logistic regression, represent lost opportunities that are not overlooked by the newer techniques.</p>
+<p>In terms of assessing the relative success of each of the techniques, a side-by-side comparison will be used. Each technique uses out of bag (OOB) data as the method of testing. While there are good arguments for using appropriate cost metrics to assist in the comparison, especially in the case of logistic regression, there is no real way to identify the true costs inherent in the current problem set. Without being able to determine whether type I or type II errors are more acceptable, an appropriate cost matrix cannot be developed.</p>
+<p>We now turn to these newer techniques, built on recent decades’ research into models with interactions between predictors<sup><xref ref-type="bibr" rid="bibr21-1548512912455470">21</xref></sup> and the past decade’s advances in ensemble methods.</p>
+</sec>
+<sec id="section5-1548512912455470">
+<title>2.3 Random Forests</title>
+<p>The advantages of this technique have been discussed extensively in statistical learning literature. Upon introducing the procedure, Breiman<sup><xref ref-type="bibr" rid="bibr4-1548512912455470">4</xref></sup> compared Random Forests to Adaboost.<sup><xref ref-type="bibr" rid="bibr22-1548512912455470">22</xref></sup> At the time Adaboost was generally conceded to be the “best off-the-shelf predictor in the world.”<sup><xref ref-type="bibr" rid="bibr4-1548512912455470">4</xref></sup> Boosting is a powerful method for improving so-called “weak-learners” (e.g., trees), in which an ensemble is constructed by a resampling procedure in which each successive sample member is not drawn uniformly but inversely proportionally to the accuracy of the previous predictions. As a result, the boosting procedure is forced to concentrate on cases that are increasingly difficult to predict. The final vote is not equal among trees; instead it is a weighted voting proportional to each tree’s accuracy. Breiman<sup><xref ref-type="bibr" rid="bibr4-1548512912455470">4</xref></sup> not only found Random Forests to be virtually as accurate as Adaboost for a number of standard test datasets, he speculated that Adaboost in its later stages was actually performing a similar process to that generated by Random Forests.</p>
+<p>The Random Forest technique, as Breiman noted, overcomes a number of problems encountered by other techniques. First, Random Forests does not overfit the data. This is an especially difficult problem for the more powerful statistical techniques. Essentially, overfitting is a problem in which the technique adapts so well to the specific data at hand (the training data) that it strays from the original real-world problem for which the training set is merely a random sample. This is why the “generalization error,” or error induced when the fitted model is projected onto the outside real world, is more critical than the error computed from the model as applied to the training data. There are a number of available methods for estimating this generalization error, including the use of a “hold-out” or a test sample of events not used in the construction of the model, specifically cross-validation, and the use of the “out-of-bag” (OOB) sample. By the simple expediency of testing the model routinely on data not used in the “bag” to actually construct the model at that step, Random Forest monitors a version of the generalization error that is not biased downward. It is also important that the use of only a small number of predictors for each tree obviates the need to maintain a large sample-to-predictors ratio—another issue that looms large in the overfitting problem. Indeed, Random Forests works well even in genome situations involving thousands of predictors (“genes”) and perhaps only hundreds of human subjects.<sup><xref ref-type="bibr" rid="bibr23-1548512912455470">23</xref></sup> These advantages make Random Forests an ideal technique for modeling terrorist attack culpability and represent a significant improvement over the naïve Bayesian approach proposed by Graham et al.<sup><xref ref-type="bibr" rid="bibr18-1548512912455470">18</xref></sup></p>
+<p>Random Forests benefits directly from the ability of the trees to model interactions between the predictors. There is no need to assume that the “independent” variables operate independently and additively to predict the dependent variable. In fact, the technique essentially eliminates to “multicolinearity” problems altogether.<sup><xref ref-type="bibr" rid="bibr8-1548512912455470">8</xref></sup> The related term “interaction” refers to a situation in which a level of one predictor leads to one group when coupled with a certain level of a second predictor but then leads to a different group when coupled to a different level of that second predictor. Far from avoiding or running afoul of intervariable relationships, the very earliest of the tree models were developed to seek out these interdependencies, and these models were advertised as “interaction detectors.”</p>
+<p>There can be no doubt that errors exist in the training dataset, which are the result of human evaluation of open-source documentation on terrorist activities. The types of violent events that are the subject of the dataset can arise in confusing, rapidly evolving, and widely variable environments. Indeed, one effective weapon in the terrorist’s arsenal is his ability to mask his future movements. It is not at all certain that the sources aggregated by ISVG analysts are able to accurately discern, interpret, and evoke the truth of any given violent attack. Even if that truth makes its way into the press, it is not certain that the analyst will understand and correctly enter the information into the ISVG relational database. Of particular concern is the accurate assignment of culpability. The analyst depends on obtaining unambiguous direction from the authorities or, failing that, a good-faith announcement of “credit” by the group involved. The full extent of this error is unknown, and it is certain to unsettle any attempts to construct the culpability model. However, Breiman<sup><xref ref-type="bibr" rid="bibr4-1548512912455470">4</xref></sup> claimed, and demonstrated with a number of different test datasets, that one of the special strengths of Random Forests is its robustness in the face of such errors. He showed that when up to 5% of the training set has randomly scrambled group assignments, Random Forests is far less likely to be thrown off, compared to Adaboost, which can suffer inflation of its error rates by as much as 50%.</p>
+<p>The issue of “multiclass” is one that has been dealt with by Random Forests far more successfully than most other classification techniques, which were developed to deal with assignment to one of two possible classes. (Support Vector Machines, or SVM, a relative of neural networks, for example, works especially well with a dependent variable that takes on only +1 and −1 as its values.) Since the technique relies in this case on a foundation of trees, and trees are reasonably adept at developing models for multiclass dependent variables, Random Forest can deal better than most with this type of problem.</p>
+<p>For these reasons—overfitting, interacting variables, and robustness to errors in the dependent variable—Random Forests was selected to model terrorist attack culpability and was run in WEKA, an open-source knowledge exploration tool built by researchers at the University of Waikaito in New Zealand. The model was run on a regional subset of data (Philippines) from the ISVG database and compared to both a naïve Bayesian model and a multinomial logistic model developed using the same data.</p>
+<p>In sum, this paper presents a new formalization of the problem of culpability as the basis for a model that predicts specific groups for culpability. Utilizing a regional subset of data from a global dataset compiled from open-source reports provided by ISVG, the approach proposed below uses Random Forests to predict terrorist attack culpability and compares the approach to a naïve Bayesian approach and multinomial logistic regression. Upon testing, the proposed method correctly identifies the group responsible 87% of the time, though the prediction of culpability was better for some groups than others. Random Forests generally outperforms the other models presented, though not for all groups examined.</p>
+</sec>
+<sec id="section6-1548512912455470">
+<title>2.4 Terrorism in the Philippines</title>
+<p>The Philippines has long been known for the religious conflict that takes place there coupled with “enormous social and political instability.”<sup><xref ref-type="bibr" rid="bibr24-1548512912455470">24</xref></sup> Despite this instability, and a struggling economy,<sup><xref ref-type="bibr" rid="bibr25-1548512912455470">25</xref></sup> the country remains instrumental to the region’s security.<sup><xref ref-type="bibr" rid="bibr26-1548512912455470">26</xref></sup> The ongoing conflict in the Philippines is currently exemplified by three terrorist groups who still maintain an immense capacity for destruction within the country: the Moro Islamic Liberation Front (MILF), the New People’s Army (NPA), and the Abu Sayyaf Group (ASG).</p>
+<p>Originally developing as a more religiously-oriented splinter group from the Moro National Liberation Front (MNLF) in 1977, the MILF has engaged in on-and-off talks with the government of the Philippines for many years.<sup><xref ref-type="bibr" rid="bibr27-1548512912455470">27</xref></sup> Restarting in 2008, talks between the MILF and the government of the Philippines have deteriorated and the threat of outright conflict looms large. Further straining relations, the group has provided sanctuary to foreign terrorists, including members of Jemaah Islamiyah (JI), who have collaborated with MILF in attacks, such as the February 2004 “Super Ferry Bombing,” which killed 200 people.<sup><xref ref-type="bibr" rid="bibr28-1548512912455470">28</xref></sup> Moreover, repeated acts by “rogue” members of the MILF have made it difficult to distinguish the group’s attacks from other groups, particularly the Abu Sayyaf Group.</p>
+<p>The NPA, rather than being a religious terrorist organization, has remained committed to their Maoist beliefs since the group’s inception as the armed wing of the Communist Party of the Philippines (CPP) in 1969.<sup><xref ref-type="bibr" rid="bibr29-1548512912455470">29</xref></sup> In contrast with the government’s repeated attempts to negotiate peace with the MILF, there has been no attempt regarding peace with the NPA or CPP. Rather, the government seeks solely to eradicate the group, frequently bringing force to bear and causing a high rate of incidents. NPA has responded by frequently attacking symbols of government power ranging from buildings housing government employees to patrols of security forces.</p>
+<p>The ASG has straddled the line between criminal gang and terrorist group for nearly 20 years. Beginning in the early 1990’s, the group has frequently performed extortions and kidnappings, though many of their attacks have also involved bombings. While beginning as a terrorist group, the ASG has degenerated in recent times to little more than a kidnap-for-ransom group, operating essentially as a criminal gang.<sup><xref ref-type="bibr" rid="bibr30-1548512912455470">30</xref></sup> Additionally, because membership has been flexible for the group, there is significant overlap with other organizations in the region, notably the MILF, from which it is frequently difficult to distinguish members of ASG.</p>
+<p>There are a number of smaller groups operating in the region; however, their activities are more criminal in nature. There are several kidnap-for-ransom groups, which are largely concentrated in the Sulu archipelago. Kidnap-for-ransom activities have become so popular in the impoverished areas of the Philippines that the Philippine Human Rights Project asserted that the tactic is no longer the monopoly of the Abu Sayyaf Group. However, despite the proliferation of kidnap-for-ransom gangs, the total number of incidents attributed to such groups are low enough so that they are largely inconsequential in terms of the regional dynamics of conflict.</p>
+</sec>
+<sec id="section7-1548512912455470">
+<title>2.5 Statement of purpose</title>
+<p>This paper explores a specific problem derived from the Philippines as the basis of analysis, in which the number of groups that are assigned culpability, the dependent variable, is four: the NPA, the MILF, the ASG, and other groups. There are 87 predictor characteristics (p = 87), or independent variables, and the Random Forest has been constructed from a set of 941 violent events that occurred in the Philippines during the period from 1 January 2004 to 30 June 2008 (the “training” dataset).</p>
+</sec>
+</sec>
+<sec id="section8-1548512912455470" sec-type="methods">
+<title>3. Methods</title>
+<sec id="section9-1548512912455470">
+<title>3.1 Data</title>
+<p>The data for this study was drawn from the ISVG relational database to capture all terrorist attacks in the Philippines from 1 January 2004 through 30 June 2008. From the more than 370 variables incorporated in the ISVG data, 87 binary predictors were extracted. Examples of these predictors are indicators for each day of the week, month of the year, time of day, geographic sector, incident type (armed assault, bombing, etc.), target type (individual, building, etc.), and target nationality (Philippino or other). See <xref ref-type="app" rid="app1-1548512912455470">Appendix A</xref> for the complete list of predictors used in this study. The group primarily responsible was known in 941 of these cases and constitutes the training set for this analysis. (This dataset includes all violent and destructive attacks for the period of 1 January 2004 through 30 June 2008.)</p>
+<p>While the analysis here presents a significant deviation from previous studies (such as the Graham et al. study in which they utilized the world—441 groups, 27,841 incidents—but we limit the study here to a single region), two factors make the instant study more analytically realistic than previous attempts: picking a single region and predicting a single group.</p>
+<p>When conducting an analysis, it is rare that an analyst would not know in what region an incident took place. Indeed, it is far more likely that an individual working in that arena would be someone with significant expertise in terrorism regarding that region specifically. It is this expertise that currently allows an analyst, without machine assistance, to eventually assign culpability. Therefore, utilizing the entire world as a basis for model prediction, while somewhat impressive in an abstract sense, is less utilitarian than focusing on a specific country or region.</p>
+<p>Additionally, as the analyst can no doubt proficiently supply a list of suspected groups, providing just such a list does little in terms of assisting the analyst. Thus, offering a list of candidates can only be helpful insofar as the list confirms or disconfirms the analyst’s own list of probable perpetrators. Single group prediction, however, presents the analyst with a single answer to the question of culpability in such a way that it is truly a solution, not a ranking of probability.</p>
+</sec>
+<sec id="section10-1548512912455470">
+<title>3.2 Reformalization of the event-inference problem</title>
+<p>Based on inclusion of historical event data rich in operational details of known terrorist group tactics, techniques, and procedures, including time and place, we reformulate the culpability classification problem.</p>
+<p>Input</p>
+<p>
+<disp-formula id="disp-formula4-1548512912455470">
+<label>(4)</label>
+<mml:math display="block" id="math5-1548512912455470">
+<mml:mrow>
+<mml:mtext>A set of candidate groups</mml:mtext>
+<mml:mo>:</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>G</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-1548512912455470" xlink:href="10.1177_1548512912455470-eq4.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula5-1548512912455470">
+<label>(5)</label>
+<mml:math display="block" id="math6-1548512912455470">
+<mml:mrow>
+<mml:mtext>A query event with characteristics</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>:</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-1548512912455470" xlink:href="10.1177_1548512912455470-eq5.tif"/>
+</disp-formula>
+</p>
+<p>A Random Forest constructed from historical data</p>
+<p>Output</p>
+<p>
+<disp-formula id="disp-formula6-1548512912455470">
+<label>(6)</label>
+<mml:math display="block" id="math7-1548512912455470">
+<mml:mrow>
+<mml:mtext>Classification of the event as the responsibility of one of the</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>m</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mtext>groups conditional on the characteristics of that event</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-1548512912455470" xlink:href="10.1177_1548512912455470-eq6.tif"/>
+</disp-formula>
+</p>
+<p>In this paper a specific problem derived from the Philippines is explored, in which the number of groups (<italic>m</italic>) is four (<italic>G</italic> = {ASG, MNLF, NPA, Other}); there are 87 predictor characteristics (<italic>p</italic> = 87); and the Random Forest has been constructed from a set of 941 violent events that occurred in the Philippines during the period from 1 January 2004 to 30 June 2008 (the “training” dataset).</p>
+</sec>
+<sec id="section11-1548512912455470">
+<title>3.3 Random Forests procedure</title>
+<p>The method proposed in this paper is based on the Random Forest procedure developed by Breiman<sup><xref ref-type="bibr" rid="bibr4-1548512912455470">4</xref></sup> in which trees are iteratively re-grown using the CART® methodology on modifications of the dataset, creating a “forest,” commonly known as an “ensemble,” which makes the ultimate predictions through a simple vote.</p>
+<p>Schematically, a random forest proceeds as follows:</p>
+<list id="list1-1548512912455470" list-type="roman-upper">
+<list-item><p>Prepare a training set for a tree</p>
+<list id="list2-1548512912455470" list-type="alpha-lower">
+<list-item><p>Bagging—select a random sample of the original training set.</p>
+<list id="list3-1548512912455470" list-type="roman-lower">
+<list-item><p>The size is usually the same as the original training set.</p></list-item>
+<list-item><p>Selection is done independently and randomly—with replacement.</p></list-item>
+</list></list-item>
+</list></list-item>
+<list-item><p>Carry out a tree analysis: Grow the tree by successive binary splits of the sample, beginning with the bagged sample created in the previous step as the root node. For each node, select a small subset of predictors to be used to split that node.</p>
+<list id="list4-1548512912455470" list-type="roman-lower">
+<list-item><p>Size of the predictor subset is usually equal to the square root of the original predictor subset.</p></list-item>
+<list-item><p>Selection is done independently and randomly—without replacement.</p></list-item>
+</list>
+<list id="list5-1548512912455470" list-type="alpha-lower">
+<list-item><p>Daughter nodes will be most pure according to misclassification rates.</p></list-item>
+<list-item><p>The tree is grown to maximum, limited only by minimum terminal node size (default set to 5).</p></list-item>
+<list-item><p>Estimate the generalization error by running the unused sample members (the “out-of-bag”—OOB) down through the tree and predict culpability as the modal value of the terminal node in which the OOB sample cases end up in and compare the modal prediction value to their actual value.</p></list-item>
+</list></list-item>
+<list-item><p>Repeat steps I and II so that every observation has the possibility of being predicted enough times (default 500).</p></list-item>
+<list-item><p>Use the results of all the above trees to vote on final predicted class for every member of the training set; estimate the error rates by the average of the OOB errors over the forest.</p></list-item>
+</list>
+<p>This procedure can be altered to accommodate a test set to further estimate the generalization error. In this case, a single “test” example is used, for which the true culpability is unknown, as the “query” to establish a vector for the query event containing the probabilities of each group being the (primary) responsible group.</p>
+<p>The results of the Random Forests classification will be then compared against two other techniques widely utilized within the literature:<sup><xref ref-type="bibr" rid="bibr18-1548512912455470">18</xref>,<xref ref-type="bibr" rid="bibr31-1548512912455470">31</xref></sup> multinomial logistic regression and naïve Bayesian classification.</p>
+</sec>
+</sec>
+<sec id="section12-1548512912455470" sec-type="results">
+<title>4. Results</title>
+<p>The Philippines data was processed with a forest of 500 trees using the default number of predictor variables for each tree, given as the square root of the number of predictors. Each of the trees, thus, used a random sample of nine of the 87 predictors. The overall accuracy rate was about 87%, compared to a simple accuracy rate of 72%, which could be reached by assigning culpability to NPA for every attack. This result is statistically significant at the <italic>p</italic> &lt; .000 level. As the “confusion” matrix shows in <xref ref-type="table" rid="table1-1548512912455470">Table 1</xref>, the technique was extremely accurate in predicting the largest of the groups (NPA), correctly classifying the group 99% of the time. (Because of the randomization that occurs within Random Forests, confusion matrices can vary on consecutive runs even if the parameter settings are not changed. Table I is generally representative of the matrices that resulted from numerous runs of Random Forests. Each of the forests constructed consisted of 500 trees.)</p>
+<table-wrap id="table1-1548512912455470" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Confusion Matrix for Random Forests.</p>
+</caption>
+<graphic alternate-form-of="table1-1548512912455470" xlink:href="10.1177_1548512912455470-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Actual Group:</th>
+<th align="left" colspan="6">Classified as:<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">ASG</th>
+<th align="left">MNLF</th>
+<th align="left">NPA</th>
+<th align="left">Other</th>
+<th align="left">Total</th>
+<th align="left">&amp; Error (1—TP)<sup><xref ref-type="bibr" rid="bibr1-1548512912455470">1</xref></sup></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ASG</td>
+<td>111</td>
+<td>2</td>
+<td>19</td>
+<td>2</td>
+<td>134</td>
+<td>17.1</td>
+</tr>
+<tr>
+<td>MNLF</td>
+<td>27</td>
+<td>21</td>
+<td>27</td>
+<td>1</td>
+<td>76</td>
+<td>72.4</td>
+</tr>
+<tr>
+<td>NPA</td>
+<td>7</td>
+<td>0</td>
+<td>673</td>
+<td>0</td>
+<td>680</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>Other</td>
+<td>14</td>
+<td>2</td>
+<td>23</td>
+<td>12</td>
+<td>51</td>
+<td>76.5</td>
+</tr>
+<tr>
+<td>Total</td>
+<td>159</td>
+<td>25</td>
+<td>742</td>
+<td>15</td>
+<td>941</td>
+<td>13.2</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-1548512912455470">
+<p>TP is the “true positive” rate of the model, or the percentage of cases correctly predicted for that group.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>Random Forests was reasonably accurate in regards to the second-most likely group (ASG) to be responsible for an attack, correctly predicting 83% of the cases, but this technique was unable to predict the MNLF group, missing more than 72% of the cases. One potential reason for this difficulty is the low number of incidents by the group that could lead to a relatively high variance. Another, and possibly more probable rationale, is the fact that frequently members of the MILF are members of the ASG, and “rogue commanders” who have carried out attacks in the MILF’s name realistically use ASG techniques. Additionally, the “other” group was unable to be predicted, with more than 76% of the cases being misclassified.</p>
+<p>As mentioned previously, one of the advantages of using Random Forests is the ability to determine variable importance. Listed in <xref ref-type="table" rid="table2-1548512912455470">Table 2</xref> are the relative importance levels of the 12 most predictive variables used within the Random Forests model. “Accuracy” here reflects the difference in the percentage accurately identified between the model with that variable included and the same model with that variable replaced by a random permutation of the original. The Gini reflects the “purity” of the daughter cells with the original variable again compared to a second model containing the permutated variable. The latter is a penalized misclassification cost in which the penalty is simply the number of terminal nodes, a straight-forward measure of complexity. (Note that the Gini is computed for each node as one minus the sum of the squares of the proportions in each of the groups to be predicted—1-∑ p2—and should be equal to a minimum of 0.00 if both daughter cells are “pure,” that is, contain only a single group, since in that case one of the p’s in the equation will be 1.00 and the others will be 0.00. The effect of using this rule is generally to split off smaller but purer daughter cells. Other splitting rules were tried, especially “Twoing,” which tries to force the daughter cell to be as similar in size as possible by treating each split as a two-class problem. The Gini rule produced trees with lower costs and fewer “cost complexity” measures.)</p>
+<table-wrap id="table2-1548512912455470" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Relative Importance for Top 12 Predictors.</p>
+</caption>
+<graphic alternate-form-of="table2-1548512912455470" xlink:href="10.1177_1548512912455470-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="left"/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Variable</th>
+<th align="left">Mean Decrease Accuracy</th>
+<th align="left">Variable</th>
+<th align="left">Mean Decrease Gini</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>s17</td>
+<td>1.120</td>
+<td>s17</td>
+<td>95.977</td>
+</tr>
+<tr>
+<td>s15</td>
+<td>0.919</td>
+<td>s15</td>
+<td>16.796</td>
+</tr>
+<tr>
+<td>s12</td>
+<td>0.859</td>
+<td>s12</td>
+<td>12.186</td>
+</tr>
+<tr>
+<td>s8</td>
+<td>0.797</td>
+<td>s8</td>
+<td>8.704</td>
+</tr>
+<tr>
+<td>s14</td>
+<td>0.679</td>
+<td>epoch4</td>
+<td>6.646</td>
+</tr>
+<tr>
+<td>s16</td>
+<td>0.649</td>
+<td>genericied</td>
+<td>6.636</td>
+</tr>
+<tr>
+<td>genericied</td>
+<td>0.644</td>
+<td>td</td>
+<td>5.812</td>
+</tr>
+<tr>
+<td>inb</td>
+<td>0.608</td>
+<td>jun</td>
+<td>5.585</td>
+</tr>
+<tr>
+<td>epoch4</td>
+<td>0.577</td>
+<td>s14</td>
+<td>5.559</td>
+</tr>
+<tr>
+<td>yr2007</td>
+<td>0.564</td>
+<td>inhhk</td>
+<td>5.426</td>
+</tr>
+<tr>
+<td>statusmil</td>
+<td>0.548</td>
+<td>inb</td>
+<td>5.310</td>
+</tr>
+<tr>
+<td>jun</td>
+<td>0.523</td>
+<td>yr2007</td>
+<td>5.277</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>As can be seen, geography plays an important role in classification accounting for six of the first 12 most important variables, and the results here support the approach of limiting the analysis by geography. Additionally, the type of incident, in terms of whether it was a bombing or not, and the timing of the attack are also important considerations.</p>
+<sec id="section13-1548512912455470">
+<title>4.1 Comparison—naïve Bayes</title>
+<p>In an indirect comparison to the model presented by Graham et al.,<sup><xref ref-type="bibr" rid="bibr18-1548512912455470">18</xref></sup> the same data used within the Random Forests model presented was classified utilizing a naïve Bayes approach.<sup><xref ref-type="bibr" rid="bibr32-1548512912455470">32</xref></sup> Generally speaking the model performed well, correctly classifying across the groups with true positive rates in 81% of cases. The model did not perform as well as the Random Forests model within certain groups, classifying ASG correctly only 64.2% of the time. While it performed better than the Random Forests model in classifying MNLF, it had had an accuracy rate of 68.4%. It, like the Random Forests model, performed well in classifying NPA, correctly classifying 93% of the cases. The “Other” group, however, was not well classified with only 33% of cases classified correctly. The confusion matrix for the naïve Bayes classification model is presented in <xref ref-type="table" rid="table3-1548512912455470">Table 3</xref>.</p>
+<table-wrap id="table3-1548512912455470" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Confusion Matrix for naive Bayes.</p>
+</caption>
+<graphic alternate-form-of="table3-1548512912455470" xlink:href="10.1177_1548512912455470-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Actual Group:</th>
+<th align="left" colspan="6">Classified as:<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">ASG</th>
+<th align="left">MNLF</th>
+<th align="left">NPA</th>
+<th align="left">Other</th>
+<th align="left">Total</th>
+<th align="left">&amp; Error (1—TP)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ASG</td>
+<td>86</td>
+<td>13</td>
+<td>15</td>
+<td>20</td>
+<td>134</td>
+<td>35.8</td>
+</tr>
+<tr>
+<td>MNLF</td>
+<td>24</td>
+<td>24</td>
+<td>24</td>
+<td>4</td>
+<td>76</td>
+<td>68.4</td>
+</tr>
+<tr>
+<td>NPA</td>
+<td>14</td>
+<td>9</td>
+<td>635</td>
+<td>22</td>
+<td>680</td>
+<td>6.6</td>
+</tr>
+<tr>
+<td>Other</td>
+<td>13</td>
+<td>5</td>
+<td>16</td>
+<td>17</td>
+<td>51</td>
+<td>66.7</td>
+</tr>
+<tr>
+<td>Total</td>
+<td>137</td>
+<td>51</td>
+<td>690</td>
+<td>63</td>
+<td>941</td>
+<td>19.0</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>On the one hand, naïve Bayes outperformed Random Forests for the “Other” group, classifying cases with 10% greater accuracy, and MNLF groups, classifying correctly 4% more of the time though the model was not as accurate in its classification of either the ASG or NPA, with Random Forests generating greater accuracy than naïve Bayes by 18% and 6%, respectively. However, despite this impressive ability to differentiate among apparently hard cases, it is not possible to generate values representing variable importance, nor is it possible to estimate how much the model was biased.</p>
+</sec>
+<sec id="section14-1548512912455470">
+<title>4.2 Comparison—multinomial logistic regression</title>
+<p>When determining the utility of a given model evaluating culpability, it is worthwhile to examine models frequently used. One such model is multinomial logistic regression, which uses a set of independent variables to predict a known number of nominal categories.<sup><xref ref-type="bibr" rid="bibr32-1548512912455470">32</xref></sup> Using the same variable set as in the Random Forests model and the naïve Bayes model, the multinomial logistic regression model was roughly as accurate as the Naïve Bayes. This method correctly classified roughly 80% of the incidents correctly with an error rate of 19.9%, nearly 6% higher than Random Forests. It correctly classified ASG nearly 63% of the time, but only classified MNLF correctly 39% of the time. Like the other techniques, it performed relatively well on the NPA, correctly classifying 81% of the time. The “Other” group had a lower rate of correct classification, classifying 33.3% of the cases correctly. <xref ref-type="table" rid="table4-1548512912455470">Table 4</xref> gives the confusion matrix for the multinomial logistic model.</p>
+<table-wrap id="table4-1548512912455470" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Confusion Matrix for Multinomial Logistic Regression.</p>
+</caption>
+<graphic alternate-form-of="table4-1548512912455470" xlink:href="10.1177_1548512912455470-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Actual Group:</th>
+<th align="left" colspan="6">Classified as:<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">ASG</th>
+<th align="left">MNLF</th>
+<th align="left">NPA</th>
+<th align="left">Other</th>
+<th align="left">Total</th>
+<th align="left">Pct. Error (1—TP)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ASG</td>
+<td>84</td>
+<td>25</td>
+<td>15</td>
+<td>10</td>
+<td>134</td>
+<td>37.3</td>
+</tr>
+<tr>
+<td>MNLF</td>
+<td>21</td>
+<td>30</td>
+<td>14</td>
+<td>11</td>
+<td>76</td>
+<td>60.5</td>
+</tr>
+<tr>
+<td>NPA</td>
+<td>20</td>
+<td>16</td>
+<td>623</td>
+<td>21</td>
+<td>680</td>
+<td>8.4</td>
+</tr>
+<tr>
+<td>Other</td>
+<td>10</td>
+<td>4</td>
+<td>20</td>
+<td>17</td>
+<td>51</td>
+<td>66.7</td>
+</tr>
+<tr>
+<td>Total</td>
+<td>135</td>
+<td>75</td>
+<td>672</td>
+<td>59</td>
+<td>941</td>
+<td>19.9</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The multinomial logistic model outperformed both the Random Forests as well as the naïve Bayesian classification models in the classification of MNLF incidents. It correctly classified 30 out of 56 incidents, roughly 8% better than naïve Bayes and 13% better than Random Forests but was outperformed by both Naïve Bayes and Random Forests for the other groups considered.</p>
+</sec>
+</sec>
+<sec id="section15-1548512912455470">
+<title>5. Discussion and limitations</title>
+<p>This analysis has demonstrated the success of utilizing Random Forests to predict terrorist culpability within one of the major “hot spots” in the world for terrorism. The model has few assumptions, has virtually no problems with error and multicollinearity, and has a high level of accuracy, correctly predicting the specific group 87% of the time. It compares favorably with other methodologies when utilized on the same dataset, outperforming both multinomial logistic and naïve Bayes by more than 6% in terms of general model error. Additionally, by using a realistic approach to how the model would be used in the field by limiting it to a specific region, the Random Forests model specified presents a significant improvement over previous attempts. Moreover, it further establishes open-source data of sufficient detail as a credible source of information for analysts and researchers alike.<sup><xref ref-type="bibr" rid="bibr18-1548512912455470">18</xref></sup></p>
+<p>The success of the Random Forests model, as well as Mabrey’s<sup><xref ref-type="bibr" rid="bibr1-1548512912455470">1</xref></sup> work and the Graham et al.<sup><xref ref-type="bibr" rid="bibr18-1548512912455470">18</xref></sup> model, demonstrates the significant capability of enhancing analysis through statistical and machine-learning techniques. It can assist with reducing bias and increasing accuracy, and with additional availability of detailed, open-source information, could develop into an important area of analysis. However, despite the success of these models, there remain significant limitations. First, it is difficult to compare the accuracy of a given machine-learning model with that of an analyst.<sup><xref ref-type="bibr" rid="bibr1-1548512912455470">1</xref></sup> Additionally, Random Forests might perform well on a given dataset but in real-world deployment might have difficulty if there are any changes in the type of operations performed by a group. Further still, as this is an empirical analysis, it is contextual, meaning alternative scenarios were outside of the scope of this analysis, for instance, examining either a more balanced conflict situation or examining attacks with multiple agents. Finally, while performing generally better than naïve Bayesian classification or multinomial logistic regression, Random Forests struggled with predicting certain groups. While it seems to do better with larger numbers of cases per group, or perhaps may perform better with more balanced data, the exact cause of the current difficulty in regards to classification is not known.</p>
+<p>Further research clearly includes addressing some of these issues. Additionally, it should assess the power of additional prediction models from the machine-learning literature, including neural-networks and support-vector machines (SVM), which may overcome some of the significant issues presented by both the naïve Bayesian approach as well as Random Forests. Perhaps an ideal deployment of a culpability prediction application will include multiple models, from which a trained analyst can choose the appropriate model for the appropriate application or create flows of models whereby the results of one are utilized in another. For instance, one of the additional strengths of the Random Forests approach is that it gives the analyst the ability to distinguish important variables from unimportant variables. This ability might be utilized to fine-tune weights in a naïve Bayesian probability model or in other models as needed. In sum, these preliminary results of generalized Random Forests models are positive, exceeding the general classification ability of the original Random Forests methodology in several ways.<sup><xref ref-type="bibr" rid="bibr8-1548512912455470">8</xref></sup></p>
+</sec>
+<sec id="section16-1548512912455470" sec-type="conclusions">
+<title>6. Conclusion</title>
+<p>This study has applied a Random Forests approach to predicting terrorist event culpability. By improving on previous attempts, this model has proven accurate and reliable and could easily be deployed into the analytical field. Further testing and improvement of the model across conflicts and the potential development of a hybrid model between the Random Forests model presented here and the naïve Bayesian approach taken by Graham et al. represent significant areas of further research and improvement. Additionally, using further approaches to estimating point error versus general error could be helpful to analysts in determining if classification is appropriate for a given incident.<sup><xref ref-type="bibr" rid="bibr33-1548512912455470">33</xref></sup></p>
+</sec>
+</body>
+<back>
+<app-group>
+<app id="app1-1548512912455470">
+<title>A.1 Appendix A</title>
+<table-wrap id="table5-1548512912455470" position="float">
+<graphic alternate-form-of="table5-1548512912455470" xlink:href="10.1177_1548512912455470-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Variable Name</th>
+<th align="left">Definition</th>
+<th align="left">Coding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Apr</td>
+<td>The month of April</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Aug</td>
+<td>The month of August</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Cd</td>
+<td>Civilian Deaths</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Dec</td>
+<td>The Month of December</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>epoch1</td>
+<td>Epoch 1: 1/1/04 – 2/13/05</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>epoch2</td>
+<td>Epoch 2: 2/14/05 – 11/8/05</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>epoch3</td>
+<td>Epoch 3: 11/9/05 – 8/12/06</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>epoch4</td>
+<td>Epoch 4: 8/13/06 – 6/27/07</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>epoch5</td>
+<td>Epoch 5: 6/28/07 – 6/30/08</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Feb</td>
+<td>The Month of February</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Fri</td>
+<td>The day of the week Friday</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>gcdeaths.1</td>
+<td>Government/Civilian Deaths</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Gd</td>
+<td>Government Deaths</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Genericied</td>
+<td>Generic IED</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Grenade</td>
+<td>Grenade</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Inaa</td>
+<td>Armed Assault</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Inars</td>
+<td>Arson</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Inb</td>
+<td>Bombing</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>inctime1</td>
+<td>Morning</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>inctime2</td>
+<td>Mid-Morning</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>inctime3</td>
+<td>Mid-Day</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>inctime4</td>
+<td>Afternoon</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>inctime5</td>
+<td>Evening</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>inctime6</td>
+<td>Night</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Inhhk</td>
+<td>Hostagetaking/Kidnapping</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Inrv</td>
+<td>Robbery/Vandalism</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Jan</td>
+<td>The month of January</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Jul</td>
+<td>The month of July</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Jun</td>
+<td>The month of June</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Landmine</td>
+<td>Landmine</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Mar</td>
+<td>The month of March</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>May</td>
+<td>The month of May</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Mon</td>
+<td>The day of the week Monday</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Natforeign</td>
+<td>Foreign National Targeted</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Natphil</td>
+<td>Philippines National Targeted</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Natunk</td>
+<td>Unknown National Targeted</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Nov</td>
+<td>The month of November</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Oct</td>
+<td>The month of October</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Otheried</td>
+<td>Other IED type</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Placiv</td>
+<td>Civilian Target</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Placom</td>
+<td>Communication Target</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Plagov</td>
+<td>Government Target</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Plarur</td>
+<td>Rural Target</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Plaurb</td>
+<td>Urban Target</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s1</td>
+<td>Manta</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s2</td>
+<td>Cordillera Administrative Region (CAR)</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s3</td>
+<td>Ilocos</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s4</td>
+<td>Cagayan Valley</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s5</td>
+<td>Central Luzon</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s6</td>
+<td>CalaBarzon</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s7</td>
+<td>Mimaropa</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s8</td>
+<td>Bicol</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s9</td>
+<td>Western Visayas</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s10</td>
+<td>Central Visayas</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s11</td>
+<td>Eastern Visayes</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s12</td>
+<td>Zamboanga Peninsula</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s13</td>
+<td>Northern Mindanao</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s14</td>
+<td>Davao</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s15</td>
+<td>Soccsksargen</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s16</td>
+<td>Caraga</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s17</td>
+<td>Autonomous Region of Muslim Mindanao</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s18</td>
+<td>Other</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>s19</td>
+<td>Unknown</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Sat</td>
+<td>The day of the week Saturday</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Sep</td>
+<td>The month of September</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Statusgov</td>
+<td>Target status Government</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Statuslaw</td>
+<td>Target status law enforcement</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Statusmil</td>
+<td>Target status military</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>statusother</td>
+<td>Target status other</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Statusterr</td>
+<td>Target status terrorist</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Sun</td>
+<td>The day of the week Sunday</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Targbdg</td>
+<td>Target building</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Targindiv</td>
+<td>Target individual</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>targnonbdg</td>
+<td>Target non-building infrastructure</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Targvehicle</td>
+<td>Target vehicle</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>tctxambush</td>
+<td>Tactic type ambush</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Tctxdirect</td>
+<td>Tactic type direct fire</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Tctxother</td>
+<td>Tactic type other</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Td</td>
+<td>Terrorist deaths</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Thu</td>
+<td>The day of the week Thursday</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Tue</td>
+<td>The day of the week Tuesday</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>Wed</td>
+<td>The day of the week Wednesday</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>yr2004</td>
+<td>Year 2004</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>yr2005</td>
+<td>Year 2005</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>yr2006</td>
+<td>Year 2006</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>yr2007</td>
+<td>Year 2007</td>
+<td>1 yes/0 no</td>
+</tr>
+<tr>
+<td>yr2008</td>
+<td>Year 2008</td>
+<td>1 yes/0 no</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</app>
+</app-group>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.</p>
+</fn>
+</fn-group>
+<bio>
+<title>Author Biographies</title>
+<p><bold>Joshua Hill</bold>, PhD, is an assistant professor of Criminal Justice and Homeland Security at Tiffin University in Tiffin, Ohio. He frequently publishes on research methods, politics and crime, and terrorism.</p>
+<p><bold>Daniel J. Mabrey</bold>, PhD, is the assistant dean of the Henry C. Lee College of Criminal Justice and Forensic Science at the University of New Haven. His interests are in machine-learning techniques and terrorism.</p>
+<p><bold>John M. Miller</bold>, PhD, was an assistant professor of Business at Sam Houston State University and is now pursuing a second career as a United States Peace Corps Volunteer.</p>
+</bio>
+<ref-list>
+<title>7. References</title>
+<ref id="bibr1-1548512912455470">
+<label>1.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Mabrey</surname><given-names>DJ</given-names></name>
+</person-group>. (<year>2006</year>). <source>Tactical terrorism analysis: a comparative study of statistical learning techniques to predict culpability for terrorist bombings in two regional low-intensity conflicts</source>. PhD Thesis, <publisher-name>Sam Houston State University</publisher-name>, <publisher-loc>USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr2-1548512912455470">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Priest</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Bali bombing may represent new wave of al-Qaeda strikes</article-title>. <source>The Washington Post</source> <year>2002</year> <month>October</month> <volume>14</volume>: <fpage>A24</fpage>.</citation>
+</ref>
+<ref id="bibr3-1548512912455470">
+<label>3.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Heuer</surname><given-names>RJ</given-names></name>
+</person-group>. <source>Psychology of intelligence analysis</source>. <publisher-loc>MacLean, Virginia</publisher-loc>: <publisher-name>Center for the Study of Analysis, MacLean</publisher-name>, <year>1999</year>.</citation>
+</ref>
+<ref id="bibr4-1548512912455470">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Breiman</surname><given-names>L</given-names></name>
+</person-group>. <article-title>Random Forests</article-title>. <source>Mach Learn</source> <year>2001</year>; <volume>45</volume>: <fpage>5</fpage>–<lpage>32</lpage>.</citation>
+</ref>
+<ref id="bibr5-1548512912455470">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kleck</surname><given-names>G</given-names></name>
+<name><surname>Tark</surname><given-names>J</given-names></name>
+<name><surname>Bellows</surname><given-names>J</given-names></name>
+</person-group>. <article-title>What methods are most frequently used in criminology and criminal justice?</article-title> <source>J Crim Just</source> <year>2006</year>: <volume>34</volume>: <fpage>147</fpage>–<lpage>152</lpage>.</citation>
+</ref>
+<ref id="bibr6-1548512912455470">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jackson</surname><given-names>AL</given-names></name>
+<name><surname>Brown</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Ensuring efficiency, interagency cooperation, and protection of civil liberties: shifting from a traditional model of policing to an intelligence led policing paradigm</article-title>. <source>Crim. Just St</source>. <year>2007</year>; <volume>20</volume>: <fpage>111</fpage>–<lpage>129</lpage>.</citation>
+</ref>
+<ref id="bibr7-1548512912455470">
+<label>7.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Hastie</surname><given-names>T</given-names></name>
+<name><surname>Tibshirani</surname><given-names>R</given-names></name>
+<name><surname>Freidman</surname><given-names>J</given-names></name>
+</person-group>. <source>The elements of statistical learning: data mining, inference and prediction</source>. <edition>2nd ed</edition>. <publisher-loc>New York</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2008</year>.</citation>
+</ref>
+<ref id="bibr8-1548512912455470">
+<label>8.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Prinzie</surname><given-names>A</given-names></name>
+<name><surname>Van den Poel</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Random multiclass classification: generalizing Random Forests to random MNL and random NB</article-title>. In <source>DEXA 2007</source> (eds <person-group person-group-type="editor">
+<name><surname>Wagner</surname><given-names>R</given-names></name>
+<name><surname>Revell</surname><given-names>N</given-names></name>
+<name><surname>Pernul</surname><given-names>G</given-names></name>
+</person-group>), <source>Regensburg, Germany, September 3–7, 2007</source>. <series>Lecture Notes in Computer Science</series>. <publisher-loc>Berlin, Germany</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2007</year>.</citation>
+</ref>
+<ref id="bibr9-1548512912455470">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Berk</surname><given-names>RA</given-names></name>
+</person-group>. <article-title>An introduction to ensemble methods for data analysis</article-title>. <source>Sociol Meth Res</source> <year>2006</year>; <volume>34</volume>: <fpage>263</fpage>–<lpage>295</lpage>.</citation>
+</ref>
+<ref id="bibr10-1548512912455470">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Goldman</surname><given-names>L</given-names></name>
+<name><surname>Cook</surname><given-names>EF</given-names></name>
+<name><surname>Brand</surname><given-names>DA</given-names></name><etal/>
+</person-group>. <article-title>A computer protocol to predict myocardial infarction in emergency department patients with chest pain</article-title>. <source>New Engl J Med</source> <year>1988</year>; <volume>318</volume>: <fpage>797</fpage>–<lpage>803</lpage>.</citation>
+</ref>
+<ref id="bibr11-1548512912455470">
+<label>11.</label>
+<citation citation-type="book">
+<collab>Government Accounting Office</collab>. <source>Data mining: federal efforts cover a wide range of uses</source>. Report, <publisher-name>Government Printing Office</publisher-name>. GAO-04-548, <year>2004</year>. <publisher-loc>Washington, DC</publisher-loc>.</citation>
+</ref>
+<ref id="bibr12-1548512912455470">
+<label>12.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Berk</surname><given-names>R A</given-names></name>
+<name><surname>Baek</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Ensemble procedures for finding high risk prison inmates</article-title>. <ext-link ext-link-type="uri" xlink:href="http://statistics.ucla.edu/preprints/uclastat-preprint-2003:27">http://statistics.ucla.edu/preprints/uclastat-preprint-2003:27</ext-link> (<year>2003</year>, <access-date>accessed 2 April 2009</access-date>).</citation>
+</ref>
+<ref id="bibr13-1548512912455470">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Berk</surname><given-names>R A</given-names></name>
+<name><surname>He</surname><given-names>Y</given-names></name>
+<name><surname>Sorenson</surname><given-names>SB</given-names></name>
+</person-group>. <article-title>Developing a practical forecasting screener for domestic violence incidents</article-title>. <source>Eval Rev</source> <year>2005</year>; <volume>29</volume>: <fpage>358</fpage>–<lpage>383</lpage>.</citation>
+</ref>
+<ref id="bibr14-1548512912455470">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Strano</surname><given-names>M</given-names></name>
+</person-group>. <article-title>A neural network applied to criminal psychological profiling: an Italian initiative</article-title>. <source>Int J Offend Ther</source> <year>2004</year>; <volume>48</volume>: <fpage>495</fpage>–<lpage>503</lpage>.</citation>
+</ref>
+<ref id="bibr15-1548512912455470">
+<label>15.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Palocsay</surname><given-names>SW</given-names></name>
+<name><surname>Wang</surname><given-names>P</given-names></name>
+<name><surname>Brookshire</surname><given-names>RG</given-names></name>
+</person-group>. <article-title>Predicting criminal recidivism using neural networks</article-title>. <source>Socio Econ Plan Sci</source> <year>2000</year>; <volume>34</volume>: <fpage>271</fpage>–<lpage>284</lpage>.</citation>
+</ref>
+<ref id="bibr16-1548512912455470">
+<label>16.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Kangas</surname><given-names>LJ</given-names></name>
+</person-group>. <source>Artificial neural network system for classification of offenders in murder and rape cases</source>. Report for the Department of Justice. U.S. DOJ Publication no. 190984. <publisher-name>National Institute of Justice</publisher-name>: <publisher-name>Washington, D.C</publisher-name>., <year>2001</year>.</citation>
+</ref>
+<ref id="bibr17-1548512912455470">
+<label>17.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Hale</surname><given-names>WC</given-names></name>
+</person-group>. <article-title>Twenty-first century terrorism, twenty-first century answers: the why and how of collection, analysis, and dissemination of open source intelligence</article-title>. PhD Thesis, <publisher-name>Sam Houston State University</publisher-name>, <publisher-loc>USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr18-1548512912455470">
+<label>18.</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Graham</surname><given-names>S</given-names></name>
+<name><surname>Ruths</surname><given-names>D</given-names></name>
+<name><surname>Bronk</surname><given-names>C</given-names></name><etal/>
+</person-group>. <article-title>The event-participant inference problem: using open source information and Bayes’ rule to select for the most likely participants in a terrorist incident [White paper]</article-title>, <year>2009</year>.</citation>
+</ref>
+<ref id="bibr19-1548512912455470">
+<label>19.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Rish</surname><given-names>I</given-names></name>
+</person-group>. <article-title>An empirical study of the naïve Bayes classiﬁer</article-title>. In <conf-name>Proceedings of IJCAI-01 workshop on empirical methods in AI</conf-name>, <conf-loc>Sicily, Italy</conf-loc>, <conf-date>August 4th</conf-date>, <year>2001</year>, pp. <fpage>41</fpage>–<lpage>46</lpage>.</citation>
+</ref>
+<ref id="bibr20-1548512912455470">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hand</surname><given-names>DJ</given-names></name>
+<name><surname>Yu</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Idiot Bayes: not so stupid after all?</article-title> <source>Int Stat Rev</source> <year>2001</year>; <volume>69</volume>: <fpage>385</fpage>–<lpage>398</lpage>.</citation>
+</ref>
+<ref id="bibr21-1548512912455470">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Morgan</surname><given-names>JN</given-names></name>
+<name><surname>Sonquist</surname><given-names>JA</given-names></name>
+</person-group>. <article-title>Problems in the analysis of survey data and a proposal</article-title>. <source>J Amer Stat Assoc</source> <year>1963</year>; <volume>58</volume>: <fpage>415</fpage>–<lpage>434</lpage>.</citation>
+</ref>
+<ref id="bibr22-1548512912455470">
+<label>22.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Freund</surname><given-names>Y</given-names></name>
+<name><surname>Schapire</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Experiments with a new boosting algorithm</article-title>. In <conf-name>Machine learning: proceedings of the thirteenth international conference</conf-name>, <conf-loc>Bari, Italy</conf-loc>, <conf-date>July 3–6</conf-date>, <year>1996</year>. <fpage>148</fpage>–<lpage>156</lpage>.</citation>
+</ref>
+<ref id="bibr23-1548512912455470">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Huang</surname><given-names>Y</given-names></name>
+<name><surname>Haifeng</surname><given-names>L</given-names></name>
+<name><surname>Hu</surname><given-names>H</given-names></name><etal/>
+</person-group>. <article-title>Systematic discovery of functional modules and context-specific functional annotation of the human genome</article-title>. <source>Bioinf</source> <year>2007</year>; <volume>23</volume>(<issue>13</issue>): <fpage>i222</fpage>–<lpage>i229</lpage>.</citation>
+</ref>
+<ref id="bibr24-1548512912455470">
+<label>24.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Church</surname><given-names>P</given-names></name>
+</person-group>. <source>A short history of South-East Asia</source>. <edition>4th ed.</edition> <publisher-loc>Hoboken, NJ</publisher-loc>: <publisher-name>John Wiley and Sons</publisher-name> p. <fpage>124</fpage>.</citation>
+</ref>
+<ref id="bibr25-1548512912455470">
+<label>25.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Del Callar</surname><given-names>M</given-names></name>
+</person-group>. <article-title>RP least competitive in Asia; graft blamed</article-title>. <source>The Daily Tribune</source> [Internet].<day>21</day> <month>May</month> <year>2009</year> [cited <day>12</day> <month>June</month> <year>2009</year>]. Available from: <ext-link ext-link-type="uri" xlink:href="http://www.tribune.net.ph/20090521/headlines/20090521hed1.html">http://www.tribune.net.ph/20090521/headlines/20090521hed1.html</ext-link>.</citation>
+</ref>
+<ref id="bibr26-1548512912455470">
+<label>26.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Strobel</surname><given-names>WP</given-names></name>
+</person-group>. <article-title>The Philippines: America’s other war on terrorism</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.mcclatchydc.com/100/story/54611.html">http://www.mcclatchydc.com/100/story/54611.html</ext-link> (<day>22</day> <month>October</month> <year>2008</year>, <access-date>accessed on 12 June 2009</access-date>).</citation>
+</ref>
+<ref id="bibr27-1548512912455470">
+<label>27.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Vitug</surname><given-names>MD</given-names></name>
+<name><surname>Gloria</surname><given-names>GM</given-names></name>
+</person-group>. <source>Under the crescent moon: rebellion in Mindanao</source>. <publisher-loc>Quezon City, The Philippines</publisher-loc>: <publisher-name>Ateneo Center for Social Policy &amp; Public Affairs and Institute for Popular Democracy</publisher-name>, <year>2000</year>.</citation>
+</ref>
+<ref id="bibr28-1548512912455470">
+<label>28.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Mingxin</surname><given-names>B</given-names></name>
+</person-group>. <article-title>At least 58 foreign terrorists operating in the Philippines</article-title>., <source>Xinhua</source> [Internet]. <day>21</day> <month>October</month> <year>2008</year> [cited <day>12</day> <month>June</month> <year>2009</year>]. Available from: <ext-link ext-link-type="uri" xlink:href="http://news.xinhuanet.com/english/2008-10/21/content_10229564.htm">http://news.xinhuanet.com/english/2008-10/21/content_10229564.htm</ext-link>.</citation>
+</ref>
+<ref id="bibr29-1548512912455470">
+<label>29.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Fortuna</surname><given-names>JF</given-names></name>
+</person-group>. <article-title>NPA: where to go from here?</article-title> <source>Manila Times</source> [Internet]. <day>29</day> <month>March</month> <year>2007</year> [cited <day>12</day> <month>June</month> <year>2009</year>]. Available from: <ext-link ext-link-type="uri" xlink:href="http://www.manilatimes.net/national/2007/mar/29/yehey/opinion/20070329opi2.html">http://www.manilatimes.net/national/2007/mar/29/yehey/opinion/20070329opi2.html</ext-link>.</citation>
+</ref>
+<ref id="bibr30-1548512912455470">
+<label>30.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Lingui</surname><given-names>X</given-names></name>
+</person-group>. <article-title>Ransom, politics embolden Philippine kidnappers</article-title>. <source>Xinhua</source> [Internet]. <day>8</day> <month>February</month> <year>2009</year> [cited <day>12</day> <month>June</month> <year>2009</year>]. Available from: <ext-link ext-link-type="uri" xlink:href="http://news.xinhuanet.com/english/2009-02/08/content_10782123.htm">http://news.xinhuanet.com/english/2009-02/08/content_10782123.htm</ext-link>.</citation>
+</ref>
+<ref id="bibr31-1548512912455470">
+<label>31.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Berk</surname><given-names>RA</given-names></name>
+</person-group>. <article-title>Statistical difficulties in determining the role of race in capital cases: a re-analysis of data from the state of Maryland</article-title>. <source>J of Quant Criminol</source> <year>2005</year>; <volume>21</volume>: <fpage>365</fpage>–<lpage>390</lpage>.</citation>
+</ref>
+<ref id="bibr32-1548512912455470">
+<label>32.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Witten</surname><given-names>IH</given-names></name>
+<name><surname>Frank</surname><given-names>E</given-names></name>
+</person-group>. <source>Data mining: practical machine-learning tools and techniques</source>. <edition>2nd ed.</edition> <publisher-loc>San Francisco, CA</publisher-loc>: <publisher-name>Morgan Kaufmann</publisher-name>, <year>2005</year>.</citation>
+</ref>
+<ref id="bibr33-1548512912455470">
+<label>33.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Breitenbach</surname><given-names>M</given-names></name>
+<name><surname>Nielsen</surname><given-names>R</given-names></name>
+<name><surname>Grudic</surname><given-names>GZ</given-names></name>
+</person-group>. <article-title>Probabilistic Random Forests: predicting data point specific misclassification probabilities</article-title>. <ext-link ext-link-type="uri" xlink:href="http://www.cs.colorado.edu/department/publications/reports/docs/CU-CS-954-03.pdf">http://www.cs.colorado.edu/department/publications/reports/docs/CU-CS-954-03.pdf</ext-link> (<access-date>accessed 29 June 2009</access-date>).</citation>
+</ref>
+</ref-list>
+</back>
+</article>

@@ -1,0 +1,4977 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JIS</journal-id>
+<journal-id journal-id-type="hwp">spjis</journal-id>
+<journal-title>Journal of Information Science</journal-title>
+<issn pub-type="ppub">0165-5515</issn>
+<issn pub-type="epub">1741-6485</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0165551512459919</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0165551512459919</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Word sense disambiguation based on positional weighted context</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Huang</surname><given-names>Shilin</given-names></name>
+<aff id="aff1-0165551512459919">Zhejiang University, China</aff>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Zheng</surname><given-names>Xiaolin</given-names></name>
+<aff id="aff2-0165551512459919">Zhejiang University, China</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Kang</surname><given-names>Haixiao</given-names></name>
+<aff id="aff3-0165551512459919">Zhejiang University, China</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Chen</surname><given-names>Deren</given-names></name>
+<aff id="aff4-0165551512459919">Zhejiang University, China</aff>
+</contrib>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0165551512459919">Xiaolin Zheng, College of Computer Science and Technology, Zhejiang University, Hangzhou, 310027, China. Email: <email>xlzheng@zju.edu.cn</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>39</volume>
+<issue>2</issue>
+<fpage>225</fpage>
+<lpage>237</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">Chartered Institute of Library and Information Professionals</copyright-holder>
+</permissions>
+<abstract>
+<p>Word sense disambiguation (WSD) is a key factor in solving natural language processing problems. The purpose of WSD is to make computers automatically determine the specific meaning of a word in a specific context. In this regard, state-of-art studies have focussed on the co-occurrences of words to measure context similarity. However, a problem with these approaches is that they consider all the words within a certain range to have equal influence on the ambiguous word. In this paper, we propose a position-based algorithm for measuring context similarity. By assigning positional weights to context words, we compared the context similarity between a new instance and pre-labelled instances to determine the appropriate sense of the ambiguous word. Experiments on the Senseval-2 English lexical sample task showed that our algorithm can achieve good precision and recall. Even in a minimally supervised state, it performs well with few training instances.</p>
+</abstract>
+<kwd-group>
+<kwd>natural language processing</kwd>
+<kwd>similarity measurement</kwd>
+<kwd>word sense disambiguation</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0165551512459919" sec-type="intro">
+<title>1. Introduction</title>
+<p>Human language can be ambiguous, because many words can be interpreted in multiple ways depending on the contexts they occur in. Word sense disambiguation (WSD) is the computational identification of meanings for words in contexts [<xref ref-type="bibr" rid="bibr1-0165551512459919">1</xref>]. Most often, human beings understand the meaning of a word without even realizing the ambiguity of the word in that language. However, understanding ambiguous words is not that easy for machines. WSD has been considered to be an artificial intelligence (AI)-complete problem [<xref ref-type="bibr" rid="bibr2-0165551512459919">2</xref>]. By analogy to nondeterministic polynomial time-completeness in complexity theory, its difficulty is equivalent to solving central problems of AI. WSD is a core research topic in natural language processing (NLP), and the outcomes of WSD are closely related to many NLP problems, such as machine translation, information retrieval and text classification.</p>
+<p>According to the disambiguation process being supervised or not, there are two conventional approaches to WSD: supervised WSD and unsupervised WSD. For different variants of WSD, the appropriate approach differs. Lexical sample WSD, also known as targeted WSD, involves disambiguating the occurrences of a small sample of target words that have been previously selected. This task can label training data beforehand and, thus, supervised approaches are typically employed to obtain better results. On the other hand, the all-word WSD task needs to disambiguate all the words in a piece of running text. This type of task requires wide-coverage systems, and it is difficult to gain manually labelled data for the supervised system. In such a case, knowledge-based WSD systems, which rely on full-coverage knowledge resources, are more appropriate [<xref ref-type="bibr" rid="bibr1-0165551512459919">1</xref>]. Knowledge-based WSD is an unsupervised WSD approach. It does not exploit any manually sense-tagged corpus; it exploits knowledge resources (such as dictionaries, thesauri, ontologies, etc.) to determine the meanings of words in context [<xref ref-type="bibr" rid="bibr3-0165551512459919">3</xref>]. Because it uses large amounts of structured knowledge, it has the advantage of a wider coverage.</p>
+<p>So far, a great disparity exists with regard to accuracy between unsupervised and supervised approaches. However, supervised methods always suffer from the problem of data sparseness. In order to have less dependency on manual effort, we use the principle of unsupervised methods. Furthermore, to ensure good accuracy, we use some training data as the knowledge resource. Similarity measurement (SM) is employed in this case. The existing SM methods usually consider words in a range around the ambiguous word as its context. All these words are equally treated. However, words close to the ambiguous word should have a greater influence than those further away. Lv and Zhai [<xref ref-type="bibr" rid="bibr4-0165551512459919">4</xref>] investigated the position-based relationship between words and developed a positional language model. They proposed that two words influence each other differently as the distance between them changes. Based on this positional interrelationship of words, we developed a positional weighted WSD system (PWWS) in this paper. We use the tuple &lt;word, context&gt; to represent the relationship between an ambiguous word and its context. For this, pre-labelled instances are used, and a new instance is compared with the labelled instances on the basis of word distribution and is classified as having sense with a similar context.</p>
+<p>The remainder of this paper is structured as follows. In Section 2, we review and discuss the state-of-art WSD algorithms. In Section 3, we research how the distance feature of context words influences the ambiguous word. The construction of the PWWS system is also discussed in this section. Then, in Section 4, we devise a set of experiments to find the most appropriate distance weighting function for our system. With the chosen function, we compare the results with other WSD systems on the Senseval-2 English Lexical Sample task. Thereafter, we present a comparative analysis and discussion. The final section presents the conclusions of this study.</p>
+</sec>
+<sec id="section2-0165551512459919">
+<title>2. Related work</title>
+<p>Almost all machine learning methods have been applied to WSD. Supervised WSD methods take advantage of large-scale corpuses that contain manually pre-labelled word senses to extract features of a particular word sense. With these features, they develop classifiers or classification rules by using machine learning methods. Among the supervised WSD methods, some of the better approaches include regularized least squares classification (RLRC) based systems, memory-based learning systems and support vector machine (SVM) based systems [<xref ref-type="bibr" rid="bibr3-0165551512459919">3</xref>]. These systems are considered better because of their adaptability to high-dimension feature space. In addition, statistical learning algorithms have been introduced into WSD, as described by Azzini et al. [<xref ref-type="bibr" rid="bibr5-0165551512459919">5</xref>, <xref ref-type="bibr" rid="bibr6-0165551512459919">6</xref>], who proposed a supervised WSD system that was based on the neutral network and the evolution algorithm. Yu et al. [<xref ref-type="bibr" rid="bibr7-0165551512459919">7</xref>] compared the performances of neutral network and SVM-based algorithms and found that SVM-based methods performed better on disambiguation, whereas neutral network based methods were more suitable for evaluating the effect of linguistic features on the target word.</p>
+<p>Data sparseness poses a challenge for supervised methods. To overcome this challenge, semi-supervised approaches have been proposed. They introduce a bootstrapping algorithm to obtain a large amount of labelled data. The bootstrapping algorithm uses a few labelled data as the seed to train an initial classifier. The classified raw data with great confidence will be added to the seed set. This process is repeated until sufficient labelled data are obtained. The Yarowsky algorithm [<xref ref-type="bibr" rid="bibr8-0165551512459919">8</xref>] was an early version of such methods. It utilized the characteristic of human language that a word in one passage may have only one sense. However, it was proved to be impractical in practical applications in the real world by Sanchez-de-Madariaga and Fernandez-del-Castillo [<xref ref-type="bibr" rid="bibr9-0165551512459919">9</xref>]. They devised and presented a new bootstrapping mechanism for the Yarowsky algorithm to make it adapt to the real corpus. In addition, to the bootstrapping algorithm, utilization of word alignment is also a resolution. Chan et al. [<xref ref-type="bibr" rid="bibr10-0165551512459919">10</xref>] obtained labelled data from an English–Chinese parallel corpus. An optimization was proposed by Zhong and Ng [<xref ref-type="bibr" rid="bibr11-0165551512459919">11</xref>], who found Chinese synonyms in the English–Chinese parallel corpus and bilingual lexicon. Similarly, Kishida and Ishita [<xref ref-type="bibr" rid="bibr12-0165551512459919">12</xref>] used a sentence-aligned bilingual corpus, which they used to build a context-based cross-language transition probability model to deal with WSD tasks.</p>
+<p>Unlike supervised approaches, unsupervised approaches can obtain sense-related features directly from raw data or a machine-readable lexicon. They cluster instances by senses based on the hypothesis that words with similar senses appear in similar contexts [<xref ref-type="bibr" rid="bibr13-0165551512459919">13</xref>]. The Lesk algorithm [<xref ref-type="bibr" rid="bibr14-0165551512459919">14</xref>] is a classical knowledge-based unsupervised algorithm. It was based on the folling hypothesis: words used together in text are related to each other and the relation can be observed in the definitions of the words and their senses. Efforts have been made to improve the Lesk algorithm. Gaona et al. [<xref ref-type="bibr" rid="bibr15-0165551512459919">15</xref>] proposed an effective sense-allocation mechanism to the Lesk algorithm by extracting the statistical information of a word in both context and annotation. In addition to Lesk-based approaches, an unsupervised system named UNED-LS-U [<xref ref-type="bibr" rid="bibr16-0165551512459919">16</xref>] has become well known. A symmetric matrix of co-occurrence for words was constructed as the base of a correlation matrix with the common information measure between words. This correlation matrix worked well on all-word WSD, but had some problems on the lexical sample WSD. The reason for this was that unrelated words rarely appear in both context and sense definition. A solution for this that involved extracting preference and layer information from the corpus to extend the sense annotation was proposed sometime later by Fernandez-Amoros et al. [<xref ref-type="bibr" rid="bibr17-0165551512459919">17</xref>].</p>
+<p>To date, the best unsupervised systems are mostly based on the construction of a co-occurrence graph with lexicon resources such as WordNet [<xref ref-type="bibr" rid="bibr18-0165551512459919">18</xref>] and Roget’s Thesaurus. In addition, other knowledge has been introduced to WSD. Pinto et al. [<xref ref-type="bibr" rid="bibr19-0165551512459919">19</xref>] made use of a bilingual statistical lexicon to overcome cross-language WSD and cross-language lexical substitution. The biggest online encyclopaedia, Wikipedia, supplies a new knowledge base for WSD. Fogarolli [<xref ref-type="bibr" rid="bibr20-0165551512459919">20</xref>] researched the link structure in Wikipedia to learn the lexicographic relations, whereas Turdakov and Kuznetsov [<xref ref-type="bibr" rid="bibr21-0165551512459919">21</xref>] directly analysed the semantic relationships of the concepts provided by Wikipedia. Li et al. [<xref ref-type="bibr" rid="bibr22-0165551512459919">22</xref>] extracted key phrases from titles and anchor texts in an attempt to disambiguate the key phrases by analysing the generality and relationship between topics and contexts. Multiple knowledge resources have been combined for more information. For example, Zavitsanos et al. [<xref ref-type="bibr" rid="bibr23-0165551512459919">23</xref>] merged WordNet and Wikipedia to map text to ontology.</p>
+<p>Recently, supervised approaches have been held to be superior with regard to their performance in disambiguation. However, they face a bottleneck when confronted by data sparseness. Although it is true that a bootstrapping algorithm can obtain large quantities of labelled data, these data are not confidently correct. On the other hand, unsupervised approaches require no manually labelled data, but their performances are just passable. In this paper, we try to obtain good accuracy on disambiguation while simultaneously reducing reliance on manual efforts. We used the idea of unsupervised algorithms and some training data as the knowledge resource. If a new instance has a similar context to the samples of a particular sense, it is probable that it will have the same sense. The benefit of this is that the number of training instances for each sense is not necessarily large. Our system performs well even when few training instances are involved.</p>
+<p>The performance of an unsupervised system depends on the way it measures similarity. In current approaches, all context words within a particular window are treated equivalently. In instances such as ‘the <italic>bank</italic> near the river’, the identification of the correct sense for the word ‘bank’ with a context ‘river’ may be difficult. Our resolution is to weight the context features by the distance between words. Distant words have a weaker influence on the ambiguous word. In the former example, the word ‘river’ is not that close to ‘bank’ as in the phrase ‘a river <italic>bank</italic>’. We thus consider it to be not so important for the sense selection of ‘bank’. We can measure the similarity between contexts more precisely and reduce instances of misinterpretation with the use of positional weights.</p>
+</sec>
+<sec id="section3-0165551512459919">
+<title>3. Positional weighted WSD system</title>
+<sec id="section4-0165551512459919">
+<title>3.1. Problem definition</title>
+<p>Let us assume the ambiguous word to be <italic>w</italic>, and its context to be <italic>C</italic>. The word <italic>w</italic> may have several senses, and they can be represented as a sense collection, <italic>senses w</italic> = {<italic>s</italic><sub>1</sub>, <italic>s</italic><sub>2</sub>, …, <italic>s<sub>n</sub></italic>}. Meanwhile, for each sense <italic>s<sub>i</sub></italic><inline-formula id="inline-formula1-0165551512459919">
+<mml:math display="inline" id="math1-0165551512459919">
+<mml:mrow>
+<mml:mo>∈</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula><italic>senses w, w</italic> could occur in multiple contexts. These contexts can be represented as a context collection, <italic>CS</italic>(<italic>w,s</italic>) = {<italic>C</italic><sub>1</sub>, <italic>C</italic><sub>2</sub>, …, <italic>C<sub>m</sub></italic>}.</p>
+<p>For simplicity, we define several symbols to describe the relationship between the word <italic>w</italic> and its context <italic>C</italic> as follows.</p>
+<p><disp-quote>
+<p>
+<bold>Definition 1.</bold> Tuple &lt;<italic>w,C</italic>&gt; represents that word <italic>w</italic> occurs in context <italic>C</italic>. Triple &lt;<italic>w,s,C</italic>&gt; represents that word <italic>w</italic> occurs in context <italic>C</italic> with a sense <italic>s</italic>.</p>
+<p>
+<bold>Definition 2.</bold> Triple &lt;<italic>w,s,CS</italic>&gt; represents that word <italic>w</italic> occurs in context collection <italic>CS</italic> with a sense <italic>s</italic>. That is, for word <italic>w</italic> with an arbitrary context <inline-formula id="inline-formula2-0165551512459919">
+<mml:math display="inline" id="math2-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>, we have &lt;<italic>w,s,C<sub>j</sub></italic>&gt;. Therefore, we know that &lt;<italic>w,s,CS</italic>&gt; = &lt;<italic>w,s,C<sub>j</sub></italic>&gt;, where the equality sign indicates the equivalence relation.</p>
+</disp-quote></p>
+<p>
+<?h-4?>As mentioned earlier, WSD is designed to automatically identify the meaning of a word in context. This can be transformed into a classification problem if we consider a word sense <italic>s</italic> as a category. Using the symbols defined above, the mission of WSD is actually to find the most appropriate category &lt;<italic>w,s,CS</italic>&gt; for &lt;<italic>w,C</italic>&gt;. To achieve this goal, our strategy is to find the most similar context collection <italic>CS</italic> to context <italic>C</italic>. To measure the similarity of &lt;<italic>w,C</italic>&gt; and &lt;<italic>w,s,CS</italic>&gt;, we continue to define the following symbols.</p>
+<p><disp-quote>
+<p>
+<bold>Definition 3.</bold> &lt;<italic>w,C</italic>&gt; <inline-formula id="inline-formula3-0165551512459919">
+<mml:math display="inline" id="math3-0165551512459919">
+<mml:mrow>
+<mml:mo>≅</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> &lt;<italic>w,C′</italic>&gt; indicates that the contexts <italic>C</italic> and <italic>C′</italic> of word <italic>w</italic> are similar; &lt;<italic>w,C</italic>&gt; <inline-formula id="inline-formula4-0165551512459919">
+<mml:math display="inline" id="math4-0165551512459919">
+<mml:mrow>
+<mml:mo>≅</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> &lt;<italic>w,s,C′</italic>&gt; indicates that the context <italic>C</italic> in which word <italic>w</italic> occurs is similar to the context <italic>C′</italic> in which word <italic>w</italic> occurs with sense <italic>s</italic>. In this instance, the symbol <inline-formula id="inline-formula5-0165551512459919">
+<mml:math display="inline" id="math5-0165551512459919">
+<mml:mrow>
+<mml:mo>≅</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> implies that the two contexts are similar to each other, where the equal sign means they are completely the same.</p>
+<p>
+<bold>Definition 4.</bold> &lt;<italic>w,C</italic>&gt; ~ &lt;<italic>w,s,CS</italic>&gt; indicates that the context <italic>C</italic> in which word <italic>w</italic> occurs is similar to the context collection <italic>CS</italic> in which word <italic>w</italic> occurs with sense <italic>s</italic>. Here, symbol ~ indicates that the context is similar to the context collection. The absence of the equal sign means that it is impossible for a context to be entirely the same as a context collection.</p>
+</disp-quote></p>
+<p>According to these definitions and the hypothesis that words with similar sense occur in similar context, we can obtain the following deduction.</p>
+<p>
+<disp-formula id="disp-formula1-0165551512459919">
+<label>(1)</label>
+<mml:math display="block" id="math6-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>≅</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>⇒</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0165551512459919" xlink:href="10.1177_0165551512459919-eq1.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula2-0165551512459919">
+<label>(2)</label>
+<mml:math display="block" id="math7-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>~</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>⇒</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0165551512459919" xlink:href="10.1177_0165551512459919-eq2.tif"/>
+</disp-formula>
+</p>
+<p>The mission of WSD is then to find <inline-formula id="inline-formula6-0165551512459919">
+<mml:math display="inline" id="math8-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> or <inline-formula id="inline-formula7-0165551512459919">
+<mml:math display="inline" id="math9-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, for which <inline-formula id="inline-formula8-0165551512459919">
+<mml:math display="inline" id="math10-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>≅</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> or <inline-formula id="inline-formula9-0165551512459919">
+<mml:math display="inline" id="math11-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>~</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> holds true.</p>
+</sec>
+<sec id="section5-0165551512459919">
+<title>3.2. Similarity measurement with vector space model</title>
+<p>To find similar context <inline-formula id="inline-formula10-0165551512459919">
+<mml:math display="inline" id="math12-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> or context collection <inline-formula id="inline-formula11-0165551512459919">
+<mml:math display="inline" id="math13-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> for <inline-formula id="inline-formula12-0165551512459919">
+<mml:math display="inline" id="math14-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, we have to introduce the SM. A common method for SM is to make use of the vector space model (VSM). VSM is one of the best-known approaches for text representation. It is based on the idea that text can be transformed into several elements of the vector space in which each element corresponds to a separate term [<xref ref-type="bibr" rid="bibr24-0165551512459919">24</xref>, <xref ref-type="bibr" rid="bibr25-0165551512459919">25</xref>].</p>
+<p>In VSM, the basic linguistic unit is called a feature. It is a component word of context <italic>C</italic>. We use <italic>cw</italic> to represent it, and <italic>C</italic> is a set of <italic>cw</italic>: <inline-formula id="inline-formula13-0165551512459919">
+<mml:math display="inline" id="math15-0165551512459919">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo><mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. Weights are attached to the features to indicate their respective importance to context <italic>C</italic>. We call this weight the character value (<italic>cv</italic>) of the feature. For a context <italic>C</italic> comprising <italic>K</italic> features, we use <inline-formula id="inline-formula14-0165551512459919">
+<mml:math display="inline" id="math16-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> to represent the character value of the <italic>k</italic>th feature <inline-formula id="inline-formula15-0165551512459919">
+<mml:math display="inline" id="math17-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. We use <inline-formula id="inline-formula16-0165551512459919">
+<mml:math display="inline" id="math18-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> as a shorter form for <inline-formula id="inline-formula17-0165551512459919">
+<mml:math display="inline" id="math19-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, and a context <italic>C</italic> can be represent by <inline-formula id="inline-formula18-0165551512459919">
+<mml:math display="inline" id="math20-0165551512459919">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo><mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. This is called the vector representation of context <italic>C</italic>. In brief, we use <inline-formula id="inline-formula19-0165551512459919">
+<mml:math display="inline" id="math21-0165551512459919">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo><mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> instead.</p>
+<p>The cosine similarity is one of the most common measurements for two vectors. After transforming the contexts into vectors, we can calculate the similarity by measuring the cosine of the angle between vectors. However, features differ in different contexts, and variants of cosine similarity have been presented to cope with this problem. The Tanimoto coefficient [<xref ref-type="bibr" rid="bibr26-0165551512459919">26</xref>] is one of the most widely used variants, and it is also called the Generalized Jaccard Coefficient. The cosine similarity metric can be extrapolated such that it yields the Jaccard Coefficient in the case of binary attributes. The Tanimoto Coefficient between contexts <inline-formula id="inline-formula20-0165551512459919">
+<mml:math display="inline" id="math22-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula21-0165551512459919">
+<mml:math display="inline" id="math23-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> can be calculated as follows:</p>
+<p>
+<disp-formula id="disp-formula3-0165551512459919">
+<label>(3)</label>
+<mml:math display="block" id="math24-0165551512459919">
+<mml:mrow>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">→</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">→</mml:mo>
+</mml:mover>
+<mml:mo>·</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo>+</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">→</mml:mo>
+</mml:mover>
+<mml:mo>·</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">→</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mo>∑</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:mo>∑</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0165551512459919" xlink:href="10.1177_0165551512459919-eq3.tif"/>
+</disp-formula>
+</p>
+<p>
+<?h-4?>Here, <inline-formula id="inline-formula22-0165551512459919">
+<mml:math display="inline" id="math25-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula23-0165551512459919">
+<mml:math display="inline" id="math26-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> represent the character values of the <italic>i</italic>th features of contexts <inline-formula id="inline-formula24-0165551512459919">
+<mml:math display="inline" id="math27-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula25-0165551512459919">
+<mml:math display="inline" id="math28-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, respectively.</p>
+<p>To measure the character value of <italic>cw</italic>, the tf-idf (term frequency – inverse document frequency) technology is applied. The tf-idf is one of the most widely used transformation schemes. Zheng et al. used this scheme to calculate query likelihood [<xref ref-type="bibr" rid="bibr27-0165551512459919">27</xref>]. The weight of a term, which means the character value of a context word in this paper, refers to its importance in the context. The tf-idf is based on the statistics of a word; here, tf means the frequency of occurrence of a context word, whereas idf is a measure of term commonness across all contexts. A word is more important to a sense if it appears more frequently in this sense category and less frequently in all the contexts.</p>
+<p>The frequency of a word is probability larger in long text than in short text. To avoid tending to long texts, tf is usually defined with a normalization factor as follows:</p>
+<p>
+<disp-formula id="disp-formula4-0165551512459919">
+<label>(4)</label>
+<mml:math display="block" id="math29-0165551512459919">
+<mml:mrow>
+<mml:mtext>tf</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0165551512459919" xlink:href="10.1177_0165551512459919-eq4.tif"/>
+</disp-formula>
+</p>
+<p>
+<?h-4?>Here, tf(<italic>cw,C</italic>) represents the term frequency of word <italic>cw</italic> in context <italic>C</italic>, <inline-formula id="inline-formula26-0165551512459919">
+<mml:math display="inline" id="math30-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> means the number of times the word <italic>cw</italic> appears in context <italic>C</italic> and <inline-formula id="inline-formula27-0165551512459919">
+<mml:math display="inline" id="math31-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is the normalization factor.</p>
+<p>The Idf is obtained by dividing the total number of documents by the number of documents containing the term, and then taking a logarithm of that quotient.</p>
+<p>
+<disp-formula id="disp-formula5-0165551512459919">
+<label>(5)</label>
+<mml:math display="block" id="math32-0165551512459919">
+<mml:mrow>
+<mml:mtext>idf</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>log</mml:mi>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>:</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>∋</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0165551512459919" xlink:href="10.1177_0165551512459919-eq5.tif"/>
+</disp-formula>
+</p>
+<p>
+<?h-4?>In this equation, <inline-formula id="inline-formula28-0165551512459919">
+<mml:math display="inline" id="math33-0165551512459919">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> means the total number of contexts in the complete training set; <inline-formula id="inline-formula29-0165551512459919">
+<mml:math display="inline" id="math34-0165551512459919">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>:</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>∋</mml:mo>
+<mml:mtext>cw</mml:mtext>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the number of contexts where the word <italic>cw</italic> appears (i.e. tf(<italic>cw,C</italic>) ≠ 0). If the word is not in the samples, this will lead to a division-by-zero. We, therefore, adjust it to <inline-formula id="inline-formula30-0165551512459919">
+<mml:math display="inline" id="math35-0165551512459919">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>:</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>∋</mml:mo>
+<mml:mtext>cw</mml:mtext>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>Based on tf-idf, the character value of a context word <italic>cw</italic> in context <italic>C</italic> can be calculated as its tf-idf weight. That is,</p>
+<p>
+<disp-formula id="disp-formula6-0165551512459919">
+<label>(6)</label>
+<mml:math display="block" id="math36-0165551512459919">
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mtext>tf</mml:mtext>
+<mml:mo>-</mml:mo>
+<mml:mtext>idf</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mtext>tf</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mtext>idf</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>·</mml:mo>
+<mml:mtext>log</mml:mtext>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>:</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>∋</mml:mo>
+<mml:mtext>cw</mml:mtext>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0165551512459919" xlink:href="10.1177_0165551512459919-eq6.tif"/>
+</disp-formula>
+</p>
+<p>In recent research, only words with relatively large weights were considered as feature candidates. Words such as prepositions that appear universally tend to have large idf values. They are probably not considered as features. However, we consider such cases as ‘in the <italic>bank</italic>’ and ‘on the <italic>bank</italic>’. The prepositions in the two phrases clearly indicate the meaning of the word ‘<italic>bank</italic>’. Universal words might be helpful in some cases of WSD. To take advantage of this, we do not extract features with large tf-idf values before commencing WSD. Instead, we give them different weights as their part-of-speech can vary. Nouns and verbs may have larger weight than prepositions. In addition, this weight changes as the part-of-speech of the ambiguous word changes. Generally speaking, adjectives have greater effects on nouns and adverbs on verbs. Prepositions influence both nouns and verbs and, therefore, they have the same weight in these two cases.</p>
+</sec>
+<sec id="section6-0165551512459919">
+<title>3.3. Positional weighting model</title>
+<p>It is not only the part-of-speech of words that influences the importance of a context word to the ambiguous word. As mentioned earlier in this paper, the distance between the words affects their relationship markedly. The existing methods only consider the number of occurrences of a context word. They do not care about where it occurs. Words far from the ambiguous word might not even be related to it. They might disturb the disambiguation of the target word, because they have the same weight as the words near the target word. Lv and Zhai [<xref ref-type="bibr" rid="bibr4-0165551512459919">4</xref>] discuss the influence of distance between words in text, and have constructed a positional language model. According to this model, the relationship between two words weakens as the distance between them increases.</p>
+<p>The main purpose of this paper is to introduce the position-based relationship between words into the context vector space model. We add positional weights to the character values of the context words. To measure the distance between a context word <italic>cw</italic> and the ambiguous word <italic>w</italic>, we have some more definitions, as described below.</p>
+<p><disp-quote>
+<p>
+<bold>Definition 5.</bold> The <italic>word distance</italic><inline-formula id="inline-formula31-0165551512459919">
+<mml:math display="inline" id="math37-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> represents the distance between <italic>cw</italic> and <italic>w</italic>; using <inline-formula id="inline-formula32-0165551512459919">
+<mml:math display="inline" id="math38-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> for brevity, it can be calculated as the absolute value of the position shift. If <inline-formula id="inline-formula33-0165551512459919">
+<mml:math display="inline" id="math39-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>position</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the position of word <italic>w</italic>, we have:</p>
+</disp-quote></p>
+<p>
+<disp-formula id="disp-formula7-0165551512459919">
+<label>(7)</label>
+<mml:math display="block" id="math40-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>position</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>position</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0165551512459919" xlink:href="10.1177_0165551512459919-eq7.tif"/>
+</disp-formula>
+</p>
+<p>Using a concept similar to that of Lv and Zhai, the influence of context word <italic>cw</italic> on ambiguous word <italic>w</italic> can be calculated with a function about <inline-formula id="inline-formula34-0165551512459919">
+<mml:math display="inline" id="math41-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. We write it as <inline-formula id="inline-formula35-0165551512459919">
+<mml:math display="inline" id="math42-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, and the value of <inline-formula id="inline-formula36-0165551512459919">
+<mml:math display="inline" id="math43-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> decreases as <inline-formula id="inline-formula37-0165551512459919">
+<mml:math display="inline" id="math44-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> increases.</p>
+<p>We then consider a condition where the two context words <inline-formula id="inline-formula38-0165551512459919">
+<mml:math display="inline" id="math45-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula39-0165551512459919">
+<mml:math display="inline" id="math46-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> appear in different sentences but with same word distances, <inline-formula id="inline-formula40-0165551512459919">
+<mml:math display="inline" id="math47-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. Assume that <inline-formula id="inline-formula41-0165551512459919">
+<mml:math display="inline" id="math48-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is in the same sentence with the <italic>w</italic> while <inline-formula id="inline-formula42-0165551512459919">
+<mml:math display="inline" id="math49-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is not. It is obvious that <inline-formula id="inline-formula43-0165551512459919">
+<mml:math display="inline" id="math50-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> should be more important to <italic>w</italic>. However, we cannot differentiate between <inline-formula id="inline-formula44-0165551512459919">
+<mml:math display="inline" id="math51-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula45-0165551512459919">
+<mml:math display="inline" id="math52-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> unless we introduce the concept of sentence distance.</p>
+<p><disp-quote>
+<p>
+<bold>Definition 6.</bold> The <italic>sentence distance</italic><inline-formula id="inline-formula46-0165551512459919">
+<mml:math display="inline" id="math53-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> represents the distance between sentences to which <italic>cw</italic> and <italic>w</italic> belong. Represented as <inline-formula id="inline-formula47-0165551512459919">
+<mml:math display="inline" id="math54-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> for simplicity, it can be calculated as the absolute value of the position shift of the two sentences. We use <inline-formula id="inline-formula48-0165551512459919">
+<mml:math display="inline" id="math55-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>position</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> to represent the position of the sentence to which <italic>w</italic> belongs; then we have</p>
+</disp-quote></p>
+<p>
+<disp-formula id="disp-formula8-0165551512459919">
+<label>(8)</label>
+<mml:math display="block" id="math56-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>position</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>position</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0165551512459919" xlink:href="10.1177_0165551512459919-eq8.tif"/>
+</disp-formula>
+</p>
+<p>
+<?h-4?>The sentence distance weight <inline-formula id="inline-formula49-0165551512459919">
+<mml:math display="inline" id="math57-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is a function of <inline-formula id="inline-formula50-0165551512459919">
+<mml:math display="inline" id="math58-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and decreases as <inline-formula id="inline-formula51-0165551512459919">
+<mml:math display="inline" id="math59-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> increases.</p>
+<p><disp-quote>
+<p>
+<bold>Definition 7. <italic><inline-formula id="inline-formula52-0165551512459919">
+<mml:math display="inline" id="math60-0165551512459919">
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula></italic></bold> (<italic>d</italic> for short) represents the overall distance between <italic>cw</italic> and <italic>w</italic>. It is a composition of <inline-formula id="inline-formula53-0165551512459919">
+<mml:math display="inline" id="math61-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula54-0165551512459919">
+<mml:math display="inline" id="math62-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and can be written as <inline-formula id="inline-formula55-0165551512459919">
+<mml:math display="inline" id="math63-0165551512459919">
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+</disp-quote></p>
+<p>Revising <inline-formula id="inline-formula56-0165551512459919">
+<mml:math display="inline" id="math64-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> with <inline-formula id="inline-formula57-0165551512459919">
+<mml:math display="inline" id="math65-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, we can derive the positional weight of <italic>cw</italic> as a composition of word distance and sentence distance weights.</p>
+<p><disp-quote>
+<p>
+<bold>Definition 8. <inline-formula id="inline-formula58-0165551512459919">
+<mml:math display="inline" id="math66-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula></bold> represents the positional weight of context word <italic>cw</italic> with distance <italic>d</italic> to ambiguous word <italic>w</italic>. It can be calculated as:</p>
+</disp-quote></p>
+<p>
+<disp-formula id="disp-formula9-0165551512459919">
+<label>(9)</label>
+<mml:math display="block" id="math67-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0165551512459919" xlink:href="10.1177_0165551512459919-eq9.tif"/>
+</disp-formula>
+</p>
+<p>
+<?h-4?>It is possible that a single word <italic>cw</italic> appears in different positions in a context. Its positional weight in context is the average of positional weights in all these positions:</p>
+<p>
+<disp-formula id="disp-formula10-0165551512459919">
+<label>(10)</label>
+<mml:math display="block" id="math68-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Weight</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dist</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>W</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0165551512459919" xlink:href="10.1177_0165551512459919-eq10.tif"/>
+</disp-formula>
+</p>
+<p>
+<inline-formula id="inline-formula59-0165551512459919">
+<mml:math display="inline" id="math69-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Weight</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dist</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> in the above formula represents the positional weight of <italic>cw</italic> in <italic>C</italic>; <inline-formula id="inline-formula60-0165551512459919">
+<mml:math display="inline" id="math70-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is the number of times <italic>cw</italic> appears in <italic>C</italic>; <inline-formula id="inline-formula61-0165551512459919">
+<mml:math display="inline" id="math71-0165551512459919">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math></inline-formula> indicates the overall distance of <italic>cw</italic> in its <italic>k</italic>th appearance, while <inline-formula id="inline-formula62-0165551512459919">
+<mml:math display="inline" id="math72-0165551512459919">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula63-0165551512459919">
+<mml:math display="inline" id="math73-0165551512459919">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math></inline-formula> represent the word distance and sentence distance in the <italic>k</italic>th appearance, respectively.</p>
+<p>After the definition of positional weight, we now have to find an appropriate function to describe how positional weight declines. Lv and Zhai proposed an experimental method to find the positional function. They experimented on several kernels and found the Gaussian one to be most suitable. However, this is not constant in different language models. Unlike general language models, we only focus on the words that have a direct influence on our target word. This difference makes it inappropriate to adapt Gaussian function to our algorithm. In practice, we similarly consider five classic distribution functions and find the best by experiments. The five functions we choose include:</p>
+<list id="list1-0165551512459919" list-type="order">
+<list-item>
+<p>Gaussian distribution function:</p>
+<p>
+<disp-formula id="disp-formula11-0165551512459919">
+<mml:math display="block" id="math74-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mtext>exp</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mo>-</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mtext>σ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0165551512459919" xlink:href="10.1177_0165551512459919-eq11.tif"/>
+</disp-formula>
+</p>
+</list-item>
+<list-item>
+<p>Triangle function:</p>
+<p>
+<disp-formula id="disp-formula12-0165551512459919">
+<mml:math display="block" id="math75-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>d</mml:mi>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>otherwise</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0165551512459919" xlink:href="10.1177_0165551512459919-eq12.tif"/>
+</disp-formula>
+</p>
+</list-item>
+<list-item>
+<p>Circle function:</p>
+<p>
+<disp-formula id="disp-formula13-0165551512459919">
+<mml:math display="block" id="math76-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msqrt>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>d</mml:mi>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>otherwise</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0165551512459919" xlink:href="10.1177_0165551512459919-eq13.tif"/>
+</disp-formula>
+</p>
+</list-item>
+<list-item>
+<p>Cosine function:</p>
+<p>
+<disp-formula id="disp-formula14-0165551512459919">
+<mml:math display="block" id="math77-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mi>cos</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mo>·</mml:mo>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>d</mml:mi>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>otherwise</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0165551512459919" xlink:href="10.1177_0165551512459919-eq14.tif"/>
+</disp-formula>
+</p>
+</list-item>
+<list-item>
+<p>Power function:</p>
+<p>
+<disp-formula id="disp-formula15-0165551512459919">
+<mml:math display="block" id="math78-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>-</mml:mo>
+<mml:mtext>σ</mml:mtext>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0165551512459919" xlink:href="10.1177_0165551512459919-eq15.tif"/>
+</disp-formula>
+</p>
+</list-item>
+</list>
+<p>The parameter σ controls the rate of decline of a function and it is unknown. The best value of σ differs in different corpuses. The general terms may affect the entire text, and a larger σ works better in such cases. However, this is not the case as discussed above. We select a relatively small σ in our system. The experiments confirm that a smaller σ works better.</p>
+<p>Because the distance of <italic>cw</italic> to <italic>w</italic> includes two components, as described previously, we have to undertake two steps to find the best function for our positional weight.</p>
+<p>First, we try a different value of σ on each word distance function. In this phase, we consider only word distance to influence the positional weight and find the best σ. Second, we evaluate different sentence distance functions based on the chosen word distance functions. We have to identify the best function and corresponding σ in this phase.</p>
+<p>We do not determine the best word distance function in the first phase. It is possible that a worse function would perform best after revision by the sentence distance. This will be verified in the experiments.</p>
+</sec>
+<sec id="section7-0165551512459919">
+<title>3.4. Word sense selection</title>
+<p>After determining the distance function of <italic>cw</italic> in <italic>C</italic>, we are able to calculate the character value of <italic>cw</italic> with its positional weight. After adding a positional weight, <inline-formula id="inline-formula64-0165551512459919">
+<mml:math display="inline" id="math79-0165551512459919">
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> becomes:</p>
+<p>
+<disp-formula id="disp-formula16-0165551512459919">
+<label>(11)</label>
+<mml:math display="block" id="math80-0165551512459919">
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mtext>tf</mml:mtext>
+<mml:mo>-</mml:mo>
+<mml:mtext>idf</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Weight</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dist</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>cw</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula16-0165551512459919" xlink:href="10.1177_0165551512459919-eq16.tif"/>
+</disp-formula>
+</p>
+<p>
+<?h-4?>Applying equation (11) to the Tanimoto coefficient, we can obtain the measure of similarity between <inline-formula id="inline-formula65-0165551512459919">
+<mml:math display="inline" id="math81-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and each <inline-formula id="inline-formula66-0165551512459919">
+<mml:math display="inline" id="math82-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mtext>s</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mtext>C</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> in the training set. We write the similarity <inline-formula id="inline-formula67-0165551512459919">
+<mml:math display="inline" id="math83-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> in a shorter form as <inline-formula id="inline-formula68-0165551512459919">
+<mml:math display="inline" id="math84-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and we obtain the following formula:</p>
+<p>
+<disp-formula id="disp-formula17-0165551512459919">
+<label>(12)</label>
+<mml:math display="block" id="math85-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+<mml:mi>cv</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mi>cv</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ik</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mo>∑</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>cv</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ik</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mo>∑</mml:mo>
+<mml:mi>cv</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mi>cv</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>cw</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ik</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula17-0165551512459919" xlink:href="10.1177_0165551512459919-eq17.tif"/>
+</disp-formula>
+</p>
+<p>
+<?h-4?>We know that <inline-formula id="inline-formula69-0165551512459919">
+<mml:math display="inline" id="math86-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>≅</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>⇒</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>; however, in practical application, it would be more suitable to have <inline-formula id="inline-formula70-0165551512459919">
+<mml:math display="inline" id="math87-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>~</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. The Tonimoto coefficient is not available for the similarity measurement between a context and a context collection. From definition 2, we know that <inline-formula id="inline-formula71-0165551512459919">
+<mml:math display="inline" id="math88-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, where <inline-formula id="inline-formula72-0165551512459919">
+<mml:math display="inline" id="math89-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. We define the similarity between <inline-formula id="inline-formula73-0165551512459919">
+<mml:math display="inline" id="math90-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula74-0165551512459919">
+<mml:math display="inline" id="math91-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> as the average value of <inline-formula id="inline-formula75-0165551512459919">
+<mml:math display="inline" id="math92-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, where <inline-formula id="inline-formula76-0165551512459919">
+<mml:math display="inline" id="math93-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. Using <inline-formula id="inline-formula77-0165551512459919">
+<mml:math display="inline" id="math94-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> as the similarity between a context <italic>C</italic> and a context collection <italic>CS</italic>, and <inline-formula id="inline-formula78-0165551512459919">
+<mml:math display="inline" id="math95-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> as its shorter form, we have:</p>
+<p>
+<disp-formula id="disp-formula18-0165551512459919">
+<label>(13)</label>
+<mml:math display="block" id="math96-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula18-0165551512459919" xlink:href="10.1177_0165551512459919-eq18.tif"/>
+</disp-formula>
+</p>
+<p>Here, <inline-formula id="inline-formula79-0165551512459919">
+<mml:math display="inline" id="math97-0165551512459919">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is short for <inline-formula id="inline-formula80-0165551512459919">
+<mml:math display="inline" id="math98-0165551512459919">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and means the amount of contexts with sense <italic>s</italic>. <inline-formula id="inline-formula81-0165551512459919">
+<mml:math display="inline" id="math99-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> means the <italic>i</italic>th context in <italic>CS</italic>.</p>
+<p>We tend to word sense with a greater similarity generally. However, word sense is unnecessarily independent; <inline-formula id="inline-formula82-0165551512459919">
+<mml:math display="inline" id="math100-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> can be similar to several contexts with different senses. We introduce a conditional probability <inline-formula id="inline-formula83-0165551512459919">
+<mml:math display="inline" id="math101-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> to help us determine the similarity. This probability means the probability to choose sense <italic>s<sub>n</sub></italic> when the similarity is <inline-formula id="inline-formula84-0165551512459919">
+<mml:math display="inline" id="math102-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>.We use a score <inline-formula id="inline-formula85-0165551512459919">
+<mml:math display="inline" id="math103-0165551512459919">
+<mml:mrow>
+<mml:mi>Score</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> to measure the possibility that <inline-formula id="inline-formula86-0165551512459919">
+<mml:math display="inline" id="math104-0165551512459919">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> would choose sense <inline-formula id="inline-formula87-0165551512459919">
+<mml:math display="inline" id="math105-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. Using the shorter form <inline-formula id="inline-formula88-0165551512459919">
+<mml:math display="inline" id="math106-0165551512459919">
+<mml:mrow>
+<mml:mi>Score</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, we have:</p>
+<p>
+<disp-formula id="disp-formula19-0165551512459919">
+<label>(14)</label>
+<mml:math display="block" id="math107-0165551512459919">
+<mml:mrow>
+<mml:mi>Score</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ni</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ni</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula19-0165551512459919" xlink:href="10.1177_0165551512459919-eq19.tif"/>
+</disp-formula>
+</p>
+<p>Here, <inline-formula id="inline-formula89-0165551512459919">
+<mml:math display="inline" id="math108-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> means the context collection with the <italic>n</italic>th sense <inline-formula id="inline-formula90-0165551512459919">
+<mml:math display="inline" id="math109-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and <inline-formula id="inline-formula91-0165551512459919">
+<mml:math display="inline" id="math110-0165551512459919">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the amount of contexts it contains. <inline-formula id="inline-formula92-0165551512459919">
+<mml:math display="inline" id="math111-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ni</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> represents the <italic>i</italic>th context in <inline-formula id="inline-formula93-0165551512459919">
+<mml:math display="inline" id="math112-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>It is not easy to obtain the value of <inline-formula id="inline-formula94-0165551512459919">
+<mml:math display="inline" id="math113-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>in practice. According to the Bayesian theory, we know that <inline-formula id="inline-formula95-0165551512459919">
+<mml:math display="inline" id="math114-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>∝</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, where <inline-formula id="inline-formula96-0165551512459919">
+<mml:math display="inline" id="math115-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> represents the probability of having a similarity <inline-formula id="inline-formula97-0165551512459919">
+<mml:math display="inline" id="math116-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> in the case where <italic>w</italic> has sense <inline-formula id="inline-formula98-0165551512459919">
+<mml:math display="inline" id="math117-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and <inline-formula id="inline-formula99-0165551512459919">
+<mml:math display="inline" id="math118-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> represents the prior probability of <inline-formula id="inline-formula100-0165551512459919">
+<mml:math display="inline" id="math119-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. Equation (14) can be changed to the following form:</p>
+<p>
+<disp-formula id="disp-formula20-0165551512459919">
+<label>(15)</label>
+<mml:math display="block" id="math120-0165551512459919">
+<mml:mrow>
+<mml:mi>Score</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mrow>
+<mml:mo>∑</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ni</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ni</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula20-0165551512459919" xlink:href="10.1177_0165551512459919-eq20.tif"/>
+</disp-formula>
+</p>
+<p>If a large amount of training data is available, <inline-formula id="inline-formula101-0165551512459919">
+<mml:math display="inline" id="math121-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula102-0165551512459919">
+<mml:math display="inline" id="math122-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> can be obtained from these data. However, this is not the case in this paper. We have to perform an approximation with the limited training data. Because <inline-formula id="inline-formula103-0165551512459919">
+<mml:math display="inline" id="math123-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is a concrete value, we divide the similarity region into several small regions. We approximate <inline-formula id="inline-formula104-0165551512459919">
+<mml:math display="inline" id="math124-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> as the frequency that <inline-formula id="inline-formula105-0165551512459919">
+<mml:math display="inline" id="math125-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> occurs in a particular region in case of <inline-formula id="inline-formula106-0165551512459919">
+<mml:math display="inline" id="math126-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. For the regions in which <inline-formula id="inline-formula107-0165551512459919">
+<mml:math display="inline" id="math127-0165551512459919">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> never occurs, we give them an equal probability of <inline-formula id="inline-formula108-0165551512459919">
+<mml:math display="inline" id="math128-0165551512459919">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, where <inline-formula id="inline-formula109-0165551512459919">
+<mml:math display="inline" id="math129-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula110-0165551512459919">
+<mml:math display="inline" id="math130-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> represent the number of samples and regions, respectively. On the other hand, we use WordNet as a supplement and count the frequency of occurrence of <inline-formula id="inline-formula111-0165551512459919">
+<mml:math display="inline" id="math131-0165551512459919">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> as the approximation of <inline-formula id="inline-formula112-0165551512459919">
+<mml:math display="inline" id="math132-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. In the extreme situation that only one training sample is provided, we can assume that each region has a probability <inline-formula id="inline-formula113-0165551512459919">
+<mml:math display="inline" id="math133-0165551512459919">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, and <inline-formula id="inline-formula114-0165551512459919">
+<mml:math display="inline" id="math134-0165551512459919">
+<mml:mrow>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> can be obtained from WordNet.</p>
+<p>According to the above, the most appropriate sense is the one to make the score <inline-formula id="inline-formula115-0165551512459919">
+<mml:math display="inline" id="math135-0165551512459919">
+<mml:mrow>
+<mml:mi>Score</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>CS</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> the largest. That is,</p>
+<p>
+<disp-formula id="disp-formula21-0165551512459919">
+<label>(16)</label>
+<mml:math display="block" id="math136-0165551512459919">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mi>argmax</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>sense</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:munder>
+<mml:mspace width="0.25em"/>
+<mml:mi>Score</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>CS</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula21-0165551512459919" xlink:href="10.1177_0165551512459919-eq21.tif"/>
+</disp-formula>
+</p>
+<p>As word senses have some similarity themselves, a word may have multiple senses in context. We output all possible senses as a guess result. Each of the guessed senses has a weight indicating their probability of being chosen, which is actually the score obtained in equation (15).</p>
+</sec>
+<sec id="section8-0165551512459919">
+<title>3.5. Overview of the PWWS</title>
+<p>As described above, the word sense disambiguation task can be solved by comparing the context similarity of the samples and the new instance. For the words to be disambiguated, the context words with different parts-of-speech have different influence. In PWWS, we give them different weights of part-of-speech to differentiate their importance. Other than that, a positional weighting model is built in order to describe the positional relation between context words and the target word. The distance is divided into two parts, which are word distance and sentence distance. Our strategy is that it is not only the distance between words that affects their relationship. Which sentences they are in also matters. Our positional weighting model is thus the product of a word distance function and a sentence distance function. These functions will be discussed in Section 4 to find the best model for word sense disambiguation. With the positional weights, we can measure the similarity between contexts more precisely for the target word. However, in practice the context similarity between the new instance and the sample set would be more trustworthy. We proposed a method to measure the similarity between a single instance and an instance set in Section 3.4. Furthermore, we consider the condition that word senses have similarities themselves. The final output of the system would be all the senses with a certain similarity score. The validities of the PWWS and its limited supervised version, L-PWWS, will then be proved in Section 4 with some tests.</p>
+</sec>
+</sec>
+<sec id="section9-0165551512459919">
+<title>4. Experiments</title>
+<p>We experiment with the dataset of the Senseval-2 English Lexical Sample task in this section. Following the two steps described in Section 3.3, we first observe the performance with only word distance. Different functions are tested with various parameters. After determining the best parameter for word distance functions, we add the sentence distance and find the best corresponding sentence distance function. We select the combination with the best performance as our positional weight function. With this best function, we randomly pick different amounts of training data to observe how our algorithm depends on training data. Finally, we compare our results with the existing systems.</p>
+<sec id="section10-0165551512459919">
+<title>4.1. Dataset and benchmark</title>
+<p>Senseval is an international organization devoted to the evaluation of WSD systems. They provided a unified criterion to estimate the advantages and disadvantages of WSD systems. In this paper, our algorithm is mainly aimed at the English Lexical Sample WSD. Senseval-2 provided 12,939 instances of 73 words on this task. These contained 8,611 instances for training and 4328 instances for testing. The word sense was labelled in a WordNet manner.</p>
+<p>The benchmark for the performance of WSD systems includes precision and recall. Precision indicates the percentage of correctly identified words among all labelled words by the system. Recall is the ratio of words correctly labelled by the system among all words that can be labelled. There are two types of evaluation criteria: fine-grained and coarse-grained. The fine-grained criterion requires an exact match of word sense. On the other hand, the coarse-grained criterion considers the affiliation of word senses. It first maps the sub-senses to main senses, and a guessed sense is estimated to be correct if its main sense matches with the answer. Irrespective of fine-grained or coarse-grained criterions, the consulting result is not required to be unique. If only one sense is provided as output by the system, it receives 1 point if it is correct. In case of multiple outputs, the score that a system receives is the sum of weights of correct senses. These two criteria describe the WSD performance under different sense granularities, and they are both considerable. Therefore, we evaluate our system under both criteria.</p>
+</sec>
+<sec id="section11-0165551512459919">
+<title>4.2. Positional weighting function</title>
+<p>Initially, we know nothing about the word distance and sentence distance functions. As described in Section 3.3, we construct two-step experiments. In Section 4.2.1, the five functions are tested with different parameters. In Section 4.2.2, different sentence distance functions and their parameters are tested on the basis of the results of Section 4.2.1.</p>
+<sec id="section12-0165551512459919">
+<title>4.2.1. Finding the best word distance function and its parameter</title>
+<p>In this phase, we assume only word distance influence on the importance of a context word. That is, all the words within a <italic>p</italic>-window have an equal sentence distance weight of 1. We test with several values of parameter σ for each of the five functions. Here, a relatively small value of σ is more appropriate. This has been discussed in Section 3.3. In the triangle, circle and cosine functions, σ can be equivalent to the size of context window. In the Gaussian distribution function, σ is approximated to half of the window size. Furthermore, in the power function, the window size is approximately <inline-formula id="inline-formula116-0165551512459919">
+<mml:math display="inline" id="math137-0165551512459919">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mtext>σ</mml:mtext>
+</mml:mrow>
+</mml:math></inline-formula>. With these rules, we obtained results shown in <xref ref-type="table" rid="table1-0165551512459919">Tables 1</xref><xref ref-type="table" rid="table2-0165551512459919"/><xref ref-type="table" rid="table3-0165551512459919"/><xref ref-type="table" rid="table4-0165551512459919"/>–<xref ref-type="table" rid="table5-0165551512459919">5</xref>.</p>
+<table-wrap id="table1-0165551512459919" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Results of Gaussian distribution with different value of σ</p>
+</caption>
+<graphic alternate-form-of="table1-0165551512459919" xlink:href="10.1177_0165551512459919-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Results</th>
+<th align="left">
+<italic>σ =</italic> 5</th>
+<th align="left">
+<italic>σ =</italic> 10</th>
+<th align="left">
+<italic>σ = 25</italic>
+</th>
+<th align="left">
+<italic>σ =</italic> 50</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fine-grained precision</td>
+<td>56.0%</td>
+<td>56.5%</td>
+<td>56.5%</td>
+<td>
+<bold>56.6%</bold>
+</td>
+</tr>
+<tr>
+<td>Fine-grained recall</td>
+<td>54.9%</td>
+<td>55.6%</td>
+<td>
+<bold>55.8%</bold>
+</td>
+<td>55.6%</td>
+</tr>
+<tr>
+<td>Coarse-grained precision</td>
+<td>68.4%</td>
+<td>
+<bold>70.5%</bold>
+</td>
+<td>
+<bold>70.5%</bold>
+</td>
+<td>70.4%</td>
+</tr>
+<tr>
+<td>Coarse-grained recall</td>
+<td>65.8%</td>
+<td>69.6%</td>
+<td>
+<bold>70.2%</bold>
+</td>
+<td>70.1%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table2-0165551512459919" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Results on triangle function with different value of σ</p>
+</caption>
+<graphic alternate-form-of="table2-0165551512459919" xlink:href="10.1177_0165551512459919-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Results</th>
+<th align="left">
+<italic>σ =</italic> 10</th>
+<th align="left">
+<italic>σ =</italic> 20</th>
+<th align="left">
+<italic>σ =</italic> 50</th>
+<th align="left">
+<italic>σ =</italic> 100</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fine-grained precision</td>
+<td>56.2%</td>
+<td>
+<bold>56.5%</bold>
+</td>
+<td>56.2%</td>
+<td>56.4%</td>
+</tr>
+<tr>
+<td>Fine-grained recall</td>
+<td>54.8%</td>
+<td>55.6%</td>
+<td>
+<bold>55.9%</bold>
+</td>
+<td>55.7%</td>
+</tr>
+<tr>
+<td>Coarse-grained precision</td>
+<td>70.0%</td>
+<td>
+<bold>70.7%</bold>
+</td>
+<td>70.5%</td>
+<td>70.4%</td>
+</tr>
+<tr>
+<td>Coarse-grained recall</td>
+<td>68.6%</td>
+<td>70.0%</td>
+<td>
+<bold>70.3%</bold>
+</td>
+<td>70.0%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table3-0165551512459919" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Results on circle function with different value of σ</p>
+</caption>
+<graphic alternate-form-of="table3-0165551512459919" xlink:href="10.1177_0165551512459919-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Results</th>
+<th align="left">
+<italic>σ</italic> = 10</th>
+<th align="left">
+<italic>σ</italic> = 20</th>
+<th align="left">
+<italic>σ</italic> = 50</th>
+<th align="left">
+<italic>σ</italic> = 100</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fine-grained precision</td>
+<td>54.2%</td>
+<td>55.5%</td>
+<td>
+<bold>56.3%</bold>
+</td>
+<td>56.1%</td>
+</tr>
+<tr>
+<td>Fine-grained recall</td>
+<td>51.6%</td>
+<td>54.6%</td>
+<td>
+<bold>55.7%</bold>
+</td>
+<td>55.5%</td>
+</tr>
+<tr>
+<td>Coarse-grained precision</td>
+<td>68.2%</td>
+<td>
+<bold>70.4%</bold>
+</td>
+<td>
+<bold>70.4%</bold>
+</td>
+<td>70.2%</td>
+</tr>
+<tr>
+<td>Coarse-grained recall</td>
+<td>65.1%</td>
+<td>69.6%</td>
+<td>
+<bold>70.0%</bold>
+</td>
+<td>
+<bold>70.0%</bold>
+</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table4-0165551512459919" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Results on cosine function with different value of σ</p>
+</caption>
+<graphic alternate-form-of="table4-0165551512459919" xlink:href="10.1177_0165551512459919-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Results</th>
+<th align="left">
+<italic>σ</italic> = 10</th>
+<th align="left">
+<italic>σ</italic> = 20</th>
+<th align="left">
+<italic>σ</italic> = 50</th>
+<th align="left">
+<italic>σ</italic> = 100</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fine-grained precision</td>
+<td>55.7%</td>
+<td>56.2%</td>
+<td>56.1%</td>
+<td>
+<bold>56.3%</bold>
+</td>
+</tr>
+<tr>
+<td>Fine-grained recall</td>
+<td>54.4%</td>
+<td>55.3%</td>
+<td>55.8%</td>
+<td>
+<bold>56.0%</bold>
+</td>
+</tr>
+<tr>
+<td>Coarse-grained precision</td>
+<td>67.7%</td>
+<td>70.0%</td>
+<td>
+<bold>70.7%</bold>
+</td>
+<td>70.4%</td>
+</tr>
+<tr>
+<td>Coarse-grained recall</td>
+<td>64.0%</td>
+<td>68.2%</td>
+<td>
+<bold>70.4%</bold>
+</td>
+<td>70.0%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table5-0165551512459919" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Results on power function with different value of σ</p>
+</caption>
+<graphic alternate-form-of="table5-0165551512459919" xlink:href="10.1177_0165551512459919-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Results</th>
+<th align="left">
+<italic>σ</italic> = 10</th>
+<th align="left">
+<italic>σ</italic> = 20</th>
+<th align="left">
+<italic>σ</italic> = 50</th>
+<th align="left">
+<italic>σ</italic> = 100</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fine-grained precision</td>
+<td>56.3%</td>
+<td>56.6%</td>
+<td>
+<bold>56.8%</bold>
+</td>
+<td>56.6%</td>
+</tr>
+<tr>
+<td>Fine-grained recall</td>
+<td>55.7%</td>
+<td>55.9%</td>
+<td>
+<bold>56.2%</bold>
+</td>
+<td>56.0%</td>
+</tr>
+<tr>
+<td>Coarse-grained precision</td>
+<td>70.0%</td>
+<td>69.8%</td>
+<td>
+<bold>70.6%</bold>
+</td>
+<td>
+<bold>70.6%</bold>
+</td>
+</tr>
+<tr>
+<td>Coarse-grained recall</td>
+<td>68.5%</td>
+<td>68.1%</td>
+<td>
+<bold>70.1%</bold>
+</td>
+<td>70.0%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<list id="list2-0165551512459919" list-type="order">
+<list-item>
+<p>Gaussian distribution function:</p>
+<p>
+<disp-formula id="disp-formula22-0165551512459919">
+<mml:math display="block" id="math138-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mtext>exp</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msup>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula22-0165551512459919" xlink:href="10.1177_0165551512459919-eq22.tif"/>
+</disp-formula>
+</p>
+</list-item>
+<list-item>
+<p>Triangle function:</p>
+<p>
+<disp-formula id="disp-formula23-0165551512459919">
+<mml:math display="block" id="math139-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>d</mml:mi>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>otherwise</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula23-0165551512459919" xlink:href="10.1177_0165551512459919-eq23.tif"/>
+</disp-formula>
+</p>
+</list-item>
+<list-item>
+<p>Circle function:</p>
+<p>
+<disp-formula id="disp-formula24-0165551512459919">
+<mml:math display="block" id="math140-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msqrt>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>d</mml:mi>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>otherwise</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula24-0165551512459919" xlink:href="10.1177_0165551512459919-eq24.tif"/>
+</disp-formula>
+</p>
+</list-item>
+<list-item>
+<p>Cosine function:</p>
+<p><disp-formula id="disp-formula25-0165551512459919">
+<mml:math display="block" id="math141-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mi>cos</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mo>·</mml:mo>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>d</mml:mi>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>otherwise</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula25-0165551512459919" xlink:href="10.1177_0165551512459919-eq25.tif"/>
+</disp-formula></p>
+</list-item>
+<list-item>
+<p>Power function:</p>
+<p>
+<disp-formula id="disp-formula26-0165551512459919">
+<mml:math display="block" id="math142-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>-</mml:mo>
+<mml:mtext>σ</mml:mtext>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula26-0165551512459919" xlink:href="10.1177_0165551512459919-eq26.tif"/>
+</disp-formula>
+</p>
+</list-item>
+</list>
+<p><xref ref-type="table" rid="table1-0165551512459919">Tables 1</xref><xref ref-type="table" rid="table2-0165551512459919"/><xref ref-type="table" rid="table3-0165551512459919"/><xref ref-type="table" rid="table4-0165551512459919"/>–<xref ref-type="table" rid="table5-0165551512459919">5</xref> show the coarse-grained precision and recall of the five functions with different <italic>σ</italic>. We find that a power function with <italic>σ</italic> = 50 performs best in the case where only word distance is considered.</p>
+</sec>
+<sec id="section13-0165551512459919">
+<title>4.2.2. Finding the best sentence distance function in case of different word distance function</title>
+<p>After determining the best parameter for each of the five functions, we revised these functions with a sentence distance function. We experimented with different functions and different parameters, and <xref ref-type="table" rid="table6-0165551512459919">Table 6</xref> shows the result of the five word distance functions with their most appropriate sentence distance function. The parameters for the word distance functions are selected with regard to the highest coarse-grained recall.</p>
+<table-wrap id="table6-0165551512459919" position="float">
+<label>Table 6.</label>
+<caption>
+<p>Results with different pairs of word distance and sentence distance functions</p>
+</caption>
+<graphic alternate-form-of="table6-0165551512459919" xlink:href="10.1177_0165551512459919-table6.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Word distance</th>
+<th align="left">Sentence distance</th>
+<th align="left">Fine-grained precision</th>
+<th align="left">Fine-grained recall</th>
+<th align="left">Coarse-grained precision</th>
+<th align="left">coarse-grained recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gaussian (<italic>σ</italic> = 25)</td>
+<td>Power (<italic>σ</italic> = 1.55)</td>
+<td>58.7%</td>
+<td>55.9%</td>
+<td>74.2%</td>
+<td>71.2%</td>
+</tr>
+<tr>
+<td>Triangle (<italic>σ</italic> = 50)</td>
+<td>Gaussian (<italic>σ</italic> = 1.6)</td>
+<td>60.6%</td>
+<td>60.1%</td>
+<td>76.4%</td>
+<td>76.0%</td>
+</tr>
+<tr>
+<td>Circle (<italic>σ</italic> = 50)</td>
+<td>Circle (<italic>σ</italic> = 1.6)</td>
+<td>60.6%</td>
+<td>59.8%</td>
+<td>
+<bold>76.8%</bold>
+</td>
+<td>
+<bold>76.2%</bold>
+</td>
+</tr>
+<tr>
+<td>Cosine (<italic>σ</italic> = 50)</td>
+<td>Gaussian (<italic>σ</italic> = 0.95)</td>
+<td>60.7%</td>
+<td>60.0%</td>
+<td>76.5%</td>
+<td>76.0%</td>
+</tr>
+<tr>
+<td>Power (<italic>σ</italic> = 0.005)</td>
+<td>Triangle (<italic>σ</italic> = 2)</td>
+<td>
+<bold>61.1%</bold>
+</td>
+<td>
+<bold>60.3%</bold>
+</td>
+<td>76.7%</td>
+<td>76.0%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>From both fine-grained and coarse-grained results, it can be seen that the system shows optimal balance when word distance function is a power function with <inline-formula id="inline-formula117-0165551512459919">
+<mml:math display="inline" id="math143-0165551512459919">
+<mml:mrow>
+<mml:mtext>σ</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>05</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> and sentence distance function is a triangle function with <inline-formula id="inline-formula118-0165551512459919">
+<mml:math display="inline" id="math144-0165551512459919">
+<mml:mrow>
+<mml:mtext>σ</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>. Then, the positional weights can be calculated by the overall function as follows:</p>
+<p>
+<disp-formula id="disp-formula27-0165551512459919">
+<label>(17)</label>
+<mml:math display="block" id="math145-0165551512459919">
+<mml:mrow>
+<mml:mi>W</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>05</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo>×</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&lt;</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mtext>otherwise</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula27-0165551512459919" xlink:href="10.1177_0165551512459919-eq27.tif"/>
+</disp-formula>
+</p>
+<p>It is clear that our system performs better by considering both word and sentence distances. The idea that word distance comprises both word and sentence distance is proved to be true. In addition, the best word distance function is the cosine function in the first phase, but it is not considered to provide the best overall function. This result completely concurs with our hypothesis in Section 3.3.</p>
+</sec>
+</sec>
+<sec id="section14-0165551512459919">
+<title>4.3. Results and analysis</title>
+<p>Our algorithm manages to work with a few labelled samples. To test its performance under limited supervised conditions, we randomly selected one-half, one-third and one-quarter of the samples from the training dataset. <xref ref-type="table" rid="table7-0165551512459919">Table 7</xref> shows the results with different amounts of training data.</p>
+<table-wrap id="table7-0165551512459919" position="float">
+<label>Table 7.</label>
+<caption>
+<p>Results with different amounts of training instances</p>
+</caption>
+<graphic alternate-form-of="table7-0165551512459919" xlink:href="10.1177_0165551512459919-table7.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Number of training data</th>
+<th align="left">Fine-grained precision</th>
+<th align="left">Fine-grained recall</th>
+<th align="left">Coarse-grained<break/>precision</th>
+<th align="left">Coarse-grained<break/>recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8611</td>
+<td>61.6%</td>
+<td>60.3%</td>
+<td>76.7%</td>
+<td>76.0%</td>
+</tr>
+<tr>
+<td>4305</td>
+<td>60.7%</td>
+<td>58.4%</td>
+<td>75.5%</td>
+<td>72.6%</td>
+</tr>
+<tr>
+<td>2870</td>
+<td>59.2%</td>
+<td>54.8%</td>
+<td>75.2%</td>
+<td>70.1%</td>
+</tr>
+<tr>
+<td>2153</td>
+<td>58.1%</td>
+<td>50.7%</td>
+<td>73.3%</td>
+<td>65.3%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>It is notable that, even when one-quarter of training data are involved, which is only half of the testing data, our algorithm maintains a stable performance. We call this the limited positional weighted WSD system (L-PWWS) under such conditions. The L-PWWS maintains a coarse-grained recall of 65.4%. Although the recall falls when the amount of training data is decreased, the precision is not affected significantly. The reduction of precision is not more than 3.5%. This implies that our algorithm does slightly rely on the training data. However, it is true that there is some difficulty in disambiguating words with many senses that have a complex relationship with each other. We attribute this to the fact that we selected training data randomly and some senses may have had no training sample.</p>
+<p>We compared the results of both PWWS and L-PWWS with several classical algorithms on Senseval-2 English Lexical Sample task; JHU(R) was found to be the best system for this task, followed by SMUIs and KUNLP. In addition, some well-known systems, such as Duluth 3 and UNED-LS-T, which is the supervised version of UNED, were used in this task. These systems are all supervised and showed better results. The best unsupervised system was UNED-LS-U, which was the unsupervised version of UNED. Other unsupervised algorithms such as ITRI-WASPS-Wor and IIS 2(R) had a coarse-grained recall of less than 40%. Two baseline algorithms were selected in this comparison. One is the MFS Baseline, which is a classifier that always outputs the most frequent sense, and the other is the Lesk Baseline.</p>
+<p>
+<xref ref-type="fig" rid="fig1-0165551512459919">Figures 1</xref> and <xref ref-type="fig" rid="fig2-0165551512459919">2</xref> show the results of fine-grained and coarse-grained criteria, respectively. Our PWWS system obtained fine-grained precision and recall of 61.1 and 60.3%, respectively. These values are slightly lower than the top three algorithms in <xref ref-type="fig" rid="fig1-0165551512459919">Figure 1</xref>. However, when we consider <xref ref-type="fig" rid="fig2-0165551512459919">Figure 2</xref>, we find that PWWS ranks first in coarse-grained scoring. It obtained coarse-grained precision and recall of 76.7 and 76.0%, respectively. Similarly, we find that L-PWWS performs well among these systems. Its fine-grained result is beyond the secondary level of supervised systems, and is 10% higher than the best unsupervised system. However, in the coarse-grained criterion, it fares slightly worse than the top supervised systems in recall.</p>
+<fig id="fig1-0165551512459919" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Fine-grained scoring on Senseval-2 English Lexical Sample.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512459919-fig1.tif"/>
+</fig>
+<fig id="fig2-0165551512459919" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Coarse-grained scoring on Senseval-2 English Lexical Sample.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512459919-fig2.tif"/>
+</fig>
+<p>We looked into the results of each word and found that the words with only two or three senses can have precision of &gt;85%. Some words even reached a precision of 90%. For words with more senses, it was possible for them to have good results if these senses were independent of each other. On the other hand, only 40% were correctly labelled for words that had more than 20 senses. The accuracy deteriorates when phrases are considered. Interestingly, the precision of 40% is about the same as that in unsupervised systems.</p>
+<p>A possible explanation of why such a gap occurs is that our algorithm relies on the similarity between contexts. It is based on the hypothesis that similar words appear in similar contexts. According to this premise, however, similar senses may also have similar contexts. Therefore, similar senses might interpret each other. In addition, data sparseness can be a cause, but the result of L-PWWS indicates that it is less important. From the comparison of fine-grained and coarse-grained results, it is apparent that misinterpretations usually occur in main sense and sub-sense. Therefore, the main difficulty in disambiguating complex words is the similarity between their senses.</p>
+</sec>
+<sec id="section15-0165551512459919">
+<title>4.4. Complexity discussion</title>
+<p>In this section, we discuss the computation complexity of our WSD algorithm. Our algorithm can be considered to consist of two stages, which are the training stage and the testing stage. As we only consider the context words in a <italic>p</italic>-window around the target word, we have to calculate the distances and the positional weights for <italic>2p</italic> words. Other than that, we have to calculate the tf-idf value for these <italic>2p</italic> words and this process has a time complexity of O(p). We assume that <italic>n</italic> training samples are used in the training stage. Because <italic>p</italic> is relatively small, the total time complexity is <inline-formula id="inline-formula119-0165551512459919">
+<mml:math display="inline" id="math146-0165551512459919">
+<mml:mrow>
+<mml:mi>nO</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. In the testing stage, we have to compare the similarity to all the training samples of the target words. Assuming we have <italic>k</italic> samples for this word, the time for similarity comparisons is O(<italic>k</italic>). As <italic>k</italic> is related to the total number of training samples <italic>n</italic> and <inline-formula id="inline-formula120-0165551512459919">
+<mml:math display="inline" id="math147-0165551512459919">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>, the time complexity is no more than O(<italic>n</italic>). If there are <italic>m</italic> testing samples, the time complexity will be O(<italic>nm</italic>) in the testing stage for the PWWS. This is about the average level among these algorithms. However, considering the limited supervised version of our algorithm, the number of training samples is limited to a certain bound. In our experiments, <italic>k</italic> is about 60 on average. In this case, <italic>k</italic> can be considered as a constant and the time complexity becomes O(<italic>m</italic>). This is approximately the same as the simplest baseline algorithm MFS.</p>
+</sec>
+</sec>
+<sec id="section16-0165551512459919" sec-type="conclusions">
+<title>5. Conclusions</title>
+<p>Word sense disambiguation is an important issue in natural language processing. It is the basis of machine translation, information retrieval, text classification and speech recognition. In this paper, we have provided a resolution for WSD on the basis of a positional relation between context words and the ambiguous word. We reported that closer context words have greater effects on the ambiguous word. We studied the positional weighting model in an experimental way, and found that the best performance can be obtained by using power and triangle functions as the word distance and sentence distance functions, respectively. The experiments on the Senseval-2 English Lexical Sample task showed good performances in the coarse-grained criterion by both our PWWS and L-PWWS systems.</p>
+<p>Finally, some limitations should be considered. We only considered the frequency and position of context words, but the ambiguity of the context itself was not considered. A context word itself should be considered together with its surrounding words in future work. Our algorithm can be extended to all-word disambiguation. In addition, a very important limitation lies in the fact that word senses have similarities themselves. This problem can hardly be expounded in this paper. In fact, different sense gratuities are required in different NLP missions and word sense reduction is required. Therefore, further investigation into the relationship between word senses is needed. Introducing WordNet-like lexicons to learn sense similarity is a possible approach. These aspects need to be explored in further research studies.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>This work was supported in part by the National Key Technology R&amp;D Program (no. 2012BAH16F02), the National Natural Science Foundation of China (grant nos 61003254 and 60903038) and the Fundamental Research Funds for the Central Universities.</p>
+</ack>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0165551512459919">
+<label>[1]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Navigli</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Word sense disambiguation: A survey</article-title>. <source>ACM Comput Surv</source> <year>2009</year>; <volume>41</volume>(<issue>2</issue>): <fpage>1</fpage>–<lpage>69</lpage>.</citation>
+</ref>
+<ref id="bibr2-0165551512459919">
+<label>[2]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>John</surname><given-names>CM</given-names></name>
+</person-group>. <article-title>Thinking about foreign policy: Finding an appropriate role for artificially intelligent computers</article-title>, presented at the <conf-name>1988 annual meeting of the International Studies Association</conf-name>, <conf-loc>St Louis, MO</conf-loc>, <year>1988</year>.</citation>
+</ref>
+<ref id="bibr3-0165551512459919">
+<label>[3]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Navigli</surname><given-names>R</given-names></name>
+</person-group>. <article-title>A quick tour of word sense disambiguation, induction and related approaches</article-title>. In: <source>SOFSEM 2012: Theory and practice of computer science</source>, <year>2012</year>, pp. <fpage>115</fpage>–<lpage>129</lpage>.</citation>
+</ref>
+<ref id="bibr4-0165551512459919">
+<label>[4]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Lv</surname><given-names>YH</given-names></name>
+<name><surname>Zhai</surname><given-names>CX</given-names></name>
+</person-group>. <article-title>Positional language models for information retrieval</article-title>. In: <conf-name>Proceedings of 32nd annual international ACM SIGIR conference on research and development in information retrieval</conf-name>, <year>2009</year>, pp. <fpage>299</fpage>–<lpage>306</lpage>.</citation>
+</ref>
+<ref id="bibr5-0165551512459919">
+<label>[5]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Azzini</surname><given-names>A</given-names></name>
+<name><surname>Pereira</surname><given-names>CD</given-names></name>
+<name><surname>Dragoni</surname><given-names>M</given-names></name>
+<name><surname>Tettamanzi</surname><given-names>AGB</given-names></name>
+</person-group>. <article-title>A lexicographic encoding for word sense disambiguation with evolutionary neural networks</article-title>. <source>AI*IA 2009: Emergent perspectives in artificial intelligence</source>, <year>2009</year>, vol. <volume>5883</volume>, pp. <fpage>192</fpage>–<lpage>201</lpage>.</citation>
+</ref>
+<ref id="bibr6-0165551512459919">
+<label>[6]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Azzini</surname><given-names>A</given-names></name>
+<name><surname>Pereira</surname><given-names>CD</given-names></name>
+<name><surname>Dragoni</surname><given-names>M</given-names></name>
+<name><surname>Tettamanzi</surname><given-names>AGB</given-names></name>
+</person-group>. <article-title>Evolving neural word sense disambiguation classifiers with a letter-count distributed encoding</article-title>. <source>Artif Life Evol Comput</source> <year>2010</year>; <fpage>111</fpage>–<lpage>120</lpage>.</citation>
+</ref>
+<ref id="bibr7-0165551512459919">
+<label>[7]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Yu</surname><given-names>JP</given-names></name>
+<name><surname>Huang</surname><given-names>L</given-names></name>
+<name><surname>Fu</surname><given-names>JL</given-names></name>
+<name><surname>Mei</surname><given-names>DM</given-names></name>
+</person-group>. <article-title>A comparative study of word sense disambiguation of english modal verb by BP neural network and support vector machine</article-title>. <source>Int J Innov Comput Inform Control</source> <year>2011</year>; <volume>7</volume>(<issue>5A</issue>): <fpage>2345</fpage>–<lpage>2355</lpage>.</citation>
+</ref>
+<ref id="bibr8-0165551512459919">
+<label>[8]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Yarowsky</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Unsupervised word sense disambiguation rivaling supervised methods</article-title>. In: <conf-name>Proceedings of the 33rd annual meeting of the Association for Computational Linguistics</conf-name>, <year>1995</year>, pp. <fpage>189</fpage>–<lpage>196</lpage>.</citation>
+</ref>
+<ref id="bibr9-0165551512459919">
+<label>[9]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sanchez-de-Madariaga</surname><given-names>R</given-names></name>
+<name><surname>Fernandez-del-Castillo</surname><given-names>JR</given-names></name>
+</person-group>. <article-title>The bootstrapping of the Yarowsky algorithm in real corpora</article-title>. <source>Inform Process Mgmt</source> <year>2009</year>; <volume>45</volume>(<issue>1</issue>): <fpage>55</fpage>–<lpage>69</lpage>.</citation>
+</ref>
+<ref id="bibr10-0165551512459919">
+<label>[10]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Chan</surname><given-names>YS</given-names></name>
+<name><surname>Ng</surname><given-names>HT</given-names></name>
+<name><surname>Zhong</surname><given-names>Z</given-names></name>
+</person-group>. <article-title>NUS-PT: Exploiting parallel texts for word sense disambiguation in the English all-words tasks</article-title>. In: <conf-name>Proceedings of the 4th international workshop on semantic evaluations</conf-name>, <year>2007</year>, pp. <fpage>253</fpage>–<lpage>256</lpage>.</citation>
+</ref>
+<ref id="bibr11-0165551512459919">
+<label>[11]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zhong</surname><given-names>Z</given-names></name>
+<name><surname>Ng</surname><given-names>HT</given-names></name>
+</person-group>. <article-title>Word sense disambiguation for all words without hard labor</article-title>. In: <conf-name>Proceedings of 21st international joint conference on artificial intelligence (IJCAI-09)</conf-name>, <year>2009</year>, pp. <fpage>1616</fpage>–<lpage>1621</lpage>.</citation>
+</ref>
+<ref id="bibr12-0165551512459919">
+<label>[12]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kishida</surname><given-names>K</given-names></name>
+<name><surname>Ishita</surname><given-names>E</given-names></name>
+</person-group>. <article-title>Translation disambiguation for cross-language information retrieval using context-based translation probability</article-title>. <source>J Inform Sci</source> <year>2009</year>; <volume>35</volume>(<issue>4</issue>): <fpage>481</fpage>–<lpage>495</lpage>.</citation>
+</ref>
+<ref id="bibr13-0165551512459919">
+<label>[13]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tejada-Carcamo</surname><given-names>J</given-names></name>
+<name><surname>Calvo</surname><given-names>H</given-names></name>
+<name><surname>Gelbukh</surname><given-names>A</given-names></name>
+<name><surname>Hara</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Unsupervised WSD by finding the predominant sense using context as a dynamic thesaurus</article-title>. <source>J Comput Sci Technol</source> <year>2010</year>; <volume>25</volume>(<issue>5</issue>): <fpage>1030</fpage>–<lpage>1039</lpage>.</citation>
+</ref>
+<ref id="bibr14-0165551512459919">
+<label>[14]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Lesk</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Automatic sense disambiguation using machine readable dictionaries: How to tell a pine cone from an ice cream cone</article-title>. In: <conf-name>Proceedings of the 5th annual international conference on systems documentation</conf-name>, <year>1986</year>, pp. <fpage>24</fpage>–<lpage>26</lpage>.</citation>
+</ref>
+<ref id="bibr15-0165551512459919">
+<label>[15]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Gaona</surname><given-names>MAR</given-names></name>
+<name><surname>Gelbukh</surname><given-names>A</given-names></name>
+<name><surname>Bandyopadhyay</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Web-based variant of the Lesk approach to word sense disambiguation</article-title>. In: <conf-name>Proceedings of 2009 Eighth Mexican International Conference on Artificial Intelligence (MICAI 2009)</conf-name>, <year>2009</year>, pp. <fpage>103</fpage>–<lpage>107</lpage>.</citation>
+</ref>
+<ref id="bibr16-0165551512459919">
+<label>[16]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Fernandez-Amoros</surname><given-names>D</given-names></name>
+<name><surname>Gonzalo</surname><given-names>J</given-names></name>
+<name><surname>Verdejo</surname><given-names>F</given-names></name>
+</person-group>. <article-title>The Uned systems at Senseval-2</article-title>. In: <conf-name>Proceedings of the second international workshop on evaluating word sense disambiguation systems (SENSEVAL)</conf-name>, <year>2001</year>, pp. <fpage>75</fpage>–<lpage>78</lpage>.</citation>
+</ref>
+<ref id="bibr17-0165551512459919">
+<label>[17]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Fernandez-Amoros</surname><given-names>D</given-names></name>
+<name><surname>Gil</surname><given-names>R</given-names></name>
+<name><surname>Somolinos</surname><given-names>J</given-names></name>
+<name><surname>Somolinos</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Automatic word sense disambiguation using cooccurrence and hierarchical information</article-title>. <source>Nat Lang Process Inform Syst</source> <year>2010</year>; <fpage>60</fpage>–<lpage>67</lpage>.</citation>
+</ref>
+<ref id="bibr18-0165551512459919">
+<label>[18]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Miller</surname><given-names>GA</given-names></name>
+</person-group>. <article-title>WordNet: A lexical database for English</article-title>. <source>Commun ACM</source> <year>1995</year>; <volume>38</volume>(<issue>11</issue>): <fpage>39</fpage>–<lpage>41</lpage>.</citation>
+</ref>
+<ref id="bibr19-0165551512459919">
+<label>[19]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Pinto</surname><given-names>D</given-names></name>
+<name><surname>Vilariño</surname><given-names>D</given-names></name>
+<name><surname>Balderas</surname><given-names>C</given-names></name>
+<name><surname>Tovar</surname><given-names>M</given-names></name>
+<name><surname>Beltrán</surname><given-names>B</given-names></name>
+</person-group>. <article-title>A naïve Bayes approach to cross-lingual word sense disambiguation and lexical substitution</article-title>. <source>Adv Pattern Recogn</source> <year>2010</year>; <fpage>352</fpage>–<lpage>361</lpage>.</citation>
+</ref>
+<ref id="bibr20-0165551512459919">
+<label>[20]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Fogarolli</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Word sense disambiguation based on Wikipedia link structure</article-title>. In: <conf-name>Proceedings of IEEE International Conference on semantic computing, 2009, ICSC ’09</conf-name>, <year>2009</year>, pp. <fpage>77</fpage>–<lpage>82</lpage>.</citation>
+</ref>
+<ref id="bibr21-0165551512459919">
+<label>[21]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Turdakov</surname><given-names>D</given-names></name>
+<name><surname>Kuznetsov</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Automatic word sense disambiguation based on document networks</article-title>. <source>Program Comput Software</source> <year>2010</year>; <volume>36</volume>(<issue>1</issue>): <fpage>11</fpage>–<lpage>18</lpage>.</citation>
+</ref>
+<ref id="bibr22-0165551512459919">
+<label>[22]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>C</given-names></name>
+<name><surname>Sun</surname><given-names>A</given-names></name>
+<name><surname>Datta</surname><given-names>A</given-names></name>
+</person-group>. <article-title>A generalized method for word sense disambiguation based on Wikipedia</article-title>. <source>Adv Inform Retriev</source> <year>2011</year>; <fpage>653</fpage>–<lpage>664</lpage>.</citation>
+</ref>
+<ref id="bibr23-0165551512459919">
+<label>[23]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zavitsanos</surname><given-names>E</given-names></name>
+<name><surname>Tsatsaronis</surname><given-names>G</given-names></name>
+<name><surname>Varlamis</surname><given-names>I</given-names></name>
+<name><surname>Paliouras</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Scalable semantic annotation of text using lexical and web resources</article-title>. <source>Artificial Intell Theories, Models Applic</source> <year>2010</year>; <fpage>287</fpage>–<lpage>296</lpage>.</citation>
+</ref>
+<ref id="bibr24-0165551512459919">
+<label>[24]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Salton</surname><given-names>G</given-names></name>
+<name><surname>Lesk</surname><given-names>ME</given-names></name>
+</person-group>. <article-title>Computer evaluation of indexing and text processing</article-title>. <source>J ACM</source> <year>1968</year>; <volume>15</volume>(<issue>1</issue>): <fpage>8</fpage>–<lpage>36</lpage>.</citation>
+</ref>
+<ref id="bibr25-0165551512459919">
+<label>[25]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Salton</surname><given-names>G</given-names></name>
+<name><surname>Wong</surname><given-names>A</given-names></name>
+<name><surname>Yang</surname><given-names>CS</given-names></name>
+</person-group>. <article-title>A vector space model for automatic indexing</article-title>. <source>Commun ACM</source> <year>1975</year>; <volume>18</volume>(<issue>11</issue>): <fpage>613</fpage>–<lpage>620</lpage>.</citation>
+</ref>
+<ref id="bibr26-0165551512459919">
+<label>[26]</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Tanimoto</surname><given-names>T</given-names></name>
+</person-group>. <article-title>An elementary mathematical theory of classification and prediction</article-title>. Report, IBM Corp., <year>1958</year>.</citation>
+</ref>
+<ref id="bibr27-0165551512459919">
+<label>[27]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zheng</surname><given-names>X</given-names></name>
+<name><surname>Hu</surname><given-names>Z</given-names></name>
+<name><surname>Xu</surname><given-names>A</given-names></name>
+<name><surname>Chen</surname><given-names>DR</given-names></name>
+<name><surname>Liu</surname><given-names>K</given-names></name>
+<name><surname>Li</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Algorithm for recommending answer providers in community-based question answering</article-title>. <source>J Inform Sci</source> <year>2012</year>; <volume>38</volume>(<issue>1</issue>): <fpage>3</fpage>–<lpage>14</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

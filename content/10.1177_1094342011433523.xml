@@ -1,0 +1,566 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">HPC</journal-id>
+<journal-id journal-id-type="hwp">sphpc</journal-id>
+<journal-title>The International Journal of High Performance Computing Applications</journal-title>
+<issn pub-type="ppub">1094-3420</issn>
+<issn pub-type="epub">1741-2846</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1094342011433523</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1094342011433523</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Linux kernel co-scheduling and bulk synchronous parallelism</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name>
+<surname>Jones</surname>
+<given-names>Terry</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342011433523"/>
+<xref ref-type="corresp" rid="corresp1-1094342011433523"/>
+</contrib>
+</contrib-group>
+<aff id="aff1-1094342011433523">Computer Science and Mathematics Division, Oak Ridge National Laboratory, Oak Ridge, TN, USA</aff>
+<author-notes>
+<corresp id="corresp1-1094342011433523">Terry Jones, Computer Science and Mathematics Division, Oak Ridge National Laboratory, Mailstop 5164, Oak Ridge, TN, 37831-5164, USA Email: <email>trj@ornl.gov</email>
+</corresp>
+<fn fn-type="other" id="fn1-1094342011433523">
+<p>
+<italic>Terry Jones</italic> is a Computer Scientist at Oak Ridge National Laboratory in Oak Ridge, Tennessee. Terry received his BS in Physics from Southwestern Oklahoma State University, and MS in Computer Science from Stanford University. As an active member of the MPI Forum, Terry helped design the MPI-IO interface. Terry is a member of the IEEE and ACM and has authored many technical papers and invited talks in runtime systems and file systems. His interests lie in taking complex algorithms and mapping them onto ultra-scale machines, parallel scaling efficiencies, and efficient frameworks.</p>
+</fn>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>5</month>
+<year>2012</year>
+</pub-date>
+<volume>26</volume>
+<issue>2</issue>
+<issue-title>Issues in Large Scale Computing Environments: Heterogeneous Computing and Operating Systems - two subjects, one special issue</issue-title>
+<fpage>136</fpage>
+<lpage>145</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>This paper describes a kernel scheduling algorithm that is based on co-scheduling principles and that is intended for parallel applications running on 1000 cores or more. Experimental results for a Linux implementation on a Cray XT5 machine are presented. The results indicate that Linux is a suitable operating system for this new scheduling scheme, and that this design provides a dramatic improvement in scaling performance for synchronizing collective operations at scale.</p>
+</abstract>
+<kwd-group>
+<kwd>co-scheduling</kwd>
+<kwd>kernel scheduling</kwd>
+<kwd>operating system interference</kwd>
+<kwd>operating system noise</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1094342011433523">
+<title>1 Introduction</title>
+<p>Operating systems (OSs) and runtime systems provide mechanisms to manage system hardware and software resources for the efficient execution of large-scale scientific applications. They are essential to the success of both large-scale systems and complex applications and must track changes in programming paradigms and computer architectures.</p>
+<p>Presently, computer architectures are swiftly changing and this is affecting OSs in multiple ways. One of the more notable emerging computer architecture trends is the advent of very large-scale parallelism, especially in the high-performance computing (HPC) domain. Within the next 10 years, exascale computers with unprecedented processor counts and complexity will require significant new levels of scalability and fault management.</p>
+<p>The last decade has yielded advances in parallel systems that have delivered phenomenal progress in the overall capability available to a single parallel application. According to the June 2011 Top500 survey, 10 systems now have a peak capability exceeding 1 petaflop (PF). This is accomplished with ever-increasing node counts; 14 systems now have total core counts exceeding 100,000 (up from eight systems just 30 months ago; see <ext-link ext-link-type="uri" xlink:href="http://www.top500.org/lists/2002/11/">http://www.top500.org/lists/2002/11/</ext-link>). This trend is expected to continue as machines push towards exascale performance. An assessment sponsored by several United States agencies released in 2008 predicted that exascale systems in the 2020 timeframe, independent of whether the design is a system-on-a-chip (‘light node‘) configuration or a commodity processor sockets (‘heavy node‘) configuration, would have <italic>millions</italic> of cores (<xref ref-type="bibr" rid="bibr11-1094342011433523">Kogge, 2008</xref>).</p>
+<p>Linux has proved to be versatile for a diverse set of applications while providing the necessary flexibility for a wide range of underlying hardware. Since Los Alamos National Laboratory (LANL)’s Roadrunner system achieved slightly over 1 PF in the June 2008 Top500 list, six other systems with commodity processors configured in a distributed memory system (usually augmented with general-purpose graphics processing units [GPGPUs]) and connected with a fast interconnect have reached more than 1 PF performance. In each case, the systems utilize the Linux OS.</p>
+<p>However, as core counts increase certain attributes in the Linux design become increasingly larger barriers to parallel program performance. Full-featured OSs incorporate many small tasks as independent threads to perform common duties including hardware health monitoring, parallel file system activity, and so on. It has been demonstrated that these independent activities result in OS jitter or interference that causes scalability issues (<xref ref-type="bibr" rid="bibr8-1094342011433523">Jones et al., 2003</xref>; <xref ref-type="bibr" rid="bibr7-1094342011433523">Hoefler et al., 2010</xref>). For example, the Tau team at the University of Oregon has reported 23–32% increase in runtime for parallel applications running at 1024 nodes and 1.6% OS noise (<xref ref-type="bibr" rid="bibr13-1094342011433523">Nataraj et al., 2007</xref>). More recently, Ferreira, Bridges and Brightwell confirmed that a 1000 Hz 25μs noise interference (an amount measured on a large-scale commodity Linux cluster) can cause a 30% slowdown in application performance on 10,000 nodes (<xref ref-type="bibr" rid="bibr5-1094342011433523">Ferreira et al., 2008</xref>).</p>
+<p>The work described here was conducted as part of the HPC-Colony project: an effort aimed at addressing OS and runtime system issues on extremely large systems (see <ext-link ext-link-type="uri" xlink:href="http://www.hpc-colony.org">http://www.hpc-colony.org</ext-link>). In particular, Colony is actively investigating scaling issues associated with system software including certain coordination aspects of smart runtime systems and OSs. One key aspect of this work is concerned with correcting problems associated with OS noise (sometimes referred to as OS jitter or OS interference) (<xref ref-type="bibr" rid="bibr8-1094342011433523">Jones et al., 2003</xref>, <xref ref-type="bibr" rid="bibr10-1094342011433523">2009</xref>). This paper describes an approach designed to address noise-related performance problems for a wide range of supercomputers, the tests conducted to validate the approach, and the conclusions reached from these experimental results.</p>
+<sec id="section2-1094342011433523">
+<title>1.1 Related work</title>
+<p>The scheduling of processes onto processors of a parallel machine has been and continues to be an important and challenging area of research. Investigating OS impacts on parallel scaling for HPC environments has emerged as a fruitful research topic during the last decade including both novel tools to characterize the issue as well as strategies to mitigate negative effects associated with OS noise.</p>
+<p>
+<xref ref-type="bibr" rid="bibr16-1094342011433523">Sottile and Minnich (2004)</xref> suggested a Fixed Time Quantum (FTQ) micro-benchmark for measuring OS interference. The FTQ benchmark eliminates the possibility of the influence of OS noise on the measurements.</p>
+<p>
+<xref ref-type="bibr" rid="bibr5-1094342011433523">Ferreira et al. (2008)</xref> used noise injection techniques to assess the impact of noise on several applications at scale and noted the importance of noise frequency and duration.</p>
+<p>
+<xref ref-type="bibr" rid="bibr17-1094342011433523">Tsafrir et al. (2005)</xref> quantified the effect of OS noise using a probabilistic approach. They also implemented a micro-benchmark similar to the FTQ benchmark and instrumented a Linux kernel to log OS interrupts.</p>
+<p>
+<xref ref-type="bibr" rid="bibr2-1094342011433523">Beckman et al. (2006)</xref> investigated the effect of user-level noise on an IBM Blue Gene/L system. This system runs a custom lightweight OS-like Catamount that demonstrates very little noise. The authors concluded that most sources of noise can be avoided in very specialized systems.</p>
+<p>
+<xref ref-type="bibr" rid="bibr13-1094342011433523">Nataraj et al. (2007)</xref> used the KTAU toolkit to investigate the kernel activities of a general-purpose OS. This toolkit instruments the Linux kernel to collect measurements from various kernel components including system calls, scheduling, interrupt handling, and network operations. The authors describe the effectiveness of the KTAU toolkit for measuring the OS noise in Linux.</p>
+<p>
+<xref ref-type="bibr" rid="bibr7-1094342011433523">Hoefler et al. (2010)</xref> developed a simulation toolchain that injects noise delays from traces gathered on common large-scale architectures into a simulator. They noted that the scale at which noise becomes a bottleneck is system-specific and depends on the structure of the noise. They also analyzed several systems including the system used for the experiments presented in this paper (the Jaguar system at Oak Ridge National Laboratory [ORNL]).</p>
+<p>Co-scheduling has long been known to improve performance of time-sensitive parallel processing. The concept is generally credited to <xref ref-type="bibr" rid="bibr14-1094342011433523">Ousterhout (1982)</xref> who used co-scheduling techniques to improve performance required for fine-grained inter-cooperating processes. More recently, the NUMA capabilities of the SGI Altix system have been exploited for co-scheduling within a single system image that may expand across separate physical computer nodes. Yet until now, these techniques have not been applied to a general-purpose supercomputer OS outside of the reach of a single memory space. The close time agreement required by distributed nodes to make co-scheduling feasible previously made such designs difficult (the global set of nodes should ideally agree on time to within a few thousand machine instructions), but recent software solutions have addressed this for massively parallel machines given sufficiently fast interconnects (<xref ref-type="bibr" rid="bibr9-1094342011433523">Jones and Koening, 2010</xref>). This paper presents a system with broad applicability, requiring neither global-machine NUMA abilities nor hardware support for global clock synchronization. As such, it should be suitable for each of the six commodity-based heavy-node systems with 1 PF of capability.</p>
+<p>
+<xref ref-type="bibr" rid="bibr15-1094342011433523">Shmueli et al. (2008)</xref> evaluated the effect of replacing IBM’s lightweight CNK kernel with Linux on the compute nodes of a Blue Gene/L system. Since the Blue Gene/L system has a single clock source distributed to all nodes in a clock tree, processor ticks (and, therefore, timer ticks) run in lock step on all nodes. As a result, noise artifacts introduced by un-coordinated noise are not present in Blue Gene/L systems and they focused on reducing the negative impact of TLB misses. Among their findings was the determination that coordinated noise does not affect scalability. Our work differs in that our approach is designed for the general case including machines without a single clock source distributed to all nodes.</p>
+</sec>
+<sec id="section3-1094342011433523">
+<title>1.2 Contributions</title>
+<p>In this work, a new Linux kernel scheduling policy is introduced and its impact on large-scale applications is assessed by empirical measurements on a synthetic benchmark. This paper builds upon our earlier work that used daemons external to the kernel to adjust scheduling by modifying the UNIX process priority (<xref ref-type="bibr" rid="bibr8-1094342011433523">Jones et al., 2003</xref>). To date, co-scheduling has been shown to work but in very constrained scenarios that precluded widespread adoption. To our knowledge, our work represents the first co-scheduling kernel for an important class of HPC computer architectures, namely distributed memory systems with commodity processors and a fast interconnect (frequently called either a ‘commodity’ architecture or ‘heavy node’ architecture). The described implementation does not require a hardware heatbeat (the necessary low-variance synchronized clock is provided with newly available software) or any other specialized ability to distribute a single clock source to all nodes, nor does it require any NUMA support.</p>
+<p>Such techniques should prove helpful in adding the capability for full-featured Linux for an important class of architectures, namely commodity-based cores (with and without GPGPU assist) connected by a fast interconnect. The focus for our work is to make Linux a practical choice for a wide class of HPC computer systems and applications.</p>
+<p>The key contributions of this work therefore are numerous:<list list-type="bullet">
+<list-item>
+<p>A new Linux scheduling policy intended for HPC parallel applications.</p>
+</list-item>
+<list-item>
+<p>The first coupling of a co-scheduling kernel together with a low-variance distributed software clock system. A new Global Clock Agreement algorithm described by <xref ref-type="bibr" rid="bibr10-1094342011433523">Jones et al. (2009)</xref> is employed.</p>
+</list-item>
+<list-item>
+<p>An assessment of the new Linux scheduling policy’s impact on synchronizing collectives by empirical measurements on a synthetic benchmark.</p>
+</list-item>
+</list>
+</p>
+<p>The remainder of this report is organized as follows. Section 2 provides the motivation for this work. Section 3 describes the coordinated scheduling design implemented in the Linux kernel, and Section 4 describes several important design considerations. Section 5 describes the experiments conducted as well as information on the machine utilized for the experiments. In Section 6, an analysis of the experiment results is presented. Finally, Section 7 contains conclusions and a few topics to be pursued further in future work.</p>
+</sec>
+</sec>
+<sec id="section4-1094342011433523">
+<title>2 Massive parallelism and the horns of a dilemma</title>
+<p>Just as the hardware of supercomputers has evolved over time, the applications that use them have also evolved. Today, parallel programs are frequently implemented in the bulk-synchronous single-program–multiple-data (SPMD) programming model. For this programming model, computation consists of one or more <italic>cycles</italic> or <italic>timesteps</italic> (see ‘repeat’ cycle in <xref ref-type="fig" rid="fig1-1094342011433523">Figure 1</xref>
+).</p>
+<fig id="fig1-1094342011433523" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Bulk-synchronous SPMD model of parallel application. Each process of a parallel job executes on a separate processor and alternates between computation and communication phases. Adapted from <xref ref-type="bibr" rid="bibr4-1094342011433523">Dusseau et al. (1996)</xref>.</p>
+</caption>
+<graphic alternate-form-of="fig1-1094342011433523" xlink:href="10.1177_1094342011433523-fig1.tif"/>
+</fig>
+<p>Each cycle may contain one or more <italic>synchronizing collective</italic> operations: an operation in which a set of processes (frequently every process) participates and no single process can continue until every process in the set has participated. Examples of synchronizing collective operations from the Message Passing Interface (MPI) interface are MPI_Barrier, MPI_Allreduce, and MPI_Allgather (<xref ref-type="bibr" rid="bibr12-1094342011433523">MPI Forum, 2009</xref>). For example, a parallel application designed to simulate climate may use the MPI_Allreduce operation to find the maximum pressure present in an array distributed over all nodes; note that the overall maximum pressure cannot be determined until every node has contributed its maximum. Synchronizing collective operations pose serious challenges to scalability since a single instance of a laggard process will block progress for every other process.</p>
+<p>Synchronizing collectives are common in parallel applications. Even though today’s most prevalent OSs, including Linux, do not include synchronizing collectives: OSs may determine the scalability of a parallel application running in user space if the parallel application contains synchronizing collectives. The <italic>scalability</italic> of an OS is referring to the OS’s ability to support a parallel application without introducing scaling issues for the parallel application. Adverse performance associated with synchronizing collectives would seem to restrict their usage, but unfortunately synchronizing collective operations are required for a large class of parallel algorithms (<xref ref-type="bibr" rid="bibr6-1094342011433523">Gupta et al., 1991</xref>).</p>
+<p>OSs impact synchronizing collectives in the following way. A <italic>cascading effect</italic> results when one laggard process impedes the progress of every other process. The cascading effect has significant OS implications and proves especially detrimental in an HPC context: while OSs may be considered very efficient in a serial context, even minimal system and/or daemon activity proves disastrous due to the cascading effect in the large processor count parallel environment common in HPC centers. When interruptions occur on a subset of the computer nodes used for a parallel application during a synchronizing collective (e.g. an interruption for OS activity such as a file system buffer flush or even a translation lookaside buffer [TLB] miss), the degree of overlap is a key component in determining the performance impact of the interruption event on the synchronizing collective operation.</p>
+</sec>
+<sec id="section5-1094342011433523">
+<title>3 Coordinated scheduling in Linux</title>
+<p>
+<xref ref-type="fig" rid="fig2-1094342011433523">Figure 2</xref>
+ graphically portrays two separate runs of an eight-way parallel application with time as the <italic>x</italic>-axis. In the top instance, system activity (denoted as dark-red rectangles) occurs at purely random times. As a result, operations that require all eight processors to make progress are able to go forward only when medium-blue is present across all eight processors vertically (at one point in time). The light-green rectangles show those periods in time when the application is running across all eight processors. In the bottom portrayal of <xref ref-type="fig" rid="fig2-1094342011433523">Figure 2</xref>, the same amount of system activity occurs (there is the same total amount of red) but it is largely overlapped. This means much more time is available for parallel activities requiring all processors, as shown by the larger green rectangles.</p>
+<fig id="fig2-1094342011433523" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Coordinated and uncoordinated schedulings. The figure depicts two schedulings of the same eight-way parallel application. In the lower depiction, co-scheduling increases the efficiency of the parallel application as indicated by the larger amount of time periods where progress can be made across the entire eight-task parallel application. The top legend is blue; the middle legend is red, and the bottom legend is green.</p>
+</caption>
+<graphic alternate-form-of="fig2-1094342011433523" xlink:href="10.1177_1094342011433523-fig2.tif"/>
+</fig>
+<p>For clusters comprising nodes with more than one core, both inter- and intra-node overlap is an issue. Note that if the eight cores in <xref ref-type="fig" rid="fig2-1094342011433523">Figure 2</xref> are spread across two four-core nodes, it is desirable to ensure overlap between nodes as well as on-node. The bottom run shows very good on-node overlap of OS interference, but does not fully achieve cross-node overlap of OS interference.</p>
+<p>The Colony Linux kernel achieves high scalability through <italic>coordinated scheduling</italic> techniques and other strategies aimed at reducing OS overhead. Coordinated scheduling (also referred to as <italic>parallel aware scheduling</italic>) seeks to reduce the impact of OS noise. This is accomplished by increasing the overlap of interruption activity (e.g. increasing the overlap of ‘red activity’ in <xref ref-type="fig" rid="fig2-1094342011433523">Figure 2</xref>). Colony establishes two alternating intervals for activity across the entire parallel computer. During the longer interval, the parallel application is scheduled (e.g., the ‘blue activity’ in <xref ref-type="fig" rid="fig2-1094342011433523">Figure 2</xref>). This is accomplished by modifying the Linux scheduler to favor the parallel application with a high scheduler priority. During a shorter interval, other necessary activities such as health-monitoring daemons, parallel file system daemons, and so on, are scheduled (e.g. the ‘red activity’ in <xref ref-type="fig" rid="fig2-1094342011433523">Figure 2</xref>). During this period, the normal Linux algorithms are used allowing delayed OS activities to make progress. In this way, the federated cores are said to be <italic>co-scheduled</italic> and interfering interruptions from daemon activity are minimized.</p>
+<p>Our previous work incorporated coordinated scheduling through the use of a separate daemon (<xref ref-type="bibr" rid="bibr8-1094342011433523">Jones et al., 2003</xref>). While that approach was a success, we were not able to achieve the tight time tolerances we desired. This paper presents our first results of incorporating a generalized coordinated scheduling scheme into the actual OS kernel scheduler, an approach that permits much tighter time tolerances.</p>
+<p>Using a Linux 2.6.16.60 kernel, two new Process flags were added: PF_COLONYSCHED and PF_COLONYSCHED_TOGGLE. All processes are therefore either marked as co-scheduled (PF_COLONYSCHED is true) or not co-scheduled. The toggle flag is used to provide a thread-safe way of determining the current state. Upon entering the scheduler, the kernel first checks to see whether coordinated scheduling is active. If so, the current process is scheduled according to whether it is a parallel application in the HPC window or otherwise. The HPC window determination is made with a constant_tsc time adjusted for global machine agreement by our algorithm described by <xref ref-type="bibr" rid="bibr10-1094342011433523">Jones et al. (2009)</xref>.</p>
+<p>The extent of modifications required to implement coordinated scheduling is surprisingly small. A total of four source files are touched (./include/asm-x86_64/unistd.h,./include/linux/sched.h,./include/linux/syscalls.h,./kernel/sched.c) and a new kernel configuration flag is added in./arch/x86_64/Kconfig.</p>
+</sec>
+<sec id="section6-1094342011433523">
+<title>4 Design implications</title>
+<p>Coordinated scheduling provides additional capabilities aimed at a very specific class of applications, namely parallel applications with synchronizing collectives. While parallel applications with synchronizing collectives are a major component of the HPC environment, a truly general solution would require sufficient flexibility for use beyond a narrowly targeted class of applications. In this section, we discuss the impact of coordinated scheduling on both other workloads and on system activity.</p>
+<p>Our design assumes that nodes are dedicated to a given application. This is true for research and development focused HPC centers such as those present in the US national laboratories, but often untrue for other computer centers with significant resources. For example, search-engine computing farms and stock market analysis computing farms are designed to enable many independent decisions with low latency. Such environments have a much lower requirement for synchronizing collective operations and should see little effect positive or negative.</p>
+<p>Furthermore, our design stipulates that favoring the parallel application for larger than usual intervals is desirable. This is certainly the case for many scientific parallel applications, but what about other activities? Our tests indicate two areas dictate concern: parallel file systems and membership services. These two services are usually present on the compute nodes of our target environment, and both parallel file systems and membership depend heavily on error detection and recovery based on timeouts. If such processes do not receive timely and sufficient compute cycles, undesirable error recovery actions ensue. We are addressing the challenge posed by such services in multiple ways.</p>
+<p>We avoid the SCHED_FIFO scheduling algorithm for our favored epoch, using SCHED_RR instead. When a SCHED_FIFO task starts running, it continues to run until it voluntarily yields the processor, blocks or is preempted by a higher-priority real-time task. All other tasks of lower priority will not be scheduled until it relinquishes the CPU. Two equal-priority SCHED_FIFO tasks do not preempt each other. SCHED_RR is similar to SCHED_FIFO, except that such tasks are allotted timeslices based on their priority and run until they exhaust their timeslice.</p>
+<p>Moreover, we provide the ability to dynamically adjust the coordinated scheduling aspects of the kernel. Coordinated scheduling may be dynamically turned on or off through the use of a new system call. During coordinated scheduling, all processes on all cores managed by a single OS instance are subject to coordinated scheduling. (That is, the idea of ‘special cores’ within a symmetric multi-processor [SMP] is not incorporated.) Two new tunables are introduced to control the duration of one epoch (the total time of one red–blue cycle as depicted in <xref ref-type="fig" rid="fig2-1094342011433523">Figure 2</xref>), and the percentage of an epoch in which the parallel application is favored in scheduling (the percentage of blue in one blue+red interval). The tunables are adjusted through making a call to a second new system call.</p>
+<p>Future Colony programming environments will feature the SpiderCast membership service being developed by IBM Haifa Research as part of the Colony Project. SpiderCast provides a highly scalable clustering infrastructure, based on peer-to-peer technologies, for supporting resiliency-aware applications as well as efficient monitoring and load balancing (<xref ref-type="bibr" rid="bibr3-1094342011433523">Chockler et al., 2007</xref>). The resulting middleware is a distributed protocol for constructing scalable churn-resistant overlay topologies for supporting decentralized topic-based pub/sub communication. SpiderCast is designed to effectively tread the balance between average overlay degree and communication cost of event dissemination. It employs a novel coverage-optimizing heuristic in which the nodes utilize partial subscription views (provided by a decentralized membership service) to reduce the average node degree while guaranteeing (with high probability) that the events posted on each topic can be routed solely through the nodes interested in this topic (in other words, the overlay is topic-connected). SpiderCast is unique in maintaining an overlay topology that scales well with the average number of topics a node is subscribed to, assuming the subscriptions are correlated insofar as found in most typical workloads. Furthermore, the degree grows logarithmically in the total number of topics, and slowly <italic>decreases</italic> as the number of nodes increases. Our aim is two-fold: first, increase performance and scalability of HPC applications, and second, enable general-purpose business workloads on HPC platforms by providing missing distributed infrastructure components.</p>
+</sec>
+<sec id="section7-1094342011433523">
+<title>5 Experimental setup and tests</title>
+<p>Our experiments were designed to demonstrate the effectiveness of coordinated scheduling on a large distributed memory machine with a high-speed interconnect. One such machine at the Leadership Computing Facility (LCF) at ORNL is the Jaguar machine. The Jaguar machine has a 18,688×2×6 configuration (18,688 nodes, each node with 2 processor sockets, each socket hex-core), see <xref ref-type="fig" rid="fig3-1094342011433523">Figure 3</xref>
+ for a depiction of the machine.</p>
+<fig id="fig3-1094342011433523" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Configuration of the test machine Jaguar. Initial design was done on Rizzo, a similar smaller machine consisting of 128 nodes, each with a single four-core Opteron socket.</p>
+</caption>
+<graphic alternate-form-of="fig3-1094342011433523" xlink:href="10.1177_1094342011433523-fig3.tif"/>
+</fig>
+<p>Jaguar has been shown to be susceptible to system noise. In one study, <xref ref-type="bibr" rid="bibr7-1094342011433523">Hoefler et al. (2010)</xref> used the Netgauge tool to compare Jaguar with other capability systems. Their findings indicate that while Jaguar’s overall serial noise is quite low in comparison with other systems, the impact of the existing noise can be much greater. In particular, their work showed that while Jaguar has less serial noise than ZeptoOS, the long spurious detours of Jaguar performs ‘significantly worse’. According to the work of <xref ref-type="bibr" rid="bibr1-1094342011433523">Agarwal et al. (2005)</xref>, the impact of noise depends on the type of distribution and their parameters. This is because the noise ‘detours’, while infrequent, may be large in comparison.</p>
+<p> The various daemons running on a Cray XT5 assure an incredibly complex environment. The new tunables introduced with a coordinated scheduling kernel add to the scope of important factors that the effectiveness of our approach. Furthermore, it is exceedingly difficult to obtain significant time on one of the world’s most powerful production supercomputers for experimental kernel work. These factors led us to design a very simple test.</p>
+<p>A test was developed which provided a single number of merit that indicated the elapsed wallclock time to perform a fixed number of synchronizing collectives. Initial results concentrated on 8-byte (floating point double) MPI_Allreduce operations as it is known to be both a common synchronizing collective and susceptible to the OS noise targeted by this design.</p>
+<p>Samples were binned into a histogram for both an unmodified kernel and the coordinated scheduling kernel with parallel aware scheduling active.</p>
+</sec>
+<sec id="section8-1094342011433523">
+<title>6 Performance measurements and interpretation</title>
+<p>Results were obtained on ORNL’s Jaguar XT5 system; first with the normal scheduling Linux 2.6.16.60 OS, then with the coordinated scheduling Linux 2.6.16.60 OS described above. Results were obtained on two separate evaluation testshots, once with 10,000 cores and once with 30,000 cores. All measurements were obtained during normal production on a weekday; all standard membership services and parallel file system services remained in normal operation and the remaining compute nodes on Jaguar were in heavy use from other workloads.</p>
+<p>Results for normal Linux scheduling showed noticeable variability from test to test at scales of 10,000 cores. This was expected and coincides well with results obtained from <xref ref-type="bibr" rid="bibr7-1094342011433523">Hoefler et al. (2010)</xref> and <xref ref-type="bibr" rid="bibr16-1094342011433523">Sottile and Minnich (2004)</xref>, as well as our previous work. Performance measurements were then obtained using the coordinated-scheduling policy and modified OS. It was immediately clear for this workload that the coordinated scheduling provided a significant performance improvement, both in terms of average wallclock runtime and in terms of variability between runs. Finally, an additional set of performance numbers with the normal OS were measured. The last set of normal OS results closely matched the set of results obtained before the co-scheduled kernel results taken in the middle.</p>
+<p>The results from the 30,000-core tests are presented in <xref ref-type="table" rid="table1-1094342011433523">Table 1</xref>
+. As described earlier, the benchmark employed for this testing results in a single number corresponding to a unit of wallclock, the lower the better. The table indicates shorter durations (better performance) for the co-scheduled kernel. Results for synchronizing collectives at scale may vary highly depending on interrupting activity such as membership services and file system activity. For this set of experiments, the average wallclock for the coordinated kernel was 0.9814 seconds compared with 2.7812 seconds for the Normal Scheduled Kernel indicating an improvement of a factor of 2.83. Moreover, the variability was much improved as the number of samples with durations at 0.75 seconds or less improved by a factor of 2.5 (28% of the time to 70% of the time).</p>
+<table-wrap id="table1-1094342011433523" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Coordinated and uncoordinated schedulings at 30,000 cores. Favored application intervals for the Colony kernel are adjusted from 1000 cycles to 20,000 cycles.</p>
+</caption>
+<graphic alternate-form-of="table1-1094342011433523" xlink:href="10.1177_1094342011433523-table1.tif"/>
+<table>
+<thead>
+<tr>
+<th>|</th>
+<th>Normal Linux kernel</th>
+<th>Colony kernel (1000 cycles)</th>
+<th>Colony kernel (5000 cycles)</th>
+<th>Colony kernel (20,000 cycles)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Average sample timing (s)</td>
+<td>1.094</td>
+<td>1.024</td>
+<td>0.995</td>
+<td>0.926</td>
+</tr>
+<tr>
+<td>Number of samples under 0.75 s</td>
+<td>56</td>
+<td>88</td>
+<td>126</td>
+<td>140</td>
+</tr>
+<tr>
+<td>Percentage of samples under 0.75 s</td>
+<td>28%</td>
+<td>44%</td>
+<td>63%</td>
+<td>70%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The top half of <xref ref-type="fig" rid="fig4-1094342011433523">Figure 4</xref>
+ depicts the normal Linux results while the bottom half of <xref ref-type="fig" rid="fig4-1094342011433523">Figure 4</xref> depicts the co-scheduled results from the 10,000 core tests. These tests demonstrate the extreme variable nature of Allreduce operations more than the 30,000 core tests. We were unable to determine the source of the variability; likely candidates include membership services activity and/or parallel file system activity. The best observed time from all experiments was 0.44. The average wallclock for the co-scheduled kernel was 0.56, which compares with 1.60 with the Normal Scheduled kernel. This represents an improvement of 285%. Moreover, the variability was <italic>much improved</italic> with the co-scheduled kernel. The standard deviation for the Normal Scheduled samples was 5.32; this compares with 0.20 for the co-scheduled kernel.</p>
+<fig id="fig4-1094342011433523" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Coordinated and uncoordinated schedulings. The figure portrays histogram bins in a pie chart to provide an indication of the relative timing of runs. The top chart gives results without scheduling, and bottom chart gives results for coordinated scheduling.</p>
+</caption>
+<graphic alternate-form-of="fig4-1094342011433523" xlink:href="10.1177_1094342011433523-fig4.tif"/>
+</fig>
+<p>With a standard deviation larger than the average, it is clear that the samples do not follow a Gaussian distribution. In fact, the distribution of samples for the co-scheduled kernel has a very prominent peak near the average measurement, and a short tail of longer times. However, the distribution for the Normal Scheduled kernel has a much broader peak and a very long tail of outlier samples with much longer times. These results can be seen in <xref ref-type="fig" rid="fig5-1094342011433523">Figure 5</xref>
+. In the figure, the worse performing outliers are circled in red, and the two most are off the charts at 8.88 and 60.77. This variability is in stark contrast to the co-scheduled results below.</p>
+<fig id="fig5-1094342011433523" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Coordinated and uncoordinated schedulings. The figure portrays a histogram of runs with and without coordinated scheduling. The lower histogram includes coordinated scheduling.</p>
+</caption>
+<graphic alternate-form-of="fig5-1094342011433523" xlink:href="10.1177_1094342011433523-fig5.tif"/>
+</fig>
+<p>In context, the 285% speedup is good news for that class of applications impacted by synchronizing collectives, but it should be noted that overall application performance will depend upon many factors beyond synchronizing collective performance. Yet the 30% overall application slowdown reported by <xref ref-type="bibr" rid="bibr13-1094342011433523">Nataraj et al. (2007)</xref> and <xref ref-type="bibr" rid="bibr5-1094342011433523">Ferreira et al. (2008)</xref> indicates a significant amount of speedup may be realized by an entire application when noise effects are minimized.</p>
+</sec>
+<sec id="section9-1094342011433523">
+<title>7 Conclusions and future work</title>
+<p>In this paper we have described a new Linux scheduling policy and analyzed the effectiveness of the policy for a ‘heavy node’ computer architecture (that is, a computer architecture characterized by commodity processor sockets and a fast interconnect). The implementation for Linux 2.6.16.60 was described and results were presented for a large Cray XT5.</p>
+<p>The results support that normal Linux scheduling policies can introduce performance issues with important parallel operations such as synchronizing collectives, and that a co-scheduled implementation is able to significantly improve performance. Using a simple benchmark that reports synchronizing collective performance in time units (smaller numbers are better), the average time for the normal kernel was consistently improved over the co-scheduled kernel. Moreover, the variability was much improved with the co-scheduled kernel. The variability of 30,000 core runs improved by a factor of 2.5 in terms of the number of samples running less than 0.75 seconds.</p>
+<p>Our future plans include data collection for analysis on heterogeneous systems (commodity core and GPGPU), additional measurements for important applications such as POP, and scaling studies for additional problem sizes.</p>
+</sec>
+</body>
+<back>
+<ack>
+<title>Acknowledgments</title>
+<p>The author gratefully acknowledges the computer resources and assistance provided by the National Center for Computational Sciences at Oak Ridge National Laboratory. I would also like to express my gratitude to ORNL’s Don Maxwell and David Dillow for all of their assistance in getting the Jaguar and Rizzo machine prepared for this work. Further thanks are due to the entire Colony team for helping to make this work a reality. Finally I would like to thank our funding sponsors. The submitted manuscript has been authored by a contractor of the US Government under Contract No. DE-AC05-00OR22725. Accordingly, the US Government retains a non-exclusive, royalty-free license to publish or reproduce the published form of this contribution, or allow others to do so, for US Government purposes.</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure" id="fn2-1094342011433523">
+<p>The work described here was performed at Oak Ridge National Laboratory. It was supported in part by the Department of Energy FastOS II program (Lab 07-23, see <ext-link ext-link-type="uri" xlink:href="http://www.fastos2.org/">http://www.fastos2.org/</ext-link>). Computer allocation support was provided by the Department of Energy INCITE award and an NCCS Director’s Discretion award.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Agarwal</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Garg</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Vishnoi</surname>
+<given-names>N</given-names>
+</name>
+</person-group> (<year>2005</year>) <article-title>The impact of noise on the scaling of collectives: a theoretical approach</article-title>. In <source>12th Annual IEEE International Conference on High Performance Computing</source>, <comment>2005</comment>.</citation>
+</ref>
+<ref id="bibr2-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Beckman</surname>
+<given-names>P</given-names>
+</name>
+<name>
+<surname>Iskra</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Yoshii</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Coghlan</surname>
+<given-names>S</given-names>
+</name>
+</person-group> (<year>2006</year>) <article-title>The influence of operating systems on the performance of collective operations at extreme scale</article-title>. In: <source>IEEE Conference on Cluster Computing</source>, <comment>September 2006</comment>.</citation>
+</ref>
+<ref id="bibr3-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Chockler</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Melmed</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Tock</surname>
+<given-names>Y</given-names>
+</name>
+<name>
+<surname>Vitenberg</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>2007</year>) <article-title>SpiderCast: a scalable interest-aware overlay for topic-based pub/sub communication</article-title>. In: <source>Proceedings of the 2007 Inaugural International Conference on Distributed Event-based Systems (DEBS’07)</source>. <publisher-loc>Toronto, CA</publisher-loc>, <comment>June 2007</comment>.</citation>
+</ref>
+<ref id="bibr4-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Dusseau</surname>
+<given-names>AC</given-names>
+</name>
+<name>
+<surname>Arpaci</surname>
+<given-names>RH</given-names>
+</name>
+<name>
+<surname>Culler</surname>
+<given-names>DE</given-names>
+</name>
+</person-group> (<year>1996</year>) <article-title>Effective distributed scheduling on parallel workloads</article-title>. In <source>ACM SIGMETRICS’96 Conference on the Measurement and Modeling of Computer Systems</source>, <comment>1996</comment>.</citation>
+</ref>
+<ref id="bibr5-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Ferreira</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Brightwell</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Bridges</surname>
+<given-names>P</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>Characterizing application sensitivity to OS interference using kernel-level noise injection</article-title>. In: <source>International Conference for High Performance Computing, Networking, Storage, and Analysis (SC’08)</source>, <publisher-loc>Austin, TX</publisher-loc>, <comment>November 2008</comment>.</citation>
+</ref>
+<ref id="bibr6-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Gupta</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Tucker</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Urushibara</surname>
+<given-names>S</given-names>
+</name>
+</person-group> (<year>1991</year>) <article-title>The impact of operating system scheduling policies and synchronization methods on the performance of parallel applications</article-title>. In: <source>Proceedings of the 1991 ACM SIGMETRICS Conference on Measurement and Modeling of Computer Systems</source>, <comment>May 1991</comment>, pp. <fpage>120</fpage>–<lpage>132</lpage>.</citation>
+</ref>
+<ref id="bibr7-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Hoefler</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Schneider</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Lumsdaine</surname>
+<given-names>A</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Characterizing the influence of system noise on large-scale applications by simulation</article-title>. In: <source>International Conference for High Performance Computing, Networking, Storage and Analysis (SC’10)</source>, <comment>November 2010</comment>.</citation>
+</ref>
+<ref id="bibr8-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Jones</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Dawson</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Neely</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Tuel</surname>
+<given-names>W</given-names>
+</name>
+<name>
+<surname>Brenner</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Fier</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>et</surname>
+<given-names>al.</given-names>
+</name>
+</person-group> (<year>2003</year>) <article-title>Improving the scalability of parallel jobs by adding parallel awareness to the operating system</article-title>. In: <source>Proceedings of Supercomputing 2003</source>, <publisher-name>Phoenix, AZ</publisher-name>, <comment>November 2003</comment>.</citation>
+</ref>
+<ref id="bibr9-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Jones</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Koening</surname>
+<given-names>G</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>A clock synchronization strategy for minimizing clock variance at runtime in high-end computing environments</article-title>. In: <source>22nd International Symposium on Computer Architecture and High Performance Computing</source>, <publisher-name>Rio de Janeiro</publisher-name>, <publisher-loc>Brazil</publisher-loc>, <comment>October 2010</comment>.</citation>
+</ref>
+<ref id="bibr10-1094342011433523">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Jones</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Tauferner</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Inglett</surname>
+<given-names>T</given-names>
+</name>
+</person-group> (<year>2009</year>) <source>Linux OS Jitter Measurements at Large Node Counts using a BlueGene/L</source>. <comment>Technical Report ORNL/TM-2009/303</comment>, <publisher-name>Oak Ridge National Laboratory</publisher-name>, <comment>November 2009</comment>.</citation>
+</ref>
+<ref id="bibr11-1094342011433523">
+<citation citation-type="book">
+<person-group person-group-type="editor">
+<name>
+<surname>Kogge</surname>
+<given-names>PM</given-names>
+</name>
+</person-group> (ed.). (<year>2008</year>) <source>ExaScale Computing Study: Technology Challenges in Achieving Exascale Systems</source>. <comment>Technical Report TR-2008-13</comment>, <publisher-name>University of Notre Dame, CSE Department</publisher-name>, <comment>September 2008</comment>.</citation>
+</ref>
+<ref id="bibr12-1094342011433523">
+<citation citation-type="book">
+<collab collab-type="author">MPI Forum</collab> (<year>2009</year>) <source>MPI: A Message-Passing Interface Standard</source>, <comment>Version 2.2</comment>, <publisher-name>MPI Forum</publisher-name>, <comment>September 2009</comment>.</citation>
+</ref>
+<ref id="bibr13-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Nataraj</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Morris</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Malony</surname>
+<given-names>AD</given-names>
+</name>
+<name>
+<surname>Sottile</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Beckman</surname>
+<given-names>P</given-names>
+</name>
+</person-group> (<year>2007</year>) <article-title>The ghost in the machine: Observing the effects of kernel operation on parallel application performance</article-title>. In <source>Proceedings of SC’07</source>, <comment>2007</comment>.</citation>
+</ref>
+<ref id="bibr14-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Ousterhout</surname>
+<given-names>JK</given-names>
+</name>
+</person-group> (<year>1982</year>) <article-title>Scheduling techniques for concurrent systems</article-title>. In: <source>Third International Conference on Distributed Computing Systems</source>, <comment>May 1982</comment>, pp. <fpage>22</fpage>–<lpage>30</lpage>.</citation>
+</ref>
+<ref id="bibr15-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Shmueli</surname>
+<given-names>E</given-names>
+</name>
+<name>
+<surname>Almasi</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Brunheroto</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Castanos</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Dozsa</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Kumar</surname>
+<given-names>S</given-names>
+</name>
+<etal/>
+</person-group>. (<year>2008</year>) <article-title>Evaluating the effect of replacing CNK with Linux on the compute-nodes of Blue Gene/L</article-title>. In <source>Proceedings of the 22nd Annual International Conference on Supercomputing</source> <comment>(ICS ‘08)</comment>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, pp. <fpage>165</fpage>–<lpage>174</lpage>. <comment>DOI: 10.1145/1375527.1375554</comment>.</citation>
+</ref>
+<ref id="bibr16-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Sottile</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Minnich</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>2004</year>) <article-title>Analysis of microbenchmarks for performance tuning of clusters</article-title>. In: <source>Proceedings of IEEE Cluster2004 International Conference on Cluster Computing</source>, <comment>2004</comment>, pp. <fpage>371</fpage>–<lpage>377</lpage>.</citation>
+</ref>
+<ref id="bibr17-1094342011433523">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Tsafrir</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Etsion</surname>
+<given-names>Y</given-names>
+</name>
+<name>
+<surname>Feitelson</surname>
+<given-names>DG</given-names>
+</name>
+<name>
+<surname>Kirkpatrick</surname>
+<given-names>S</given-names>
+</name>
+</person-group> (<year>2005</year>) <article-title>System noise, OS clock ticks, and fine-grained parallel applications</article-title>. In: <source>ACM International Conference on Supercomputing</source>, <comment>June 2005</comment>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

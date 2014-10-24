@@ -1,0 +1,3243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">ADB</journal-id>
+<journal-id journal-id-type="hwp">spadb</journal-id>
+<journal-title>Adaptive Behavior</journal-title>
+<issn pub-type="ppub">1059-7123</issn>
+<issn pub-type="epub">1741-2633</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1059712312462904</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1059712312462904</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Papers</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Linear reactive control for efficient 2D and 3D bipedal walking over rough terrain</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Solomon</surname><given-names>Joseph H</given-names></name>
+<xref ref-type="aff" rid="aff1-1059712312462904">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Locascio</surname><given-names>Mark A</given-names></name>
+<xref ref-type="aff" rid="aff2-1059712312462904">2</xref>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Hartmann</surname><given-names>Mitra JZ</given-names></name>
+<xref ref-type="aff" rid="aff1-1059712312462904">1</xref>
+<xref ref-type="aff" rid="aff2-1059712312462904">2</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-1059712312462904"><label>1</label>Department of Biomedical Engineering, Northwestern University, Evanston, IL, USA</aff>
+<aff id="aff2-1059712312462904"><label>2</label>Department of Mechanical Engineering, Northwestern University, Evanston, IL, USA</aff>
+<author-notes>
+<corresp id="corresp1-1059712312462904">Mitra JZ Hartmann, Department of Biomedical Engineering, 2145 Sheridan Rd, Evanston, IL 60208, USA. Email: <email>m-hartmann@northwestern.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>2</month>
+<year>2013</year>
+</pub-date>
+<volume>21</volume>
+<issue>1</issue>
+<fpage>29</fpage>
+<lpage>46</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">International Society of Adaptive Behavior</copyright-holder>
+</permissions>
+<abstract>
+<p>The kinematics of human walking are largely driven by passive dynamics, but adaptation to varying terrain conditions and responses to perturbations require some form of active control. The basis for this control is often thought to take the form of entrainment between a neural oscillator (i.e., a central pattern generator and/or distributed counterparts) and the mechanical system. Here we use techniques in evolutionary robotics to explore the potential of a purely reactive, linear controller to control bipedal locomotion over rough terrain. In these simulation studies, joint torques are computed as weighted linear sums of sensor states, and the weights are optimized using an evolutionary algorithm. We show that linear reactive control can enable a seven-link 2D biped and a nine-link 3D biped to walk over rough terrain (steps of ∼5% leg length or more in the 2D case). In other words, the simulated walker gradually learns the appropriate weights to achieve stable locomotion. The results indicate that oscillatory neural structures are not necessarily a requirement for robust bipedal walking. The study of purely reactive control through linear feedback may help to reveal some basic control principles of stable walking.</p>
+</abstract>
+<kwd-group>
+<kwd>Bipedal walking</kwd>
+<kwd>dynamic walking</kwd>
+<kwd>biped</kwd>
+<kwd>reactive control</kwd>
+<kwd>rough terrain</kwd>
+<kwd>evolutionary robotics</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1059712312462904" sec-type="intro">
+<title>1 Introduction</title>
+<sec id="section2-1059712312462904">
+<title>1.1 Background</title>
+<p>Animal behavior emerges from dynamic interactions between the nervous system, the body (musculoskeletal system) and the environment (<xref ref-type="bibr" rid="bibr5-1059712312462904">Chiel and Beer, 1997</xref>; <xref ref-type="bibr" rid="bibr6-1059712312462904">Chiel, Ting, Ekeberg &amp; Hartmann, 2009</xref>). These three factors are interdependent because the body and nervous system co-evolve to produce behavior that is suitable for a particular environment (<xref ref-type="bibr" rid="bibr30-1059712312462904">Sims, 1994</xref>).</p>
+<p>Bipedal locomotion is an intriguing example of how a complex motor behavior can emerge even in the absence of a nervous system. Tad McGeer showed that bipedal walking is possible in the complete absence of sensing or actuation, a concept he called “passive dynamic walking” (<xref ref-type="bibr" rid="bibr24-1059712312462904">McGeer, 1990</xref>). McGeer simulated and constructed bipedal mechanisms with carefully tuned geometric and inertial properties. These bipeds could autonomously walk down a shallow ramp, powered only by gravity. The critical finding of these studies is that the overall process exhibits self-stabilizing attractor dynamics (<xref ref-type="bibr" rid="bibr35-1059712312462904">Strogatz, 2000</xref>) that allow the system to fall into a stable limit cycle.</p>
+<p>An important limitation on passive dynamic walkers, however, is that they are unable to accommodate environmental disturbances or variations in terrain slope (<xref ref-type="bibr" rid="bibr24-1059712312462904">McGeer, 1990</xref>). These limitations underscore the importance of active control (e.g., a nervous system) to robust real-world bipedal locomotor behavior.</p>
+<p>The studies of Taga and colleagues offered insight into the neural basis of stable, adaptive walking over unpredictable terrain (<xref ref-type="bibr" rid="bibr36-1059712312462904">Taga, 1995a</xref>, <xref ref-type="bibr" rid="bibr37-1059712312462904">1995b</xref>; <xref ref-type="bibr" rid="bibr38-1059712312462904">Taga, Miyake, Yamaguchi, &amp; Shimizu, 1993</xref>; <xref ref-type="bibr" rid="bibr39-1059712312462904">Taga, Yamaguchi, &amp; Shimizu, 1991</xref>). These authors entrained the mechanics of a 2D seven-link biped to a set of neural oscillators, permitting the biped to traverse uneven terrain and to recover from mechanical perturbations and applied loads to various parts of the body. The authors suggested that “global entrainment” between the neural and musculo-skeletal systems could generate stable and flexible locomotion in an unpredictable environment (<xref ref-type="bibr" rid="bibr36-1059712312462904">Taga, 1995a</xref>, <xref ref-type="bibr" rid="bibr37-1059712312462904">1995b</xref>).</p>
+<p>Although these studies demonstrated that neural oscillator-based control is sufficient for some aspects of gait adaptation, they did not demonstrate that it is necessary. In the present work we use simulations to investigate the potential for a purely “linear reactive” controller to enable stable and flexible locomotion over rugged terrain. By reactive we mean that there is a fixed mapping between sensor input and motor output. By linear, we mean that the mapping is a weighted sum of the sensor inputs. The existence of such a control scheme would call into question the fundamental necessity of coupling between a neural oscillator and the mechanical system for bipedal walking.</p>
+<p>The present work was originally motivated by “Braitenberg Vehicles,” which demonstrate that complex behaviors can emerge from simple reactive control laws (<xref ref-type="bibr" rid="bibr2-1059712312462904">Braitenberg, 1984</xref>; <xref ref-type="bibr" rid="bibr25-1059712312462904">Mondada and Floreano, 1995</xref>; <xref ref-type="bibr" rid="bibr10-1059712312462904">Eiben and Smith, 2003</xref>). In a recent paper, we used control laws similar to those used by Braitenberg to simulate stable and efficient locomotion of a five-link biped robot (<xref ref-type="bibr" rid="bibr32-1059712312462904">Solomon, Wisse, &amp; Hartmann, 2010</xref>). The five-link biped was able to walk over unpredictable terrain, with slopes varying between 2° and 7°, and step-downs varying between 0 and 25% leg length (<xref ref-type="bibr" rid="bibr32-1059712312462904">Solomon et al., 2010</xref>). However, this five-link biped did not have feet and was only trained to walk downhill.</p>
+<p>The present study extends these previous results to implement linear reactive control in simulations of both a 2D seven-link biped (in which feet and ankles have been added to the previous model) and a 3D nine-link biped (in which hips and another spatial dimension have been added). Weights are tuned with an evolutionary algorithm (EA) to achieve efficient and stable walking over rough terrain (step-to-step standard deviations in terrain height of 5.4% and 2.0% of the leg length for the 2D and 3D walkers, respectively) with a sparsely interconnected linear reactive controller. The work suggests that “physical entrainment” involving only the dynamic interaction between body and environment is sufficient to enable adaptive locomotion control; internal neural dynamics, i.e., global entrainment, is found to be unnecessary.</p>
+</sec>
+<sec id="section3-1059712312462904">
+<title>1.2 Related work</title>
+<p>The scope of research related to bipedal locomotion control is vast. Here we briefly review some relevant studies that fall under the bipedal “dynamic walking” paradigm, as opposed to the popular zero moment point control (<xref ref-type="bibr" rid="bibr42-1059712312462904">Vukobratović and Borovac, 2004</xref>). Following McGeer’s pioneering work, several studies focused on issues of energy efficiency and stability in passive dynamic walking (<xref ref-type="bibr" rid="bibr11-1059712312462904">Garcia, Chatterjee, Ruina, &amp; Coleman, 1998</xref>). Work by <xref ref-type="bibr" rid="bibr21-1059712312462904">Kuo (2002)</xref> demonstrated methods to add actuation and feedback control to enable stable walking over level ground. <xref ref-type="bibr" rid="bibr7-1059712312462904">Collins and Ruina (2005)</xref> implemented a variation of ankle push-off actuation studied by Kuo on a 3D bipedal robot, which exhibited energy efficiency on par with humans. Hobbelen and Wisse developed several simple and effective control strategies, including swing leg retraction near the end of a step (Hobbelen and Wisse, 2008c), local stance ankle control and ankle push-off modulation (<xref ref-type="bibr" rid="bibr15-1059712312462904">Hobbelen and Wisse, 2008a</xref>), modulation of walking speed (<xref ref-type="bibr" rid="bibr16-1059712312462904">Hobbelen and Wisse, 2008b</xref>), and a linear, lateral foot placement strategy (<xref ref-type="bibr" rid="bibr18-1059712312462904">Hobbelen and Wisse, 2009</xref>). All were successfully implemented on the planarized (2D) robot “Meta” and/or the fully 3D robot “Flame” (<xref ref-type="bibr" rid="bibr19-1059712312462904">Hobbelen, de Boer &amp; Wisse, 2008</xref>). <xref ref-type="bibr" rid="bibr4-1059712312462904">Chevallereau et al. (2003)</xref> analytically derive a controller based on the concepts of “hybrid zero dynamics” and “virtual constraints,” achieving successful implementation on the 2D robot “RABBIT”. <xref ref-type="bibr" rid="bibr3-1059712312462904">Byl and Tedrake (2009)</xref> apply an approximate optimal control method with one-step planning to a compass gait model, enabling it to traverse rough terrain.</p>
+<p>Particularly relevant to the present study is research involving simple reflex-based models. <xref ref-type="bibr" rid="bibr27-1059712312462904">Ono, Takahashi and Shimada (2001)</xref> developed a control strategy based on setting the hip torque proportional to knee angle and linearly damping the knee joint, and successfully instantiated it on a 2D biped robot on a shallow slope. <xref ref-type="bibr" rid="bibr23-1059712312462904">Manoonpong, Geng, Kulvicius, Porr, and Wörgötter (2007)</xref> designed a neural network control architecture based on the design principle of nested sensorimotor loops and applied it to a 2D robot, “RunBot,” demonstrating fast and efficient walking performance with the ability to adapt to varying terrain slopes. <xref ref-type="bibr" rid="bibr12-1059712312462904">Geyer and Herr (2010)</xref> apply a muscle reflex model based on positive force and length feedback schemes to a 2D, seven-link model, exhibiting angle and torque activation patterns qualitatively similar to humans. Most similar to the present study, <xref ref-type="bibr" rid="bibr28-1059712312462904">Paul (2005)</xref> used feed-forward neural networks to compute desired joint angles for proportional-derivative (PD) control of a simulated 3D biped over level terrain, tuning the weights with an EA. We recently applied a controller similar to that studied here to a 2D five-link model (<xref ref-type="bibr" rid="bibr32-1059712312462904">Solomon et al., 2010</xref>). It was able to reject large step-down disturbances and adapt to changing slopes, but, critically, did not incorporate feet and was only trained on downhill slopes.</p>
+</sec>
+</sec>
+<sec id="section4-1059712312462904" sec-type="methods">
+<title>2 Methods</title>
+<p>The present work uses both 2D and 3D biped models. Most of the results presented here focus on the 2D model, as its faster simulation speed allowed a larger number of EA runs. The 2D equations of motion were derived using the TMT method (<xref ref-type="bibr" rid="bibr45-1059712312462904">Wisse and Schwab, 2005</xref>) and solved by Euler integration, while the 3D model was developed using the Open Dynamics Engine (version 0.11.1) as a simulation environment (<xref ref-type="bibr" rid="bibr31-1059712312462904">Smith, 2009</xref>). We used anthropomorphic dynamic parameters for the 2D model (<xref ref-type="bibr" rid="bibr43-1059712312462904">Winter, 1991</xref>) to allow direct comparison with the kinematics and actuation torques measured in human locomotion, and the 3D model’s parameters were based on the Delft University of Technology’s prototype “Flame” to test the controller’s potential performance on a plausible real-world testbed (<xref ref-type="bibr" rid="bibr22-1059712312462904">Locascio, Solomon &amp; Hartmann, in press</xref>).</p>
+<sec id="section5-1059712312462904">
+<title>2.1 Two- and three-dimensional biped models</title>
+<p>The 2D model consisted of seven links: an upper body, two thighs, two shanks, and two feet, as shown in <xref ref-type="fig" rid="fig1-1059712312462904">Figure 1a</xref>. Parameter values for the 2D model are provided in (<xref ref-type="bibr" rid="bibr44-1059712312462904">Wisse, 2008</xref>; <xref ref-type="bibr" rid="bibr22-1059712312462904">Locascio et al. in press</xref>; <xref ref-type="table" rid="table1-1059712312462904">Table 1</xref>), and are based on typical values for a 70-kg, 1.75-m tall human (<xref ref-type="bibr" rid="bibr43-1059712312462904">Winter, 1991</xref>). Note that the center of mass distance for each segment is measured relative to its “parent” joint (e.g., the hip joint for the thigh segment). Also, three length values are provided for the foot; these correspond to heel-to-toe length, heel-to-instep length, and instep-to-ankle length, where “instep” refers to the point on the bottom of the foot directly below the ankle when the foot is flat on the ground. The foot center of mass resides at the geometric center of the foot. Geometric and inertial parameter values for the 3D model are provided in the FLAME documentation (<xref ref-type="bibr" rid="bibr44-1059712312462904">Wisse, 2008</xref>; <xref ref-type="bibr" rid="bibr22-1059712312462904">Locascio et al., in press</xref>).</p>
+<fig id="fig1-1059712312462904" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>The 2D seven-link and 3D nine-link biped models used in this study. (a) The 2D model incorporates a total of seven degrees of freedom. (b) The 3D walking model is a straightforward extension of the 2D model. In addition to the features of the 2D model, the ankles have a “passively” actuated degree of freedom (simulated springs, including damping), and two links were added to allow symmetric hip adduction.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312462904-fig1.tif"/>
+</fig>
+<table-wrap id="table1-1059712312462904" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Parameter values for the seven-link model</p>
+</caption>
+<graphic alternate-form-of="table1-1059712312462904" xlink:href="10.1177_1059712312462904-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left"><underline>b</underline>ody</th>
+<th align="left"><underline>t</underline>high</th>
+<th align="left"><underline>s</underline>hank</th>
+<th align="left"><underline>f</underline>oot</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mass, <italic>m</italic> [kg]</td>
+<td>47.5</td>
+<td>7.00</td>
+<td>3.26</td>
+<td>1.02</td>
+</tr>
+<tr>
+<td>Length, <italic>l</italic> [m]</td>
+<td>−</td>
+<td>0.430</td>
+<td>0.430</td>
+<td>0.210, 0.052, 0.068</td>
+</tr>
+<tr>
+<td>Center of mass, <italic>c</italic> [m]</td>
+<td>0.316</td>
+<td>0.186</td>
+<td>0.186</td>
+<td>0.057</td>
+</tr>
+<tr>
+<td>Moment of inertia, <italic>I</italic> [kg·m<sup>2</sup>]</td>
+<td>2.966</td>
+<td>0.134</td>
+<td>0.055</td>
+<td>0.005</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-1059712312462904">
+<p>The body length is not provided because it plays no role in the biped’s dynamics (i.e., the position of the center of mass and the moment of inertia are present in the equations of motion, but not the full body length). The three foot lengths refer to heel-to-toe length, heel-to-instep length, and instep-to-ankle length, respectively.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>The 3D model, shown in <xref ref-type="fig" rid="fig1-1059712312462904">Figure 1b</xref>, includes the same seven links as the 2D model, plus two hip links, used to introduce a pelvic width into the model and to allow independent hip adduction/abduction (hereafter simply “adduction” for brevity) and hip flexion/extension. These two links are mechanically constrained (consistent with the real Flame) such that the left and right legs cannot adduct independently, but must always have the same angle relative to the torso. The imposition of this symmetry simplifies the model, while still allowing sufficient step-width control. There is an additional degree of freedom in the ankles, allowing them to “roll” about the axis indicated in <xref ref-type="fig" rid="fig1-1059712312462904">Figure 1b</xref>. This degree of freedom is un-actuated, but is under the influence of passive torsional springs. Thus, only a single additional actuator (hip adduction) was added to the 3D model. Both the 2D and the 3D models include encoder sensors that measure the angle and velocity of each joint, an inertial sensor to measure the upper body angle and velocity with respect to gravity, and a binary contact sensor at the heel and toe of each foot. Each of the six joints in the 2D model has a torque-controlled actuator, while the 3D model also has one additional actuator for hip abduction/adduction, and corresponding position and velocity sensors at that joint.</p>
+<p>The equations of motion for the 2D model were implemented in C++ for fast execution. The first-order Euler method was used to integrate the equations of motion, with a time step of 0.0002 s. A more accurate solver, such as fourth-order Runge–Kutta could have been used, but would have run at a quarter of the speed, and was found to negligibly affect the behavior of the model. The 3D model was simulated in the Open Dynamics Engine using a 0.001-s time step, congruent with the time step used in Flame’s real-time operating system.</p>
+<p>The following notation is used throughout this paper to describe the degrees of freedom of the 2D and 3D models. The 2D model has seven degrees of freedom: one defines the “upper-<underline>b</underline>ody” angle with respect to gravity <inline-formula id="inline-formula1-1059712312462904">
+<mml:math display="inline" id="math1-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, two define the “<underline>h</underline>ip” angles between the upper-body and thigh segments <inline-formula id="inline-formula2-1059712312462904">
+<mml:math display="inline" id="math2-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula3-1059712312462904">
+<mml:math display="inline" id="math3-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, two define the “<underline>k</underline>nee” angles between the thigh and shank segments <inline-formula id="inline-formula4-1059712312462904">
+<mml:math display="inline" id="math4-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula5-1059712312462904">
+<mml:math display="inline" id="math5-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and two define the “<underline>a</underline>nkle” angles between the shank and foot segments <inline-formula id="inline-formula6-1059712312462904">
+<mml:math display="inline" id="math6-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula7-1059712312462904">
+<mml:math display="inline" id="math7-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The abbreviations “st” and “sw” indicate whether the angle is associated with the “<underline>st</underline>ance” leg or “<underline>sw</underline>ing” leg, respectively. Also note that absolute (with respect to gravity) “<underline>t</underline>high” segment angles <inline-formula id="inline-formula8-1059712312462904">
+<mml:math display="inline" id="math8-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula9-1059712312462904">
+<mml:math display="inline" id="math9-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and the “<underline>i</underline>nter-<underline>l</underline>eg” angle <inline-formula id="inline-formula10-1059712312462904">
+<mml:math display="inline" id="math10-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>il</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> have been defined because they are used for control purposes. The 3D model adds theactuated hip <underline>ad</underline>duction angle <inline-formula id="inline-formula11-1059712312462904">
+<mml:math display="inline" id="math11-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ad</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the upper-body yaw and roll angles <inline-formula id="inline-formula12-1059712312462904">
+<mml:math display="inline" id="math12-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>yaw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula13-1059712312462904">
+<mml:math display="inline" id="math13-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>roll</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and the unactuated ankle <underline>r</underline>oll angles <inline-formula id="inline-formula14-1059712312462904">
+<mml:math display="inline" id="math14-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula15-1059712312462904">
+<mml:math display="inline" id="math15-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p>In both the 2D and the 3D models, joint angle limits were enforced using “soft” constraints, effectively by implementing stiff PD controllers with the gains manually tuned to produce good qualitative behavior of the model (typically &lt;1° overshoot). Although enforcement of all constraints occurred frequently in the early stages of controller evolution, only the knee hyperextension constraint was regularly enacted during normal locomotion in the 2D model. In other words, successful walkers gradually learned to operate in the absence of the constraints on joint angle limits, except for knee hyperextension. <xref ref-type="table" rid="table2-1059712312462904">Table 2</xref> provides the joint angle constraints and associated PD gains for the 2D model. The 3D model shares joint angle constraints with the Flame prototype (<xref ref-type="bibr" rid="bibr19-1059712312462904">Hobbelen et al., 2008</xref>).</p>
+<table-wrap id="table2-1059712312462904" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Joint angle limits and the proportional-derivative (PD) gains used to enforce them</p>
+</caption>
+<graphic alternate-form-of="table2-1059712312462904" xlink:href="10.1177_1059712312462904-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Min. φ [rad]</th>
+<th align="left">Max. φ [rad]</th>
+<th align="left">P gain <inline-formula id="inline-formula16-1059712312462904">
+<mml:math display="inline" id="math16-1059712312462904">
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mtext>N</mml:mtext>
+<mml:mo>·</mml:mo>
+<mml:mtext>m</mml:mtext>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mtext>rad</mml:mtext>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">D gain <inline-formula id="inline-formula17-1059712312462904">
+<mml:math display="inline" id="math17-1059712312462904">
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mtext>N</mml:mtext>
+<mml:mo>·</mml:mo>
+<mml:mtext>m</mml:mtext>
+<mml:mo>·</mml:mo>
+<mml:mtext>s</mml:mtext>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mtext>rad</mml:mtext>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hip</td>
+<td><inline-formula id="inline-formula18-1059712312462904">
+<mml:math display="inline" id="math18-1059712312462904">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mtext>π</mml:mtext>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula19-1059712312462904">
+<mml:math display="inline" id="math19-1059712312462904">
+<mml:mrow>
+<mml:mtext>π</mml:mtext>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>100</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Knee</td>
+<td><inline-formula id="inline-formula20-1059712312462904">
+<mml:math display="inline" id="math20-1059712312462904">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mtext>π</mml:mtext>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0</td>
+<td>300</td>
+<td>15</td>
+</tr>
+<tr>
+<td>Ankle</td>
+<td><inline-formula id="inline-formula21-1059712312462904">
+<mml:math display="inline" id="math21-1059712312462904">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mtext>π</mml:mtext>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula22-1059712312462904">
+<mml:math display="inline" id="math22-1059712312462904">
+<mml:mrow>
+<mml:mtext>π</mml:mtext>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>5</td>
+<td>0.25</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>An important note is that we chose to control the upper-body <inline-formula id="inline-formula23-1059712312462904">
+<mml:math display="inline" id="math23-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and inter-leg <inline-formula id="inline-formula24-1059712312462904">
+<mml:math display="inline" id="math24-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>il</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> angles instead of directly controlling the hip angles <inline-formula id="inline-formula25-1059712312462904">
+<mml:math display="inline" id="math25-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula26-1059712312462904">
+<mml:math display="inline" id="math26-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> in both the 2D and 3D models. As will be shown, this choice of actuation allows PD control of walking with fixed set points, which is not possible using only the hip angles, as they do not take into account the angle of the upper body with respect to gravity.</p>
+</sec>
+<sec id="section6-1059712312462904">
+<title>2.2 Terrain models</title>
+<p>Care was taken to devise simple methods to generate unpredictable, rough terrain with features determined by a few intuitive parameters. The 2D terrain morphology is numerically defined by a series of <inline-formula id="inline-formula27-1059712312462904">
+<mml:math display="inline" id="math27-1059712312462904">
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> points, regularly spaced in the <italic>x</italic>-direction in 0.1-m increments. The vertical spacing between adjacent points is computed by generating a traditional “random walk” sequence, and then smoothing it using a 5-point moving average. The vertical step size was chosen to be 0.0176 m, such that the slope of the terrain was limited to the range [−10°, 10°], and the effective step-to-step standard deviation in terrain height was typically ∼5.4% leg length (including the foot), nicely following a normal distribution. A similar technique was used for the 3D terrain, although this technique was slightly more complicated and is described in <xref ref-type="app" rid="app1-1059712312462904">Appendix A</xref>. Two different sets of 3D terrains were used during evolution, one with effective step-to-step standard deviations of ∼0.36% leg-length, and one with linearly increasing standard deviations up to ∼3.6% leg-length. The advantages of this method are that it is simple, efficient, automatically puts an upper limit on the slope magnitude, and stochastically generates empirically interesting features, including relatively flat regions of various slopes, abrupt changes in slope, and higher frequency bumpy regions. Typical samples of the 2D and 3D terrains used in this study are shown in <xref ref-type="fig" rid="fig2-1059712312462904">Figure 2</xref>.</p>
+<fig id="fig2-1059712312462904" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Examples of typical 2D and 3D terrain.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312462904-fig2.tif"/>
+</fig>
+</sec>
+<sec id="section7-1059712312462904">
+<title>2.3 Models of ground contact</title>
+<p>The foot-ground contact of the 2D model was modeled using soft constraints, as described in <xref ref-type="bibr" rid="bibr13-1059712312462904">Haavisto and Hyötyniemi (2004)</xref>. A stiff spring (<italic>k</italic><sub><italic>p,terrain</italic></sub>=50,000 N/m) and damper (<italic>k</italic><sub><italic>d,terrain</italic></sub>=2500 N·s/m) push on a heel or toe whenever penetration with the ground is detected through linear interpolation between the (<italic>x,y</italic>) terrain points. A traditional Coulomb friction model is also implemented, such that the maximum tangential force <inline-formula id="inline-formula28-1059712312462904">
+<mml:math display="inline" id="math28-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is proportional to the normal force <inline-formula id="inline-formula29-1059712312462904">
+<mml:math display="inline" id="math29-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> through the static friction coefficient <inline-formula id="inline-formula30-1059712312462904">
+<mml:math display="inline" id="math30-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Hence, whenever the spring-damper tangential force exceeds the maximum normal force <inline-formula id="inline-formula31-1059712312462904">
+<mml:math display="inline" id="math31-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mtext>max</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the applied tangential force becomes <inline-formula id="inline-formula32-1059712312462904">
+<mml:math display="inline" id="math32-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where <inline-formula id="inline-formula33-1059712312462904">
+<mml:math display="inline" id="math33-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>6</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the kinetic friction coefficient, and the heel or toe begins to slide.</p>
+<p>In the 3D model, collisions were detected between the model and the ground heightfield using the OPCODE collision detection engine (<xref ref-type="bibr" rid="bibr40-1059712312462904">Terdiman, 2003</xref>). When collisions between the feet and the ground were detected, temporary constraints were placed at those positions. ODE’s “error-reduction” and “constraint-force-mixing” parameters for those constraints were set in order to produce spring and damper coefficients equivalent to the 2D model.</p>
+</sec>
+<sec id="section8-1059712312462904">
+<title>2.4 Control model</title>
+<p>The control approach used here deviates significantly from traditional control theory; the overall methodology more closely resembles work in the field of artificial neural networks (ANNs), and hence terminology from that field will be used (<xref ref-type="bibr" rid="bibr1-1059712312462904">Bishop, 1996</xref>). As schematized in <xref ref-type="fig" rid="fig3-1059712312462904">Figure 3a</xref>, the output of each actuator is computed from a weighted linear sum of sensor states and a bias. Alternatively, the output of the network can be interpreted as a desired angle, and the actuator torque is then calculated via PD control using this as a reference (<xref ref-type="fig" rid="fig3-1059712312462904">Figure 3b</xref>). Equivalent weight sets can be found for the two forms such that they produce identical results. This “linear reactive” control architecture was used for both the 2D and the 3D models, which we now describe in detail.</p>
+<fig id="fig3-1059712312462904" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>The controller architecture, in which torques are computed as a weighted sum of sensor inputs. Here, each arrow connecting the input to the summing block is weighted by some value, which will be tuned by an evolutionary algorithm (EA). (a) Direct torque output. (b) Desired angle output, in which torque is computed via PD control. In this study, zero was always used as the reference velocity in order to apply damping to the system.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312462904-fig3.tif"/>
+</fig>
+<p>The 2D biped model has six actuators: stance/swing ankle, stance/swing knee, and stance/swing hip. In the “fully connected” configuration, each actuator’s output is computed from 16 inputs. The sixteen network inputs include seven angles (<inline-formula id="inline-formula34-1059712312462904">
+<mml:math display="inline" id="math34-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula35-1059712312462904">
+<mml:math display="inline" id="math35-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula36-1059712312462904">
+<mml:math display="inline" id="math36-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>il</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula37-1059712312462904">
+<mml:math display="inline" id="math37-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula38-1059712312462904">
+<mml:math display="inline" id="math38-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula39-1059712312462904">
+<mml:math display="inline" id="math39-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula40-1059712312462904">
+<mml:math display="inline" id="math40-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>), their derivatives, the variable <italic>in_double_stance</italic> (a Boolean that indicates whether both feet are in ground contact), and a bias. A bias term is standard in machine learning algorithms as a way to provide a constant, non-zero input to a function (e.g., the intercept term of a linear regression). The network input vector thus accounts for a full state description of the robot except for its absolute spatial position and velocity, which are not necessary for control of walking. Inputs <inline-formula id="inline-formula41-1059712312462904">
+<mml:math display="inline" id="math41-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula42-1059712312462904">
+<mml:math display="inline" id="math42-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula43-1059712312462904">
+<mml:math display="inline" id="math43-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula44-1059712312462904">
+<mml:math display="inline" id="math44-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula45-1059712312462904">
+<mml:math display="inline" id="math45-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> are direct sensor (inertial and encoder) states, and stance thigh <inline-formula id="inline-formula46-1059712312462904">
+<mml:math display="inline" id="math46-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> angle and inter-leg angle <inline-formula id="inline-formula47-1059712312462904">
+<mml:math display="inline" id="math47-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>il</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> are computed from sensor states as follows:</p>
+<p><disp-formula id="disp-formula1-1059712312462904">
+<label>(1)</label>
+<mml:math display="block" id="math48-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1059712312462904" xlink:href="10.1177_1059712312462904-eq1.tif"/>
+</disp-formula></p>
+<p><disp-formula id="disp-formula2-1059712312462904">
+<label>(2)</label>
+<mml:math display="block" id="math49-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>il</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-1059712312462904" xlink:href="10.1177_1059712312462904-eq2.tif"/>
+</disp-formula></p>
+<p>The 3D biped model has seven actuators: the same six as in 2D, plus hip adduction. In the “fully connected” 3D configuration—which was never used in the present study—the output of each of the seven actuators is computed from all 28 inputs, for a total of 196 weights. Each of the seven actuator networks consisted of 25 state variables, plus the P and D gains for the “angle output” configuration, and one constant bias term. The sensor inputs include the same 16 from the 2D model, plus the roll and yaw of the torso, the hip adduction angle, the stance and swing ankle roll values, and the time derivatives of these five values. This highlights an important benefit of the linear reactive control framework, namely, the simplicity of scaling. The transition from a 2D controller to 3D required only two changes: addition of a network to control the one additional actuator, and addition of these 3D-specific inputs.</p>
+<p>A complication arises in the interpretation of the torso roll and yaw angles used as inputs to the network. The signs of these values must be adjusted to be stance-foot dependent. This way, a roll sensor value indicating that the torso is leaning left will result in a different network input (and therefore, a different control action) depending on which is the stance foot. This is implemented simply by multiplying the roll, the yaw, and their velocities by −1 if the left foot is the stance foot. The choice of left or right in this instance is arbitrary, as the signs of the connection weights will be set accordingly by the EA.</p>
+<p>Simulations of both 2D and 3D models proceed as follows: at each time step, the sensor state of the model is measured. An affine transformation is used to shift and scale all values to a range of roughly [−1, +1]. A weighted sum of normalized sensor inputs is computed as in <xref ref-type="fig" rid="fig3-1059712312462904">Figure 3</xref>, and for the 2D model the output is used directly as a torque (as in <xref ref-type="fig" rid="fig3-1059712312462904">Figure 3a</xref>), while for 3D model it was used indirectly as a desired joint angle for PD control (as in <xref ref-type="fig" rid="fig3-1059712312462904">Figure 3b</xref>). In practice, either interpretation of the sensor output can be used for both the 2D and 3D case. Further details can be found in <xref ref-type="app" rid="app2-1059712312462904">Appendix B</xref>.</p>
+<p>An important detail is identifying which leg is “stance” and which is “swing,” as this determines which network controls which actuator at any given time. The two legs are trivial to identify during the swing phase (one contact sensor is high, the other is low). During the double-stance phase, we defined the “trailing” leg (the leg whose ankle is more caudal in the direction of travel) as the stance leg. This was necessary to ensure that the stance leg had the higher torques required for push-off, and that the inter-leg angle remained relatively unchanged during push-off. A flight phase was not permitted (i.e., considered a “fall” during weight optimization).</p>
+</sec>
+<sec id="section9-1059712312462904">
+<title>2.5 Variations on the control model</title>
+<p><xref ref-type="fig" rid="fig3-1059712312462904">Figure 3</xref> and Section 2.4 present the “fully interconnected” version of the 2D and 3D control architecture, in which actuator output is calculated as a linear sum of all of the inputs. The present work focuses on the following four variations of this “linear reactive” control framework in the 2D model, and then explores the use of one variation in the 3D model. Note that the networks vary only with respect to the number and identity of the input connections.</p>
+<sec id="section10-1059712312462904">
+<title>2.5.1 Local proportional-derivative (LPD) configuration (three inputs/actuator)</title>
+<p>The LPD configuration makes use of only three inputs per actuator. In the case of direct torque output, the angle and angular velocity of the associated joint and a bias are used to compute the motor torque, which is equivalent to a PD controller with a fixed set point. For example, the swing leg’s knee torque would only be based on a weighted sum of the swing leg knee angle, velocity, and a constant offset. It would not be surprising if such a minimalistic control policy were completely insufficient for generating stable locomotion over rough terrain, but it will be shown that impressively stable and fluid walking behavior can be achieved.</p>
+</sec>
+<sec id="section11-1059712312462904">
+<title>2.5.2 Fully interconnected linear (FIL) configuration (16 inputs/actuator)</title>
+<p>The FIL configuration tests the capacity of using all sensor states as inputs to all networks of the model to improve upon the efficiency and stability of LPD control. Intuitively, more sensor information should result in better control.</p>
+</sec>
+<sec id="section12-1059712312462904">
+<title>2.5.3 Sparsely interconnected linear (SIL) networks (between one and 16 inputs/actuator)</title>
+<p>To generate the SIL networks for the 2D model, connections of the FIL networks are slowly pruned away until performance starts to decline. This addresses the question of which non-local connections are actually conferring significant performance benefit, and in doing so, may provide insights relevant to controlling bipedal robots as well as insights into the nature of human locomotion. The smaller search spaces compared to the FIL networks should also reduce the optimization time.</p>
+<p>An SIL network identified using the 2D data was used for the 3D walking trials. A hip adduction actuator network had to be added, for which the inputs were manually chosen based on their intuitive relevance for lateral control: the torso roll and yaw angles and velocities, as well as the stance ankle (plantarflexion/dorsiflexion) angle and velocity. The values of the weights were then optimized from scratch (i.e., were not biased using the values found from optimizing the 2D model).</p>
+</sec>
+<sec id="section13-1059712312462904">
+<title>2.5.4 Reduced, sparsely interconnected linear (RSIL) networks (between one and 16 inputs/actuator)</title>
+<p>Finally, the connections most frequently remaining after pruning SIL networks were used to create “reduced” SIL networks. The methods used to achieve the “reduction” will be explained more fully in Results. The goal in developing RSIL networks was to determine the performance achievable when using a minimal set of connections.</p>
+</sec>
+</sec>
+<sec id="section14-1059712312462904">
+<title>2.6 Gait initiation and gait termination</title>
+<p>We used two different methods to initiate stable walking in the simulations. For the 2D simulations, we extended the linear reactive controller of Section 2.4 to enable gait initiation behavior starting from a static stance state. Specifically, we defined an additional set of network weights, the “initiation weights”<inline-formula id="inline-formula48-1059712312462904">
+<mml:math display="inline" id="math50-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, wherein each weight is paired with a corresponding one from the locomotion controller set of “walking weights”<inline-formula id="inline-formula49-1059712312462904">
+<mml:math display="inline" id="math51-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>walk</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Gait initiation begins with the biped in a static state, with its legs side-by-side (although any statically stable configuration is permissible). Then, from <italic>t</italic>=0 seconds to <italic>t</italic>=<italic>t_init</italic> seconds, the weights linearly scale with time from <inline-formula id="inline-formula50-1059712312462904">
+<mml:math display="inline" id="math52-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> to <inline-formula id="inline-formula51-1059712312462904">
+<mml:math display="inline" id="math53-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>walk</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> as follows:</p>
+<p><disp-formula id="disp-formula3-1059712312462904">
+<label>(3)</label>
+<mml:math display="block" id="math54-1059712312462904">
+<mml:mtable>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>net</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>walk</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+<mml:mo>&lt;</mml:mo>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>walk</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>≥</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>.</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-1059712312462904" xlink:href="10.1177_1059712312462904-eq3.tif"/>
+</disp-formula></p>
+<p>As the network weights linearly scale from the initiation weights to the walking weights, the desired behavior is simply for the biped to take a smooth, stable step forward. Note that a nearly identical procedure can also be used for gait termination, and indeed was found to be effective (results not shown).</p>
+<p>The lack of lateral stability in 3D simulations adds considerable complexity to the control of gait initiation; hence we could not obtain reliable gait initiation with <xref ref-type="disp-formula" rid="disp-formula3-1059712312462904">Equation 3</xref>. Therefore, 3D walking was initiated using a fixed initial state amenable to walking, in which the swing foot was already in the air and the inter-leg angle was increasing. This approach had the disadvantage of restricting the range of possible weight sets to those that are “compatible” with the initial conditions, but did not prevent us from successfully evolving controllers.</p>
+</sec>
+<sec id="section15-1059712312462904">
+<title>2.7 Evolutionary optimization</title>
+<p>Because of the large number of parameters that need to be tuned as well as the stochasticity of the terrain model, the majority of standard numerical optimization approaches are poorly suited for the current problem. However, one family of optimization methods, EAs, clearly stand out in these respects. EAs are stochastic, population-based metaheuristic optimization procedures inspired by principles of neo-Darwinian evolution (selection, crossover, and mutation; <xref ref-type="bibr" rid="bibr10-1059712312462904">Eiben and Smith, 2003</xref>). They generally scale well with problem size, can handle stochasticity in the fitness function, and have proven effective in optimizing control parameters for numerous locomotion studies (<xref ref-type="bibr" rid="bibr14-1059712312462904">Hasegawa, Arakawa, &amp; Fukuda, 2000</xref>; <xref ref-type="bibr" rid="bibr29-1059712312462904">Reil and Husbands, 2002</xref>; <xref ref-type="bibr" rid="bibr41-1059712312462904">Vaughan, Di Paolo, &amp; Harvey, 2004</xref>). Of the four main historical branches of EAs—genetic algorithms, evolution strategies, evolutionary programming, and genetic programming—the algorithm used here is most similar to evolution strategies, although there are some customizations, as will be explained.</p>
+<sec id="section16-1059712312462904">
+<title>2.7.1 Evolutionary parameters</title>
+<p>Having defined the control framework, the remaining critical component to enable successful walking was the optimization of control parameters. We used an EA to optimize the connection weights of all actuator networks. One cannot expect to truly optimize such a large set of parameters for the type of control problem investigated here. We therefore use the word “optimization” only in the sense that it describes the attempt to maximize (or minimize) some quantity, perhaps finding a local optimum.</p>
+<p>As described in Section 2.6, the control parameters for 2D walking consist of six sets of gait initiation weights <inline-formula id="inline-formula52-1059712312462904">
+<mml:math display="inline" id="math55-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, six sets of walking weights <inline-formula id="inline-formula53-1059712312462904">
+<mml:math display="inline" id="math56-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>walk</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and the <italic>t_init</italic> parameter. Additionally, six evolutionary “learning rate” parameters <inline-formula id="inline-formula54-1059712312462904">
+<mml:math display="inline" id="math57-1059712312462904">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> (one for each network) are included to improve the optimization.</p>
+<p>In the 2D LPD network mapping there are three weights associated with each of the six actuators for both the initiation weights <inline-formula id="inline-formula55-1059712312462904">
+<mml:math display="inline" id="math58-1059712312462904">
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> and walking weights <inline-formula id="inline-formula56-1059712312462904">
+<mml:math display="inline" id="math59-1059712312462904">
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>walk</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, along with the six learning rates, yielding a total of <inline-formula id="inline-formula57-1059712312462904">
+<mml:math display="inline" id="math60-1059712312462904">
+<mml:mrow>
+<mml:mn>6</mml:mn>
+<mml:mo>·</mml:mo>
+<mml:mn>3</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>6</mml:mn>
+<mml:mo>·</mml:mo>
+<mml:mn>3</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>6</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>=</mml:mo>
+<mml:mn>43</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> parameters. The 2D FIL mapping has 16 weights per set, yielding <inline-formula id="inline-formula58-1059712312462904">
+<mml:math display="inline" id="math61-1059712312462904">
+<mml:mrow>
+<mml:mn>6</mml:mn>
+<mml:mo>·</mml:mo>
+<mml:mn>16</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>6</mml:mn>
+<mml:mo>·</mml:mo>
+<mml:mn>16</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>6</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>=</mml:mo>
+<mml:mn>199</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> parameters, and for the 2D SIL and RSIL frameworks the number of weights can vary.</p>
+<p>The learning rate parameters <inline-formula id="inline-formula59-1059712312462904">
+<mml:math display="inline" id="math62-1059712312462904">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> are used in the 2D trials to automatically scale the nominal mutation sizes of each of the networks. They serve an analogous function to the “strategy” parameters in the evolution strategies algorithm (<xref ref-type="bibr" rid="bibr10-1059712312462904">Eiben and Smith, 2003</xref>). The general idea is that choosing proper mutation sizes can be critical to ensure optimization, given that certain parameters or groups of parameters may require bigger or smaller mutations. For example, the stance ankle controller will generally output larger torques than the swing ankle controller, and hence larger changes in torque output (i.e., bigger mutations) are required to significantly affect the resulting behaviors.</p>
+<p>Moreover, optimization results may be improved if mutation sizes are allowed to change during the course of evolution, regardless of their initial values. For example, the initial mutation sizes might need to be large at the start of an evolutionary run to prevent falling into a local minimum, but smaller at the end of the run to allow refinement of the controller. These issues are addressed by defining learning rates for each of the networks, and having evolutionary pressures adapt them alongside the control parameters for effective optimization. The 2D model was used to provide initial estimates of the evolutionary parameters, which were then implemented in the 3D model with minor changes.</p>
+</sec>
+<sec id="section17-1059712312462904">
+<title>2.7.2 Fitness function</title>
+<p>We used a fitness function that placed strong emphasis on both stability and efficiency. Fitness was defined as “the distance traveled before falling down or expending a fixed amount of joint torque cost.” In this function, distance traveled is the distance the biped has moved in the <italic>x</italic>-direction, measured at the hip, and “joint torque cost” is a concept similar to mechanical energy expenditure (<xref ref-type="bibr" rid="bibr34-1059712312462904">Srinivasan, Westervelt &amp; Hansen, 2009</xref>).</p>
+<p>The joint torque cost is computed using</p>
+<p><disp-formula id="disp-formula4-1059712312462904">
+<label>(4)</label>
+<mml:math display="block" id="math63-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msubsup>
+<mml:mrow>
+<mml:mo>∫</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-1059712312462904" xlink:href="10.1177_1059712312462904-eq4.tif"/>
+</disp-formula></p>
+<p>where <italic>T</italic> is the total time elapsed since the start of the trial and <inline-formula id="inline-formula60-1059712312462904">
+<mml:math display="inline" id="math64-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the torque of the motor for the <italic>n</italic>th network. Torque cost is used in place of mechanical energy for a number of reasons. First, joint torque cost may be a better reflection of true metabolic expenditure in humans, as well as a better reflection of battery power expenditure in robots (as will be explained in Section 4.3). Also, integrating the product of torque and angular velocity to compute energy has the effect of producing stiff walking behaviors in which joint velocities are kept very low, resulting in small mechanical energy expenditures.</p>
+<p>With this fitness function, stability is required for high fitness because falling down will lead to a short distance traveled, and therefore, low fitness. Efficiency is required for high fitness because the more quickly the fixed amount of joint torque cost is expended, the shorter the distance traveled, and the lower the fitness. Thus, maximizing fitness is tantamount to simultaneously optimizing both stability and efficiency.</p>
+</sec>
+<sec id="section18-1059712312462904">
+<title>2.7.3 Evolution procedure</title>
+<p>In the 2D model, the EA starts out by generating an initial population (generation <italic>g</italic>=0) of 150 genotypes (sets of weights) for the LPD network configuration. The walking weights <inline-formula id="inline-formula61-1059712312462904">
+<mml:math display="inline" id="math65-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>walk</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> of the initial population were manually tuned to be equivalent to PD controllers with effective gains of <inline-formula id="inline-formula62-1059712312462904">
+<mml:math display="inline" id="math66-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>300</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>100</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>300</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>10</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>300</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>20</mml:mn>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>N·m, <inline-formula id="inline-formula63-1059712312462904">
+<mml:math display="inline" id="math67-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>15</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>15</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> N·m·s, and the set points uniformly distributed between −1 and +1 radians. The gait initiation weights <inline-formula id="inline-formula64-1059712312462904">
+<mml:math display="inline" id="math68-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>init</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> were generated uniformly in the range of [−1, 1], <italic>t_init</italic> uniformly in the range [0, 2] seconds, and the learning rates were biased around unity. During each EA run, the values of all weight parameters were unconstrained, while the learning rates were constrained to be greater than zero and <italic>t_init</italic> was constrained to [0, 2]. Each generation involved the following steps:</p>
+<list id="list1-1059712312462904" list-type="order">
+<list-item><p><italic>Selection</italic>—The population is ranked by fitness, and those in the top 20% are chosen as parents for the subsequent generation (so-called <inline-formula id="inline-formula65-1059712312462904">
+<mml:math display="inline" id="math69-1059712312462904">
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> selection; <xref ref-type="bibr" rid="bibr10-1059712312462904">Eiben and Smith, 2003</xref>).</p></list-item>
+<list-item><p><italic>Crossover and mutation</italic>—The best parent is directly copied (elitism). The remaining 149 offspring are generated by either crossover between two random parents (25% probability), mutation of a random parent (25% probability), or by crossover between two random parents followed by mutation (50% probability). The crossover operation is “discrete,” meaning that each parameter is randomly chosen from either parent. The mutation operator simply adds a normally distributed random vector to the genotype vector, with the standard deviations set to 0.05 for the LPD configuration, and 0.005 for the FIL and SIL configurations. Smaller mutations are used in the latter cases due to the larger number of weights.</p></list-item>
+<list-item><p><italic>Fitness evaluation</italic>—The fitness of each member of the population is evaluated, with <inline-formula id="inline-formula66-1059712312462904">
+<mml:math display="inline" id="math70-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>3000</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> N·m·s for the LPD runs, and <inline-formula id="inline-formula67-1059712312462904">
+<mml:math display="inline" id="math71-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1000</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> N·m·s for the FIL and SIL runs. The LPD runs were given three times as much joint torque cost in order to compensate for the reduced efficiency of the LPD controllers. The terrain is randomly regenerated for each fitness evaluation.</p></list-item>
+<list-item><p><italic>Repeat or stop</italic>—If the final generation <italic>g</italic> is reached (<italic>g</italic>=500 for LPD run and <italic>g</italic>=3000 for the FIL run) or other stopping condition is met (for the SIL runs), then stop. Otherwise, return to step 1.</p></list-item>
+</list>
+<p>In the 3D trials, the procedure remained nearly the same. As previously mentioned, the gait initiation procedure is removed. Elitism was also not used for the 3D optimizations. LPD walkers were uniformly less successful in 3D, as they lacked any mechanism for dynamic step-width control. As a result, only the SIL configuration described in Section 2.5.3 was used for 3D. One set of SIL connections from a 2D run was used for the six actuators shared between 2D and 3D. Connections likely to be important for the hip adduction actuator were chosen for that network: torso roll, torso yaw, hip adduction angle, stance ankle (plantarflexion/dorsiflexion) angle, and the velocity of each of these. All individuals were given <inline-formula id="inline-formula68-1059712312462904">
+<mml:math display="inline" id="math72-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1000</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> N·m·s of torque cost. The crossover and mutation probabilities were the same, and the mutation standard deviation was the same as in the 2D FIL runs.</p>
+<p>Because of the stochastic nature of the fitness evaluations, it is probable that the fittest individual of the final generation is actually not the fittest individual of the overall run. To select the fittest overall individual, the elite individuals of the last 50 generations were evaluated on twenty new terrains. The individual with the highest average fitness was declared the winner. The winner was then evaluated on 1000 newly generated terrains to accurately measure its fitness.</p>
+</sec>
+<sec id="section19-1059712312462904">
+<title>2.7.4 Bootstrapping</title>
+<p>Optimizing the FIL weights in 2D followed a procedure very similar to that of the LPD weights in 2D, except for how the initial population was generated. Several attempts were made at evolving a FIL controller by generating the initial weights according to various random distributions, but walking behaviors did not even begin to evolve. This is a common phenomenon in the field of evolutionary robotics called the “bootstrap problem,” wherein completely random parameters lead to controllers that all perform so poorly that learning cannot get started (or the population quickly falls into a highly suboptimal local minimum) (<xref ref-type="bibr" rid="bibr26-1059712312462904">Nolfi and Floreano, 2004</xref>).</p>
+<p>To address this issue, each winner of the LPD tournaments was used as a bias around which the initial populations of FIL weights were centered (with a standard deviation of 0.05 on all weights to add diversity). Thus, the initial FIL populations started out with successfully walking individuals, and evolution could incrementally ascend gradients in fitness space for gradual improvement. The EA proceeded in the same manner as with the LPD weights, but using smaller mutation sizes of 0.005 in all generations after the first to allow thorough optimization of the additional weights. A total of 50 runs were conducted, and final tournaments were again held to determine the best-performing individual of each run.</p>
+<p>The 3D SIL trials also required bootstrapping. A set of hand-chosen LPD weights were incorporated into the parents of generation 0, and all other connection weights were set to zero. These weights encoded elementary walking behavior such as increasing inter-leg angle and locking of the stance knee. Evolution proceeded successfully from this point.</p>
+</sec>
+<sec id="section20-1059712312462904">
+<title>2.7.5 Identifying the important links</title>
+<p>Additional analysis was performed to determine which of the network links played important roles in the controller. For example, it seems likely that the network that controls the stance knee torque would not benefit significantly from the input link associated with the swing ankle velocity, but how should this be determined? Our analysis involved continuing each of the 50 original 2D FIL runs, but now pruning a random link (excluding the link associated with the local angle, angular velocity, and the bias) from each member of the population (except the elite) every 10th generation, starting at generation 3001. When the median fitness of the 10 most recent elite individuals became less than 90% that of the median fitness of the elite from the final 50 generations of the original run (generations 2951 to 3000), the removal of links was halted. In other words, links were gradually removed until doing so started to have a significant impact on the fitness of the population. The EA was then run for an additional 200 generations without further pruning to optimize the weights in the context of the reduced but consistent set of connections. Finally, tournaments were held to identify and evaluate the best performing SIL controller resulting from each run. This process produced the SIL configurations.</p>
+<p>In order to consolidate the results of the 50 pruning runs and identify which connections played the most important roles, we conducted a threshold analysis. Any connection that remained for at least 80% of the pruning runs was kept, and the rest were removed. The 80% threshold was chosen through trial and error, such that fitness did not degrade significantly compared to the previously evolved SIL controllers, while attempting to remove as many connections as possible. The connection weights of the RSIL controller were then evolved from scratch for 10 runs (while again, as with the FIL controller, biasing the LPD weights) to evaluate its performance.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section21-1059712312462904" sec-type="results">
+<title>3 Results</title>
+<p>As described in Section 2.5, we focus on four variations of the controller shown in <xref ref-type="fig" rid="fig3-1059712312462904">Figure 3</xref>: “local proportional-derivative” (LPD); “fully interconnected linear” (FIL); “sparsely interconnected linear” (SIL); and “reduced, sparsely interconnected linear” (RSIL).</p>
+<p>These results are first explored in two dimensions (Sections 3.1–3.4) in order to analyze the general principles. Building on the results from the 2D simulations, we then evolved controllers for the 3D model that could also navigate rough terrain under linear reactive control (Section 3.5).</p>
+<sec id="section22-1059712312462904">
+<title>3.1 EA results for 2D walkers</title>
+<p>We evolved linear reactive controllers for 2D bipedal walking over terrain with characteristics described in Section 2.2. Successful walking for one particular FIL controller can be seen in the video in Supplemental Online Materials. FIL controllers were found with mechanical cost of transport <inline-formula id="inline-formula69-1059712312462904">
+<mml:math display="inline" id="math73-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mt</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> as low as 0.033 (0.044 average) and fall percentage as low as 2.0% (12.8% average), and similar results were obtained for the SIL and RSIL configurations, as shown below.</p>
+<p>The EA results for the 2D model are shown in <xref ref-type="fig" rid="fig4-1059712312462904">Figure 4a</xref>, which plots fitness as a function of generation, averaged over 50 runs. The first 500 generations are for the LPD learning phase, the next 3000 are for the FIL learning phase, followed by 564 generations for the pruning phase, and finally 200 generations for post-pruning optimization. The pruning phase actually lasted a different number of generations for each run—between 353 and 854—depending on when fitness started to fall significantly. Averaging this portion of the plot involved scaling each set of data from the pruning phase to the average length of 564 generations. In <xref ref-type="fig" rid="fig4-1059712312462904">Figure 4a</xref>, fitness values for the LPD phase were scaled by a third, because those controllers were allotted three times as much joint torque cost to compensate for their reduced efficiency.</p>
+<fig id="fig4-1059712312462904" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>(a) Results of the evolutionary algorithm (EA) optimization, averaged over the 50 runs. The upper three curves represent the maximum fitness±the standard deviation of maximum fitness values, and the bottom three curves represent the mean fitness±the standard deviation of mean fitness values. (b) Results of the 10 reduced, sparsely interconnected linear (RSIL) runs (thick lines) and 50 fully interconnected linear (FIL) runs (thin lines). The upper curves represent the maximum fitness, and the lower curves represent the mean fitness.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312462904-fig4.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig4-1059712312462904">Figure 4a</xref> shows that fitness values started to increase steadily at the beginning of the FIL phase, due to the increased efficiency afforded by the non-local connections. Both the mean and maximum fitness values increase steadily throughout the 3000 generations and then slowly start to taper off, although they are still increasing at the end of the FIL phase. The high fitness values are sustained for the first 300 or so generations of the pruning phase, and then start to drop increasingly precipitously until the stopping condition is triggered. Notice that the mean fitness values fluctuate much more (i.e., the curve is more “noisy”) during the pruning phase because of the increased fitness variability caused by pruning random connections. During the 200 generations of the post-pruning phase, most of the efficiency is recovered and fitness continues to increase when the evolution is halted.</p>
+<p>The results of the RSIL run are shown in <xref ref-type="fig" rid="fig4-1059712312462904">Figure 4b</xref> (thick lines), with the FIL run (thin lines) also plotted for comparison. As might be expected, the reduced weight set of the RSIL controller (and hence smaller search space) resulted in significantly quicker increase in fitness early on, but the additional weights of the FIL controller ultimately enabled slightly increased efficiency. At generation 3000, the SIL runs nearly plateaued, and the FIL controllers were still improving, again due to the larger search space.</p>
+</sec>
+<sec id="section23-1059712312462904">
+<title>3.2 Pruning results</title>
+<p>Because of the stochastic nature of the pruning process, each of the 50 pruning phases (one in each run) ended up removing a different set of connections, although some connections proved to be much more important than others, as shown in <xref ref-type="table" rid="table3-1059712312462904">Table 3</xref>.</p>
+<table-wrap id="table3-1059712312462904" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Frequency of each connection remaining after pruning</p>
+</caption>
+<graphic alternate-form-of="table3-1059712312462904" xlink:href="10.1177_1059712312462904-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Net 1 (upper-body)</th>
+<th align="left">Net 2 (inter-leg)</th>
+<th align="left">Net 3 (stance knee)</th>
+<th align="left">Net 4 (swing knee)</th>
+<th align="left">Net 5 (stance ankle)</th>
+<th align="left">Net 6 (swing ankle)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><inline-formula id="inline-formula70-1059712312462904">
+<mml:math display="inline" id="math74-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.20</td>
+<td>0.42</td>
+<td>0.00</td>
+<td><italic>0.82</italic></td>
+<td>0.18</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula71-1059712312462904">
+<mml:math display="inline" id="math75-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.64</td>
+<td><italic>0.96</italic></td>
+<td>0.36</td>
+<td>0.06</td>
+<td>0.42</td>
+<td>0.30</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula72-1059712312462904">
+<mml:math display="inline" id="math76-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>il</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.66</td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.46</td>
+<td>0.10</td>
+<td>0.36</td>
+<td>0.32</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula73-1059712312462904">
+<mml:math display="inline" id="math77-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.66</td>
+<td><italic>0.82</italic></td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.22</td>
+<td><italic>0.92</italic></td>
+<td>0.48</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula74-1059712312462904">
+<mml:math display="inline" id="math78-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.22</td>
+<td><italic>0.80</italic></td>
+<td>0.12</td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.60</td>
+<td>0.24</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula75-1059712312462904">
+<mml:math display="inline" id="math79-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><italic>0.88</italic></td>
+<td><italic>0.92</italic></td>
+<td>0.02</td>
+<td>0.02</td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.48</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula76-1059712312462904">
+<mml:math display="inline" id="math80-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.50</td>
+<td>0.58</td>
+<td>0.12</td>
+<td>0.00</td>
+<td><italic>0.92</italic></td>
+<td><bold><italic>1</italic></bold></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula77-1059712312462904">
+<mml:math display="inline" id="math81-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.46</td>
+<td>0.10</td>
+<td>0.00</td>
+<td>0.44</td>
+<td>0.58</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula78-1059712312462904">
+<mml:math display="inline" id="math82-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.76</td>
+<td>0.44</td>
+<td>0.12</td>
+<td>0.02</td>
+<td><italic>0.96</italic></td>
+<td>0.28</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula79-1059712312462904">
+<mml:math display="inline" id="math83-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>il</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.58</td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.40</td>
+<td>0.50</td>
+<td><italic>0.82</italic></td>
+<td>0.46</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula80-1059712312462904">
+<mml:math display="inline" id="math84-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><italic>0.80</italic></td>
+<td>0.62</td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.02</td>
+<td><italic>0.90</italic></td>
+<td>0.34</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula81-1059712312462904">
+<mml:math display="inline" id="math85-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><italic>0.84</italic></td>
+<td>0.12</td>
+<td>0.08</td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.32</td>
+<td>0.20</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula82-1059712312462904">
+<mml:math display="inline" id="math86-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><italic>0.90</italic></td>
+<td>0.44</td>
+<td>0.08</td>
+<td>0.04</td>
+<td><bold><italic>1</italic></bold></td>
+<td>0.28</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula83-1059712312462904">
+<mml:math display="inline" id="math87-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.16</td>
+<td>0.14</td>
+<td>0.02</td>
+<td>0.04</td>
+<td><italic>0.88</italic></td>
+<td><bold><italic>1</italic></bold></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula84-1059712312462904">
+<mml:math display="inline" id="math88-1059712312462904">
+<mml:mrow>
+<mml:mi>DS</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.38</td>
+<td>0.16</td>
+<td>0.04</td>
+<td>0.00</td>
+<td>0.18</td>
+<td>0.00</td>
+</tr>
+<tr>
+<td><italic>bias</italic></td>
+<td><bold><italic>1</italic></bold></td>
+<td><bold><italic>1</italic></bold></td>
+<td><bold><italic>1</italic></bold></td>
+<td><bold><italic>1</italic></bold></td>
+<td><bold><italic>1</italic></bold></td>
+<td><bold><italic>1</italic></bold></td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn2-1059712312462904">
+<p>The bold indicates either local connections or the bias, which were not allowed to be removed. The italic indicates connections that were used for the RSIL controller, due to their “survival” through the pruning phase for at least 40 of 50 runs. “DS” refers to the Boolean double-stance input.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>Several important observations may immediately be made. The upper-body, inter-leg and stance ankle controllers clearly require the most elaborate control, on average keeping 61%, 51% and 66% of non-local connections, respectively (calculated by averaging all non-bold values in each column). In comparison, the swing knee, stance knee, and swing ankle controllers kept only 8%, 18%, and 32% of non-local connections, respectively. This result is not surprising in light of the observed walking behaviors, as the swing knee trajectory is relatively consistent, the stance knee usually locked, and the swing foot behavior does not need elaborate control to prevent toe-scuffing nor to ensure proper heel-strike at the end of a step.</p>
+<p>Another notable result is that all the network input variables (besides <italic>DS</italic>) proved to be useful for locomotion control, with their network connections frequently surviving the pruning process, but a given connection’s survival depended greatly on the network with which it was associated. For example, the connection from <inline-formula id="inline-formula85-1059712312462904">
+<mml:math display="inline" id="math89-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> survived 22% of the time for Network 1 (upper-body) and 80% of the time for Network 2 (inter-leg), while the connection from <inline-formula id="inline-formula86-1059712312462904">
+<mml:math display="inline" id="math90-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> survived 84% of the time for Network 1 and 12% of the time for Network 2. Thus the position of the swing knee was found to be important for controlling the inter-leg angle, but not for controlling the upper body. In contrast, the velocity of the swing knee was found to be important for the control of the upper-body, but relatively unimportant for the control of the inter-leg angle.</p>
+<p>As explained in Section 2.7.5, the connections of the RSIL controller consisted of those that were not pruned for at least 80% (40 of the 50) pruning phases. The result is that all input variables except <inline-formula id="inline-formula87-1059712312462904">
+<mml:math display="inline" id="math91-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>il</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula88-1059712312462904">
+<mml:math display="inline" id="math92-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <italic>DS</italic> were used as inputs for at least one of the six networks, but none of them for more than two, again reinforcing that the usefulness of an input variable depends on which joint it is being used to control.</p>
+<p>Examination of <xref ref-type="table" rid="table3-1059712312462904">Table 3</xref> reveals that the control of the stance ankle (network 5) required the most non-local inputs, followed by the upper-body and inter-leg angles (networks 1 and 2). In contrast, the stance and swing knee and the swing ankle did not require any non-local inputs (networks 3, 4, and 6). Summarizing, networks 1, 2 and 5 of the RSIL controller ended up receiving 4, 4, and 7 non-local inputs, respectively, while the other three networks received zero, effectively acting as local PD controllers with fixed set points.</p>
+</sec>
+<sec id="section24-1059712312462904">
+<title>3.3 Controller benchmarks</title>
+<p>We consider two fundamental ways to benchmark controller performance: stability and efficiency. Conveniently, the fitness function used in this study provides a measure of both. As mentioned earlier, at the end of each run, a tournament is held, and the winner is tested for 1000 fitness evaluations. We thus consider the percentage of fitness evaluations that result in a fall as the stability metric. For efficiency, it is straightforward to compute the dimensionless specific mechanical cost of transport <inline-formula id="inline-formula89-1059712312462904">
+<mml:math display="inline" id="math93-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mt</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, defined as the amount of positive mechanical work required to move a unit weight a unit distance (<xref ref-type="bibr" rid="bibr8-1059712312462904">Collins, Ruina, Tedrake, &amp; Wisse, 2005</xref>; <xref ref-type="bibr" rid="bibr33-1059712312462904">Srinivasan and Ruina, 2006</xref>). We average the <inline-formula id="inline-formula90-1059712312462904">
+<mml:math display="inline" id="math94-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mt</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> values computed over the 1000 runs as a final measure of efficiency.</p>
+<p><xref ref-type="table" rid="table4-1059712312462904">Table 4</xref> reveals several interesting results. The LPD controller, while not especially efficient, exhibits remarkable stability for such a minimalistic control scheme considering the ruggedness of the terrain, falling in as few as 7.3% of trials. With the full interconnectivity of the FIL controller comes a great improvement in efficiency—with <inline-formula id="inline-formula91-1059712312462904">
+<mml:math display="inline" id="math95-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mt</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> as low as 0.033 (0.044 average) and fall percentage as low as 2.0% (12.8% average). Considering that humans walking on level ground have a <inline-formula id="inline-formula92-1059712312462904">
+<mml:math display="inline" id="math96-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mt</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> of about 0.05 (<xref ref-type="bibr" rid="bibr8-1059712312462904">Collins et al., 2005</xref>), this is a very good level of efficiency. It should be noted, however, that since the model is 2D, there is no need to expend energy to ensure lateral stability, as there is with humans. Although the SIL controllers only possessed an average of 39% as many non-local connections overall as the FIL controllers, the reduction in both efficiency and stability is relatively negligible. Indeed, the RSIL controllers, which incorporate only 19% of the non-local connections (15 out of 78), also performed impressively, with similar efficiency and stability.</p>
+<table-wrap id="table4-1059712312462904" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Performance benchmarks of the various controller types</p>
+</caption>
+<graphic alternate-form-of="table4-1059712312462904" xlink:href="10.1177_1059712312462904-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">
+<inline-formula id="inline-formula93-1059712312462904">
+<mml:math display="inline" id="math97-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mt</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (mean/best)</th>
+<th align="left">Fall % (mean/best)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LPD</td>
+<td>0.218±0.025/0.169</td>
+<td>25.2±7.9/7.3</td>
+</tr>
+<tr>
+<td>FIL</td>
+<td>0.044±0.006/0.033</td>
+<td>12.8±7.7/2.0</td>
+</tr>
+<tr>
+<td>SIL</td>
+<td>0.047±0.009/0.028</td>
+<td>19.7±10.8/4.9</td>
+</tr>
+<tr>
+<td>RSIL</td>
+<td>0.043±0.003/0.038</td>
+<td>10.4±4.6/3.6</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn3-1059712312462904">
+<p>LPD, local proportional-derivative; FIL, fully interconnected linear; SIL, sparsely interconnected linear; RSIL, reduced, sparsely interconnected linear.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+</sec>
+<sec id="section25-1059712312462904">
+<title>3.4 Walking behaviors</title>
+<p>With the exception of the LPD framework, all EA runs evolved weight sets that exhibited qualitatively similar-looking walking behaviors. Example stick figures and kinematic plots are shown in <xref ref-type="fig" rid="fig5-1059712312462904">Figures 5</xref> and <xref ref-type="fig" rid="fig6-1059712312462904">6</xref>, respectively, as well as the Supplementary Video. The figures and video reveal a remarkably human-like gait pattern. Each stride, the upper-body undergoes a smooth rotation around 0°, with the amplitude adjusted to compensate for terrain unevenness. The stance thigh angle increases in a relatively linear manner, while the inter-leg angle increases relatively abruptly for the first half of the stride, and by a much smaller amount for the second half. The stance knee generally remains locked out, and the swing knee smoothly bends from 0° to between 60° and 90° and back to 0° during the first two-thirds of the stride, and remains locked out. The stance ankle angle increases linearly for the first two-thirds of the stride, and then abruptly starts to decrease, exhibiting a push-off behavior. The swing ankle behaves in a reasonable manner, experiencing a small disturbance as the swing knee locks out, and quickly decreases after the swing foot’s heel makes contact with the ground. The LPD-based walking motions appeared similar to those of the other frameworks, but the upper-body tended to lean forward, and the inter-leg angle increased more rapidly, which helps explain the reduced efficiency of LPD control.</p>
+<fig id="fig5-1059712312462904" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>A sequence of walking steps for a particular fully interconnected linear (FIL) controller, starting with gait initiation. The time transpiring between each frame is 0.5 seconds.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312462904-fig5.tif"/>
+</fig>
+<fig id="fig6-1059712312462904" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Averaged kinematics over thousands of strides for a typical fully interconnected linear (FIL) controller. The intensity of whiteness indicates how frequently the walker passed through a given state, with each time “slice” normalized relative to the most frequent state within the slice; 5000 successful walking trials (no falls) were used to generate the figure.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312462904-fig6.tif"/>
+</fig>
+<p>In addition to kinematic analysis, we also compared the controllers using intuitive metrics of the walking patterns, including mean speed, mean step length and mean percent double-stance (the percent of each stride during which both feet were on the ground). Specifically, for each of the tournament winners, we conducted 100 successful walking trials (no falls) and averaged the results, shown in <xref ref-type="table" rid="table5-1059712312462904">Table 5</xref>. The standard deviations of the metrics were computed to give a measure of the variability of the behavior between tournament winners for each of the frameworks.</p>
+<table-wrap id="table5-1059712312462904" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Metrics of walking behaviors</p>
+</caption>
+<graphic alternate-form-of="table5-1059712312462904" xlink:href="10.1177_1059712312462904-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Walking speed (m/s)</th>
+<th align="left">Step length (m)</th>
+<th align="left">Pct. double-stance (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LPD</td>
+<td>1.50±0.14</td>
+<td>0.762±0.045</td>
+<td>8.29±1.46</td>
+</tr>
+<tr>
+<td>FIL</td>
+<td>1.44±0.08</td>
+<td>0.966±0.031</td>
+<td>5.59±1.22</td>
+</tr>
+<tr>
+<td>SIL</td>
+<td>1.42±0.08</td>
+<td>0.941±0.051</td>
+<td>5.38±1.47</td>
+</tr>
+<tr>
+<td>RSIL</td>
+<td>1.41±0.03</td>
+<td>0.773±0.063</td>
+<td>5.06±2.19</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn4-1059712312462904">
+<p>LPD, local proportional-derivative; FIL, fully interconnected linear; SIL, sparsely interconnected linear; RSIL, reduced, sparsely interconnected linear.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p><xref ref-type="table" rid="table5-1059712312462904">Table 5</xref> reveals that both the average walking speeds and step lengths were generally consistent with a human walking at a slightly brisk pace, but the double-stance phase was notably briefer (∼20% is typical for humans) (<xref ref-type="bibr" rid="bibr9-1059712312462904">DeLisa, 1998</xref>). The variability (standard deviations) of the various metrics was mostly small but not entirely insignificant, indicating that good walking performance can be achieved at a range of walking speeds and step lengths.</p>
+</sec>
+<sec id="section26-1059712312462904">
+<title>3.5 3D results</title>
+<sec id="section27-1059712312462904">
+<title>3.5.1 The 3D walker on slightly rough terrain</title>
+<p>We next conducted experiments in which we generalized the 2D results to a 3D model, demonstrating the efficacy and scalability of the linear reactive controller. We follow the same procedure as the 2D experiments in order to demonstrate control of a 3D walker on slightly rough terrain (step-to-step terrain height standard deviations of about 0.36% leg-length). Slightly rough terrain provides a demonstration of walking on nearly flat ground, and helps prevent dangerous behaviors (sliding, tip-toeing, near-zero swing foot clearance) that can emerge when perfectly flat ground is used. See <xref ref-type="app" rid="app1-1059712312462904">Appendix A</xref> for details on ground roughness. An LPD set of weights was chosen by hand to bootstrap the first generation of SIL controllers, as described in Section 2.7.4, and then the same EA was implemented to optimize the weights with minor differences as noted in Section 2.7.3.</p>
+<p>Interestingly, the reduced set of connections based on the 2D SIL results worked extremely well in 3D also. The connections for the six shared actuators were taken directly from a 2D SIL run (identities only, not weight values), and a hip adduction actuator network was then added as described in Section 2.5.3. Stable 3D walking behaviors were readily evolved using this sparse network, with no additional design effort. Six runs were averaged together, and the evolution of fitness is shown in <xref ref-type="fig" rid="fig7-1059712312462904">Figure 7</xref>.</p>
+<fig id="fig7-1059712312462904" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Results of the evolutionary algorithm (EA) optimization of a 3D walker, averaged over six runs. The upper three curves represent the maximum fitness±the standard deviation of maximum fitness values, and the bottom three curves represent the mean fitness±the standard deviation of mean fitness values.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312462904-fig7.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig7-1059712312462904">Figure 7</xref> shows that, with 1000 N·m·s of torque cost, the best 3D walkers in each generation were able to travel slightly over 50 m. An average walker could cover about 20 m, most of them falling before expending the available torque cost. Evaluation of tournament winners yielded a mean <italic>C<sub>mt</sub></italic> of 0.376±0.008. By comparison, ZMP-controlled bipeds such as ASIMO have a <italic>C<sub>mt</sub></italic> around 1.6 (<xref ref-type="bibr" rid="bibr8-1059712312462904">Collins et al., 2005</xref>). Thus our 3D walkers are approximately four times more efficient, even though they are trained to walk over rough terrain. The tournament winner fell in 11.7% of trials.</p>
+<p>Note that, compared with <xref ref-type="fig" rid="fig4-1059712312462904">Figure 4</xref>, the evolution proceeds very quickly. Using the reduced set of weights helps to reduce the solution search space, meaning that only a few hundred generations are required for the fitness to approach its final value. This is a favorable result, as it quickly generates very stable walking controllers with minimal design effort for 3D bipedal locomotion, an extremely difficult control task. The similarity in both the procedure and the control framework between 2D and 3D models demonstrates the straightforward scalability of this method.</p>
+</sec>
+<sec id="section28-1059712312462904">
+<title>3.5.2 The 3D walker on rough terrain</title>
+<p>Starting with the 3D controllers evolved for slightly rough terrain, the roughness of the terrain was gradually increased ten-fold over 800 generations, from step-to-step terrain height standard deviations of 0.36% leg-length to about 3.55% leg-length. Sample videos are included in Supplemental Online Materials.</p>
+<p>Similar to <xref ref-type="fig" rid="fig6-1059712312462904">Figure 6</xref>, kinematic data for one typical controller was generated by testing on 1000 different rough terrains. The averaged trajectories are plotted in <xref ref-type="fig" rid="fig8-1059712312462904">Figure 8</xref>.</p>
+<fig id="fig8-1059712312462904" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Averaged kinematic data for a typical sparsely interconnected linear (SIL) 3D controller generated by testing on 1000 different rough terrains (no falls included).</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312462904-fig8.tif"/>
+</fig>
+<p>There is less variability in these trajectories compared to those in <xref ref-type="fig" rid="fig6-1059712312462904">Figure 6</xref>, possibly because of the higher walking speed (∼3 times faster than the 2D walker). The short step duration leaves little time to diverge from the trajectories shown, so the joints fall into very consistent limit cycles. The upper-body and hip adduction plots are noteworthy for having the most variable trajectories. The hip adduction plot has trajectories distributed over much of the plot area because this joint is used to control step width, which stabilizes lateral falls. This angle is therefore highly dependent on the terrain. The upper-body angle is the second-most diffuse, as it is also adjusted to compensate for unevenness.</p>
+<p>The highest terrain roughness used during evolution was a step-to-step height standard deviation of about 3.55% leg length. The fall rate for the best individuals in the tournament on this level of roughness was very high (over 99% failed at some point before exhausting 1000 N·m·s of torque cost), so in order to more effectively evaluate the performance, a tournament was conducted on terrain with standard deviations of about 2.0% leg-length. The winner of this tournament had a mechanical cost of transport of <italic>C<sub>mt</sub></italic>=0.421±0.005, and a fall rate of about 16.7%.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section29-1059712312462904" sec-type="discussion">
+<title>4 Discussion</title>
+<sec id="section30-1059712312462904">
+<title>4.1 Linear reactive control for robotics</title>
+<p>The linear reactive control approach presented in this study was shown to enable stable and efficient simulations of locomotion over rough terrain using both 2D and 3D models. From an algorithmic perspective, the control approach is “simple,” in that it relies only on a linear weighted sum of the sensory inputs, and requires no dynamic memory. From an optimization perspective, the control approach might be called “complex,” in that it requires dozens of weights to be tuned in order to establish a successful control network. Our view is that although the size of the search space is large, the algorithmic simplicity of linear reactive control is novel among bipedal walking controllers considering the level of stability and efficiency achieved.</p>
+<p>It is not at all obvious that linear reactive control should be sufficient to enable biped walkers to negotiate rough terrain. Although hand-tuned controllers for the 3D “Cornell biped” and “Denise” have been shown to enable locomotion over flat terrain (<xref ref-type="bibr" rid="bibr8-1059712312462904">Collins et al., 2005</xref>), and “Flame” can even handle small step-downs (<xref ref-type="bibr" rid="bibr18-1059712312462904">Hobbelen and Wisse, 2009</xref>), walking over rough terrain requires considerably more adaptive behavior. In particular, results from previous studies have seemed to suggest that central pattern generators may be needed to entrain the oscillatory dynamics of the body/environment interaction (<xref ref-type="bibr" rid="bibr36-1059712312462904">Taga, 1995a</xref>, <xref ref-type="bibr" rid="bibr37-1059712312462904">1995b</xref>). Importantly, the results of the present work demonstrate that 3D bipedal locomotion over rough terrain can be achieved with a control architecture consisting of little more than a weighted linear sum of sensor states. Although the present approach does not by itself afford any theoretical stability guarantees, the trajectories it generates are amenable to theoretic analysis in future studies.</p>
+<p>The present work does not demonstrate that linear reactive control is the <italic>best</italic> controller for bipedal locomotion; it is indeed likely that a nonlinear controller could allow for at least marginally higher fitness behavior. The present work does, however, demonstrate that linear reactive control is a <italic>very good</italic> solution, especially given its very simple structure, which we consider to be a virtue (all things being equal, simple solutions are preferable). Furthermore, by maximizing the performance of linear control for bipedal locomotion, we can help to establish what benefits are being afforded by nonlinear control approaches.</p>
+<p>The simulation results presented here make linear reactive control a favorable candidate for application to a robotic testbed. The problem, however, is that its reliance on numerical optimization to tune the network weights makes it challenging to implement in hardware: it is clearly infeasible to perform thousands of fitness trials in hardware, yet discrepancies between simulation and hardware will preclude direct transfer of simulation results. In a recent study, we investigated an approach to address this problem: various forms of noise and uncertainty, as well as a realistic actuation model, were introduced into the 3D model simulation (<xref ref-type="bibr" rid="bibr22-1059712312462904">Locascio et al., in press</xref>). By randomly varying the biped’s dynamic parameters and terrain properties for each fitness evaluation, the weights must evolve such that the controller is robust to these deviations. Although additional measures are likely to be needed before effective hardware transfer can take place, we anticipate that this may be a useful approach to aid in crossing the “reality gap” (<xref ref-type="bibr" rid="bibr20-1059712312462904">Jakobi, Husbands &amp; Harvey, 1995</xref>; <xref ref-type="bibr" rid="bibr46-1059712312462904">Zagal and Ruiz-del-Solar, 2007</xref>).</p>
+</sec>
+<sec id="section31-1059712312462904">
+<title>4.2 Extension from the 2D to the 3D model</title>
+<p>A significant advantage of the approach used in this study is that it was relatively easy to scale up control of the 2D model to the 3D model. The 2D seven-link model was an invaluable tool for developing the control framework and efficient evolutionary parameters. However, this model bypasses some complex control issues—most importantly, lateral stability—that must be addressed for the case of 3D humanoid walking. It was therefore necessary to show that a linear reactive controller was truly a viable option for unsupported 3D walkers.</p>
+<p>The expansion from 2D to 3D required the addition of one actuator control network for hip adduction, and the inclusion of up to ten more sensor inputs to each network, if a fully connected controller is desired. These changes were easy to implement as natural extensions of the 2D model, increasing the appeal of the linear reactive controller design. The most important non-trivial change required for the 3D controller was the interpretation of the “roll” and “yaw” values that were used as inputs to the hip adduction network. 3D walking, even on flat terrain, carries the risk of toppling laterally, in the direction transverse to the direction of travel. The 3D walker prevents lateral falling through hip adduction, i.e., widening or narrowing the step width. To address the symmetric nature of walking and enable this behavior, the signs of the roll and yaw angles and velocities had to be flipped whenever the left leg was the stance leg.</p>
+<p>Aside from this lateral stability issue, the controller used in the 2D model was directly applicable to a 3D model with the addition of appropriate sensors and actuator networks. It is particularly noteworthy that the 2D SIL connections were directly applicable to the 3D model, perhaps implying a high degree of decoupling between forward and lateral control aspects of biped walking.</p>
+</sec>
+<sec id="section32-1059712312462904">
+<title>4.3 Bottom-up design using the fitness function</title>
+<p>A significant advantage of the evolutionary optimization approach used in this study is the ease with which it allows characteristics of the controller to be adjusted, as well as its potential to be used for the design of controllers for different locomotion behaviors (e.g., running, jumping, turning, traversing steps, and gait initiation). However, it must be emphasized that the controller “design” is not carried out in the traditional top-down sense wherein the controller is synthesized through rigorous mathematical modeling and control systems engineering. Instead, the fitness function must be carefully formulated in such a way that the desired (high fitness) behavior emerges in a bottom-up sense as the EA optimizes the network weights.</p>
+<p>In the current study, the fitness function was designed to not only ensure that the controller is stable and efficient, but also to reward improvement in an incremental way, thereby discouraging the optimization from falling into local minima. In the early stages of each EA run, all the selection pressure was on stability because the walker would fall before exhausting its joint torque cost <inline-formula id="inline-formula94-1059712312462904">
+<mml:math display="inline" id="math98-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, much like a toddler focuses on standing upright and taking small steps forward before walking efficiently. Once individuals in the population were able to walk far enough to completely use the torque cost, efficiency became an important factor in the optimization. Increasing the value of <inline-formula id="inline-formula95-1059712312462904">
+<mml:math display="inline" id="math99-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> increases the relative importance of stability compared to efficiency, and vice-versa. Optimization also takes longer when <inline-formula id="inline-formula96-1059712312462904">
+<mml:math display="inline" id="math100-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is increased because the biped may walk farther on any given fitness evaluation.</p>
+<p>Another interesting aspect of the fitness function was its use of joint torque cost instead of mechanical energy expenditure. If mechanical energy expenditure were used, <xref ref-type="disp-formula" rid="disp-formula4-1059712312462904">Equation 4</xref> would simply be modified by multiplying the <inline-formula id="inline-formula97-1059712312462904">
+<mml:math display="inline" id="math101-1059712312462904">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> term by <inline-formula id="inline-formula98-1059712312462904">
+<mml:math display="inline" id="math102-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>jo</mml:mi>
+<mml:mtext>int</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where <inline-formula id="inline-formula99-1059712312462904">
+<mml:math display="inline" id="math103-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>joint</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> for the 2D model. We experimented with using mechanical energy expenditure, but found that led to gait patterns with overly stiff joints, e.g., locking out the swing knee and keeping the stance ankle relatively stiff, which is not surprising given that keeping <inline-formula id="inline-formula100-1059712312462904">
+<mml:math display="inline" id="math104-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>joint</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> small conserves energy. Moreover, joint torque cost may be a better reflection of true metabolic expenditure in humans, as well as a better reflection of battery power expenditure in robots. For example, consider a control strategy that involves fully extending the stance leg and “locking” the knee with a strong torque on the stance knee motor. Although it is clear that applying a strong torque implies metabolic exertion (in humans) or use of battery power (in robots), it accounts for no mechanical energy expenditure in this scenario, since the knee joint angle velocity would be zero. The joint torque cost metric addresses this issue by integrating only the absolute torque magnitude over time.</p>
+<p>Finally, the particular controllers evolved in the present work are likely to owe part of their success to the fact that both 2D and 3D simulations were based on physical systems (a human and robot, respectively) specifically designed to exploit principles of passive dynamic walking (<xref ref-type="bibr" rid="bibr19-1059712312462904">Hobbelen et al., 2008</xref>). For these systems, much of the locomotor computation is inherent in the physical interaction between the robot and the environment, leading to a large basin of attraction and hence aiding in optimization from start to finish. If a linear reactive approach were used to control other types of bipeds—ones that had been designed in the absence of passive dynamic principles—it is likely that the optimization would be more difficult and lead to less anthropomorphic walking patterns.</p>
+</sec>
+</sec>
+<sec id="section33-1059712312462904" sec-type="conclusions">
+<title>5 Conclusion</title>
+<p>The linear reactive control approach presented in this study enables locomotion over rough terrain with remarkable stability, efficiency and human-like movement, especially considering the overall simplicity of the architecture. By using an EA to tune the weights, properties of the resulting gaits can be altered in a straightforward manner. Future studies may focus on implementing the approach in hardware, and also explore how different fitness functions can be used to enable the evolution of diverse behaviors such as speed control, jogging, running, turning and traversing stairs.</p>
+</sec>
+</body>
+<back>
+<app-group>
+<app id="app1-1059712312462904">
+<title>Appendix A: 3D terrain profile generation</title>
+<p>In order to generate terrains for the 3D model, the random walk procedure had to be altered to produce surfaces. This was done using a constrained 2D random walk to build an <italic>m</italic>-by-<italic>n</italic> matrix of height values.</p>
+<p>Starting on column 1 and proceeding to column <italic>n</italic>, the first row of nodes is produced using a standard 1D random walk with unity step size. Row 2 starts at column <italic>n</italic> and proceeds toward column 1. The entry at (2,<italic>n</italic>) is also a random-walk step from the entry at (1,<italic>n</italic>). The entry at (2,<italic>n</italic>−1) is based on the values at (1,<italic>n</italic>−1) and (2,<italic>n</italic>). If the two values are the same, we take another random-walk step. If they differ by more than 1, then an additional step away from those values is prevented. This keeps two values in the same column from diverging wildly. At the end of row 2 (back at column 1), we again proceed in row 3 from column 1 to column <italic>n</italic>, and continue the procedure.</p>
+<p>Another matrix, this one of transposed dimensions <italic>n</italic>-by-<italic>m</italic>, is then produced in the same way. It is transposed and added to the first layer, and then each element in the resulting matrix is divided by two. This composition of layers cancels out any bias that may arise in the directions in which the layers were produced.</p>
+<p>The surface is then smoothed by averaging using 2D windows with a side length of <italic>f</italic> nodes. This is effectively a low-pass filter determining the frequencies present in the surface. A higher <italic>f</italic> value results in more averaging, removing more high frequencies. In this study, we used <italic>f</italic>=5, and node spacings equal to those of the 2D terrain (0.1 m). Finally, the value of each point is multiplied by the scale factor, <italic>r</italic>, to determine the amplitudes. A perfectly flat terrain can be generated using <italic>r</italic>=0.0, but this could allow unsafe behaviors to evolve, such as near-zero swing foot heights. Instead, our “slightly rough terrain” uses <italic>r</italic>=0.002, which corresponds to step-to-step height standard deviations of about 0.36% leg-length. The highest roughness used during evolution used <italic>r</italic>=0.02, which results in a standard deviation of about 3.55% leg-length. The tournament in Section 3.5.2 used <italic>r</italic>=0.01, which results in a standard deviation of about 2.0% leg-length.</p>
+<p>Additionally, it should be noted that the first 2 m of these terrains were perfectly flat to avoid a bootstrapping problem in which a difficult starting point on the terrain immediately caused falls. The terrain for the 2D model started perfectly flat up to the tip of the toes, but was rough immediately thereafter.</p>
+</app>
+<app id="app2-1059712312462904">
+<title>Appendix B: mathematical implementation of control architecture</title>
+<p>Expressed mathematically, the output (motor torque) <inline-formula id="inline-formula101-1059712312462904">
+<mml:math display="inline" id="math105-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> of network <italic>n</italic> is computed as:</p>
+<p><disp-formula id="disp-formula5-1059712312462904">
+<label>(5)</label>
+<mml:math display="block" id="math106-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>net</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-1059712312462904" xlink:href="10.1177_1059712312462904-eq5.tif"/>
+</disp-formula></p>
+<p><inline-formula id="inline-formula102-1059712312462904">
+<mml:math display="inline" id="math107-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>net</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the <italic>i</italic>th weight of network <italic>n</italic>, <inline-formula id="inline-formula103-1059712312462904">
+<mml:math display="inline" id="math108-1059712312462904">
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the signal coming from input node <italic>i</italic>, and <inline-formula id="inline-formula104-1059712312462904">
+<mml:math display="inline" id="math109-1059712312462904">
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the number of inputs for network <italic>n</italic>. There is one small but critical modification to <xref ref-type="disp-formula" rid="disp-formula5-1059712312462904">Equation 5</xref> for network 1, making it</p>
+<p><disp-formula id="disp-formula6-1059712312462904">
+<label>(6)</label>
+<mml:math display="block" id="math110-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>net</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-1059712312462904" xlink:href="10.1177_1059712312462904-eq6.tif"/>
+</disp-formula></p>
+<p>This causes control of the upper-body to be effectively isolated from the activity of the swing hip’s actuator, enabling stable locomotion using the LPD control framework, which would not be possible using LPD control directly on <inline-formula id="inline-formula105-1059712312462904">
+<mml:math display="inline" id="math111-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>sw</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula106-1059712312462904">
+<mml:math display="inline" id="math112-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ϕ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. As is common with neural networks, all of the raw sensor states <italic>s</italic> are shifted and scaled to the range [−1, 1] with an affine transform:</p>
+<p><disp-formula id="disp-formula7-1059712312462904">
+<label>(7)</label>
+<mml:math display="block" id="math113-1059712312462904">
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>scale</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>shift</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-1059712312462904" xlink:href="10.1177_1059712312462904-eq7.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula107-1059712312462904">
+<mml:math display="inline" id="math114-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>scale</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula108-1059712312462904">
+<mml:math display="inline" id="math115-1059712312462904">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>shift</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> are the scaling and shifting parameters for sensor state <italic>i</italic>, respectively. For each of the 50 runs, these parameters were determined based on the minimum and maximum state values measured during a single fitness evaluation (in which a fall did not occur).</p>
+</app>
+</app-group>
+<ack>
+<p>We thank Martijn Wisse for providing a copy of the Flame robot, associated CAD drawings, and other assistance.</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work was supported by the Director’s Research and Development Fund program of the Jet Propulsion Laboratory (California Institute of Technology), NSF awards IOS-0818414 and IOS-0846088 to MJZH, and the Graduate Student Research Program of the Jet Propulsion Laboratory (award number 10401 to MAL).</p>
+</fn>
+</fn-group>
+<bio>
+<title>About the Authors</title>
+<p><bold>Joseph H Solomon</bold> is currently an adjunct assistant professor in the department of biomedical engineering at Northwestern University, Evanston, IL. He received a B.S. degree in aeronautical and astronautical engineering from the University of Illinois at Urbana-Champaign in 2001, an M.S. degree in mechanical engineering from the University of Illinois at Chicago in 2003, and a Ph.D. degree in mechanical engineering from Northwestern University in 2008. His research interests include evolutionary algorithms, neural networks, artificial general intelligence, biomimetic sensing, and bipedal locomotion.</p>
+<p><bold>Mark A Locascio</bold> received a B.S. degree in engineering from Harvey Mudd College (Claremont, CA) in 2005. He completed an M.S. degree in mechanical engineering from Northwestern University (Evanston, IL) in 2009, and received his Ph.D. degree in mechanical engineering from Northwestern University in 2012. He was a NASA GSRP fellow from 2010 to 2012. His research interests include evolutionary robotics, machine learning, control, and numerical methods.</p>
+<p><bold>Mitra J Z Hartmann</bold> is an associate professor at Northwestern University with a 50/50 joint appointment between the departments of biomedical engineering and mechanical engineering. She received a B.S. degree in applied and engineering physics from Cornell University, and a Ph.D. degree in integrative neuroscience from the California Institute of Technology. From 2000–2003, she was a postdoctoral scholar at the Jet Propulsion Laboratory in Pasadena, California, where she worked in the bio-inspired technology and systems group. Dr. Hartmann’s research interests involve understanding the mechanics and neuroscience of active sensing behaviors.</p>
+</bio>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1059712312462904">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Bishop</surname><given-names>C. M.</given-names></name>
+</person-group> (<year>1996</year>). <source>Neural networks for pattern recognition</source>. <publisher-name>Oxford University Press USA</publisher-name>.</citation>
+</ref>
+<ref id="bibr2-1059712312462904">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Braitenberg</surname><given-names>V.</given-names></name>
+</person-group> (<year>1984</year>). <source>Vehicles: Experiments in synthetic psychology</source>. <publisher-loc>Cambridge, MA</publisher-loc>, <publisher-name>MIT Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr3-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Byl</surname><given-names>K.</given-names></name>
+<name><surname>Tedrake</surname><given-names>R.</given-names></name>
+</person-group> (<year>2009</year>). <article-title>Metastable walking machines</article-title>. <source>International Journal of Robotics Research</source> <volume>28</volume>(<issue>8</issue>), <fpage>1040</fpage>–<lpage>1064</lpage>.</citation>
+</ref>
+<ref id="bibr4-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chevallereau</surname><given-names>C.</given-names></name>
+<name><surname>Abba</surname><given-names>G.</given-names></name>
+<name><surname>Aoustin</surname><given-names>Y.</given-names></name>
+<name><surname>Plestan</surname><given-names>F.</given-names></name>
+<name><surname>Westervelt</surname><given-names>E. R.</given-names></name>
+<name><surname>Canduas-de-Wit</surname><given-names>C.</given-names></name>
+<name><surname>Grizzle</surname><given-names>J. W.</given-names></name>
+</person-group> (<year>2003</year>). <article-title>RABBIT: A testbed for advanced control theory</article-title>. <source>IEEE Control Systems Magazine</source> <volume>23</volume>(<issue>5</issue>), <fpage>57</fpage>–<lpage>79</lpage>.</citation>
+</ref>
+<ref id="bibr5-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chiel</surname><given-names>H. J.</given-names></name>
+<name><surname>Beer</surname><given-names>R. D.</given-names></name>
+</person-group> (<year>1997</year>). <article-title>The brain has a body: adaptive behavior emerges from interactions of nervous system, body and environment</article-title>. <source>Trends in Neurosciences</source> <volume>20</volume>(<issue>12</issue>), <fpage>553</fpage>–<lpage>557</lpage>.</citation>
+</ref>
+<ref id="bibr6-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chiel</surname><given-names>H. J.</given-names></name>
+<name><surname>Ting</surname><given-names>L. H.</given-names></name>
+<name><surname>Ekeberg</surname><given-names>Ö</given-names></name>
+<name><surname>Hartmann</surname><given-names>M.J.Z.</given-names></name>
+</person-group> (<year>2009</year>). <article-title>The brain in its body: Motor control and sensing in a biomechanical context</article-title>. <source>Journal of Neuroscience</source> <volume>29</volume>(<issue>41</issue>), <fpage>12807</fpage>–<lpage>12814</lpage>.</citation>
+</ref>
+<ref id="bibr7-1059712312462904">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Collins</surname><given-names>S. H.</given-names></name>
+<name><surname>Ruina</surname><given-names>A.</given-names></name>
+</person-group> (<year>2005</year>). <article-title>A bipedal walking robot with efficient and human-like gait</article-title>. <conf-name>Proceedings of the 2005 International Conference on Robotics and Automation</conf-name>, <conf-loc>Barcelona</conf-loc>.</citation>
+</ref>
+<ref id="bibr8-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Collins</surname><given-names>S. H.</given-names></name>
+<name><surname>Ruina</surname><given-names>A.</given-names></name>
+<name><surname>Tedrake</surname><given-names>R.</given-names></name>
+<name><surname>Wisse</surname><given-names>M.</given-names></name>
+</person-group> (<year>2005</year>). <article-title>Efficient bipedal robots based on passive-dynamic walkers</article-title>. <source>Science</source> <volume>307</volume>, <fpage>1082</fpage>–<lpage>1085</lpage>.</citation>
+</ref>
+<ref id="bibr9-1059712312462904">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>DeLisa</surname><given-names>J. A.</given-names></name>
+</person-group> (<year>1998</year>). <source>Gait analysis in the science of rehabilitation</source>. <publisher-loc>Darby, PA</publisher-loc>: <publisher-name>Diane Publishing Co</publisher-name>.</citation>
+</ref>
+<ref id="bibr10-1059712312462904">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Eiben</surname><given-names>A.</given-names></name>
+<name><surname>Smith</surname><given-names>J.</given-names></name>
+</person-group> (<year>2003</year>). <source>Introduction to evolutionary computing</source>. <publisher-loc>Heilderberg</publisher-loc>: <publisher-name>Springer</publisher-name>.</citation>
+</ref>
+<ref id="bibr11-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Garcia</surname><given-names>M.</given-names></name>
+<name><surname>Chatterjee</surname><given-names>A.</given-names></name>
+<name><surname>Ruina</surname><given-names>A.</given-names></name>
+<name><surname>Coleman</surname><given-names>M.</given-names></name>
+</person-group> (<year>1998</year>). <article-title>The simplest walking model: Stability, complexity, and scaling</article-title>. <source>Journal of Biomechanical Engineering</source> <volume>120</volume>(<issue>2</issue>), <fpage>281</fpage>–<lpage>288</lpage>.</citation>
+</ref>
+<ref id="bibr12-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Geyer</surname><given-names>H.</given-names></name>
+<name><surname>Herr</surname><given-names>H. M.</given-names></name>
+</person-group> (<year>2010</year>). <article-title>A muscle-reflex model that encodes principles of legged mechanics produces human walking dynamics and muscle activities</article-title>. <source>IEEE Transactions on Neural Systems and Rehabilitation Engineering</source> <volume>18</volume>(<issue>3</issue>), <fpage>263</fpage>–<lpage>273</lpage>.</citation>
+</ref>
+<ref id="bibr13-1059712312462904">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Haavisto</surname><given-names>O.</given-names></name>
+<name><surname>Hyötyniemi</surname><given-names>H.</given-names></name>
+</person-group> (<year>2004</year>). <source>Simulation tool of a biped walking robot model</source>. <publisher-name>Helsinki University of Technology, Control Engineering Laboratory</publisher-name>.</citation>
+</ref>
+<ref id="bibr14-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hasegawa</surname><given-names>Y.</given-names></name>
+<name><surname>Arakawa</surname><given-names>T.</given-names></name>
+<name><surname>Fukuda</surname><given-names>T.</given-names></name>
+</person-group> (<year>2000</year>). <article-title>Trajectory generation for biped locomotion robot</article-title>. <source>Mechatronics</source> <volume>10</volume>(<issue>1–2</issue>), <fpage>67</fpage>–<lpage>89</lpage>.</citation>
+</ref>
+<ref id="bibr15-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hobbelen</surname><given-names>D. G. E.</given-names></name>
+<name><surname>Wisse</surname><given-names>M.</given-names></name>
+</person-group> (<year>2008a</year>). <article-title>Ankle actuation for limit cycle walkers</article-title>. <source>The International Journal of Robotics Research</source> <volume>27</volume>(<issue>6</issue>), <fpage>709</fpage>–<lpage>735</lpage>.</citation>
+</ref>
+<ref id="bibr16-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hobbelen</surname><given-names>D. G. E.</given-names></name>
+<name><surname>Wisse</surname><given-names>M.</given-names></name>
+</person-group> (<year>2008b</year>). <article-title>Controlling the walking speed in limit cycle walking</article-title>. <source>The International Journal of Robotics Research</source> <volume>27</volume>(<issue>9</issue>), <fpage>989</fpage>–<lpage>1005</lpage>.</citation>
+</ref>
+<ref id="bibr17-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hobbelen</surname><given-names>D. G. E.</given-names></name>
+<name><surname>Wisse</surname><given-names>M.</given-names></name>
+</person-group> (<year>2008b</year>). <article-title>Swing leg retraction for limit cycle walkers improves disturbance rejection</article-title>. <source>IEEE Transactions on Robotics</source> <volume>24</volume>(<issue>2</issue>), <fpage>377</fpage>–<lpage>389</lpage>.</citation>
+</ref>
+<ref id="bibr18-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hobbelen</surname><given-names>D. G. E.</given-names></name>
+<name><surname>Wisse</surname><given-names>M.</given-names></name>
+</person-group> (<year>2009</year>). <article-title>Active lateral foot placement for 3D stabilization of a limit cycle walker prototype</article-title>. <source>International Journal of Humanoid Robotics</source> <volume>6</volume>(<issue>1</issue>), <fpage>93</fpage>–<lpage>116</lpage>.</citation>
+</ref>
+<ref id="bibr19-1059712312462904">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Hobbelen</surname><given-names>D. G. E.</given-names></name>
+<name><surname>de Boer</surname><given-names>T.</given-names></name>
+<name><surname>Wisse</surname><given-names>M.</given-names></name>
+</person-group> (<year>2008</year>). <article-title>System overview of bipedal robots Flame and TUlip: Tailor-made for limit cycle walking</article-title>. <conf-name>IEEE/RSJ International Conference on Intelligent Robots and Systems</conf-name>. Nice, pp. <fpage>2486</fpage>–<lpage>2491</lpage>.</citation>
+</ref>
+<ref id="bibr20-1059712312462904">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Jakobi</surname><given-names>N.</given-names></name>
+<name><surname>Husbands</surname><given-names>P.</given-names></name>
+<name><surname>Harvey</surname><given-names>I.</given-names></name>
+</person-group> (<year>1995</year>). <article-title>Noise and the reality gap: The use of simulation in evolutionary robotics</article-title>. In <person-group person-group-type="editor">
+<name><surname>Moran</surname><given-names>F.</given-names></name>
+<name><surname>Moreno</surname><given-names>A.</given-names></name>
+<name><surname>Merelo</surname><given-names>J. J.</given-names></name>
+<name><surname>Chacon</surname><given-names>P.</given-names></name>
+</person-group> (Eds.), <source>Advances in artificial life</source>, <volume>volume 929</volume>, pp. <fpage>704</fpage>–<lpage>720</lpage>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer-Verlag</publisher-name>.</citation>
+</ref>
+<ref id="bibr21-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kuo</surname><given-names>A. D.</given-names></name>
+</person-group> (<year>2002</year>). <article-title>Energetics of actively powered locomotion using the simplest walking model</article-title>. <source>Journal of Biomechanical Engineering</source> <volume>124</volume>, <fpage>113</fpage>–<lpage>120</lpage>.</citation>
+</ref>
+<ref id="bibr22-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Locascio</surname><given-names>M. A.</given-names></name>
+<name><surname>Solomon</surname><given-names>J. H.</given-names></name>
+<name><surname>Hartmann</surname><given-names>M.J.Z.</given-names></name>
+</person-group> (in press). <article-title>Linear reactive control of bipedal walking in the presence of noise and uncertainty</article-title>. <source>Adaptive Behavior</source>. Published online before print <month>August</month> <day>31</day>, <year>2012</year>, doi: <pub-id pub-id-type="doi">10.1177/1059712312453059</pub-id>.</citation>
+</ref>
+<ref id="bibr23-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Manoonpong</surname><given-names>P.</given-names></name>
+<name><surname>Geng</surname><given-names>T.</given-names></name>
+<name><surname>Kulvicius</surname><given-names>T.</given-names></name>
+<name><surname>Porr</surname><given-names>B.</given-names></name>
+<name><surname>Wörgötter</surname><given-names>F.</given-names></name>
+</person-group> (<year>2007</year>). <article-title>Adaptive, fast walking in a biped robot under neuronal control and learning</article-title>. <source>PLoS Computational Biology</source> <volume>3</volume>(<issue>7</issue>), <fpage>1</fpage>–<lpage>15</lpage>.</citation>
+</ref>
+<ref id="bibr24-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>McGeer</surname><given-names>T.</given-names></name>
+</person-group> (<year>1990</year>). <article-title>Passive dynamic walking</article-title>. <source>The International Journal of Robotics Research</source> <volume>9</volume>(<issue>2</issue>), <fpage>62</fpage>–<lpage>82</lpage>.</citation>
+</ref>
+<ref id="bibr25-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mondada</surname><given-names>F.</given-names></name>
+<name><surname>Floreano</surname><given-names>D.</given-names></name>
+</person-group> (<year>1995</year>). <article-title>Evolution of neural control structures: Some experiments on mobile robots</article-title>. <source>Robotics and Autonomous Systems</source> <volume>16</volume>, <fpage>183</fpage>–<lpage>195</lpage>.</citation>
+</ref>
+<ref id="bibr26-1059712312462904">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Nolfi</surname><given-names>S.</given-names></name>
+<name><surname>Floreano</surname><given-names>D.</given-names></name>
+</person-group> (<year>2004</year>). <source>Evolutionary robotics: The biology, intelligence, and technology of self-organizing machines</source>. <publisher-loc>Cambridge, MA</publisher-loc>: <publisher-name>The MIT Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr27-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ono</surname><given-names>K.</given-names></name>
+<name><surname>Takahashi</surname><given-names>R.</given-names></name>
+<name><surname>Shimada</surname><given-names>T.</given-names></name>
+</person-group> (<year>2001</year>). <article-title>Self-excited walking of a biped mechanism</article-title>. <source>The International Journal of Robotics Research</source> <volume>20</volume>(<issue>12</issue>), <fpage>953</fpage>–<lpage>966</lpage>.</citation>
+</ref>
+<ref id="bibr28-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Paul</surname><given-names>C.</given-names></name>
+</person-group> (<year>2005</year>). <article-title>Sensorimotor control of biped locomotion</article-title>. <source>Adaptive Behavior</source> <volume>13</volume>(<issue>1</issue>), <fpage>67</fpage>–<lpage>80</lpage>.</citation>
+</ref>
+<ref id="bibr29-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Reil</surname><given-names>T.</given-names></name>
+<name><surname>Husbands</surname><given-names>P.</given-names></name>
+</person-group> (<year>2002</year>). <article-title>Evolution of central pattern generators for bipedal walking in a real-time physics environment</article-title>. <source>IEEE Transactions on Evolutionary Computation</source> <volume>6</volume>(<issue>2</issue>), <fpage>159</fpage>–<lpage>168</lpage>.</citation>
+</ref>
+<ref id="bibr30-1059712312462904">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Sims</surname><given-names>K.</given-names></name>
+</person-group> (<year>1994</year>). <article-title>Evolving virtual creatures</article-title>. <conf-name>Proceedings of the 21st annual conference on Computer graphics and interactive techniques</conf-name>, <conf-loc>New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr31-1059712312462904">
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Smith</surname><given-names>R.</given-names></name>
+</person-group> (<year>2009</year>). <article-title>Open Dynamics Engine</article-title>. <access-date>Retrieved January 8, 2010</access-date>, from <ext-link ext-link-type="uri" xlink:href="http://www.ode.org">www.ode.org</ext-link>.</citation>
+</ref>
+<ref id="bibr32-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Solomon</surname><given-names>J. H.</given-names></name>
+<name><surname>Wisse</surname><given-names>M.</given-names></name>
+<name><surname>Hartmann</surname><given-names>M.J.Z.</given-names></name>
+</person-group> (<year>2010</year>). <article-title>Fully interconnected, linear control for limit cycle walking</article-title>. <source>Adaptive Behavior</source> <volume>18</volume>(<issue>7</issue>), <fpage>492</fpage>–<lpage>506</lpage>.</citation>
+</ref>
+<ref id="bibr33-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Srinivasan</surname><given-names>M.</given-names></name>
+<name><surname>Ruina</surname><given-names>A.</given-names></name>
+</person-group> (<year>2006</year>). <article-title>Computer optimization of a minimal biped model discovers walking and running</article-title>. <source>Nature</source> <volume>439</volume>(<issue>5</issue>), <fpage>72</fpage>–<lpage>75</lpage>.</citation>
+</ref>
+<ref id="bibr34-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Srinivasan</surname><given-names>S.</given-names></name>
+<name><surname>Westervelt</surname><given-names>E. R.</given-names></name>
+<name><surname>Hansen</surname><given-names>A. H.</given-names></name>
+</person-group> (<year>2009</year>). <article-title>A low-dimensional sagittal-plane forward-dynamic model for asymmetric gait and Its application to study the gait of transtibial prosthesis users</article-title>. <source>Journal of Biomechanical Engineering</source> <volume>131</volume>(<issue>3</issue>), <fpage>031003</fpage>.</citation>
+</ref>
+<ref id="bibr35-1059712312462904">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Strogatz</surname><given-names>S. H.</given-names></name>
+</person-group> (<year>2000</year>). <source>Nonlinear dynamics and chaos</source>. <publisher-loc>Cambridge, MA</publisher-loc>: <publisher-name>Westview Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr36-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Taga</surname><given-names>G.</given-names></name>
+</person-group> (<year>1995a</year>). <article-title>A model of the neuro-musculo-skeletal system for human locomotion. I. Emergence of basic gait</article-title>. <source>Biological Cybernetics</source> <volume>73</volume>(<issue>2</issue>), <fpage>97</fpage>–<lpage>111</lpage>.</citation>
+</ref>
+<ref id="bibr37-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Taga</surname><given-names>G.</given-names></name>
+</person-group> (<year>1995b</year>). <article-title>A model of the neuro-musculo-skeletal system for human locomotion. II. Real-time adaptability under various constraints</article-title>. <source>Biological Cybernetics</source> <volume>73</volume>(<issue>2</issue>), <fpage>113</fpage>–<lpage>121</lpage>.</citation>
+</ref>
+<ref id="bibr38-1059712312462904">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Taga</surname><given-names>G.</given-names></name>
+<name><surname>Miyake</surname><given-names>Y.</given-names></name>
+<name><surname>Yamaguchi</surname><given-names>Y.</given-names></name>
+<name><surname>Shimizu</surname><given-names>H.</given-names></name>
+</person-group> (<year>1993</year>). <article-title>Generation and coordination of bipedal locomotion through global entrainment</article-title>. <conf-name>Proceedings of the International Symposium on Autonomous Decentralized Systems</conf-name>, <conf-loc>Kawasaki</conf-loc>.</citation>
+</ref>
+<ref id="bibr39-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Taga</surname><given-names>G.</given-names></name>
+<name><surname>Yamaguchi</surname><given-names>Y.</given-names></name>
+<name><surname>Shimizu</surname><given-names>H.</given-names></name>
+</person-group> (<year>1991</year>). <article-title>Self-organized control of bipedal locomotion by neural oscillators in unpredictable environment</article-title>. <source>Biological Cybernetics</source> <volume>65</volume>, <fpage>147</fpage>–<lpage>159</lpage>.</citation>
+</ref>
+<ref id="bibr40-1059712312462904">
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Terdiman</surname><given-names>P.</given-names></name>
+</person-group> (<year>2003</year>). <article-title>OPCODE. 1.3</article-title>. from <ext-link ext-link-type="uri" xlink:href="http://www.codercorner.com/Opcode.htm">http://www.codercorner.com/Opcode.htm</ext-link>.</citation>
+</ref>
+<ref id="bibr41-1059712312462904">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Vaughan</surname><given-names>E. D.</given-names></name>
+<name><surname>Di Paolo</surname><given-names>E. A.</given-names></name>
+<name><surname>Harvey</surname><given-names>I.</given-names></name>
+</person-group> (<year>2004</year>). <article-title>The evolution of control and adaptation in a 3D powered passive dynamic walker</article-title>. <conf-name>Proceedings of the Ninth International Conference on the Simulation and Synthesis of Living Systems</conf-name>, <conf-loc>Boston, MA</conf-loc>.</citation>
+</ref>
+<ref id="bibr42-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Vukobratović</surname><given-names>M.</given-names></name>
+<name><surname>Borovac</surname><given-names>B.</given-names></name>
+</person-group> (<year>2004</year>). <article-title>Zero-moment point—Thirty years of its life</article-title>. <source>International Journal of Humanoid Robotics</source> <volume>1</volume>(<issue>1</issue>), <fpage>157</fpage>–<lpage>173</lpage>.</citation>
+</ref>
+<ref id="bibr43-1059712312462904">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Winter</surname><given-names>D. A.</given-names></name>
+</person-group> (<year>1991</year>). <source>Biomechanics and motor control of human gait: Normal, elderly and pathological</source>. <publisher-loc>Waterloo, ON</publisher-loc>: <publisher-name>University of Waterloo Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr44-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wisse</surname><given-names>M.</given-names></name>
+</person-group> (<year>2008</year>). Deliverable 1.2, Hardware Specifications of EU FP6 Project ESBiRRo, TU Delft.</citation>
+</ref>
+<ref id="bibr45-1059712312462904">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wisse</surname><given-names>M.</given-names></name>
+<name><surname>Schwab</surname><given-names>A. L.</given-names></name>
+</person-group> (<year>2005</year>). <article-title>First steps in passive dynamic walking</article-title>. <conf-name>Proceedings of the International Conference on Climbing and Walking Robots</conf-name>, <conf-loc>London</conf-loc>.</citation>
+</ref>
+<ref id="bibr46-1059712312462904">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zagal</surname><given-names>J. C.</given-names></name>
+<name><surname>Ruiz-del-Solar</surname><given-names>J.</given-names></name>
+</person-group> (<year>2007</year>). <article-title>Combining simulation and reality in evolutionary robotics</article-title>. <source>Journal of Intelligent &amp; Robotic Systems</source> <volume>50</volume>(<issue>1</issue>), <fpage>19</fpage>–<lpage>39</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

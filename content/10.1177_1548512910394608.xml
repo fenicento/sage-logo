@@ -1,0 +1,768 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">DMS</journal-id>
+<journal-id journal-id-type="hwp">spdms</journal-id>
+<journal-title>The Journal of Defense Modeling and Simulation: Applications, Methodology, Technology</journal-title>
+<issn pub-type="ppub">1548-5129</issn>
+<issn pub-type="epub">1557-380X</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1548512910394608</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1548512910394608</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Sim-PETEK: A Parallel Simulation Execution Framework for Grid Environments</article-title>
+</title-group>
+<contrib-group content-type="issue">
+<contrib contrib-type="editor">
+<name><surname>Isler</surname><given-names>Veysi</given-names></name>
+</contrib>
+<contrib contrib-type="editor">
+<name><surname>Vural</surname><given-names>Fatos Yarman</given-names></name>
+</contrib>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Bozağaç</surname><given-names>Doruk</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Karaduman</surname><given-names>Gülşah</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Kara</surname><given-names>Ahmet</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Alpdemir</surname><given-names>M Nedim</given-names></name>
+</contrib>
+<aff id="aff1-1548512910394608">TÜBİTAK UEKAE/İLTAREN, Turkey</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-1548512910394608">Doruk Bozağaç, TÜBİTAK UEKAE/İLTAREN, Şehit Yzb, İlhan Tan Kışlası 8, Cad 417 Sok, Ümitköy, Ankara, Turkey. Email: <email>doruk.bozagac@iltaren.tubitak.gov.tr</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>10</month>
+<year>2012</year>
+</pub-date>
+<volume>9</volume>
+<issue>4</issue>
+<issue-title>Special Issue: USMOS Conference: Recent Research on Defence M&amp;S in Turkey</issue-title>
+<fpage>303</fpage>
+<lpage>319</lpage>
+<permissions>
+<copyright-statement>© 2011 The Society for Modeling and Simulation International</copyright-statement>
+<copyright-year>2011</copyright-year>
+<copyright-holder content-type="society">The Society for Modeling and Simulation International</copyright-holder>
+</permissions>
+<abstract>
+<p>In this paper we introduce a framework for parallel and distributed execution of simulations (Sim-PETEK), a middleware for minimizing the total run time of batch runs and Monte Carlo trials. Sim-PETEK proposes a generic solution for applications in the simulation domain, which improves on our previous work done to parallelize simulation runs in a single node, multiple central processing unit (CPU) setting. Our new framework aims at managing a heterogeneous computational resource pool consisting of multiple CPU nodes distributed on a potentially geographically dispersed network, through a service-oriented middleware layer that is compliant to Web Services Resource Framework standard, thereby providing a scalable and flexible architecture for simulation software developers. What differentiates Sim-PETEK from a general-purpose, Grid-based job-distribution middleware is a number of simulation-specific aspects regarding the specification, distribution, monitoring, result collection and aggregation of simulation runs. These aspects are prevalent in the structure of the messages and in the protocol of interaction both among the constituent services of the framework and within the interfaces exposed to the external clients.</p>
+</abstract>
+<kwd-group>
+<kwd>parallel and distributed computing</kwd>
+<kwd>simulation</kwd>
+<kwd>simulation output analysis</kwd>
+<kwd>software framework</kwd>
+<kwd>stochastic simulation</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1548512910394608" sec-type="intro">
+<title>1. Introduction</title>
+<p>The emergence of applications processing huge data sets and/or requiring extensive central processing unit (CPU) power has led to solutions that ranged from the use of super computers with a custom architecture, to the utilization of heterogeneous, distributed computational resources over a local or wide area network with particular emphasis on parallelism. More recently, a considerable amount of research has been devoted to specification and implementation of software middleware to simplify the usage and management of distributed computational resources in a networked environment, by providing access to such resources through a standardized programming interface. In particular, efforts aiming at benefiting from abstractions provided by Service-Oriented approaches have led to Grid infrastructures with a Service-oriented Architecture (SOA). A good example in this respect is the Open Grid Services Architecture (OGSA)<sup><xref ref-type="bibr" rid="bibr1-1548512910394608">1</xref></sup> and its reference implementations GT3.x, and later Web Services Resource Framework (WSRF)-based implementations. More recently, Grid research has drawn the attention of simulation community, and thus several attempts have been made to exploit Grid infrastructures in the context of distributed simulation.<sup><xref ref-type="bibr" rid="bibr2-1548512910394608">2</xref><xref ref-type="bibr" rid="bibr3-1548512910394608"/>–<xref ref-type="bibr" rid="bibr4-1548512910394608">4</xref></sup> However, distributed simulation applications have a number of distinct properties, such as causal dependency (a limiting factor for parallelism), the possibility of high communication throughput and the need for time synchronization between distributed components, all of which place certain constrains on the extent of utilization of Grid infrastructures. Grid infrastructures are better suited to applications with an inherent high degree of parallelism, a high degree of CPU utilization and a relatively low network throughput. Notably, there is a group of simulation applications where these latter properties lend themselves to full exploitation: Parameter Sweep Applications (PSAs) (e.g. parameterized scenarios to search a solution space) and stochastic simulations (e.g. Monte Carlo (MC) simulations). However, existing Grid infrastructures are at a relatively low level from a simulation application developer point of view and are too generic to address simulation-specific requirements.</p>
+<p>The parallel simulation run execution framework (Sim-PETEK) introduced in this paper provides a service-oriented middleware layer that enables simulation runs and MC trials to be dynamically distributed to a pool of computational resources. Sim-PETEK has a number of distinct properties that differentiate it from other general-purpose Grid middleware and make it simulation centric:</p>
+<list id="list1-1548512910394608" list-type="bullet">
+<list-item><p>the specification of a distributable task is formalized around the notion of a simulation scenario;</p></list-item>
+<list-item><p>scheduling and monitoring of distributed simulation runs contain simulation-specific aspects;</p></list-item>
+<list-item><p>the result collection approach supports requirements largely found in a group of simulation applications.</p></list-item>
+</list>
+<p>It is important to note that Sim-PETEK is a fully service-based framework that is compliant to the WSRF<sup><xref ref-type="bibr" rid="bibr5-1548512910394608">5</xref></sup> standard, which is endorsed by the Organization for the Advancement of Structured Information Standards (OASIS). Sim-PETEK is based on experience from our previous work where we developed a parallel simulation execution framework implemented using a single-node/multi-core model, and aims at improving this framework to operate in a networked multi-node/multi-core resource pool setting, through a standardized service-oriented middleware in an optimized, effective and dynamic way. The rest of the paper is structured as follows: Section 2 provides a short introduction to Grid environments and their application to simulation applications in the current literature, with a discussion of service-oriented and resource-oriented approaches. Section 2.3 explains the concept of PSAs and Section 2.4 explains the use of stochastic simulation analysis methods in Sim-PETEK. Section 3 provides a more detailed discussion of the architectural and behavioural properties of Sim-PETEK. Section 5 details the scheduling algorithms used in Sim-PETEK and gives performance results. Finally in Section 7, we provide some concluding remarks and state our future work plans.</p>
+</sec>
+<sec id="section2-1548512910394608">
+<title>2. Background</title>
+<p>Grid is the general name for the common protocols and mechanisms to utilize geographically dispersed computational and data resources for solving CPU-intensive problems in a distributed, heterogeneous and multi-user environment. The emergence of Grid technologies provided new opportunities in the field of large-scale distributed simulations by enabling access to the distributed computational resources and facilitating access to the geographically distributed data sets. Recently, there have been studies for executing High-level Architecture (HLA) simulations on the Internet by making use of the Grid technologies.<sup><xref ref-type="bibr" rid="bibr6-1548512910394608">6</xref></sup></p>
+<sec id="section3-1548512910394608">
+<title>2.1 Service-oriented approach</title>
+<p>SOAs are characterized by distinct features, such as allowing the abstraction of and access to a set of functionality via standard interfaces and protocols. Services are autonomous systems accepting one or more requests and returning responses via well-defined interfaces.<sup><xref ref-type="bibr" rid="bibr7-1548512910394608">7</xref></sup> Service-oriented Grid technologies have emerged with the introduction of the OGSA.<sup><xref ref-type="bibr" rid="bibr1-1548512910394608">1</xref></sup> The OGSA introduced the Grid service concept, which unifies several notions borrowed from web services, from earlier Grid research on the Globus Toolkit<sup><xref ref-type="bibr" rid="bibr8-1548512910394608">8</xref></sup> and from the object-oriented distributed software architectures area. The OGSA specifies standard programming interfaces for Grid service creation, management and lifetime control.<sup><xref ref-type="bibr" rid="bibr9-1548512910394608">9</xref></sup></p>
+</sec>
+<sec id="section4-1548512910394608">
+<title>2.2 Resource-oriented approach</title>
+<p>A relatively recent approach that abstracts all manageable state via the notion of ‘resource’ and prioritizes resource management in a stateful setting is called the resource-oriented approach. In resource-oriented systems, resources are defined as logical addresses (e.g. Uniform Resource Identifiers (URIs)) and resource operations are handled by the requests sent to the corresponding resource.<sup><xref ref-type="bibr" rid="bibr10-1548512910394608">10</xref></sup> In 2004, the OASIS defined the resource management standards with the WSRF.<sup><xref ref-type="bibr" rid="bibr5-1548512910394608">5</xref></sup> The main objective of the WSRF is to define the standards for making web service resources stateful.<sup><xref ref-type="bibr" rid="bibr11-1548512910394608">11</xref></sup> The WSRF defines four specifications. The first specification, WS-ResourceProperties, specifies how web services are defined in the Extensible Markup Language (XML)-based ‘Resource Properties’ document, how resource property queries could be sent and how resource properties could be updated. The resource properties document contains the state information of web service resources. The second specification, WS-ResourceLifetime, defines the fundamental mechanisms for resource lifetime management. WS-ServiceGroup, which defines grouping between services and service resources, is the third specification of the WSRF. This kind of grouping is important, because it provides access to the services and resources of the same group through a single entry point.<sup><xref ref-type="bibr" rid="bibr7-1548512910394608">7</xref></sup> The fourth and final specification of the WSRF, WS-BasicFaults, defines the standards for reporting faults when they occur.</p>
+</sec>
+<sec id="section5-1548512910394608">
+<title>2.3 Parameter sweep applications</title>
+<p>PSAs can be defined as the applications consisting of independent experiments that are held for distinct parameter sets.<sup><xref ref-type="bibr" rid="bibr12-1548512910394608">12</xref></sup> The designer selects a number of input parameters and analyses the effects of these parameters on the simulation results. In such cases, a minimum value, a maximum value and a step value is specified for each parameter, effectively defining a discrete value set for that parameter. We call the set of parameters in this set the batch parameter set. For each value within the batch parameter set the simulation is run and results are analysed with respect to the value changes. We call the series of simulation runs produced using this method the batch runs. Grid is an ideal execution environment for the applications of many scientific and engineering domains, such as bioinformatics, operations research, data mining, business model, network simulations, massive searches, ecological modelling, fractals calculations and image manipulation.<sup><xref ref-type="bibr" rid="bibr13-1548512910394608">13</xref></sup></p>
+</sec>
+<sec id="section6-1548512910394608">
+<title>2.4 Stochastic simulations</title>
+<p>Computer simulation is frequently used in solving real-world problems by evaluating models and optimizing responses. Large-scale engineering problems can include a large number of variables where finding the optimum solution can be very hard. Conventional design optimization may not be successful due to the fact that solutions to optimization problems can exhibit sensitivity to perturbations in design parameters or environmental conditions. Whenever the design parameters describe only a part of the overall system, the designer will have to make assumptions about other parameters, which may include some uncertainties. If these parameters are empirical measurements, then they are prone to measurement errors. Even if the design process is perfect, during application or manufacturing there may be errors that could lead to changes in system performance. For this reason, designers use stochastic simulation analysis methodologies. Stochastic simulation analysis incorporates probabilistic elements in the problem and tries to find the expected performance. Using methods like MC analysis or stochastic approximation, the noise in the output is evaluated using statistical methodologies to reach the result.<sup><xref ref-type="bibr" rid="bibr14-1548512910394608">14</xref></sup> On the other hand, sensitivity analysis can be used to study the impact of variations in input parameters on the model output.<sup><xref ref-type="bibr" rid="bibr15-1548512910394608">15</xref></sup> Sensitivity analysis is a post-optimization tool, where input parameters are perturbed for quantifying the changes in optimized design and sensitivity of the solution is defined in terms of the effect of the uncertainties in parameters on the optimized design.</p>
+<p>PSAs can use stochastic simulation analysis methods for increasing the confidence in the solution. For each design parameter in the batch parameter set, a number of independent and identically distributed (i.i.d.) repetitions are made. The results of the repetitions are analysed for finding an expected performance value (mean) and variance. Mean and variance can be used for finding a confidence interval of the solution. Note that this approach will increase the total number of runs exponentially. For instance, if there are two batch parameters each requiring <italic>M</italic> and <italic>N</italic> number of batch runs, and if each run is to be repeated for <italic>T</italic> repetitions, there would be <italic>M</italic> × <italic>N</italic> × <italic>T</italic> simulation runs in total. MC analysis can be used for analysing the effect of random variables in the simulation and finding the possible distribution of the results. Each random variable has a domain space and, by generating input variables in each domain space, the simulation can be run numerous times. The i.i.d. results are analysed using histograms and aggregated for a final summary. A simulation run executed with this approach is called a MC trial. To give a more practical example, consider a bullet simulation scenario, where the input parameters are bullet shape, bullet outer material, bullet weight, bullet diameter, muzzle velocity and target location. Assume that the simulation calculates the trajectory of the bullet, penetration velocity, penetration angle and distance from the target point. To establish the rationale for MC trials, assume also that the simulation takes into account the weather conditions, such as air pressure, wind and humidity, since these parameters can affect aerodynamic forces and moments. If our target is to find the best material to use for bullet outer material for a list of guns (i.e. each gun’s bullet has a specific diameter and muzzle velocity), for each gun bullet parameter we need to perform simulation runs for each material. Here, bullet diameter, muzzle velocity and material properties are the batch parameters. We may also change target distance and test the effect of material for these cases, so target distance is another batch parameter. Assuming that there are three different cases for gun types, 10 different materials and five different target distances, the number of batch runs will be 3 × 10 × 5 = 150. To account for different weather conditions, consider performing 100 MC trials for each batch run, where air pressure, wind and humidity are changed randomly. The resulting number of simulation runs grows to 15,000. Although our example, bullet simulation, can be run in the order of seconds, the many practical optimization simulations include complex hierarchical structures, hybrid time advance schemes and high resolution models. Even a single evaluation of such simulations can take some time, while PSAs require plenty of evaluations for producing good results. For this reason, parallelizations of optimization algorithms are becoming prevalent and, moreover, those algorithms are designed to work in a distributed fashion. Thus, effective exploitation of networked computational resources in a dynamic and efficient way via a well-defined programming model becomes more than a necessity.</p>
+</sec>
+<sec id="section7-1548512910394608">
+<title>2.5 Scheduling approaches for parameter sweep applications</title>
+<p>PSAs are defined over distinct sets parameterized jobs that can be executed in parallel. Similarly, the repetitions used for stochastic simulation output analysis are independent. Divisible Load Theory (DLT) offers a convenient methodology for developing linear and continuous models for partitionable computation and communication loads for parallel processing. Therefore, for scheduling purposes we adopt DLT as our starting point. DLT works with loads that are both massive and require an enormous amount of time to process. In the most straightforward DLT model, there is one master processor and many slave processors, where the master processor partitions the massive load into smaller partitions, keeps one of the load partitions for itself to process and sends the rest to the slaves in the network for processing.<sup><xref ref-type="bibr" rid="bibr16-1548512910394608">16</xref></sup> Scheduling of these load partitions and at the same time achieving efficient utilization of the available resources in terms of computational power and communication channel bandwidth is non-trivial. DLT states that, in order to obtain optimal processing time, all the processors used in the computation must stop at the same time. Note that the divisible nature of the load provides the opportunity to divide and distribute the load in a repetitive sequence. With this strategy, the idle time of the processors at the farthest end of the load-distribution sequence is reduced. In addition to this reduction in time, the finish time of the computation can be controlled by the selection of number of rounds (i.e. repetitions).<sup><xref ref-type="bibr" rid="bibr16-1548512910394608">16</xref></sup> The earliest multi-round scheduling used for divisible loads is known to be the Multi Instalment (MI) algorithm, which starts with small chunks and increases the chunk sizes throughout application execution to achieve effective overlap of communication and computation.<sup><xref ref-type="bibr" rid="bibr17-1548512910394608">17</xref></sup> Uniform Multi-round (UMR) is an extension of MI, which distributes work to computational resources in multiple rounds. UMR handles the limitations of MI, by modelling latencies associated with resource utilization and providing a method to determine the optimal number of rounds. UMR overcomes these limitations by imposing the restriction that rounds must be ‘uniform’, that is, within each round the master assigns identical chunks to all workers. By this restriction, the UMR algorithm makes it possible to compute the optimal number of rounds while modelling resource latencies.<sup><xref ref-type="bibr" rid="bibr18-1548512910394608">18</xref></sup> Investigations on multi-round algorithms have revealed that:<sup><xref ref-type="bibr" rid="bibr19-1548512910394608">19</xref></sup></p>
+<list id="list2-1548512910394608" list-type="bullet">
+<list-item><p>dividing the workload into large chunks reduces overhead, and thereby application makespan;</p></list-item>
+<list-item><p>the use of small chunks at the onset of application execution makes it possible to overlap overhead with useful work more efficiently;</p></list-item>
+<list-item><p>the use of small chunks at the end of the execution leads to better robustness to performance prediction errors.</p></list-item>
+</list>
+<p>Based on these findings, the Robust Scheduling for Divisible Workloads (RUMR)<sup><xref ref-type="bibr" rid="bibr19-1548512910394608">19</xref></sup> algorithm was developed. What the RUMR algorithm seeks to do is to combine ideas from multi-round divisible workload scheduling to harness performance centric features, and from factoring-based scheduling to harness robustness centric features. Using a heterogeneous environment, such as the Grid, introduces diversity in workload, processors, network latencies and other system-related factors, which in turn causes variation in the overall performance. Adapting to the heterogeneities in these factors requires dynamic task assignment. Dynamic scheduling algorithms are powerful tools for performance improvement via load-balancing strategies. Recently, adaptive approaches in divisible load scheduling have come to the scene. In Ghose et al.,<sup><xref ref-type="bibr" rid="bibr20-1548512910394608">20</xref></sup> a two-phase adaptive load-distribution strategy has been adopted. In the first phase (probe phase), a small part of the load is partitioned and communicated to individual processing resources. When a resource completes its load, the average bandwidth and average processing capacity of the processing resource is estimated. Then the optimal load-distribution phase starts and distributes the load by computing the optimal load fractions to be dispatched to the individual processor resources. Computations of the optimal load fractions are performed according to the estimations of the first phase. In Gonzalez-Velez and Cole,<sup><xref ref-type="bibr" rid="bibr21-1548512910394608">21</xref></sup> a skeletal task farm (TF) is used for performance improvement. A TF consists of a farmer process and a set of independent worker processes. The farmer process administers the worker processes for executing a large number of independent tasks concurrently. Gonzalez-Velez and Cole<sup><xref ref-type="bibr" rid="bibr21-1548512910394608">21</xref></sup> provide a dynamic framework that makes an automatic scheduling of divisible workloads based on the dispersion of the participating computational resources and size of the workload. For multi-round scheduling, an instalment factor is defined. The instalment factor dynamically quantifies the number of rounds by making use of the number of tasks in the workload and the system circumstances.</p>
+</sec>
+</sec>
+<sec id="section8-1548512910394608">
+<title>3. Sim-PETEK architecture</title>
+<sec id="section9-1548512910394608">
+<title>3.1 Previous work</title>
+<p>Sim-PETEK has evolved from a parallel simulation execution framework developed earlier at TUBITAK UEKAE that distributed PSA batch runs and MC trials to multiple cores on a single multi-CPU machine. In this section we briefly describe this earlier framework to establish a basis for a better understanding of the evolution. <xref ref-type="fig" rid="fig1-1548512910394608">Figure 1</xref> shows the architecture of this framework. As illustrated in the figure, the Simulation Manager controls the batch runs and MC trials attached to them. It sends the main scenario to the Scenario Factory. The Scenario Factory uses the batch run parameters and random seed of the trials to generate batch run and MC trial scenarios. The Simulation Manager gathers these scenarios and passes them to the Simulation Run Broker, which performs scheduling and distribution of simulation runs. The Simulation Run Broker sends the scenarios to the Simulation Runners. The framework uses a Discrete Event System (DEVS)-based simulation infrastructure, SIMA,<sup><xref ref-type="bibr" rid="bibr22-1548512910394608">22</xref></sup> for underlying simulation services, such as initializing the simulation models, applying the simulation protocol, time management, etc. Simulation Runners create simulations from the scenarios submitted to them, and run these simulations using the SIMA simulation engines. Simulation Runners return the results to the Run Broker, which in turn returns them back to the Simulation Manager. To optimize CPU utilization and minimize overheads incurred by context switches, the framework exercised a tight control over process and thread boundaries, processor affinities and garbage collection of individual simulation tasks. This framework was used for a highly compute-intensive software application that needed 10,000 batch runs and 100 MC trials for each batch run.</p>
+<fig id="fig1-1548512910394608" position="float">
+<label>Figure 1.</label>
+<caption><p>Simulation run distribution framework.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig1.tif"/>
+</fig>
+</sec>
+<sec id="section10-1548512910394608">
+<title>3.2 Problem definition and goals</title>
+<p>For many application domains the required number of batch runs and MC trials may grow so large that effective and efficient use of all available computational resources become crucial to reduce the total simulation time to acceptable levels. Service-oriented computational Grids promise a viable solution for such power-hungry applications by introducing a new paradigm for software deployment, execution and management. It is inevitable that access and liberal use of available computational resources on a wide area network introduces new challenges, such as reliability, security, effective management of component deployment, life cycle, monitoring and disposal, user authentication, access control, auditing and billing, etc. At this point, it is important to note that the notion of service-oriented Grids is not simply an architectural blueprint for job distribution to compute nodes, but a composable collection of rules, specifications, Application Programming Interfaces (APIs) that collectively establish a well-defined programming and execution model. Therefore, Sim-PETEK aims at providing a Grid middleware that is compliant to well-established service-oriented Grid standards, such as the OGSA and the WSRF, thereby ensuring that a robust, full-fledged resource access and utilization layer is available to simulation application developers. There are a number of distinct properties that differentiate Sim-PETEK from other general-purpose Grid middleware, and make it simulation centric. Firstly, a job request is defined as a simulation scenario with a set of decision variables. Each decision variable is associated with a range and an increment, effectively creating a value set for parameter sweeps. Sim-PETEK encapsulates into its constituent services the mechanisms required to generate all possible combinations of scenarios from these parameter sets, which is something usually left to application-specific layers. The second aspect pertains to the task distribution logic. Since each scenario combination may include replicated simulations (i.e. MC runs), Sim-PETEK services encapsulate the logic required to distribute the replicated, in each Grid node, thereby reducing the network traffic and encapsulating the complexity of replication generation and distribution mechanism to the nodes. Finally, Sim-PETEK employs a sophisticated result collection mechanism that includes a hierarchical result aggregation scheme, where the results of the replicated simulations (i.e. MC simulations) are aggregated at the replicating Grid node. This approach does not only reduce the amount of data transferred during result collection, but also prevents one node causing a bottleneck, as opposed to a single-point aggregation scheme.</p>
+</sec>
+<sec id="section11-1548512910394608">
+<title>3.3 Main architecture</title>
+<p><xref ref-type="fig" rid="fig2-1548512910394608">Figure 2</xref> illustrates the general architecture of Sim-PETEK. As the figure indicates, Sim-PETEK is designed as a service-oriented infrastructure. As such, Coordinator Grid Service and Simulator Grid Service are the two main components of the Sim-PETEK architecture. They communicate with each other and with the application layer using programming interfaces compliant with WSRF specified standards, such as WS-Addressing, WS-ResourceProperties, WS-BaseNotification and WS-Security.<sup><xref ref-type="bibr" rid="bibr11-1548512910394608">11</xref></sup> Sim-PETEK is implemented using .NET Windows Communication Foundation (WCF) for the web service layer realization. WCF is a communication framework that enables development of distributed applications using SOA with the use of XML Web Services technologies.<sup><xref ref-type="bibr" rid="bibr23-1548512910394608">23</xref></sup> WCF implements WS-Address ing, WS-ReliableMessaging and WS-Security standards. Sim-PETEK uses extension modules to implement WS-ResourceProperties and WS-BaseNotification standards on top of WCF, making Sim-PETEK a WSRF-compliant Grid middleware. These extension modules are shown in <xref ref-type="fig" rid="fig2-1548512910394608">Figure 2</xref>. To set a more convenient terminology for discussions, we use Simulator instead of Simulator Grid Service and Coordinator instead of Coordinator Grid Service. Similarly, we define a set of simulation runs as a job. In other words, a job is a single unit of work scheduled to a Simulator by the Coordinator. A scenario is defined as the set of all parameters required by the simulation models (for their initialization) for a single simulation run. A Job Execution is a bunch of simulation runs corresponding to a group of simulation scenarios sent to the Simulator and may contain a number of batch runs and MC trials. An application using Sim-PETEK as its simulation distribution layer will use the Coordinator to submit a simulation execution order, which includes a main (base) scenario, a set of batch parameters and their value sets, and an integer specifying the required number of MC trials. Once invoked, the Coordinator initializes many Simulators on the available nodes on the network, and uses those simulators to consume the underlying hardware resources for the simulation. During the execution, the Simulator sends periodic status updates to the Coordinator to enable progress monitoring or re-scheduling if necessary. The following sections provide a more detailed description of the internal structure of both the Coordinator and Simulator.</p>
+<fig id="fig2-1548512910394608" position="float">
+<label>Figure 2.</label>
+<caption><p>Sim-PETEK architecture.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig2.tif"/>
+</fig>
+</sec>
+<sec id="section12-1548512910394608">
+<title>3.4 Coordinator Grid service</title>
+<p>The Coordinator is composed of the Job Manager, Job Producer, Scheduler and Resource Manager components. The Job Manager is responsible for connecting to the Simulators, collecting resource information and subscribing to the job and resource status. It also informs the Scheduler and Resource Manager about current resource information of the connected Simulators. The Job Manager is also responsible for sending jobs to Simulators, collecting job results and returning the client job status and job results whenever requested. The Resource Manager maintains a list of Simulators that the Coordinator can use and it is responsible for creation, querying and lifetime management of those Simulators in compliance with WS-ResourceProperties and WS-ResourceLifetime standards. The Scheduler analyses the Simulator resources by examining the resource properties, such as the CPU load, available memory, etc., and creates an optimized scheduling plan for the jobs. The Job Manager submits the job schedule to the Job Producer so that it can divide the simulation runs according to the schedule, creates jobs and return them to the Job Manager for distribution.</p>
+</sec>
+<sec id="section13-1548512910394608">
+<title>3.5 Simulator Grid service</title>
+<p>The Simulator is composed of the Resource Manager, Notification Manager, Job Execution Manager and Scenario Factory. For Sim-PETEK, the hardware used by a Simulator for a simulation execution is a resource. The Resource Manager implements mechanisms required for creation, querying and lifetime management of this resource in compliance with WS-ResourceProperties and WS-ResourceLifetime standards. The Notification Manager handles the subscription to resource information and job execution status, sends periodic notification messages to subscribers and manages the notification life cycle in compliance with the WS-BaseNotification standard. The Scenario Factory is responsible for creating scenarios by substituting the batch parameter values into the base scenario as specified in the job definition, so that for each possible value given in the batch parameter range a distinct scenario is produced. The Job Execution Manager creates simulation runs from these scenarios using the underlying simulation framework, executes the simulation runs and collects the simulation results to assemble the job result. The job result is sent to the Coordinator via a notification. Alternatively, a client may request the results to be sent to another service by specifying a service reference, in which case the Simulator will send the results to that service. The client may also send a data repository reference instead of sending a scenario and the Coordinator can get the scenario parameters from the specified reference. The following section provides the full list of messages exchanged during the interactions introduced here.</p>
+</sec>
+</sec>
+<sec id="section14-1548512910394608">
+<title>4. Sim-PETEK working principles</title>
+<p>The current software infrastructure provided by Sim-PETEK is utilized for running stochastic PSAs.</p>
+<list id="list3-1548512910394608" list-type="order">
+<list-item><p><bold>Initialization:</bold> Simulators are initialized and the Coordinator sets up the parallel execution environment by connecting to the Simulators.</p></list-item>
+<list-item><p><bold>Job distribution:</bold> design space of a simulation is partitioned into jobs and these jobs are sent to Simulators.</p></list-item>
+<list-item><p><bold>Stochastic analysis:</bold> Simulators apply stochastic analysis methods to simulation runs, such as repetition by MC simulations.</p></list-item>
+<list-item><p><bold>Result aggregation:</bold> Simulators aggregate results of stochastic methods.</p></list-item>
+<list-item><p><bold>Result collection:</bold> Simulators return the results to the Coordinator.</p></list-item>
+</list>
+<sec id="section15-1548512910394608">
+<title>4.1 Initialization</title>
+<p>The initialization stage is shown in <xref ref-type="fig" rid="fig3-1548512910394608">Figure 3</xref>. All communication between the Coordinator and the Simulator is performed through WCF and Sim-PETEK WS* extensions and for the sake of simplicity this information is omitted in the diagrams. The interaction flow in the system starts with the Coordinator Resource Request sent from the Simulation Application to the Coordinator using getCoordinatorResource. The response of this request is sent through the Resource Manager Component of the Coordinator as Coordinator Resource Properties. According to the resource information retrieved, the Simulation Application sends a Simulation Execution Request to the Coordinator and gets the response as a Simulation Execution Response, which includes the identifiers belonging to the simulation execution. From this point on, the Coordinator starts communicating with the Simulator, subscribes for resource notifications and asks for simulation resource information by using the getSimulatorResource operation. Resource information is retrieved in the form of Simulator Resource Properties from the Resource Manager component of the Simulator and transmitted to the Job Manager.</p>
+<fig id="fig3-1548512910394608" position="float">
+<label>Figure 3.</label>
+<caption><p>Sim-PETEK working principles initialization stage.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig3.tif"/>
+</fig>
+</sec>
+<sec id="section16-1548512910394608">
+<title>4.2 Job distribution</title>
+<p><xref ref-type="fig" rid="fig4-1548512910394608">Figure 4</xref> shows the job-distribution stage. After obtaining the simulator resource information, the Job Manager sends this information to the Scheduler, which prepares the scheduling plan. When the schedules are prepared they are transmitted to the Job Package Producer, where job packages are created. At this point, it is time for the Coordinator Grid Service to ask for the Job Execution Request from the Simulator Grid Service using startJobExecution. This request is passed to the Job Execution Manager, where jobs are processed. The Job Execution Manager first retrieves simulator resource information and then asks the Scenario Factory to produce simulation run scenarios from the job, according to this resource information. Consecutively, prepared scenarios are sent to the Simulation Modelling Infrastructure where they are executed using the executeSimulationRun operation.</p>
+<fig id="fig4-1548512910394608" position="float">
+<label>Figure 4.</label>
+<caption><p>Sim-PETEK working principles job distribution stage.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig4.tif"/>
+</fig>
+</sec>
+<sec id="section17-1548512910394608">
+<title>4.3 Message structures</title>
+<list id="list4-1548512910394608" list-type="simple">
+<list-item><p><bold>Coordinator resource properties:</bold> defines the resources managed by the Coordinator. A client can query the Coordinator resource information before sending a Simulation Execution Request and decide which Coordinator to use. Resource information includes the number of Simulators in service (i.e. available for use), the number of CPU cores available to a particular Simulator and the number of requests waiting on the Coordinator (i.e. current load).</p></list-item>
+<list-item><p><bold>Simulator resource properties:</bold> defines the hardware properties of the computer to which a particular Simulator is deployed. The Coordinator can use this resource information while creating a schedule and doing load balancing. Resource information includes number of CPU cores, memory capacity and disk capacity. The Coordinator can also query instantaneous CPU usage, memory usage and input/output (IO) usage.</p></list-item>
+<list-item><p><bold>Simulation execution request:</bold> The client sends this message to the Coordinator. <xref ref-type="fig" rid="fig5-1548512910394608">Figure 5</xref> shows the contents of this message structure. The main component is a scenario and a set of batch parameters with their values. These parameters will be used during simulation run creation. If the client requests MC trials, then there will be a set of parameters to generate random numbers of the trials and their value ranges. The client can also send a simulation result-filtering aggregation expression so that results will be processed before being sent. This expression will be further explained in Section 4.4. In addition, the client may demand the results to be sent to another service reference.</p></list-item>
+<list-item><p><bold>Simulation execution response:</bold> in response to the request, the Coordinator will send an identification (ID) number. This number will be unique and the Coordinator will respond with the status and result request using this ID.</p></list-item>
+<list-item><p><bold>Simulation execution status request:</bold> The client can send a request to query the current status of the execution using request the ID.</p></list-item>
+<list-item><p><bold>Simulation execution status:</bold> the Coordinator sends the information of how many simulation runs are completed. The Simulation Execution Result Request Client can send a request to query results of the execution using the request ID.</p></list-item>
+<list-item><p><bold>Simulation execution results:</bold> a simulation run result includes both simulation results and the set of values of batch parameters used for that run. It also includes the MC trial number. Simulation execution results include all the simulation results.</p></list-item>
+<list-item><p><bold>Job execution request:</bold> the Coordinator creates jobs after getting the simulation execution request. These jobs are sent to Simulators using the Job Execution Request, which includes parts of the execution request and a subset of batch parameter values and number of trials.</p></list-item>
+<list-item><p><bold>Job execution status:</bold> the Simulator periodically notifies the Coordinator about how many simulation runs of the job are completed.</p></list-item>
+<list-item><p><bold>Job execution results:</bold> the Simulator sends the simulation run results of the given job after completing all the simulation runs.</p></list-item>
+</list>
+<fig id="fig5-1548512910394608" position="float">
+<label>Figure 5.</label>
+<caption><p>SimulationExecutionRequest and SimulationExecutionResults message schema</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig5.tif"/>
+</fig>
+</sec>
+<sec id="section18-1548512910394608">
+<title>4.4 Result aggregation</title>
+<p>Result aggregation is a common requirement for simulation applications where many batch runs and MC trials are performed. What is also important is to be able to filter each simulations result. This is due to the fact that each simulation run may produce a large amount of results with redundant information for the final analysis. Result filtering becomes more crucial in a Grid environment where the data transport cost is relatively high. After the distribution of the simulation runs, Simulators will execute the runs and each will have the raw simulation results. If these raw (unfiltered) simulation results are returned to the Coordinator first, then returned to the client, this would incur an unnecessary communication cost using network resources and cause additional processing, filtering and aggregation on the client side. Therefore, we have developed a mechanism where the client can specify a filtering logic during the Simulation Execution Request submission, to be sent to each Simulator. The simulators are supposed to apply the specified filtering logic to the simulation run results and create processed simulation results to return them to the Coordinator. To provide an example, recall the bullet simulation we mentioned in Section 2.4, where the result of each simulation was trajectory data, penetration velocity, penetration angle and distance from the target point. Considering the 15,000 simulation runs caused by batch run and MC trial permutations, the resulting data would be hard to transfer, maintain and process in its raw format. In this particular case, the client could provide an expression to filter the data such that only the success rates of the bullets for each batch are filtered out of the raw simulation results. Such a filtering logic can be constituted with the following specifications:</p>
+<list id="list5-1548512910394608" list-type="bullet">
+<list-item><p>in a simulation run, a bullet is considered successful if miss distance is lower than some value;</p></list-item>
+<list-item><p>if the penetration velocity is below some constant, miss distance is not important and the bullet is considered as failed;</p></list-item>
+<list-item><p>if the penetration angle is greater than some constant, miss distance is not important and the bullet is considered as failed;</p></list-item>
+<list-item><p>all MC runs for a batch run should be aggregated to give a success rate for that batch run;</p></list-item>
+<list-item><p>the client wants an average of miss distance data for successful runs;</p></list-item>
+<list-item><p>the client is not interested in trajectory data.</p></list-item>
+</list>
+<p>Sim-PETEK assumes that simulation results are in XML format and accepts XML Stylesheet Language for Transformations (XSLT) expression from the client, creating an XML document after the filtering and aggregation. <xref ref-type="fig" rid="fig6-1548512910394608">Figure 6</xref> illustrates the XSLT document containing the filtering logic described above.</p>
+<fig id="fig6-1548512910394608" position="float">
+<label>Figure 6.</label>
+<caption><p>Sample XSLT for aggregating the results.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig6.tif"/>
+</fig>
+</sec>
+<sec id="section19-1548512910394608">
+<title>4.5 Result collection</title>
+<p><xref ref-type="fig" rid="fig7-1548512910394608">Figure 7</xref> shows the status monitoring and result collection stage, in which components can ask for status and gather results. The Coordinator subscribes to the Simulator to receive job status updates and results. The Job Execution Manager of the Simulator keeps track of current job status and informs the Coordinator through the Notification Manager. The Coordinator can also ask for this information explicitly using the getJobExecutionStatus operation and get the results in the form of the Job Execution Status. Similarly, the result can be queried by the Coordinator using getJobExecutionResults and returned to the Coordinator in Job Execution Results format. The client can ask for Simulation Execution Status using getSimulationExecutionStatus. The Coordinator examines the current processing status for the requested jobs and returns the Job Execution Status. If all the runs in the simulation are executed, clients can send Simulation Execution Result Request using the getSimulationExecutionResults operation and get the result information in the form of Simulation Execution Results. Note that in the overall interaction patterns, as well as the message structures, simulation-oriented constructs are explicit. It is also worth noting that, although the Coordinator is a generic component in that it does not contain any specific dependencies, the Simulator has a dependency point to our simulation execution framework (SIMA). However, this dependency is managed by a simple adapter layer that can easily be used for other simulation run-time infrastructures.</p>
+<fig id="fig7-1548512910394608" position="float">
+<label>Figure 7.</label>
+<caption><p>Sim-PETEK working principles gathering stage.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig7.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section20-1548512910394608">
+<title>5. Sim-PETEK scheduling algorithm</title>
+<p>The Sim-PETEK infrastructure is designed to allow execution of PSAs in distributed and heterogeneous computational environments. To address various kinds of heterogeneities, the job scheduling algorithms of Sim-PETEK are designed in a multi-round and adaptive manner. As mentioned in Section 2.5, we adopted DLT in the scheduling algorithms by encapsulating the load-distribution logic in a master processor, which is the Coordinator in our case. The Coordinator schedules load partitions to the slaves, which are the Simulators in our design. For the sake of clarity, the notions and the notation used in the scheduling algorithms are defined below.</p>
+<list id="list6-1548512910394608" list-type="bullet">
+<list-item><p><bold>Run:</bold> single execution of a simulation run corresponding to one parameter configuration out of the batch parameter combination set. Note that this single execution includes repetitions done for stochastic analysis, since we do not distribute repetitions among nodes.</p></list-item>
+<list-item><p><bold>Job:</bold> a load sent to the nodes consisting of several runs. ActualJobExecutionTime: execution time of the last load sent to a node. NodeAvgRunExecutionTime: average execution time of a run from the last load sent to a node. NodeProcessPower: average processing power of a node calculated from the last load sent to that node.</p></list-item>
+<list-item><p><bold>NodeProcessRatio:</bold> ratio of a node’s processing power to the sum of the processing powers of all nodes.</p></list-item>
+<list-item><p><bold>Expected Node Processing Ratio (ENPR):</bold> expected ratio of processing power of the node to the whole processing power available to the Coordinator. The sum of these values adds up to 1.</p></list-item>
+<list-item><p><bold>NumRounds:</bold> number of rounds in the scheduling algorithm.</p></list-item>
+<list-item><p><bold>TotalNumNodes:</bold> total number of nodes available to the Coordinator.</p></list-item>
+<list-item><p><bold>TotalNumRuns:</bold> total number of runs to be executed for completing the batch parameter set.</p></list-item>
+</list>
+<p>In this paper, we present two separate scheduling algorithms, one building upon the other with some improvements. Both algorithms include a common skeleton of a basic sequence of events. This common part in Sim-PETEK scheduling algorithms is illustrated in <xref ref-type="fig" rid="fig8-1548512910394608">Figure 8</xref> in the form of a flow diagram. The algorithms start with an initialization phase. Firstly, the number of rounds and ENPR values of the computational nodes are initialized. ENPR initialization is done according to the number of CPU cores of the nodes. After the initialization phase, job dispatching rounds start. In each round, we compute the number of runs in the jobs assigned to the idle simulator nodes. The jobs are dispatched to the idle nodes and the algorithm waits for job executions to complete. When job completion messages are received from the nodes, the ENPR values of the nodes are updated and the next round starts. The rounding phase ends when all of the runs are finished and simulation results are received.</p>
+<fig id="fig8-1548512910394608" position="float">
+<label>Figure 8.</label>
+<caption><p>Sim-PETEK scheduling activity diagram.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig8.tif"/>
+</fig>
+<sec id="section21-1548512910394608">
+<title>5.1 Adaptive multi-round synchronous scheduling algorithm</title>
+<p>The adaptive multi-round synchronous scheduling algorithm (AMRS) is the first scheduling algorithm that was implemented for scheduling purposes of Sim-PETEK. As its name implies, the AMRS is synchronous, since it waits for all nodes to finish their jobs in a round (i.e. the next round starts when all of the nodes inform that they have finished their jobs). The algorithm starts with assigning an expected execution power to the available computational nodes. This assignment considers the number of CPU cores of the nodes and assigns an execution power value to each node between 0 and 1, where the sum of all execution power values are 1. After this initial step, the first round starts by dispatching runs to the computational nodes in accordance with their expected powers. The round ends when all of the nodes finish their jobs and send the results. Before the next round starts, the expected execution power values of the nodes are updated and job assignments are made according to the newly computed execution power. This procedure goes on until all the jobs are completed.</p>
+<p><xref ref-type="fig" rid="fig9-1548512910394608">Figure 9</xref> shows the pseudocode of the AMRS. The pseudocode briefly follows the steps that were previously explained in <xref ref-type="fig" rid="fig8-1548512910394608">Figure 8</xref>. In the AMRS the number of rounds mentioned as ‘A’ on the pseudocode line (2) is an optimal value that is determined by experimentation. In lines (3) and (4) initialization of the ENPR and jobs arrays are performed. The ENPR array keeps the expected execution power values of the nodes and the jobs array keeps the number of runs to be sent to the nodes (i.e. jobs[<italic>i</italic>] = number of runs to be sent to node <italic>i</italic>). At line (5), the main loop of the AMRS starts. Firstly, the number of runs of that round is computed at line (6) and then the number of runs in each node’s job is computed at lines (7)–(9). At line (10) jobs are sent to the nodes. Line (11) indicates that all of the jobs are waited for completion. Before the next round begins, the ENPR values are recomputed at line (13).</p>
+<fig id="fig9-1548512910394608" position="float">
+<label>Figure 9.</label>
+<caption><p>Pseudocode for AMRS schedule function.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig9.tif"/>
+</fig>
+<p>Detailed information about the ENPR initialization is given in the pseudocode in <xref ref-type="fig" rid="fig10-1548512910394608">Figure 10</xref>. For each node, the ENPR value is set to a value that is a ratio of the number of CPU cores that the node under consideration contains, to the total number of CPU cores of all available nodes. NPPTable at line (4) of the pseudocode is the table that maintains the processing powers of the nodes. In the initialization step, the processing power of a node is assumed to be proportional to its number of CPU cores.</p>
+<fig id="fig10-1548512910394608" position="float">
+<label>Figure 10.</label>
+<caption><p>Pseudocode for AMRS InitializeENPR function.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig10.tif"/>
+</fig>
+<p>Furthermore, ENPR re-computation is mentioned in detail in <xref ref-type="fig" rid="fig11-1548512910394608">Figure 11</xref>. For the ENPR re-computation, node process power values are updated first. At line (4) the average time needed by the node for completing one run is computed and node process power is set to the inverse of this value. At line (8) the sum of the process powers of all nodes are computed. This sum is used in the ENPR value re-computation. The ENPR re-computation is held according to the following prediction formula defined in [24]:</p>
+<p>
+<disp-formula id="disp-formula1-1548512910394608">
+<mml:math display="block" id="math1-1548512910394608">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msubsup>
+<mml:mi>α</mml:mi>
+<mml:mi>m</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msubsup>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mi>α</mml:mi>
+<mml:mi>m</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msubsup>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1548512910394608" xlink:href="10.1177_1548512910394608-eq1.tif"/>
+</disp-formula>
+</p>
+<fig id="fig11-1548512910394608" position="float">
+<label>Figure 11.</label>
+<caption><p>Pseudocode for AMRS RecomputeENPR function.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig11.tif"/>
+</fig>
+<p>This formula uses historical measures of job execution times of the nodes. In the formula, <inline-formula id="inline-formula1-1548512910394608">
+<mml:math display="inline" id="math2-1548512910394608">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>) is the predicted execution time of a new run on node <italic>m, t</italic> is the number of times that the jobs are executed on <italic>m</italic>, <inline-formula id="inline-formula2-1548512910394608">
+<mml:math display="inline" id="math3-1548512910394608">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the actual execution time of the job on the same node and <inline-formula id="inline-formula3-1548512910394608">
+<mml:math display="inline" id="math4-1548512910394608">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>α</mml:mi>
+<mml:mi>m</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the learning rate. The values of <inline-formula id="inline-formula4-1548512910394608">
+<mml:math display="inline" id="math5-1548512910394608">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula5-1548512910394608">
+<mml:math display="inline" id="math6-1548512910394608">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> are provided by the previous executions.<sup><xref ref-type="bibr" rid="bibr24-1548512910394608">24</xref></sup> Lines (9)–(14) of the RecomputeENPR function in <xref ref-type="fig" rid="fig11-1548512910394608">Figure 11</xref> apply the prediction formula to obtain the expected execution powers of the nodes for the next round. As we have mentioned before, the number of runs to be sent to a node is proportional to its expected execution power.</p>
+</sec>
+<sec id="section22-1548512910394608">
+<title>5.2 Adaptive multi-round asynchronous scheduling algorithm</title>
+<p>The asynchronous scheduling algorithm is an improved version of the synchronous scheduling algorithm. Instead of waiting for all of the nodes to finish their tasks in each round, the asynchronous scheduling algorithm dispatches new jobs to the nodes immediately after they finish their runs. Before any job assignment, expected execution power values of the nodes are updated and job assignments are made accordingly. <xref ref-type="fig" rid="fig12-1548512910394608">Figure 12</xref> shows the pseudocode of the adaptive multi-round asynchronous scheduling algorithm (AMRA). The difference in this algorithm from the AMRS is at line (12). The AMRS waits for all nodes to complete their jobs, whereas the AMRA assigns a new job to a node immediately after it finishes its runs. This reduces the idle time spent by the AMRS for all nodes to finish their jobs. The ENPR initialization and re-computation parts of the AMRS and AMRA are identical.</p>
+<fig id="fig12-1548512910394608" position="float">
+<label>Figure 12.</label>
+<caption><p>Pseudocode for AMRA schedule function.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig12.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section23-1548512910394608">
+<title>6. Performance analysis</title>
+<p>In order to analyse the performance of the scheduling algorithms, a Wireless Sensor Network Simulation (WSN) was run using the Sim-PETEK framework in a computational resource pool that consists of 16 compute nodes. One of the resources was determined as the coordinator node and the others were simulator nodes. The hardware configurations of the computers are as follows:</p>
+<list id="list7-1548512910394608" list-type="bullet">
+<list-item><p>one coordinator resource: quad-core with Windows XP Professional x64 edition;</p></list-item>
+<list-item><p>five simulator resources: 16-core with Windows Server x64 edition;</p></list-item>
+<list-item><p>six simulator resources: quad-core with Windows XP Professional x64 edition;</p></list-item>
+<list-item><p>four simulator resources: dual-core with Windows XP Professional x32 edition.</p></list-item>
+</list>
+<p>WSN is a system consisting of five components: main sensor (head), sensors, truck, logger and sensor adders. The main sensor component communicates with other sensors in its range for sending activation messages and receiving response messages. Sensor components are designed for sensing the movements in their environment and they are able to communicate with the other sensors in their range. The truck component has a predefined path that it follows during the simulation. The logger is the component that saves the location of the truck and data created by the sensors. The last component, namely the sensor adder, is used for adding sensors to the environment at runtime (to simulate sensor deployment to a field). When WSN starts running, the truck with a predefined velocity and a random path starts moving and follows its track. When the truck enters a sensor’s sensing range, the sensor detects the truck’s location and sends an accuracy value to its parent to be sent to the main sensor. At the end, the main sensor analyses collected messages and determines the truck’s observed path.<sup><xref ref-type="bibr" rid="bibr25-1548512910394608">25</xref></sup></p>
+<p>WSN runs for 20 seconds for testing purposes. There are four test cases, each of which is repeated for different scheduling algorithms or for the same algorithm with different numbers of rounds. The four test cases are 20 MC trials for 100 runs, 20 MC trials for 400 runs, 50 MC trials for 100 runs and 50 MC trials for 400 runs. The number of runs is obtained by multiplying the possible discrete values for the number of sensors, truck’s step size and truck’s velocity. The number of sensors is taken in the range 150–169 with an increment step size of 1, resulting in 20 different values. The truck’s step size is taken in the range 0.020–0.024 with an increment step size of 0.001, resulting in five different values. For 100 runs, truck velocity is kept constant, since different values for number of sensors and truck’s step size already result in 100 runs (i.e. 20 × 5 = 100). For 400 runs, truck velocity is taken in the range 0.40–0.43 with an increment step size of 0.01, resulting in four different values.</p>
+<p>As mentioned in the previous section, the optimal number of rounds for the scheduling algorithms is determined by experimentation. All tests are repeated three times and the average value obtained out of the repetitions is taken as the final result. Tests for the AMRS are performed for two, three, five, eight and 10 rounds and the simulation completion times in <xref ref-type="fig" rid="fig13-1548512910394608">Figure 13</xref> are obtained. The optimal number of rounds for the AMRS is two for the test cases with 100 runs and three for the tests with 400 runs. Similarly, the AMRA tests are made for two, three, five, eight, 10, 12, 15 and 18 rounds and the results in <xref ref-type="fig" rid="fig14-1548512910394608">Figure 14</xref> are obtained. As can be seen from the figure, the optimal number of rounds for the AMRA is five when number of runs is 100, and 10 when number of runs is 400. Note that the reason we obtain the optimal number of runs for each algorithm is to establish a fair and consistent basis for the comparison of these algorithms (which is given in <xref ref-type="fig" rid="fig15-1548512910394608">Figure 15</xref>). Evidently, these optimal numbers are sensitive both to the number of runs and also to the computational characteristics of the simulation application.</p>
+<fig id="fig13-1548512910394608" position="float">
+<label>Figure 13.</label>
+<caption><p>AMRS test results.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig13.tif"/>
+</fig>
+<fig id="fig14-1548512910394608" position="float">
+<label>Figure 14.</label>
+<caption><p>AMRA test results.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig14.tif"/>
+</fig>
+<fig id="fig15-1548512910394608" position="float">
+<label>Figure 15.</label>
+<caption><p>AMRS versus AMRA test results.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig15.tif"/>
+</fig>
+<p>To provide a comparison of the AMRS and AMRA we use the scores found in the tests with the optimal number of rounds for each algorithm. The results of this comparison are provided in <xref ref-type="fig" rid="fig15-1548512910394608">Figure 15</xref>. As can be observed from the figure, the AMRA exhibits a far better performance than the AMRS. This is because the asynchronous job dispatching scheme adopted in the AMRA ensures that no idle time is spent in waiting for all simulator nodes to complete their jobs in a round. Therefore, node availability is exploited in a much more timely manner, eliminating unnecessary processing overheads.</p>
+<p><xref ref-type="fig" rid="fig16-1548512910394608">Figure 16</xref> illustrates the graph obtained by running Sim-PETEK with different number of runs and MC trials. The figure indicates that, given a certain number of MC trials, there is a linear increase in simulation execution times when the number of runs in a simulation increases. As the number of MC trials executed during each parameter sweep run increases, the rate of increase in total simulation time also tends to grow.</p>
+<fig id="fig16-1548512910394608" position="float">
+<label>Figure 16.</label>
+<caption><p>Simulation execution times versus number of runs.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig16.tif"/>
+</fig>
+<p>By evaluating Sim-PETEK in terms of framework cost, the graphic shown in <xref ref-type="fig" rid="fig17-1548512910394608">Figure 17</xref> is obtained. The framework cost can be defined as the cost including communication times and Sim-PETEK specific costs, such as simulation initialization times. In other words, framework cost can be defined as the difference between the total simulation time and actual simulation time. Total simulation time is the time passing from a simulation execution request to the simulation result retrieval at the Coordinator side. Actual simulation time stands for the time spent at the Simulators from the start until the end of a simulation execution. <xref ref-type="fig" rid="fig17-1548512910394608">Figure 17</xref> depicts that the framework cost increases linearly when the number of runs of a simulation is increased.</p>
+<fig id="fig17-1548512910394608" position="float">
+<label>Figure 17.</label>
+<caption><p>Framework cost versus number of runs.</p></caption>
+<graphic xlink:href="10.1177_1548512910394608-fig17.tif"/>
+</fig>
+</sec>
+<sec id="section24-1548512910394608" sec-type="discussion">
+<title>7. Discussion and future work</title>
+<p>In this paper we have described Sim-PETEK, which provides a service-oriented middleware layer that enables simulation runs and MC trials to be dynamically distributed to a pool of computational resources. Sim-PETEK offers a number of properties that makes it convenient for a particular class of simulation applications:</p>
+<list id="list8-1548512910394608" list-type="bullet">
+<list-item><p>Sim-PETEK is a fully service-based framework that is compliant to WSRF<sup><xref ref-type="bibr" rid="bibr5-1548512910394608">5</xref></sup> standard, which is endorsed by the OASIS, thereby ensuring that a robust, full-fledged resource access and utilization layer is available to simulation application developers;</p></list-item>
+<list-item><p>the specification of a simulation scenario, result collection, filtering and aggregation approaches are all tailored for meeting the requirements largely found in a group of simulation applications where the required number of runs may grow exponentially;</p></list-item>
+<list-item><p>scheduling and monitoring of distributed simulation runs are utilized for PSAs;</p></list-item>
+<list-item><p>Sim-PETEK allows stochastic simulation analysis methodologies for increasing confidence in simulation results;</p></list-item>
+<list-item><p>Sim-PETEK uses a well-established simulation framework (i.e. SIMA) for its low-level simulation execution and therefore relies on a well-defined scheme for simulation initialization, execution protocol and result collection.</p></list-item>
+</list>
+<p>Furthermore, we have implemented two DLT-based multi-round scheduling algorithms. We note that multi-round scheduling algorithms are well suited to PSAs. To cater for the unpredictable nature of highly heterogeneous execution environments, such as the Grid, we have also added adaptivity to the algorithms. We have tested both synchronous and asynchronous versions of our algorithm. We have performed these tests with different number of rounds for four different test cases aiming at specifying the optimal number of rounds for each case. We report that the asynchronous version performs better, since the asynchronous job dispatching scheme adopted in the AMRA ensures that node availability is exploited in a much timelier manner, eliminating unnecessary processing overheads. Clearly, this improvement is due to the employment of a relatively simple and well-known programming technique that is widely used for efficiency enhancement. It is interesting to note, once again, the strong impact of a relatively simple technique. It is also interesting to observe that the asynchronous version lends itself to a more effective adaptation sequence due to a higher value for the optimal number of rounds. This is particularly worth noting for applications where the intended computational environment involves a high degree of unpredictability and heterogeneity, such as those found in the Grid.</p>
+<p>There are a number of improvements we plan as a follow on to our current work.</p>
+<list id="list9-1548512910394608" list-type="bullet">
+<list-item><p>Currently Sim-PETEK assumes a secure Grid environment. We are aiming to improve Sim-PETEK by incorporating WS-Security-compatible mechanisms across its full call stack.</p></list-item>
+<list-item><p>Although our communication protocol can operate in reliable-messaging setting due to the infrastructure support (i.e. support given by WCF) our framework is not fully fault tolerant. We are planning to add fault tolerance support with an aim to recover a single simulation run in a given job execution request.</p></list-item>
+<list-item><p>Although Sim-PETEK currently uses a well-performing scheduling algorithm, we will continue our research to further improve the algorithm to achieve better levels of performance.</p></list-item>
+</list>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This research received no specific grant from any funding agency in the public, commercial or not-for-profit sectors.</p>
+</fn>
+<fn fn-type="conflict">
+<label>Conflict of interest statement</label>
+<p>None declared.</p>
+</fn>
+</fn-group>
+<bio>
+<title>Author Biographies</title>
+<p><bold>Doruk Bozağaç</bold> is a Senior Researcher at TUBITAK BİLGEM UEKAE. He has been involved in design and implementation of modelling and simulation architectures. He received his BSc (2003) and MSc (2006) degrees from Bilkent University, Ankara, Turkey. He is currently a PhD student in the Department of Computer Engineering of the Middle East Technical University. His current research interests include modelling and simulation, parallel and distributed computation and simulation optimization.</p>
+<p><bold>Gülşah Karaduman</bold> is a Researcher at TUBITAK BİLGEM UEKAE. She received her BSc (2006) and MSc (2010) degree from the Middle East Technical University, Ankara, Turkey. Her current research interests include Grid computing and scheduling methodologies.</p>
+<p><bold>Ahmet Kara</bold> is a Senior Researcher at TUBITAK BİLGEM UEKAE. He has been involved in the design and implementation of modelling and simulation architectures. He received his BSc (2003) and MSc (2006) degrees from Bilkent University, Ankara, Turkey. He is currently a PhD student in the Department of Computer Engineering of the Middle East Technical University. His current research interests include modelling and simulation.</p>
+<p><bold>M Nedim Alpdemir</bold> received his MSc (1996) in Advanced Computer Science and PhD (2000) in Component-based Simulation Environments from the Department Computer Science, University of Manchester, UK. He worked as a Research Associate, and later as a Research Fellow in the Information Management Group (IMG) at the Department of Computer Science at the University of Manchester, UK, until 2005. Currently he is the head of the Software Infrastructures Group and supervises the Simulation Software Frameworks team at TUBITAK BİLGEM UEKAE, Ankara, Turkey.</p>
+</bio>
+<ref-list>
+<title>8. References</title>
+<ref id="bibr1-1548512910394608">
+<label>1.</label>
+<citation citation-type="web">
+<collab>Open Grid Services Architecture</collab>. <comment><ext-link ext-link-type="uri" xlink:href="http://www.globus.org/OGSA">http://www.globus.org/OGSA</ext-link></comment> (<year>2009</year>).</citation>
+</ref>
+<ref id="bibr2-1548512910394608">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Xie</surname><given-names>Y</given-names></name>
+<name><surname>Teo</surname><given-names>YM</given-names></name>
+<name><surname>Cai</surname><given-names>W</given-names></name>
+<name><surname>Turner</surname><given-names>SJ</given-names></name>
+</person-group>. <article-title>Service provisioning for HLA-based distributed simulation on the Grid</article-title>. In: <source>Proceedings of the Workshop on Principles of Advanced and Distributed Simulation, PADS 2005</source>, (<issue>2005</issue>), pp.<fpage>282</fpage>–<lpage>291</lpage>.</citation>
+</ref>
+<ref id="bibr3-1548512910394608">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Pullen</surname><given-names>JM</given-names></name>
+<name><surname>Brunton</surname><given-names>R</given-names></name>
+<name><surname>Brutzman</surname><given-names>D</given-names></name>
+<name><surname>Drake</surname><given-names>D</given-names></name>
+<name><surname>Hieb</surname><given-names>M</given-names></name>
+<name><surname>Morse</surname><given-names>KL</given-names></name>
+<etal/>
+</person-group>. <article-title>Using Web services to integrate heterogeneous simulations in a Grid environment</article-title>. <source>Future Gener Comput Syst</source> (<year>2005</year>); <volume>21</volume>: <fpage>97</fpage>–<lpage>106</lpage>.</citation>
+</ref>
+<ref id="bibr4-1548512910394608">
+<label>4.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zajac</surname><given-names>K</given-names></name>
+<name><surname>Tirado-Ramos</surname><given-names>A</given-names></name>
+<name><surname>Zhao</surname><given-names>Z</given-names></name>
+<name><surname>Sloot</surname><given-names>P</given-names></name>
+<name><surname>Bubak</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Grid services for HLA-based distributed simulation frameworks</article-title>. In: <source>Proceedings of the Grid Computing: First European Across Grids Conference</source>, <conf-loc>Santiago de Compostela, Spain</conf-loc>, <conf-date>13–14 February 2003</conf-date>, <comment>Revised Papers</comment>, <conf-loc>Springer</conf-loc>, (<year>2004</year>), p.<fpage>147</fpage>.</citation>
+</ref>
+<ref id="bibr5-1548512910394608">
+<label>5.</label>
+<citation citation-type="web">
+<collab>The Web Services Resource Framework</collab>. <comment><ext-link ext-link-type="uri" xlink:href="http://www.globus.org/WSRF">http://www.globus.org/WSRF</ext-link></comment> (<year>2009</year>).</citation>
+</ref>
+<ref id="bibr6-1548512910394608">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Theodoropoulos</surname><given-names>G</given-names></name>
+<name><surname>Zhang</surname><given-names>Y</given-names></name>
+<name><surname>Chen</surname><given-names>D</given-names></name>
+<name><surname>Minson</surname><given-names>R</given-names></name>
+<name><surname>Turner</surname><given-names>SJ</given-names></name>
+<name><surname>Cai</surname><given-names>W</given-names></name>
+<etal/>
+</person-group>. <article-title>Large scale distributed simulation on the Grid</article-title>. <source>EPSRC e-Science Sister Project GR/ S, 82862</source>, (<issue>2003</issue>).</citation>
+</ref>
+<ref id="bibr7-1548512910394608">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Peiris</surname><given-names>C</given-names></name>
+<name><surname>Mulder</surname><given-names>D</given-names></name>
+<name><surname>Cicoria</surname><given-names>S.</given-names></name>
+</person-group> <source>Pro WCF: practical Microsoft SOA implementation</source>. <comment>Apress NY 10013 USA</comment>, (<year>2007</year>).</citation>
+</ref>
+<ref id="bibr8-1548512910394608">
+<label>8.</label>
+<citation citation-type="web">
+<collab>Globus Toolkit</collab>. <comment><ext-link ext-link-type="uri" xlink:href="http://www.globus.org/toolkit">http://www.globus.org/toolkit</ext-link></comment> (<year>2009</year>).</citation>
+</ref>
+<ref id="bibr9-1548512910394608">
+<label>9.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Ion Foster</surname></name>
+<name><surname>Nick</surname><given-names>JM</given-names></name>
+<name><surname>Kesselman</surname><given-names>C</given-names></name>
+<name><surname>Tuecke</surname><given-names>S</given-names></name></person-group>. “<article-title>The Physiology of the Grid</article-title>”, <comment><ext-link ext-link-type="uri" xlink:href="http://www.globus.org/alliance/publications/papers/ogsa.pdf">http://www.globus.org/alliance/publications/papers/ogsa.pdf</ext-link></comment></citation>
+</ref>
+<ref id="bibr10-1548512910394608">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Foster</surname><given-names>I</given-names></name>
+<name><surname>Kesselman</surname><given-names>C</given-names></name>
+<name><surname>Tuecke</surname><given-names>S</given-names></name>
+</person-group>. <article-title>The anatomy of the Grid</article-title>. <source>Int J Supercomput Appl</source> (<year>2001</year>); <volume>15</volume>: <fpage>200</fpage>–<lpage>222</lpage>.</citation>
+</ref>
+<ref id="bibr11-1548512910394608">
+<label>11.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Humphrey</surname><given-names>M</given-names></name>
+<name><surname>Wasson</surname><given-names>G</given-names></name>
+<name><surname>Jackson</surname><given-names>K</given-names></name>
+<name><surname>Boverhof</surname><given-names>J</given-names></name>
+<name><surname>Rodriguez</surname><given-names>M</given-names></name>
+<name><surname>Gawor</surname><given-names>J</given-names></name>
+<etal/>
+</person-group>. <article-title>State and events for web services: a comparison of five WS-resource framework and WS-notification implementations</article-title>. In: <conf-name>Proceedings of the 14th IEEE International Symposium on High Performance Distributed Computing, HPDC-14</conf-name>, (<year>2005</year>), pp.<fpage>3</fpage>–<lpage>13</lpage>.</citation>
+</ref>
+<ref id="bibr12-1548512910394608">
+<label>12.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Casanova</surname><given-names>H</given-names></name>
+<name><surname>Legrand</surname><given-names>A</given-names></name>
+<name><surname>Zagorodnov</surname><given-names>D</given-names></name>
+<name><surname>Berman</surname><given-names>F</given-names></name></person-group>. <article-title>Heuristics for scheduling parameter sweep applications in Grid environments</article-title>. In: <source>Proceedings of the 9th Heterogeneous Computing Workshop (HCW)</source>, (<year>2000</year>), pp.<fpage>349</fpage>–<lpage>363</lpage>.</citation>
+</ref>
+<ref id="bibr13-1548512910394608">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Fujimoto</surname><given-names>N</given-names></name>
+<name><surname>Hagihara</surname><given-names>K</given-names></name></person-group>. <article-title>Near-optimal dynamic task scheduling of independent coarse-grained tasks onto a computational Grid</article-title>. In: <source>Proceedings of the International Conference on Parallel Processing</source> (<year>2003</year>); pages <fpage>391</fpage>–<lpage>398</lpage>.</citation>
+</ref>
+<ref id="bibr14-1548512910394608">
+<label>14.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Gentle</surname><given-names>JE</given-names></name>
+<name><surname>Hardle</surname><given-names>W</given-names></name>
+<name><surname>Mori</surname><given-names>Y.</given-names></name>
+</person-group> <source>Handbook of computational statistics</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, (<year>2004</year>).</citation>
+</ref>
+<ref id="bibr15-1548512910394608">
+<label>15.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Doubilet</surname><given-names>P</given-names></name>
+<name><surname>Begg</surname><given-names>CB</given-names></name>
+<name><surname>Weinstein</surname><given-names>MC</given-names></name>
+<name><surname>Braun</surname><given-names>P</given-names></name>
+<name><surname>McNeil</surname><given-names>BJ.</given-names></name>
+</person-group> <article-title>Probabilistic sensitivity analysis using Monte Carlo simulation. A practical approach</article-title>. <source>Med Decis Making</source> (<year>1985</year>); <volume>5</volume>: <fpage>157</fpage>.</citation>
+</ref>
+<ref id="bibr16-1548512910394608">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bharadwaj</surname><given-names>V</given-names></name>
+<name><surname>Ghose</surname><given-names>D</given-names></name>
+<name><surname>Robertazzi</surname><given-names>TG</given-names></name>
+</person-group>. <article-title>Divisible load theory: a new paradigm for load scheduling in distributed systems</article-title>. <source>Cluster Comput</source> (<year>2003</year>); <volume>6</volume>: <fpage>7</fpage>–<lpage>17</lpage>.</citation>
+</ref>
+<ref id="bibr17-1548512910394608">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Yang</surname><given-names>Y</given-names></name>
+<name><surname>Raadt</surname><given-names>K</given-names></name>
+<name><surname>Casanova</surname><given-names>H</given-names></name>
+</person-group>. <article-title>Multiround algorithms for scheduling divisible loads</article-title>. <source>IEEE Trans Parallel Distrib Syst</source> (<year>2005</year>); <volume>16</volume>: <fpage>1092</fpage>–<lpage>1102</lpage>.</citation>
+</ref>
+<ref id="bibr18-1548512910394608">
+<label>18.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Yang</surname><given-names>Y</given-names></name>
+<name><surname>Casanova</surname><given-names>H</given-names></name>
+</person-group>. <article-title>UMR: A multi-round algorithm for scheduling divisible workloads</article-title>. In: <conf-name>Proceedings of the International Parallel and Distributed Processing Symposium (IPDPS’03)</conf-name>, (<year>2003</year>).</citation>
+</ref>
+<ref id="bibr19-1548512910394608">
+<label>19.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Yang</surname><given-names>Y</given-names></name>
+<name><surname>Casanova</surname><given-names>H</given-names></name>
+</person-group>. <article-title>RUMR: robust scheduling for divisible workloads</article-title>. In: <conf-name>Proceedings of the 12th IEEE International Symposium on High Performance Distributed Computing (HPDC’03)</conf-name>, (<year>2003</year>).</citation>
+</ref>
+<ref id="bibr20-1548512910394608">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ghose</surname><given-names>D</given-names></name>
+<name><surname>Kim</surname><given-names>HJ</given-names></name>
+<name><surname>Kim</surname><given-names>TH</given-names></name>
+</person-group>. <article-title>Adaptive divisible load scheduling strategies for work-station clusters with unknown network resources</article-title>. <source>IEEE Trans Parallel Distrib Syst</source> (<year>2005</year>); <volume>16</volume>: <fpage>897</fpage>–<lpage>907</lpage>.</citation>
+</ref>
+<ref id="bibr21-1548512910394608">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Gonzalez-Velez</surname><given-names>H</given-names></name>
+<name><surname>Cole</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Adaptive statistical scheduling of divisible workloads in heterogeneous systems</article-title>. <source>J Scheduling</source> (<year>2009</year>); <article-title>Volume 13 number</article-title> <volume>4</volume> <fpage>1</fpage>–<lpage>15</lpage>.</citation>
+</ref>
+<ref id="bibr22-1548512910394608">
+<label>22.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kara</surname><given-names>A</given-names></name>
+<name><surname>Bozagac</surname><given-names>D</given-names></name>
+<name><surname>Alpdemir</surname><given-names>MN.</given-names></name>
+</person-group> <article-title>Sima: a DEVS based hierarchical and modular modeling and simulation framework</article-title>. In: <conf-name>Proceedings of the National Defensive Applications Modeling and Simulation Conference</conf-name>, (<year>2007</year>).</citation>
+</ref>
+<ref id="bibr23-1548512910394608">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Resnick</surname><given-names>S</given-names></name>
+<name><surname>Crane</surname><given-names>R</given-names></name>
+<name><surname>Bowen</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Essential windows communication foundation: for .net frame-work 3.5</article-title>. <source>Addison-Wesley</source> (<year>2008</year>).</citation>
+</ref>
+<ref id="bibr24-1548512910394608">
+<label>24.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Gao</surname><given-names>Y</given-names></name>
+<name><surname>Rong</surname><given-names>H</given-names></name>
+<name><surname>Huang</surname><given-names>JZ.</given-names></name>
+</person-group> <article-title>Adaptive Grid job scheduling with genetic algorithms</article-title>. <source>Future Gener Comput Syst</source> <volume>21</volume> (<year>2005</year>) pages <fpage>151</fpage>–<lpage>161</lpage>.</citation>
+</ref>
+<ref id="bibr25-1548512910394608">
+<label>25.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Deniz</surname><given-names>F.</given-names></name>
+</person-group> <article-title>Variable structure and dynamism extensions to a DEVS based modeling and simulation framework</article-title>. <comment>Master’s thesis METU</comment>, (<year>2010</year>).</citation>
+</ref>
+</ref-list>
+</back>
+</article>

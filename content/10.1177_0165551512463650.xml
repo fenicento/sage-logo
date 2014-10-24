@@ -1,0 +1,2176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JIS</journal-id>
+<journal-id journal-id-type="hwp">spjis</journal-id>
+<journal-title>Journal of Information Science</journal-title>
+<issn pub-type="ppub">0165-5515</issn>
+<issn pub-type="epub">1741-6485</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0165551512463650</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0165551512463650</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Backward inference and pruning for RDF change detection using RDBMS</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Im</surname><given-names>Dong-Hyuk</given-names></name>
+<aff id="aff1-0165551512463650">School of Computer Science and Engineering, Seoul National University, Seoul, Korea</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Lee</surname><given-names>Sang-Won</given-names></name>
+<aff id="aff2-0165551512463650">School of Information and Communication Engineering, Sungkyunkwan University, Suwon, Korea</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Kim</surname><given-names>Hyoung-Joo</given-names></name>
+<aff id="aff3-0165551512463650">School of Computer Science and Engineering, Seoul National University, Seoul, Korea</aff>
+</contrib>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0165551512463650">Dong-Hyuk Im, School of Computer Science and Engineering, Seoul National University, Seoul 151-742, Korea. Email: <email>dhim@idb.snu.ac.kr</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>39</volume>
+<issue>2</issue>
+<fpage>238</fpage>
+<lpage>255</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">Chartered Institute of Library and Information Professionals</copyright-holder>
+</permissions>
+<abstract>
+<p>Recent studies on change detection for RDF data have focused on minimizing the delta size and, as a way to exploit the semantics of RDF models in reducing the delta size, the forward-chaining inferences have been widely employed. However, since the forward-chaining inferences should pre-compute the entire closure of the RDF model, the existing approaches are not scalable to large RDF data sets. In this paper, we propose a scalable change detection scheme for RDF data, which is based on backward-chaining inference and pruning. Our scheme, instead of pre-computing the full closure, computes only the necessary closure on the fly, thus achieving fast and scalable change detection. In addition, for any two RDF data input files to be compared, the delta obtained from our scheme is always equivalent to the one from the existing forward-chaining inferences. In addition, in order to handle RDF data sets too large to fit in the available RAM, we present an SQL-based implementation of our scheme. Our experimental results show that our scheme, in comparison to the existing schemes, can reduce the number of inference triples for RDF change detection by 10–60%.</p>
+</abstract>
+<kwd-group>
+<kwd>backward-chaining inference</kwd>
+<kwd>change detection</kwd>
+<kwd>ontology</kwd>
+<kwd>pruning</kwd>
+<kwd>RDF</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0165551512463650" sec-type="intro">
+<title>1. Introduction</title>
+<p>RDF (Resource Description Framework) is recommended by W3C (World Wide Web Consortium) as the language to represent information about web resources in the semantic web. Many web sites publish their data in the RDF format, as RDF has a simple data model, well-defined formal semantics and provable inference [<xref ref-type="bibr" rid="bibr1-0165551512463650">1</xref>]. In addition, RDF is known to be useful for integrated query processing because it can easily integrate information from diverse data sources. Therefore, users can find meaningful information using the RDF query language (i.e. SPARQL), irrespective of the data format.</p>
+<p>RDF data can change over time for various reasons [<xref ref-type="bibr" rid="bibr2-0165551512463650">2</xref>, <xref ref-type="bibr" rid="bibr3-0165551512463650">3</xref>]. First, as the information itself can change in the domain of interest, RDF that models the knowledge of that domain should also change accordingly. Second, RDF data can change according to the user’s needs. Since RDF data is, in general, created and evolved in a distributed environment, multiple users can manage the RDF data in a collaborative manner. Changes made by a user should be propagated to the other users of the domain to maintain consistency in the RDF data. Therefore, detecting and representing RDF changes (i.e. RDF deltas) are crucial in evolution process [<xref ref-type="bibr" rid="bibr4-0165551512463650">4</xref>], synchronization system [<xref ref-type="bibr" rid="bibr5-0165551512463650">5</xref>] and versioning system [<xref ref-type="bibr" rid="bibr6-0165551512463650">6</xref><xref ref-type="bibr" rid="bibr7-0165551512463650"/><xref ref-type="bibr" rid="bibr8-0165551512463650"/>–<xref ref-type="bibr" rid="bibr9-0165551512463650">9</xref>] to trace the history of changes in an RDF data set to synchronize two or more versions correctly, and compare different versions.</p>
+<p>The main role of change detection tools is to determine what has been changed between two models. The change detection between RDF data is similar to that in flat files or structured data (e.g. HTML and XML). For example, the GNU Diff utility is a popular tool to detect changes in program source files and text files. Several change detection algorithms based on the tree model have been proposed for structured documents such as XML [<xref ref-type="bibr" rid="bibr10-0165551512463650">10</xref>, <xref ref-type="bibr" rid="bibr11-0165551512463650">11</xref>]. However, these traditional algorithms cannot be generalized to handle the RDF model, because they do not fully utilize the semantic information in RDF data. Therefore, Tim Berners-Lee emphasizes that it is necessary and important to develop efficient change detection schemes for RDF graphs to exchange and distribute RDF deltas [<xref ref-type="bibr" rid="bibr12-0165551512463650">12</xref>]. In addition, as RDF deltas would be actively used in the synchronization system and versioning system, it is necessary to minimize the delta size for the fast exchange over the network, as well as storage efficiency [<xref ref-type="bibr" rid="bibr5-0165551512463650">5</xref>, <xref ref-type="bibr" rid="bibr7-0165551512463650">7</xref>, <xref ref-type="bibr" rid="bibr13-0165551512463650">13</xref>, <xref ref-type="bibr" rid="bibr14-0165551512463650">14</xref>]. Thus, several approaches have been proposed to minimize the size of RDF deltas by exploiting the semantics of the RDF model [<xref ref-type="bibr" rid="bibr9-0165551512463650">9</xref>, <xref ref-type="bibr" rid="bibr15-0165551512463650">15</xref>, <xref ref-type="bibr" rid="bibr16-0165551512463650">16</xref>].</p>
+<p><xref ref-type="fig" rid="fig1-0165551512463650">Figure 1</xref> illustrates an example of change in the RDF model. In <xref ref-type="fig" rid="fig1-0165551512463650">Figure 1</xref>, we represent each RDF model (<italic>K</italic> and <italic>K</italic>′) as the set of triples, and detect changes between two RDF triple sets using the set-difference operation. RDF change detection, such as Delta [<xref ref-type="bibr" rid="bibr12-0165551512463650">12</xref>], has taken this approach, since it is very simple to compute RDF deltas using set-difference operation. However, by applying the RDF inference rules under the RDFS (RDF Schema) specification to the triple set [<xref ref-type="bibr" rid="bibr17-0165551512463650">17</xref>], we can derive new triples from the existing ones; that is, the closure of the RDF model (the RDF closure). This result of the closure enables us to reduce the size of the differences between two RDF triple sets. For example, when we compute the differences between <italic>K</italic> and <italic>K</italic>′, even if a triple (TA subClassOf Univ_Person) is deleted from <italic>K</italic> in <xref ref-type="fig" rid="fig1-0165551512463650">Figure 1</xref>, we can infer the triple (TA subClassOf Univ_Person) by computing the transitive closure of the triples in <italic>K</italic>′. That is, although this triple is explicitly deleted from one set (syntactic level), there is no semantic difference between two sets if we can infer the deleted triple in the other set (semantic level). Therefore, this semantic property of the RDF delta allows us to minimize the size of differences by exploiting the semantics of the RDF model.</p>
+<fig id="fig1-0165551512463650" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>An example of change in the RDF model.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463650-fig1.tif"/>
+</fig>
+<p>Existing work, such as SemVersion [<xref ref-type="bibr" rid="bibr9-0165551512463650">9</xref>], pre-computes the complete closures of both the RDF models and then performs the set-difference operation between two closures. In this respect, we term this approach the forward-chaining inference strategy. However, it is very time-consuming to compute and store the entire closures of both the RDF models in advance. In addition, forward-chaining inference-based change detections must cover all derived triples in computing the differences between two sets of triples. To make it worse, in general only a small fraction of the entire data in RDF applications changes. (The result reported in PromptDiff [<xref ref-type="bibr" rid="bibr8-0165551512463650">8</xref>] shows that 97.9% of the data in each version remains unchanged.) Thus, it should compute the redundant closures of more than 90% of the entire data that are irrelevant to the result of changes. On the other hand, Delta function [<xref ref-type="bibr" rid="bibr15-0165551512463650">15</xref>, <xref ref-type="bibr" rid="bibr16-0165551512463650">16</xref>] computes the closure on-the-fly using a labelling scheme (e.g. interval-labelling scheme [<xref ref-type="bibr" rid="bibr18-0165551512463650">18</xref>]). Thus, it efficiently checks the transitive closure without computing all the derived triples. In Delta function, the label information itself should be constructed by performing two plain traversals of the explicit graph by the subClassOf and subPropertyOf relations. However, since we assume the DRAM memory is not large enough to keep the two RDF triple sets, it requires additional overhead (e.g. construction time for the labels and additional space to store the label information). Thus, the existing change detection approaches are neither efficient nor scalable.</p>
+<p>These observations lead us to develop scalable solutions to compute differences between the large data efficiently. This issue is critical in terms of incremental maintenance. For example, when a large RDF data set changes frequently, we need a change detection tool that can efficiently find the differences between two consecutive versions to update from the old version to the new one. In this paper, we propose a scalable change detection technique for RDF data. It computes only the relevant closure of the RDF model using a backward-chaining inference strategy. In addition, we propose a new pruning method, which skips unnecessary backward-chaining inference, to improve the performance of change detection using the backward-chaining inference. While previous work on RDF change detection mainly focused on minimizing the delta size, our backward-chaining inference strategy, in combination with the pruning method, can drastically improve change detection performance, as well as minimizing the delta size. <xref ref-type="fig" rid="fig2-0165551512463650">Figure 2</xref> shows the generic comparisons of our scheme to existing ones.</p>
+<fig id="fig2-0165551512463650" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Classification of RDF change detection techniques.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463650-fig2.tif"/>
+</fig>
+<p>The contributions of this paper can be summarized as follows:</p>
+<list id="list1-0165551512463650" list-type="bullet">
+<list-item><p><bold>Pruning method based on backward-chaining inference</bold>. We propose a change detection technique using the backward-chaining inference strategy and pruning method. When we detect RDF changes using the inference scheme, we can compute a small part of the RDF closure, not the entire closure. Although some studies have dealt with inference issues in RDF query processing [<xref ref-type="bibr" rid="bibr19-0165551512463650">19</xref><xref ref-type="bibr" rid="bibr20-0165551512463650"/>–<xref ref-type="bibr" rid="bibr21-0165551512463650">21</xref>], no work has tried to detect RDF changes efficiently. Our pruning scheme-based change detection is faster than change detection using forward-chaining inference [<xref ref-type="bibr" rid="bibr9-0165551512463650">9</xref>] by a factor of 10–80 and faster than any existing change detection technique using only backward-chaining inference for real data sets [<xref ref-type="bibr" rid="bibr20-0165551512463650">20</xref>, <xref ref-type="bibr" rid="bibr21-0165551512463650">21</xref>] by a factor of 1.5–4.</p></list-item>
+<list-item><p><bold>Correctness of change detection</bold>. We show that our change detection generates the same result of RDF deltas as that produced by the forward-chaining inference strategy.</p></list-item>
+<list-item><p><bold>Change detection based on relational database</bold>. We propose the change detection for RDF data using relational databases. Memory-based change detection is not suitable for large RDF data sets, as it requires much memory to retain two RDF triple sets. In contrast, in our implementation, we store large RDF data sets in a relational database and compute the delta using SQL queries against the database, which embodied our backward-chaining inference and pruning scheme. As far as we know, this is the first implementation of backward inference-based RDF change detection using relational database.</p></list-item>
+</list>
+<p>The remainder of this paper is organized as follows. Section 2 reviews the RDF data model, background concepts on RDF inference and five well-known change detections for RDF. Section 3 proposes a new RDF change detection based on the backward-chaining inference and pruning method. Section 4 explains how we implement our change detection in a relational database. Section 5 presents the experimental results. Section 6 concludes the paper.</p>
+</sec>
+<sec id="section2-0165551512463650">
+<title>2. Background</title>
+<p>In this section, we explain the RDF data model and the basic concept of inference used throughout this paper. In addition, we describe two RDF inference strategies (forward-chaining and backward-chaining). We then review five existing RDF change detection techniques and explain their limitations.</p>
+<sec id="section3-0165551512463650">
+<title>2.1. RDF preliminaries</title>
+<p>RDF is a language to represent metadata about resources in the World Wide Web [<xref ref-type="bibr" rid="bibr1-0165551512463650">1</xref>]. RDF data is modelled as a directed labelled graph, where each node and each arc represent a resource and a relationship between two resources, respectively. In general, an RDF graph is represented as a set of triples that represent binary relationships between two resources, and can be formally defined as follows:<disp-quote>
+<p>
+<bold>Definition 1</bold>. An RDF model <italic>K</italic> consists of a set of RDF triples whose every triple represents a statement of the form (subject property object), denoted by <italic>t</italic>(<italic>S P O</italic>) <inline-formula id="inline-formula1-0165551512463650"><mml:math display="inline" id="math1-0165551512463650"><mml:mrow><mml:mo>∈</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>.</p>
+</disp-quote></p>
+<p>
+<?h -4?>The RDF inference (i.e. RDF closure calculation) is based on the RDFS entailment rules provided by the RDFS semantics specification [<xref ref-type="bibr" rid="bibr17-0165551512463650">17</xref>]. However, we do not consider all of RDFS entailment rules when computing the inferential closure of an RDF Schema model. That is, we ignore some of entailment rules because they do not affect minimizing the delta size. For example, although we apply the rules (U A Y ⇒ A rdf:type rdf:Property) and (U A Y ⇒ U rdf:type rdfs:Resource) from the RDFS entailment rules to RDF data, we cannot reduce RDF deltas. The closure rules for our change detection among the RDFS entailment rules are defined as follows. These closure rules play crucial roles in limiting the coverage of inference in our change detection method.</p>
+<p><disp-quote>
+<p><bold>Definition 2</bold> (Closure Rule). The definitions of closure rules for change detection are as follows:</p>
+<p>Rule 1. (<italic>U</italic> rdfs:subPropertyOf <italic>V</italic>) ∧ (<italic>V</italic> rdfs:subPropertyOf <italic>X</italic>) ⇒ (<italic>U</italic> rdfs:subPropertyOf <italic>X</italic>).</p>
+<p>Rule 2. (<italic>U A Y</italic>) ∧ (<italic>A</italic> rdfs:subPropertyOf <italic>B</italic>) ⇒ (<italic>U B Y</italic>).</p>
+<p>Rule 3. (<italic>V</italic> rdf:type <italic>U</italic>) ∧ (<italic>U</italic> rdfs:subClassOf <italic>X</italic>) ⇒ (<italic>V</italic> rdf:type <italic>X</italic>).</p>
+<p>Rule 4. (<italic>U</italic> rdfs:subClassOf <italic>V</italic>) ∧ (<italic>V</italic> rdfs:subClassOf <italic>X</italic>) ⇒ (U rdfs:subClassOf <italic>X</italic>).</p>
+<p><bold>Definition 3</bold>. Given an RDF model <italic>K</italic>, the closure of <italic>K</italic>, denoted by <italic>C</italic>(<italic>K</italic>), is defined by recursively applying the closure rules to <italic>K</italic> and adding the derived triples to <italic>K</italic>.</p>
+</disp-quote></p>
+<p>New triples can be inferred from existing ones using the closure rules in Definition 2. For example, we can obtain <italic>C</italic>(<italic>K</italic>) by adding the derived triples (John type Univ_Person, Rule 3), (Sam type Univ_Person, Rule 3) and (Tom type Univ_Person, Rule 3) to <italic>K</italic>. Likewise, we compute <italic>C</italic>(<italic>K</italic>′) by adding the inferred triples (TA subClassOf Univ_Person, Rule 4), (John type Univ_Person, Rule 3), (John type Staff, Rule 3), (Alice type Staff, Rule 3) and (Alice type Univ_Person, Rule 3) to <italic>K</italic>′.</p>
+</sec>
+<sec id="section4-0165551512463650">
+<title>2.2. RDF inference strategy</title>
+<p>In this section, we provide background on RDF inference strategy and show how RDF inference is used. Existing RDF inference strategies can be classified into two approaches based on the direction of inference: forward-chaining inference strategy and backward-chaining inference strategy [<xref ref-type="bibr" rid="bibr19-0165551512463650">19</xref>]. Forward-chaining inference derives all new triples from the existing ones with the closure rules, until no more triples can be derived. This forward-chaining is preferred when data are uploaded (load-time inference), but it can often result in a long load time and excessive space overhead. However, its main advantage is that it can boost query processing time using the pre-computed triples in query processing, instead of computing the triples on the fly. In contrast, the backward-chaining approach computes the relevant triples among all the closures on the fly during query processing (run-time inference) [<xref ref-type="bibr" rid="bibr21-0165551512463650">21</xref>]. Therefore, it can quickly load data and requires little storage overhead, but it can increase the query response time. Since the query performance is of more concern than storage overhead, most RDF storage systems choose the forward-chaining strategy. For example, Sesame [<xref ref-type="bibr" rid="bibr22-0165551512463650">22</xref>] uses the exhaustive forward-chaining algorithm to pre-compute the closure and stores all derived triples in the database. In addition, Broekstra and Kampman [<xref ref-type="bibr" rid="bibr19-0165551512463650">19</xref>] present how to maintain consistency in RDF storage: if we need to insert (or delete) a triple in forward-based system, we should also insert (or delete) the triples derived by inference. Conversely, Shen and Qu [<xref ref-type="bibr" rid="bibr20-0165551512463650">20</xref>] and Stuckenschmidt and Broekstra [<xref ref-type="bibr" rid="bibr21-0165551512463650">21</xref>] propose a flexible inference strategy (combining forward-chaining and backward-chaining) in RDF management systems to mitigate excessive space overhead. For ease of presentation, we may use forward-chaining inference strategy and forward inference interchangeably (respectively, backward-chaining inference strategy and backward inference).</p>
+</sec>
+<sec id="section5-0165551512463650">
+<title>2.3. Change detection techniques for RDF data</title>
+<p>In this section, we overview the syntax and semantics of existing change detection techniques for RDF data. We term them Δ<italic>E</italic>, Δ<italic>C</italic>, Δ<italic>D</italic>, Δ<italic>DC</italic> and Δ<italic>ED</italic>, respectively [<xref ref-type="bibr" rid="bibr9-0165551512463650">9</xref>, <xref ref-type="bibr" rid="bibr12-0165551512463650">12</xref>, <xref ref-type="bibr" rid="bibr15-0165551512463650">15</xref>, <xref ref-type="bibr" rid="bibr16-0165551512463650">16</xref>]. We model the change operations in the RDF data only with triple insertions and triple deletions [<xref ref-type="bibr" rid="bibr23-0165551512463650">23</xref>]. A triple update is assumed to be modelled as a triple deletion-then-insertion. In general, these change operations are common in the RDF change detection field. Given two RDF triple sets <italic>K</italic> and <italic>K</italic>′, let <italic>C</italic>(<italic>K</italic>) and <italic>C</italic>(<italic>K</italic>′) denote the closure of <italic>K</italic> and <italic>K</italic>′, respectively. Given a triple <italic>t</italic>(<italic>S P O</italic>), let Del(<italic>t</italic>(<italic>S P O</italic>)) denote triple deletion, and Ins(<italic>t</italic>(<italic>S P O</italic>)) denote triple insertion.</p>
+<p>The first method, Δ<italic>E</italic> (Explicit Delta), computes the differences using set arithmetic for triple sets. Since this method is intuitive and simple, many change detection tools [<xref ref-type="bibr" rid="bibr12-0165551512463650">12</xref>, <xref ref-type="bibr" rid="bibr24-0165551512463650">24</xref><xref ref-type="bibr" rid="bibr25-0165551512463650"/>–<xref ref-type="bibr" rid="bibr26-0165551512463650">26</xref>] choose this approach, and we categorize Δ<italic>E</italic> as the syntactic level. In Δ<italic>E</italic>, Del denotes <italic>K</italic>−<italic>K</italic>′ and Ins denotes <italic>K</italic>′−<italic>K</italic>.</p>
+<p>
+<disp-formula id="disp-formula1-0165551512463650">
+<mml:math display="block" id="math2-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>E</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>∪</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0165551512463650" xlink:href="10.1177_0165551512463650-eq1.tif"/>
+</disp-formula>
+</p>
+<p>The second method, Δ<italic>C</italic> (Closure Delta), exploits the semantics of the RDF model. It uses the RDF schema entailment rules on <italic>K</italic> and <italic>K</italic>′. It first calculates <italic>C</italic>(<italic>K</italic>) and <italic>C</italic>(<italic>K</italic>′) by applying the closure rules to <italic>K</italic> and <italic>K</italic>′, and then calculates the differences between <italic>C</italic>(<italic>K</italic>) and <italic>C</italic>(<italic>K</italic>′). Consider an example where a triple <italic>t</italic> in <italic>K</italic> is not in <italic>K</italic>′. Even though the triple <italic>t</italic> is not in <italic>K</italic>′, it might not be included in Δ<italic>C</italic> where <italic>t</italic>∈<italic>C</italic>(<italic>K</italic>′). This means that, when computing differences, we can remove the triples that can be inferred in the other set from the deltas. Although Δ<italic>C</italic> is different from Δ<italic>E</italic>, we can obtain the same <italic>C</italic>(<italic>K</italic>′) if we compute the RDF closure after applying each RDF delta (Δ<italic>E</italic>, Δ<italic>C</italic>) to <italic>K</italic>. Some RDF management systems store RDF triple set and the inferred triples together, and support query processing using the closure of the RDF model. Since the same RDF closure can be generated by Δ<italic>C</italic> and Δ<italic>E</italic>, Δ<italic>C</italic> is useful for managing and exchanging the deltas [<xref ref-type="bibr" rid="bibr9-0165551512463650">9</xref>, <xref ref-type="bibr" rid="bibr15-0165551512463650">15</xref>, <xref ref-type="bibr" rid="bibr16-0165551512463650">16</xref>]. Δ<italic>C</italic> is computed as follows:</p>
+<p>
+<disp-formula id="disp-formula2-0165551512463650">
+<mml:math display="block" id="math3-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>C</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>−</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>∪</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>−</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0165551512463650" xlink:href="10.1177_0165551512463650-eq2.tif"/>
+</disp-formula>
+</p>
+<p>However, since Δ<italic>C</italic> computes the closure of both sets and then performs a set-difference between two closures, Δ<italic>C</italic> is not necessarily smaller than Δ<italic>E</italic>. In fact, the delta size of Δ<italic>C</italic> could be larger than that of Δ<italic>E</italic>, in case one set has many inferred triples in one set that are not inferred in the other set and thus belong to Δ<italic>C</italic>.</p>
+<p>To cope with this problem, Delta Function proposes Δ<italic>D</italic> (Dense Delta), Δ<italic>DC</italic> (Dense&amp;Closure Delta) and Δ<italic>ED</italic> (Explicit&amp;Dense Delta) [<xref ref-type="bibr" rid="bibr15-0165551512463650">15</xref>, <xref ref-type="bibr" rid="bibr16-0165551512463650">16</xref>]. They also exploit the semantics of the RDF model for change detection like Δ<italic>C</italic>. However, these differ from Δ<italic>C</italic>, in that they do not perform the set-difference between both closures. Although Δ<italic>D</italic> generates the smallest delta of the change detection techniques using RDF inference, Δ<italic>D</italic> is not always correct. Thus, only Δ<italic>D</italic>C and Δ<italic>E</italic>D can be used for synchronization in the general case. In most practical cases, Δ<italic>E</italic>D produces smaller deltas than Δ<italic>D</italic>C [<xref ref-type="bibr" rid="bibr16-0165551512463650">16</xref>]. Δ<italic>D</italic>, Δ<italic>D</italic>C and Δ<italic>E</italic>D are computed as follows:</p>
+<p>
+<disp-formula id="disp-formula3-0165551512463650">
+<mml:math display="block" id="math4-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>D</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>∪</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0165551512463650" xlink:href="10.1177_0165551512463650-eq3.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula4-0165551512463650">
+<mml:math display="block" id="math5-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>DC</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>∪</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0165551512463650" xlink:href="10.1177_0165551512463650-eq4.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula5-0165551512463650">
+<mml:math display="block" id="math6-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>ED</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>∪</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0165551512463650" xlink:href="10.1177_0165551512463650-eq5.tif"/>
+</disp-formula>
+</p>
+<p>By applying the above five different change detection schemes against the example in <xref ref-type="fig" rid="fig1-0165551512463650">Figure 1</xref>, we can obtain the following results of change detections.</p>
+<p>
+<disp-formula id="disp-formula6-0165551512463650">
+<mml:math display="block" id="math7-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>E</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>TA</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>subClassOf</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Univ</mml:mtext>
+<mml:mo>_</mml:mo>
+<mml:mtext>Person</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>Sam</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>Tom</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>John</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo></mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>TA</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>subClassOf</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>John</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo></mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>Tom</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Univ</mml:mtext>
+<mml:mo>_</mml:mo>
+<mml:mtext>Person</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>Alice</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0165551512463650" xlink:href="10.1177_0165551512463650-eq6.tif"/></disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula7-0165551512463650">
+<mml:math display="block" id="math8-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>C</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Sam</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Tom</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext> Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Sam type Univ</mml:mtext>
+<mml:mi>_</mml:mi>
+<mml:mtext>Person</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>John</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Alice</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Alice</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Alice</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Univ</mml:mtext>
+<mml:mi>_</mml:mi>
+<mml:mtext>Person</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0165551512463650" xlink:href="10.1177_0165551512463650-eq7.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula8-0165551512463650">
+<mml:math display="block" id="math9-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>D</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>Sam</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>Tom</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>TA</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>subClassOf</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>John</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>Alice</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0165551512463650" xlink:href="10.1177_0165551512463650-eq8.tif"/></disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula9-0165551512463650">
+<mml:math display="block" id="math10-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>DC</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Sam</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Tom</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Sam</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Univ</mml:mtext>
+<mml:mi>_</mml:mi>
+<mml:mtext>Person</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>TA subClassOf</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>John</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Alice</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0165551512463650" xlink:href="10.1177_0165551512463650-eq9.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula10-0165551512463650">
+<mml:math display="block" id="math11-0165551512463650">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>ED</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Sam</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext> Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Tom</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>TA</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>subClass</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Of</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Staff</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext> Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>John</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type TA</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Tom type Univ</mml:mtext>
+<mml:mi>_</mml:mi>
+<mml:mtext>Person</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Ins</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>Alice</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>type</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>TA</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0165551512463650" xlink:href="10.1177_0165551512463650-eq10.tif"/>
+</disp-formula>
+</p>
+<p>In summary, conventional change detection tools have developed to minimize the delta size by exploiting the semantics of the RDF model. In this paper, we consider only inference-based change detection. In particular, we focus on the change detection which produces the smaller deltas and the correct deltas (i.e. Δ<italic>ED</italic>). Other issues on executing the RDF deltas, such as the order of change operations and the execution semantics of change operations [<xref ref-type="bibr" rid="bibr15-0165551512463650">15</xref>, <xref ref-type="bibr" rid="bibr16-0165551512463650">16</xref>], are beyond the scope of this paper.</p>
+</sec>
+<sec id="section6-0165551512463650">
+<title>2.4. Limitations of existing change detection methods</title>
+<p>As explained above, the basic operations in RDF change detection are the set-difference operation and the inference operation. In particular, since all the inferable triples from an RDF data set are collected by applying the deduction rules recursively, the overhead of the inference operation is large. Let us consider the inference strategy in existing change detection. SemVersion [<xref ref-type="bibr" rid="bibr9-0165551512463650">9</xref>] uses forward inference for change detection. SemVersion materializes the complete closure in advance and then performs set-difference. Consider the change detection that produces the smaller size changes Δ<italic>ED</italic> using forward inference. Given two RDF triple sets <italic>K</italic> and <italic>K</italic>′, the change detection is computed as follows. First, the closure of <italic>K</italic>′, denoted as <italic>C</italic>(<italic>K</italic>′), is computed and stored. Then, the delta Δ<italic>ED</italic> is computed using two set-difference operations, (<italic>K</italic>−<italic>C</italic>(<italic>K</italic>′)) and (<italic>K</italic>′−<italic>K</italic>). However, it is too costly to compute the entire closure. Moreover, the set-difference operations are performed by comparing sets that contain all derived triples, as well as the existing triples. Therefore, it is desirable to reduce the time required for these two steps in the case of large RDF data sets. Note that we do not consider a labelling scheme because the label information itself should be pre-computed, just like in forward inference.</p>
+<p>Incidentally, since change detection algorithms, unlike the query processing case, use only a small part of the closure, it may not be necessary to compute the entire closure of RDF models. Therefore, from the perspective of change detection, forward inference, which computes all the closure in advance, could be quite inefficient, in that it pre-computes the closures of triples that are irrelevant to the change detection. This observation leads us to apply the backward inference to the change detection technique. Although Broekstra and Kampman [<xref ref-type="bibr" rid="bibr19-0165551512463650">19</xref>], Shen and Qu [<xref ref-type="bibr" rid="bibr20-0165551512463650">20</xref>] and Stuckenschmidt and Broekstra [<xref ref-type="bibr" rid="bibr21-0165551512463650">21</xref>] discuss the backward-inference strategy in RDF management (i.e. query processing, update processing), no work uses backward inference (i.e. not a labelling scheme) in RDF change detection. Furthermore, we propose a new pruning method that skips unnecessary backward inference for efficient change detection.</p>
+</sec>
+</sec>
+<sec id="section7-0165551512463650">
+<title>3. Change detection based on backward inference and pruning method</title>
+<p>As mentioned earlier, the main idea of our method is based on the observation that inferring only relevant triples is critical to change detection performance. In this section, we first present a method that infers only the necessary triples for change detection using a backward-chaining inference, instead of pre-computing all the triples in closures. This method improves the time and space complexity in change detection. Note that backward-chaining begins with a goal and checks if there are known facts that can satisfy the goal. That is, we need to check if the specific triple will be supported by some triples without computing the entire closure of triples.</p>
+<p>Even with this backward-inference, however, some triples might be unnecessarily computed; this is still a time-consuming part of change detection. Therefore, we propose a pruning method in backward inference to avoid this unnecessary inference. The proposed pruning method allows us to skip some irrelevant derived triples during change detection. Then we check if each of the remaining triples can be inferred in the other set.</p>
+<sec id="section8-0165551512463650">
+<title>3.1. Outline of the proposed change detection technique</title>
+<p><xref ref-type="fig" rid="fig3-0165551512463650">Figure 3</xref> shows the overview of the three approaches (forward inference (case 1), backward inference (case 2) and pruning and backward inference (case 3)). The change detections based on forward-chaining produce Δ<italic>ED</italic> by computing the entire closure of all triples in <italic>K</italic>′ first and calculating the set-differences. In this respect, we term this approach the <italic>inference-then-difference</italic> strategy. In contrast, backward-inference-based change detection computes ((<italic>K</italic>−<italic>K</italic>′) ∪ (<italic>K</italic>′−<italic>K</italic>), Δ<italic>E</italic>) using set-difference operations between two sets of triples, and then checks if every triple <italic>t</italic>∈ (<italic>K</italic>−<italic>K</italic>′) can be included in the closure of the other set (i.e. delete <italic>t</italic> from (<italic>K</italic>−<italic>K</italic>′) if <italic>t</italic>∈<italic>C</italic>(<italic>K</italic>′)). In this sense, this approach takes the <italic>difference-then-inference</italic> strategy. For example, triple (TA subClassOf Univ_Person) in <xref ref-type="fig" rid="fig1-0165551512463650">Figure 1</xref> is in (<italic>K</italic>−<italic>K</italic>′). Therefore, we are able to use backward inference to check if (TA subClassOf Univ_Person) can be derived from the set of triples in <italic>K</italic>′.</p>
+<fig id="fig3-0165551512463650" position="float">
+<label>Figure 3.</label>
+<caption><p>Overview of our change detection and comparison to existing methods.</p></caption>
+<graphic xlink:href="10.1177_0165551512463650-fig3.tif"/></fig>
+<p>Moreover, prior to applying backward inference, our pruning method is employed to compute the closure of the relevant triples, thus avoiding the inference paths from non-relevant triples. Note that this pruning technique is applicable only to backward inference, not to forward inference. Since forward chaining calculates all the inferable triples from the entire triples, we cannot determine which triples should be pruned in advance. However, the backward-chaining approach takes the <italic>difference-then-inference</italic> strategy. Thus, we can apply the closure rules to only a small number of triples in (<italic>K</italic>−<italic>K</italic>′) (only 2–3% of data changed explicitly). In summary, backward inference in combination with pruning optimization enables us to detect changes more efficiently.</p>
+</sec>
+<sec id="section9-0165551512463650">
+<title>3.2. Correctness of the proposed change detection</title>
+<p>In this section, we deal with two theoretical topics of our change detection method. First, we show that the result of change detection by backward inference is equivalent to that by forward inference. Then, we prove that some triples need not be inferred for correct change detection and could be safely pruned in backward inference, and propose the pruning condition to stop further inference.</p>
+<p>Unlike forward inference, backward inference does not compute the entire closure in advance. Instead, it computes only the relevant closure at query time. Therefore, we must determine which triple is relevant to the delta. That is, we check if the triples can be included in the closure of the other set by backward inference. Since Delta Function proved that Δ<italic>ED</italic> is a subset of Δ<italic>E</italic>, we can get Δ<italic>ED</italic> from Δ<italic>E</italic>. The following Propositions show the correctness of backward inference-based change detection [<xref ref-type="bibr" rid="bibr16-0165551512463650">16</xref>]. Given two triple sets <italic>K</italic> and <italic>K</italic>′, let Del in Δ<italic>E</italic> denote (<italic>K</italic>−<italic>K</italic>′), Ins in Δ<italic>E</italic> denote (<italic>K</italic>′−<italic>K</italic>), Del in Δ<italic>ED</italic> denote (<italic>K</italic>−<italic>C</italic>(<italic>K</italic>′)), and Ins in Δ<italic>ED</italic> denote (<italic>K</italic>′−<italic>K</italic>). Since the inserted sets in Δ<italic>E</italic>D and Δ<italic>E</italic> are the same triple set, we consider the deleted set.</p>
+<p><disp-quote>
+<p><bold>Proposition 1</bold>. Given an RDF triple set <italic>K</italic> and its closure <italic>C</italic>(<italic>K</italic>), the following condition holds: <italic>K</italic>⫅<italic>C</italic>(<italic>K</italic>).</p>
+<p><bold>Proposition 2</bold>. Given two RDF sets <italic>K</italic> and <italic>K</italic>′, (<italic>K</italic>−<italic>C</italic>(<italic>K</italic>′)) is a subset of (<italic>K</italic>−<italic>K</italic>′):</p>
+</disp-quote></p>
+<p>
+<disp-formula id="disp-formula11-0165551512463650">
+<mml:math display="block" id="math12-0165551512463650">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>∩</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0165551512463650" xlink:href="10.1177_0165551512463650-eq11.tif"/>
+</disp-formula>
+</p>
+<p>Proposition 2 guarantees that (<italic>K</italic>−<italic>C</italic>(<italic>K</italic>′)) is a subset of (<italic>K – K</italic>′). That is, (<italic>K</italic>−<italic>K</italic>′) contains all triples in (<italic>K</italic>−<italic>C</italic>(<italic>K</italic>′)), and we can obtain the results (<italic>K</italic>−<italic>C</italic>(<italic>K</italic>′)) from (<italic>K</italic>−<italic>K</italic>′) by finding and deleting the triples in (<italic>K</italic>−<italic>K</italic>′) that are inferable from the other set. These inferable triples are defined as follows:<disp-quote>
+<p><bold>Definition 4</bold>. Given (<italic>K</italic>−<italic>K</italic>′), Δ<italic>I</italic> (Inferable) is a set of deleted triples from (<italic>K</italic>−<italic>K</italic>′) to (<italic>K</italic>−<italic>C</italic>(<italic>K</italic>′)) by the backward inference process (Δ<italic>I</italic> = <italic>K</italic>∩ (<italic>C</italic>(<italic>K</italic>′) −<italic>K</italic>′)).</p>
+</disp-quote></p>
+<p>Note that, although the triples in Δ<italic>I</italic> do not exist explicitly in the other triple set, they can be inferred in the compared set. Therefore, the goal of our change detection is to find Δ<italic>I</italic> using backward inference. However, in addition to this difference-then-inference approach, there is still another chance to avoid applying backward inference to all triples in (<italic>K</italic>−<italic>K</italic>′). For this, we propose a pruning method that skips unnecessary inferences as early as possible in computing the closure. The following Proposition and Theorem present some properties of Δ<italic>I</italic> to show the correctness of our pruning method.</p>
+<p><disp-quote>
+<p><bold>Proposition 3</bold>. Given Δ<italic>I</italic>, the following relationships hold:</p>
+</disp-quote></p>
+<p>
+<disp-formula id="disp-formula12-0165551512463650">
+<mml:math display="block" id="math13-0165551512463650">
+<mml:mrow>
+<mml:mtext>If Del</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mi>I</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>then</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>P</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>O</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>∈</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0165551512463650" xlink:href="10.1177_0165551512463650-eq12.tif"/>
+</disp-formula>
+</p>
+<p><disp-quote>
+<p><bold>Theorem 1</bold>. Let <italic>A</italic> and <italic>B</italic> denote rdf:Property and <italic>T</italic>′ denote rdf:Resource. Given a triple <italic>t</italic>(<italic>S P O</italic>), the following conditions hold:</p>
+<p>(1) If Del(<italic>t</italic>(<italic>S</italic> subClassOf <italic>O</italic>)) ∈Δ<italic>I</italic>, then <italic>t</italic>(<italic>S</italic> subClassOf <italic>T</italic>′) ∈<italic>K</italic>′ and <italic>t</italic>(<italic>T</italic>′ subClassOf <italic>O</italic>) ∈<italic>K</italic>′.</p>
+<p>(2) If Del(<italic>t</italic>(<italic>S</italic> subPropertyOf <italic>O</italic>)) ∈Δ<italic>I</italic>, then <italic>t</italic>(<italic>S</italic> subPropertyOf <italic>T</italic>′) ∈<italic>K</italic>′ and <italic>t</italic>(<italic>T</italic>′ subPropertyOf <italic>O</italic>) ∈<italic>K</italic>′.</p>
+<p>(3) If Del(<italic>t</italic>(<italic>S B O</italic>)) ∈Δ<italic>I</italic>, then <italic>t</italic>(<italic>S A O</italic>) ∈<italic>K</italic>′ and <italic>t</italic>(<italic>A</italic> subPropertyOf <italic>B</italic>) ∈<italic>K</italic>′.</p>
+<p>(4) If Del(<italic>t</italic>(<italic>S</italic> type <italic>O</italic>)) ∈Δ<italic>I</italic>, then <italic>t</italic>(<italic>S</italic> type <italic>T</italic>′) ∈<italic>K</italic>′ and <italic>t</italic>(<italic>T</italic>′ subClassOf <italic>O</italic>) ∈<italic>K</italic>′.</p>
+</disp-quote></p>
+<p><bold><italic>Proof.</italic></bold> First, we prove condition (1). If Del(<italic>t</italic>(<italic>S</italic> subClassOf <italic>O</italic>)) ∈Δ<italic>I</italic>, then <italic>t</italic>(<italic>S</italic> subClassOf <italic>O</italic>) ∈<italic>K</italic> and <italic>t</italic>(<italic>S</italic> subClassOf <italic>O</italic>) <inline-formula id="inline-formula2-0165551512463650"><mml:math display="inline" id="math14-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′. According to Proposition 3, obviously <italic>t</italic>(<italic>S</italic> subClassOf <italic>O</italic>) ∈<italic>C</italic>(<italic>K</italic>′). If <italic>t</italic>(<italic>S</italic> subClassOf <italic>O</italic>) ∈<italic>C</italic>(<italic>K</italic>′) and <italic>t</italic>(<italic>S</italic> subClassOf <italic>O</italic>) <inline-formula id="inline-formula3-0165551512463650"><mml:math display="inline" id="math15-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′, then <italic>t</italic>(<italic>S</italic> subClassOf <italic>O</italic>) is a derived triple in <italic>K</italic>′ by the closure rules in Definition 2. Therefore, there exist triples that satisfy both <italic>t</italic>(<italic>S</italic> subClassOf <italic>T</italic>′) and <italic>t</italic>(<italic>T</italic>′ subClassOf <italic>O</italic>) in <italic>K</italic>′. Likewise, we can prove conditions (2)–(4).</p>
+<p>Based on Theorem 1, given the triple of Δ<italic>I</italic> where <italic>t</italic>(<italic>S P O</italic>) <inline-formula id="inline-formula4-0165551512463650"><mml:math display="inline" id="math16-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′ and <italic>t</italic>(<italic>S P O</italic>) ∈<italic>K</italic>, the triple <italic>t</italic>(<italic>S P O</italic>) can be created in <italic>C</italic>(<italic>K</italic>′) by inferring the triples that contain <italic>t</italic>(S **) ∈<italic>K</italic>′ and <italic>t</italic>(** O) ∈<italic>K</italic>′ (* is a wildcard that matches any resource). However, it is difficult to choose the exact triples for Δ<italic>I</italic>, because we cannot determine which triples can be inferred in the other set, until computing the closures of triples using backward inference. That is, not all the triples whose subject and object exist in the other set are necessarily included in Δ<italic>I</italic>. Instead, we propose a pruning method that removes the triples unrelated to Δ<italic>I</italic> from Δ<italic>E</italic>. The following Theorem describes our pruning method under the backward-inference process.</p>
+<p><disp-quote>
+<p><bold>Theorem 2</bold>. Given a triple <italic>t</italic>(<italic>S P O</italic>) in (<italic>K</italic>−<italic>K</italic>′), the following conditions hold:</p>
+<p>(1) When Del(<italic>t</italic>(<italic>S</italic> subClassOf <italic>O</italic>)): if (<italic>t</italic>(<italic>S</italic> subClassOf <italic>T</italic>′)<inline-formula id="inline-formula5-0165551512463650"><mml:math display="inline" id="math17-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′ or <italic>t</italic>(<italic>T</italic>′ subClassOf <italic>O</italic>)<inline-formula id="inline-formula6-0165551512463650"><mml:math display="inline" id="math18-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′), then Del(<italic>t</italic>(S subClassOf <italic>O</italic>)) ∈Δ<italic>ED</italic>.</p>
+<p>(2) When Del(<italic>t</italic>(S subPropertyOf <italic>O</italic>)): if (<italic>t</italic>(<italic>S</italic> subPropertyOf <italic>T</italic>′)<inline-formula id="inline-formula7-0165551512463650"><mml:math display="inline" id="math19-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′ or <italic>t</italic>(<italic>T</italic>′ subPropertyOf <italic>O</italic>)<inline-formula id="inline-formula8-0165551512463650"><mml:math display="inline" id="math20-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′), then Del(<italic>t</italic>(<italic>S</italic> subPropertyOf <italic>O</italic>)) ∈Δ<italic>ED</italic>.</p>
+<p>(3) When Del(<italic>t</italic>(S B O)): If (<italic>t</italic>(S A O)<inline-formula id="inline-formula9-0165551512463650"><mml:math display="inline" id="math21-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′ or <italic>t</italic>(A subPropertyOf <italic>B</italic>)<inline-formula id="inline-formula10-0165551512463650"><mml:math display="inline" id="math22-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′), then Del(<italic>t</italic>(<italic>S</italic> subClassOf <italic>O =&gt; S B O</italic>)) ∈Δ<italic>ED</italic>.</p>
+<p>(4) When Del(<italic>t</italic>(S type O)): If (<italic>t</italic>(S type <italic>T</italic>′)<inline-formula id="inline-formula11-0165551512463650"><mml:math display="inline" id="math23-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′ or <italic>t</italic>(<italic>T</italic>′ subClassOf <italic>O</italic>)<inline-formula id="inline-formula12-0165551512463650"><mml:math display="inline" id="math24-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula><italic>K</italic>′ ), then Del(<italic>t</italic>(S type O)) ∈Δ<italic>ED</italic>.</p>
+</disp-quote></p>
+<p><bold><italic>Proof.</italic></bold> Theorem 2 is proved by Definition 4 and the contraposition of Theorem 1. For a given triple <italic>t</italic>(<italic>S P O</italic>) where <italic>t</italic>(<italic>S P O</italic>) ∈<italic>K</italic>−<italic>K</italic>′, if the subject or the object of triple does not exist in <italic>K</italic>′, then Del(<italic>t</italic>(<italic>S P O</italic>)) <inline-formula id="inline-formula13-0165551512463650"><mml:math display="inline" id="math25-0165551512463650"><mml:mrow><mml:mo>∉</mml:mo></mml:mrow></mml:math></inline-formula>Δ<italic>I</italic>. Thus, by Δ<italic>I</italic> = Δ<italic>E</italic>−Δ<italic>E</italic>D, Del(<italic>t</italic>(<italic>S P O</italic>)) ∈Δ<italic>E</italic>D. Since each of conditions (2)–(4) can be similar way, we omit its proof here.</p>
+<p>Theorem 2 is the key point of our pruning method. Since the goal of the backward inference is to generate Δ<italic>I</italic> from Δ<italic>E</italic>, the triples whose subject or object does not appear in the other set can be safely pruned from the backward-inference process. That is, these triples must be included in Δ<italic>E</italic>D irrespective of using backward inference. Meanwhile, each of the remaining triples in Δ<italic>E</italic> that pass the pruning step needs to check if it is included in Δ<italic>I</italic> using backward inference.</p>
+<p>Our pruning method considerably reduces the number of triples to be checked, in case they cannot be inferred in the other set. As mentioned in the Introduction, RDF describes information (e.g. class and instance) about resources in a specific domain. Therefore, the existing concepts in a released version might disappear in a subsequent version, or new concepts can be introduced. Since those concepts are also represented as the subject or the object in a triple, we can prune a number of triples in (<italic>K</italic>−<italic>K</italic>′).</p>
+</sec>
+</sec>
+<sec id="section10-0165551512463650">
+<title>4. Change detection using relational database</title>
+<p>As the size of the RDF data set grows exponentially, scalable change detection algorithms are required. However, existing main-memory-based change detections are not scalable. That is, all the sets of triples in RDF models should be memory-resident to compute the differences between RDF models using those schemes. Therefore, for large-scale RDF data, the memory should be sufficiently large to keep the two RDF triple sets. To make matters worse, in change detection based on forward-chaining, the number of triples inferred by the closure rules increases exponentially and thus the temporary RAM does too. To solve this excessive RAM requirement in the existing approaches, we designed and implemented our change detection scheme using relational databases. Thus, as the change detection for the large XML data set in [<xref ref-type="bibr" rid="bibr27-0165551512463650">27</xref>] uses a relational database, we present a relational approach to detect the changes in RDF data using the pruning method. Moreover, change detection based on relational database would be reliable, as well as scalable, because the technology of commercial DBMSs has been developed for more than 30 years. In addition, we need not parse the RDF document repeatedly whenever we need to compare it with another RDF model, since these two RDF triple sets are already stored in a database.</p>
+<sec id="section11-0165551512463650">
+<title>4.1. Relational schema for change detection</title>
+<p>In order to detect changes in efficient and scalable way, we store RDF data in a relational database. Several approaches have recently been proposed for storing RDF data in relational databases [<xref ref-type="bibr" rid="bibr22-0165551512463650">22</xref>, <xref ref-type="bibr" rid="bibr28-0165551512463650">28</xref>, <xref ref-type="bibr" rid="bibr29-0165551512463650">29</xref>]. In this paper, we use a triple store method (subject, property and object) [<xref ref-type="bibr" rid="bibr25-0165551512463650">25</xref>], popularly used in RDF storage. In particular, we partition the triple store into several separate tables, so that change detection can be computed by examining only the small tables. <xref ref-type="fig" rid="fig4-0165551512463650">Figure 4</xref> shows the relational schema used in this paper for RDF change detection. The principle in designing the relational schema composed of four tables (SubClass, SubProperty, Type and Triple) in <xref ref-type="fig" rid="fig4-0165551512463650">Figure 4</xref> is to model the type of property in closure rules in a natural way. For example, we store the triple whose property is a ‘subClassOf’ to the SubClass table. Likewise, all the triples whose properties are ‘type’ and ‘subProperty’ are stored in the Type table and the SubProperty table, respectively. The remaining triples (except subClassOf, subProperty and type property) are stored in the Triple table.</p>
+<fig id="fig4-0165551512463650" position="float">
+<label>Figure 4.</label>
+<caption><p>Relational schemas for change detection.</p></caption>
+<graphic xlink:href="10.1177_0165551512463650-fig4.tif"/></fig>
+<p>This storage scheme has two advantages. First, this scheme makes it easier to compute the set-difference using SQL operators. Second, when computing the closure through backward inference, we need to access only those tables that correspond to the closure rules. For example, when computing the set-difference between ‘subClassOf’ relationships, we need to access only two SubClass tables from the two triple sets being compared. Similarly, the class subsumption hierarchies can be computed by accessing only the SubClass tables. In addition, since the unit of change operation is a triple, the results of change detection can be represented as the triple representation (Del table and Ins table).</p>
+</sec>
+<sec id="section12-0165551512463650">
+<title>4.2. Relational implementation of change detection</title>
+<p>In this section, we present the implementation details of our change detection algorithm using a commercial relational DBMS. We then give an illustrative example for its execution.</p>
+<fig id="fig9-0165551512463650" position="float">
+<graphic xlink:href="10.1177_0165551512463650-fig9.tif"/></fig>
+<p>Algorithm 1 shows the change detection algorithm using the pruning method in Section 3. Suppose we have two versions of the RDF triple sets, <italic>K</italic> and <italic>K</italic>′. First, the algorithm starts to compute the differences at the syntactic level between <italic>K</italic> and <italic>K</italic>′ using the set-difference. Each result (i.e. (<italic>K</italic>−<italic>K</italic>′), (<italic>K</italic>′−<italic>K</italic>)) is stored in the Del table and the Ins table respectively (lines 5 and 6). Note that, for each property in closure rules, the set-difference operation is executed against the two tables corresponding to the property. Next, for every triple in the Del table, the algorithm checks if it is inferable from the other set using backward inference. However, the algorithm uses the pruning method, which is based on Theorem 2 in Section 3.2 (lines 9–11) to reduce the number of the triples to check whether if they are inferable from other set (i.e. check if they are included in Δ<italic>I</italic>). This process prunes unnecessary triples using the conditions in Theorem 2 and returns the set of the triples that participate in backward inference (we denote these inferable triples <italic>I<sub>k</sub></italic><sub>′</sub>). Next, the algorithm applies the closure rules to every triple in <italic>I<sub>k</sub></italic><sub>′</sub>. The function Backward_Infer(<italic>t, K</italic>′) returns a true value if the triple <italic>t</italic>∈<italic>C</italic>(<italic>K</italic>′) using backward inference (lines 13 and 14). We need not use all closure rules in the function Backward_Infer. If the triple has the ‘subProperty’ property, rule 1 in Definition 2 is applied to only the subProperty table and checks if this triple can be inferred within the subProperty table. Likewise, we can apply each closure rule to its corresponding tables (e.g. rule 2 is applied to both the Triples table and the subProperty table, and rule 3 is applied to both the subClass and the Type tables (rule 3 uses two properties ‘type’ and ‘subClassOf’)). Then, if the function Backward_Infer returns the true value for a triple, we remove the triple from the Del table (line 16). This process is repeated until all the triples in <italic>I<sub>k</sub></italic><sub>′</sub> have been checked. Finally, the remaining triples in the Del table and the Ins table are the delta (Δ<italic>ED</italic>).</p>
+<p><xref ref-type="fig" rid="fig5-0165551512463650">Figure 5</xref> illustrates how Algorithm 1 works for ‘subClassOf’ closure rule. We first compute differences between the <italic>K</italic>.Subclass table and the <italic>K</italic>′.Subclass table using the following queries (step 1 in <xref ref-type="fig" rid="fig5-0165551512463650">Figure 5</xref>) based on the algorithm.</p>
+<p><disp-quote>
+<p><italic>INSERT INTO Del ((SELECT * FROM K.SubClass) MINUS (SELECT * FROM K′.SubClass))</italic></p>
+<p>INSERT INTO Ins ((SELECT * FROM K′.SubClass) MINUS (SELECT * FROM K.SubClass))</p>
+</disp-quote></p>
+<fig id="fig5-0165551512463650" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Execution process of change detection.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463650-fig5.tif"/>
+</fig>
+<p>Then, we prune unnecessary triples that cannot be inferred in the Del table before the inference process begins. For example, consider step 2 of <xref ref-type="fig" rid="fig5-0165551512463650">Figure 5</xref>, subject <italic>C</italic>, subject D, object A and object B in the Del table appear in the <italic>K</italic>′.SubClass table. However, subject F and object E in the Del table do not exist in the <italic>K</italic>′.SubClass table. Therefore, we prune a triple (F subClassOf E) from Del, because it cannot be inferred in <italic>K</italic>′.SubClass. In order to remove unnecessary inference from Del, we use the following SQL queries before the inference process begins.</p>
+<p><disp-quote>
+<p><italic>SELECT * FROM Del t<sub>1</sub></italic></p>
+<p>WHERE t<sub>1</sub>.sub IN (SELECT sub FROM K′.SubClass) AND t.obj IN (SELECT obj FROM K′.SubClass)</p>
+</disp-quote></p>
+<p>In step 3, we temporarily store the resultant triples (<italic>I<sub>k</sub></italic><sub>′</sub>) from step 2 (e.g. ResultSet) and apply the function Backward_Infer to the inferable triples directly. Unlike Sesame, which uses the repetitive self-joins of the triple table for backward inference [<xref ref-type="bibr" rid="bibr4-0165551512463650">4</xref>], we use the recursive query feature of the standard SQL language [<xref ref-type="bibr" rid="bibr30-0165551512463650">30</xref>, <xref ref-type="bibr" rid="bibr31-0165551512463650">31</xref>]. Although self-join operations would work for backward inference, this is expensive in terms of both program development and query processing, because we have to write a recursive procedure. More importantly, we do not know in advance how many self-join operations would be required for inference processing. Conversely, we can use the recursive WITH clause in the ANSI SQL standard for the recursive query; this allows us to query by specifying what we want, rather than how to perform the recursive procedure. Several commercial DBMSs, including IBM DB2 and Oracle, support recursive query processing (e.g. In case of Oracle RDBMS, its own proprietary syntax, based on START WITH and CONNECT BY clauses, has been supported, but its recent version Oracle 11gR2 has started to support the ANSI Standard Recursive WITH clause). For example, the following SQL computes if a triple (<italic>C</italic> subClassOf <italic>A</italic>) in the Del table can be inferred in the <italic>K</italic>′SubClass table by backward inference (rule 4 in Definition 2). If it is inferable from the <italic>K</italic>′.SubClass, the function Backward_Infer returns the true value. In the case of the example in <xref ref-type="fig" rid="fig5-0165551512463650">Figure 5</xref>, since there exist (<italic>C</italic> subClassOf <italic>B</italic>) and (<italic>B</italic> subClassOf <italic>A</italic>) in the <italic>K</italic>′.SubClass table, the inference result of a triple (<italic>C</italic> subClassOf <italic>A</italic>) is true.</p>
+<p><disp-quote>
+<p><italic>WITH temp (sub, obj) AS</italic></p>
+<p>(SELECT sub, obj FROM K′.SubClass WHERE sub=‘C’ UNION ALL</p>
+<p>SELECT t1.sub, t1.obj FROM K′SubClass t1, temp t2 WHERE t1.sub=t2.obj)</p>
+<p>SELECT * FROM temp WHERE obj=‘A’</p>
+</disp-quote></p>
+<p>This SQL statement constructs an initial result set with the first query (e.g. select the triples whose subject are ‘<italic>C</italic>’ as in above example), and then adds rows to the previous result set with the second query (e.g. select the triples where subjects and objects are connected (subject–object join)). Next, we know that the triple (<italic>C</italic> subClassOf <italic>A</italic>) is inferable by selecting the triple satisfying the specific conditions (e.g. the triple whose object is ‘<italic>A</italic>’) among the result set obtained.</p>
+<p>Finally, using the inference result, we remove the corresponding triples from the Del table (step 4 in <xref ref-type="fig" rid="fig5-0165551512463650">Figure 5</xref>). For example, since a triple (<italic>C</italic> subClassOf <italic>A</italic>) in <xref ref-type="fig" rid="fig5-0165551512463650">Figure 5</xref> is included in the inference result, it is deleted from the Del table. Similarly, a triple (<italic>D</italic> subClassOf <italic>B</italic>) is removed from the Del table, because it is inferable from the <italic>K</italic>′.Subclass table. Thus, we obtain the smaller RDF deltas from the Del table. In addition, although only the transitive closure of the subclass relationships in the class hierarchy (rule 4 in Definition 2) is exemplified in <xref ref-type="fig" rid="fig5-0165551512463650">Figure 5</xref>, all the other types of rules can be handled using the SQL language. For example, suppose that <italic>e</italic> is an instance of class <italic>E</italic> (i.e. <italic>e</italic> type <italic>E</italic>) in triple set <italic>K</italic> and this triple is stored in the <italic>K</italic>.Type table, the result inference of a triple (<italic>e</italic> type <italic>A</italic>) can be computed using the following SQL statement.</p>
+<p><disp-quote>
+<p><italic>WITH temp (sub, obj) AS</italic></p>
+<p>(SELECT sub, obj FROM K′.SubClass WHERE sub=(SELECT obj FROM K.TYPE WHERE SUBJ=‘e’) UNION ALL</p>
+<p>SELECT t1.sub, t1.obj FROM K′SubClass t1, temp t2 WHERE t1.sub=t2.obj)</p>
+<p>SELECT * FROM temp WHERE obj=‘A’</p>
+</disp-quote></p>
+<sec id="section13-0165551512463650">
+<title>Complexity analysis</title>
+<p>Let <italic>N</italic><sub>1</sub> and <italic>N</italic><sub>2</sub> be the numbers of triples in <italic>K</italic> and <italic>K</italic>′. For the brevity of discussion, we assume that all <italic>K</italic> and <italic>K</italic>′ are already stored in a repository and there are no labels for the transitive RDFS relations. Since the forward inference takes <italic>O</italic>(<italic>n</italic><sup>2</sup>) time, the forward-inference-based change detection runs in time <italic>O</italic>(<italic>N</italic><sub>2</sub><sup>2</sup>). Conversely, let <italic>O</italic>(<italic>μ</italic>) be the complexity of the backward inference (generally, <italic>μ</italic> can be much less than linear in model size). The total run time in backward-inference-based change detection will be <italic>O</italic>(<italic>N</italic><sub>2</sub><italic>μ</italic>). Finally, let <italic>p</italic> be the size of pruned triples in each data and (<italic>N</italic><sub>2</sub>−<italic>p</italic>) be <italic>M</italic>. The complexity of pruning-based change detection will be <italic>O</italic>(<italic>Mμ</italic>). Obviously, the amount of time saved depends on the number of pruned triples. The worst case for pruning is when all subjects and objects in each triple set exist in another triple set. In this case, the time requirement equals to the backward-inference-based change detection. Conversely, the best case for the pruning method is when every triple in (<italic>K</italic>−<italic>K</italic>′) is pruned. In that case, there is no need to use backward inference.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section14-0165551512463650">
+<title>5. Performance analysis</title>
+<p>In this section, we compare our change detection technique to other change detection methods in terms of delta size and performance. First, for the comparison of the delta size, Explicit (Δ<italic>E</italic>), Closure (Δ<italic>C</italic>) and Explicit&amp;Dense (Δ<italic>ED</italic>) are used. Next, for the comparison of execution time, three methods for the minimum size delta are evaluated: forward-chaining used in SemVersion [<xref ref-type="bibr" rid="bibr9-0165551512463650">9</xref>] (denoted as FC), backward-chaining (denoted as BC) and our pruning-then-backward-chaining (denoted as PBC). Note that we do not compare our approach against Delta Function [<xref ref-type="bibr" rid="bibr15-0165551512463650">15</xref>, <xref ref-type="bibr" rid="bibr16-0165551512463650">16</xref>], since it is highly beneficial only when the labels are already constructed.</p>
+<sec id="section15-0165551512463650">
+<title>5.1. Experimental setting and test data set</title>
+<p>All experiments were performed on a Pentium 4–3.2GHz PC with 1 GB memory. We implemented change detection using Java with the RDF parser Rio,<sup><xref ref-type="fn" rid="fn1-0165551512463650">1</xref></sup> and used Oracle 11gR2 as the relational database to store each version and deltas. The buffer cache of the Oracle database was set to 512M and the database block size was set to 8K, the default size in Oracle. Since there is no benchmark for RDF change detection, we used one synthetic RDF data set generated using our RDF generator and a few real RDF sets from the bioinformatics domain, including Gene Ontology termDB RDF<sup><xref ref-type="fn" rid="fn2-0165551512463650">2</xref></sup> (GO) and Uniprot Taxonomy RDF<sup><xref ref-type="fn" rid="fn3-0165551512463650">3</xref></sup> (Uniprot). <xref ref-type="table" rid="table1-0165551512463650">Tables 1</xref> and <xref ref-type="table" rid="table2-0165551512463650">2</xref> show the characteristics of our real data sets, each of which consists of nine versions (GO monthly version) and six versions (Uniprot versions from 14.8 to 15.3). We do not consider other properties, such as ‘type’ and ‘subPropertyOf’, since these real data contain only the ‘subClassOf’ relationship. Conversely, the synthetic data were generated by Jena [<xref ref-type="bibr" rid="bibr25-0165551512463650">25</xref>] and the number of triples ranges up to 1,000,000 (note that, if the data sets contain the inferred triples, the number of triples is about 9 million). <xref ref-type="fig" rid="fig6-0165551512463650">Figure 6</xref> shows an example of synthetic RDF data. Unlike real data, it contains all kinds of properties (e.g. subClassOf, type and subProperty). Changes between the two triple sets being compared were randomly generated by varying the change ratio. Since only a small fraction of the entire data changes and we focus on the practical support for the change detection, two specific change ratios (i.e. 5 and 10%) are used in the experimental setting.</p>
+<table-wrap id="table1-0165551512463650" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Gene Ontology TermDB RDF</p>
+</caption>
+<graphic alternate-form-of="table1-0165551512463650" xlink:href="10.1177_0165551512463650-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">G1</th>
+<th align="left">G2</th>
+<th align="left">G3</th>
+<th align="left">G4</th>
+<th align="left">G5</th>
+<th align="left">G6</th>
+<th align="left">G7</th>
+<th align="left">G8</th>
+<th align="left">G9</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Number of triples</td>
+<td>419,995</td>
+<td>426,235</td>
+<td>431,540</td>
+<td>432,705</td>
+<td>456,793</td>
+<td>459,225</td>
+<td>462,589</td>
+<td>490,488</td>
+<td>467,654</td>
+</tr>
+<tr>
+<td>Number of subClassOf</td>
+<td>44,301</td>
+<td>38,024</td>
+<td>39,339</td>
+<td>39,575</td>
+<td>39,739</td>
+<td>39,943</td>
+<td>40,360</td>
+<td>40,703</td>
+<td>41,309</td>
+</tr>
+<tr>
+<td>Size (MB)</td>
+<td>33</td>
+<td>33</td>
+<td>35</td>
+<td>35</td>
+<td>35</td>
+<td>35</td>
+<td>35</td>
+<td>35</td>
+<td>36</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table2-0165551512463650" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Uniprot taxonomy RDF</p>
+</caption>
+<graphic alternate-form-of="table2-0165551512463650" xlink:href="10.1177_0165551512463650-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">U1</th>
+<th align="left">U2</th>
+<th align="left">U3</th>
+<th align="left">U4</th>
+<th align="left">U5</th>
+<th align="left">U6</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Number of triples</td>
+<td>3,163,163</td>
+<td>3,198,383</td>
+<td>3,230,870</td>
+<td>3,256,174</td>
+<td>3,282,876</td>
+<td>3,327,128</td>
+</tr>
+<tr>
+<td>Number of subClassOf</td>
+<td>481,736</td>
+<td>484,656</td>
+<td>488,465</td>
+<td>492,376</td>
+<td>496,597</td>
+<td>501,745</td>
+</tr>
+<tr>
+<td>Size (MB)</td>
+<td>220</td>
+<td>222</td>
+<td>224</td>
+<td>226</td>
+<td>228</td>
+<td>231</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig6-0165551512463650" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Sample RDF in synthetic set.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463650-fig6.tif"/>
+</fig>
+</sec>
+<sec id="section16-0165551512463650">
+<title>5.2. Performance analysis of various change detection methods on real data</title>
+<p>
+<xref ref-type="table" rid="table3-0165551512463650">Tables 3</xref> and <xref ref-type="table" rid="table4-0165551512463650">4</xref> show the delta sizes of three deltas for GO and Uniprot, respectively. The delta sizes are defined as the sum of deleted triples and inserted triples. As expected, Δ<italic>ED</italic> achieves the better performance (with fewest triples). The three change detection techniques for Δ<italic>ED</italic> (FC, BC and PBC) always generate the same result.</p>
+<table-wrap id="table3-0165551512463650" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Quality of change detection in GO (number of subClassOf relationships)</p>
+</caption>
+<graphic alternate-form-of="table3-0165551512463650" xlink:href="10.1177_0165551512463650-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" colspan="9">Pairs of RDF</th>
+</tr>
+<tr>
+<th align="left" colspan="9"><hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">(G1, G2)</th>
+<th align="left">(G2, G3)</th>
+<th align="left">(G3, G4)</th>
+<th align="left">(G4, G5)</th>
+<th align="left">(G5, G6)</th>
+<th align="left">(G6, G7)</th>
+<th align="left">(G7, G8)</th>
+<th align="left">(G8, G9)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Δ<italic>E</italic></td>
+<td>873</td>
+<td>1955</td>
+<td>588</td>
+<td>254</td>
+<td>436</td>
+<td>609</td>
+<td>533</td>
+<td>887</td>
+</tr>
+<tr>
+<td>Δ<italic>C</italic></td>
+<td>9,038</td>
+<td>17,002</td>
+<td>3,750</td>
+<td>2,617</td>
+<td>4,170</td>
+<td>5,029</td>
+<td>3,401</td>
+<td>5,568</td>
+</tr>
+<tr>
+<td>Δ<italic>ED</italic></td>
+<td>794</td>
+<td>1716</td>
+<td>517</td>
+<td>226</td>
+<td>399</td>
+<td>578</td>
+<td>479</td>
+<td>731</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table4-0165551512463650" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Quality of change detection in Uniprot (number of subClassOf relationships)</p>
+</caption>
+<graphic alternate-form-of="table4-0165551512463650" xlink:href="10.1177_0165551512463650-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" colspan="6">Pairs of RDF</th>
+</tr>
+<tr>
+<th align="left" colspan="6"><hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">(U1, U2)</th>
+<th align="left">(U2, U3)</th>
+<th align="left">(U3, U4)</th>
+<th align="left">(U4, U5)</th>
+<th align="left">(U5, U6)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Δ<italic>E</italic></td>
+<td>6,538</td>
+<td>4,335</td>
+<td>4,635</td>
+<td>5,080</td>
+<td>6,503</td>
+</tr>
+<tr>
+<td>Δ<italic>C</italic></td>
+<td>73,015</td>
+<td>46,313</td>
+<td>49,383</td>
+<td>62,524</td>
+<td>67,952</td>
+</tr>
+<tr>
+<td>Δ<italic>ED</italic></td>
+<td>6,516</td>
+<td>4,303</td>
+<td>4,566</td>
+<td>4,873</td>
+<td>6,279</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>
+<xref ref-type="fig" rid="fig7-0165551512463650">Figure 7</xref> compares the performance of the three techniques for Δ<italic>ED</italic> using real data sets, GO and Uniprot. First, for the three alternative techniques for Δ<italic>ED</italic>, <xref ref-type="fig" rid="fig7-0165551512463650">Figure 7(a and b)</xref> shows the elapsed times to compute the changes between two consecutive versions in each real data set. From <xref ref-type="fig" rid="fig7-0165551512463650">Figure 7(a and b)</xref>, we can observe that PBC significantly outperforms both FC and BC. PBC is about 10–80 times faster than FC and about 1.5–4 times faster than BC. We separately measured the execution time of each core operations in change detection, set-difference and inference to understand why PBC can outperform both FC and BC significantly. <xref ref-type="table" rid="table5-0165551512463650">Table 5</xref> shows the elapsed times of set-difference and inference operations when each change detection technique computes Δ<italic>ED</italic> for (G6, G7) from GO and (U4, U5) from Uniprot. The results in <xref ref-type="table" rid="table5-0165551512463650">Table 5</xref> show that the inference operation takes most of the time in change detection. Consequently, FC performs worst, as it must compute the closure of all triples in each version in advance, while both BC and PBC calculate the closure of triples that are already computed by a set-difference between the two RDF triple sets. However, although both BC and PBC use backward-chaining inference for change detection, PBC outperforms BC considerably in all cases, because PBC prunes a number of triples for backward inference.</p>
+<fig id="fig7-0165551512463650" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Elapsed time on real data sets. (a) Elapsed time on GO; (b) elapsed time on Uniprot.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463650-fig7.tif"/>
+</fig>
+<table-wrap id="table5-0165551512463650" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Elapsed time analysis: (G6, G7) and (U4, U5) (s)</p>
+</caption>
+<graphic alternate-form-of="table5-0165551512463650" xlink:href="10.1177_0165551512463650-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left" colspan="2">(G6, G7)<hr/></th>
+<th align="left" colspan="2">(U4, U5)<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">Inference time</th>
+<th align="left">Set-operation time</th>
+<th align="left">Inference time</th>
+<th align="left">Set-operation time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FC</td>
+<td>280 (63%)</td>
+<td>162 (37%)</td>
+<td>6585 (98%)</td>
+<td>127 (2%)</td>
+</tr>
+<tr>
+<td>BC</td>
+<td>3 (50%)</td>
+<td>3 (50%)</td>
+<td>377 (96%)</td>
+<td>15 (4%)</td>
+</tr>
+<tr>
+<td>PBC</td>
+<td>2 (40%)</td>
+<td>3 (60%)</td>
+<td>309 (95%)</td>
+<td>15 (5%)</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>We counted the number of triples that participated in the backward-chaining process in BC and PBC to investigate the effect of the pruning scheme in PBC. <xref ref-type="fig" rid="fig8-0165551512463650">Figure 8(a and b)</xref> shows the results for GO and Uniprot data sets. As is illustrated in <xref ref-type="fig" rid="fig8-0165551512463650">Figure 8(a and b)</xref>, PBC can prune 10–60% of triples as early as possible prior to backward inference. We also observe that the elapsed times in <xref ref-type="fig" rid="fig7-0165551512463650">Figure 7(a and b)</xref> are approximately in proportion to the number of triples that participate in the backward inference in <xref ref-type="fig" rid="fig8-0165551512463650">Figure 8(a and b)</xref>. In addition, we know from <xref ref-type="fig" rid="fig8-0165551512463650">Figure 8(a and b)</xref> that the pruning effect of PBC is greater in Uniprot than in GO. This is due to the characteristics of each data set. In the Uniprot data set, numerous existing concepts are removed and many new concepts are introduced in the subclass hierarchy between two consecutive versions. This type of change matches our pruning conditions (recall the subject–object condition in Section 3.2). As shown in <xref ref-type="fig" rid="fig8-0165551512463650">Figure 8(b)</xref>, most triples, particularly for (U1, U2), are pruned by PBC. Meanwhile, numerous concepts in GO data set are, rather than being deleted, moved from one position to another position in the hierarchy between two consecutive versions, and thus they are not pruned. As shown in <xref ref-type="fig" rid="fig8-0165551512463650">Figure 8(a)</xref>, the ratio of pruned triples in GO by PBC is much less than in Uniprot.</p>
+<fig id="fig8-0165551512463650" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Pruning effect on real data sets. (a) Pruning effect on GO; (b) pruning effect on Uniprot.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463650-fig8.tif"/>
+</fig>
+</sec>
+<sec id="section17-0165551512463650">
+<title>5.3. Scalability on synthetic data</title>
+<p>In this section, in order to show that our change detection scheme is scalable, we present the delta size and the elapsed time of each of three change detection schemes by varying the number of triples in the synthetic data set from 1000 to 1,000,000. <xref ref-type="table" rid="table6-0165551512463650">Table 6</xref> plots the delta size of the deltas generated by the three schemes with the ratio of changed triples as 5 and 10%, respectively. Unlike the real data sets, the result shows the sum of deleted triples and inserted triples that contain not only ‘subClassOf’ relationships but also all the properties, such as ‘type’ and ‘subProperty’. We know from the table that Δ<italic>C</italic> generates much larger deltas and Δ<italic>ED</italic> yields the fewest triples. In addition, we notice that all of FC, BC and PBC produce the same Δ<italic>ED</italic>.</p>
+<table-wrap id="table6-0165551512463650" position="float">
+<label>Table 6.</label>
+<caption>
+<p>Delta size of change detection in synthetic data (number of all relationships)</p>
+</caption>
+<graphic alternate-form-of="table6-0165551512463650" xlink:href="10.1177_0165551512463650-table6.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left" colspan="4">Change ratio: 5%<hr/></th>
+<th align="left" colspan="4">Change ratio: 10%<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">1,000</th>
+<th align="left">10,000</th>
+<th align="left">100,000</th>
+<th align="left">1,000,000</th>
+<th align="left">1,000</th>
+<th align="left">10,000</th>
+<th align="left">100,000</th>
+<th align="left">1,000,000</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Δ<italic>E</italic></td>
+<td>44</td>
+<td>455</td>
+<td>4,576</td>
+<td>45,720</td>
+<td>90</td>
+<td>911</td>
+<td>9,109</td>
+<td>91,261</td>
+</tr>
+<tr>
+<td>Δ<italic>C</italic></td>
+<td>170</td>
+<td>2,365</td>
+<td>20,255</td>
+<td>347,099</td>
+<td>218</td>
+<td>3,354</td>
+<td>42,533</td>
+<td>508,774</td>
+</tr>
+<tr>
+<td>Δ<italic>ED</italic></td>
+<td>36</td>
+<td>373</td>
+<td>3,746</td>
+<td>37,443</td>
+<td>74</td>
+<td>747</td>
+<td>7,471</td>
+<td>74,797</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>
+<xref ref-type="table" rid="table7-0165551512463650">Table 7</xref> plots the elapsed time of three change detection techniques in calculating Δ<italic>ED</italic>. As expected, FC performs worst and PBC performs better than BC. However, the pruning effect of PBC is, unlike in real data sets, not so large, because each change operation in the synthetic data, such as triple deletion, triple insertion and triple deletion-then-insertion (i.e. moving from one position to another position in the hierarchy) was generated uniformly. In addition, we can observe that the percentage of changes have some influence on the performance trends of FC, BC and PBC. PBC performs better than BC when we set the ratio of changed triples to 10%. In particular, it should be noted that the performance gap between BC and PBC is widening as the number of triples exceeds 100,000. This is because, as the number of triples is increased, the pruning effect of PBC allows us to skip the inference step for the pruned triples while BC should carry out the backward inference against more triples. In addition, we also counted the number of triples that participated in the backward-chaining process in BC and PBC. <xref ref-type="table" rid="table8-0165551512463650">Table 8</xref> shows the results for two data sets. As illustrated in <xref ref-type="table" rid="table8-0165551512463650">Table 8</xref>, we can also observe that most triples are pruned in PBC. Consequently, we confirm that the proposed change detection is more suitable for large RDF data sets.</p>
+<table-wrap id="table7-0165551512463650" position="float">
+<label>Table 7.</label>
+<caption>
+<p>Elapsed time on synthetic data sets (s)</p>
+</caption>
+<graphic alternate-form-of="table7-0165551512463650" xlink:href="10.1177_0165551512463650-table7.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left" colspan="4">Change ratio: 5%<hr/></th>
+<th align="left" colspan="4">Change ratio: 10%<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">1,000</th>
+<th align="left">10,000</th>
+<th align="left">100,000</th>
+<th align="left">1,000,000</th>
+<th align="left">1,000</th>
+<th align="left">10,000</th>
+<th align="left">100,000</th>
+<th align="left">1,000,000</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FC</td>
+<td>7.8</td>
+<td>64</td>
+<td>978</td>
+<td>13,102</td>
+<td>6.5</td>
+<td>53.1</td>
+<td>1072</td>
+<td>15,087</td>
+</tr>
+<tr>
+<td>BC</td>
+<td>0.1</td>
+<td>2.2</td>
+<td>22.1</td>
+<td>6,426</td>
+<td>0.6</td>
+<td>4.4</td>
+<td>63.7</td>
+<td>13,099</td>
+</tr>
+<tr>
+<td>PBC</td>
+<td>0.1</td>
+<td>1.4</td>
+<td>17.7</td>
+<td>4,007</td>
+<td>0.5</td>
+<td>3.5</td>
+<td>33.5</td>
+<td>8,108</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table8-0165551512463650" position="float">
+<label>Table 8.</label>
+<caption>
+<p>Pruning effect on synthetic data sets (number of triples)</p>
+</caption>
+<graphic alternate-form-of="table8-0165551512463650" xlink:href="10.1177_0165551512463650-table8.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left" colspan="4">Change ratio: 5%<hr/></th>
+<th align="left" colspan="4">Change ratio: 10%<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">1,000</th>
+<th align="left">10,000</th>
+<th align="left">100,000</th>
+<th align="left">1,000,000</th>
+<th align="left">1,000</th>
+<th align="left">10,000</th>
+<th align="left">100,000</th>
+<th align="left">1,000,000</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BC</td>
+<td>6</td>
+<td>62</td>
+<td>625</td>
+<td>6,208</td>
+<td>12</td>
+<td>125</td>
+<td>1,229</td>
+<td>12,342</td>
+</tr>
+<tr>
+<td>PBC</td>
+<td>3</td>
+<td>48</td>
+<td>482</td>
+<td>4,681</td>
+<td>7</td>
+<td>81</td>
+<td>947</td>
+<td>9,437</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+</sec>
+<sec id="section18-0165551512463650" sec-type="conclusions">
+<title>6. Conclusion</title>
+<p>Previous work on the RDF change detection technique mainly focused on minimizing the delta size using the semantics of RDF. However, no existing approaches are scalable. We need to develop scalable schemes to compute the closure of the triples to detect changes for the large RDF data. In this paper, we propose an efficient change detection technique for RDF. It generates the smaller delta using backward-chaining inference and a pruning method. Our proposed scheme first stores two RDF models in a relational database. It then computes the difference using the set-difference operation. Next, it prunes many triples that are not necessary to apply backward inference. Finally, we apply the closure rules only to the relevant triples for the deltas. Our experiments prove that our method generates the same size of RDF deltas that previous work produced, but performs better.</p>
+<p>We have two areas for future work. First, we need to improve the performance of our change detection schemes. For this, we will investigate alternative storage schemes and will develop new query processing for RDF triples for change detection. Next, we will extend our scheme to be able to handle the OWL model that has more powerful but complicated inference rules.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>This work was supported by the National Research Foundation of Korea(NRF) grant funded by the Korea government (MEST) (No. 20120005695) and also supported by the MKE, Korea under ITRC NIPA-2012-(H0301-12-3001).</p>
+</ack>
+<notes>
+<fn-group>
+<fn fn-type="other" id="fn1-0165551512463650">
+<label>1.</label>
+<p>Available at <ext-link ext-link-type="uri" xlink:href="http://openrdf.org">http://openrdf.org</ext-link></p>
+</fn>
+<fn fn-type="other" id="fn2-0165551512463650">
+<label>2.</label>
+<p>Available at <ext-link ext-link-type="uri" xlink:href="http://geneontology.org">http://geneontology.org</ext-link></p>
+</fn>
+<fn fn-type="other" id="fn3-0165551512463650">
+<label>3.</label>
+<p>Available at <ext-link ext-link-type="uri" xlink:href="http://dev.isb-sib.ch/projects/uniprot-rdf/">http://dev.isb-sib.ch/projects/uniprot-rdf/</ext-link></p>
+</fn>
+</fn-group>
+</notes>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0165551512463650">
+<label>[1]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Klyne</surname><given-names>G</given-names></name>
+<name><surname>Carroll</surname><given-names>JJ</given-names></name>
+<name><surname>McBride</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Resource description framwork (RDF): Concepts and abstract syntax</article-title>. <source>W3C Recommendation</source>, <year>2004</year>.</citation>
+</ref>
+<ref id="bibr2-0165551512463650">
+<label>[2]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Flouris</surname><given-names>G</given-names></name>
+<name><surname>Manakanatas</surname><given-names>D</given-names></name>
+<name><surname>Kondylakis</surname><given-names>H</given-names></name>
+<name><surname>Plexousakis</surname><given-names>D</given-names></name>
+<name><surname>Antoniou</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Ontology change: classification and survey</article-title>. <source>The Knowledge Engineering Review</source> <year>2008</year>; <volume>23</volume>(<issue>2</issue>): <fpage>117</fpage>–<lpage>152</lpage>.</citation>
+</ref>
+<ref id="bibr3-0165551512463650">
+<label>[3]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Noy</surname><given-names>NF</given-names></name>
+<name><surname>Klein</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Ontology evolution: Not the same as schema evolution</article-title>. <source>Knowledge and Information Systems</source> <year>2004</year>; <volume>6</volume>(<issue>4</issue>): <fpage>428</fpage>–<lpage>440</lpage>.</citation>
+</ref>
+<ref id="bibr4-0165551512463650">
+<label>[4]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Plessers</surname><given-names>P</given-names></name>
+<name><surname>Troyer</surname><given-names>O</given-names></name>
+<name><surname>Castelyan</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Understanding ontology evolution: A change detection approach</article-title>. <source>Journal of Web Semantics</source> <year>2007</year>; <volume>5</volume>(<issue>1</issue>): <fpage>39</fpage>–<lpage>49</lpage>.</citation>
+</ref>
+<ref id="bibr5-0165551512463650">
+<label>[5]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tummarello</surname><given-names>G</given-names></name>
+<name><surname>Morbidoni</surname><given-names>C</given-names></name>
+<name><surname>Bachmann-Gmur</surname><given-names>R</given-names></name>
+<name><surname>Erling</surname><given-names>O</given-names></name>
+</person-group>. <article-title>RDFSync: Efficient remote synchronization of RDF models</article-title>. In: <source>Proceedings of international semantic web conference</source>, <year>2007</year>, pp. <fpage>537</fpage>–<lpage>551</lpage>.</citation>
+</ref>
+<ref id="bibr6-0165551512463650">
+<label>[6]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Im</surname><given-names>D</given-names></name>
+<name><surname>Lee</surname><given-names>S</given-names></name>
+<name><surname>Kim</surname><given-names>H</given-names></name>
+</person-group>. <article-title>A version management framework for RDF triple stores</article-title>. <source>International Journal of Software Engineering and Knowledge Engineering</source> <year>2012</year>; <volume>22</volume>(<issue>1</issue>): <fpage>85</fpage>–<lpage>106</lpage>.</citation>
+</ref>
+<ref id="bibr7-0165551512463650">
+<label>[7]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Klein</surname><given-names>M</given-names></name>
+<name><surname>Kiryakov</surname><given-names>A</given-names></name>
+<name><surname>Ognyanov</surname><given-names>D</given-names></name>
+<name><surname>Fensel</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Ontology versioning and change detection on the Web</article-title>. In: <source>Proceedings of international conference on knowledge engineering and knowledge management</source>, <year>2002</year>, pp. <fpage>197</fpage>–<lpage>212</lpage>.</citation>
+</ref>
+<ref id="bibr8-0165551512463650">
+<label>[8]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Noy</surname><given-names>NF</given-names></name>
+<name><surname>Musen</surname><given-names>MA</given-names></name>
+</person-group>. <article-title>Ontology versioning in an ontology management framework</article-title>. <source>IEEE Intelligent Systems</source> <year>2004</year>; <volume>19</volume>(<issue>4</issue>): <fpage>6</fpage>–<lpage>13</lpage>.</citation>
+</ref>
+<ref id="bibr9-0165551512463650">
+<label>[9]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Volkel</surname><given-names>M</given-names></name>
+<name><surname>Groza</surname><given-names>T</given-names></name>
+</person-group>. <article-title>SemVersion: An RDF-based ontology versioning system</article-title>. In: <source>Proceedings of IADIS international conference on WWW/internet</source>, <year>2006</year>, pp. <fpage>195</fpage>–<lpage>202</lpage>.</citation>
+</ref>
+<ref id="bibr10-0165551512463650">
+<label>[10]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Leonardi</surname><given-names>E</given-names></name>
+<name><surname>Hoai</surname><given-names>TT</given-names></name>
+<name><surname>Bhowmick</surname><given-names>SS</given-names></name>
+<name><surname>Madria</surname><given-names>S</given-names></name>
+</person-group>. <article-title>DTD-DIFF: A change detection algorithm for DTDs</article-title>. <source>Data &amp; Knowledge Engineering</source> <year>2006</year>; <volume>61</volume>(<issue>2</issue>): <fpage>384</fpage>–<lpage>402</lpage>.</citation>
+</ref>
+<ref id="bibr11-0165551512463650">
+<label>[11]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wang</surname><given-names>Y</given-names></name>
+<name><surname>DeWitt</surname><given-names>DJ</given-names></name>
+<name><surname>Cai</surname><given-names>J</given-names></name>
+</person-group>. <article-title>X-Diff: An effective change detection algorithm for XML documents</article-title>. In: <source>Proceedings of international conference on data engineering</source>, <year>2003</year>, pp. <fpage>519</fpage>–<lpage>530</lpage>.</citation>
+</ref>
+<ref id="bibr12-0165551512463650">
+<label>[12]</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Berners-Lee</surname><given-names>T</given-names></name>
+<name><surname>Connolly</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Delta: An ontology for the distribution of differences between RDF graphs</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.w3.org/DesignIssues/Diff">http://www.w3.org/DesignIssues/Diff</ext-link> (<year>2004</year>).</citation>
+</ref>
+<ref id="bibr13-0165551512463650">
+<label>[13]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Papavassiliou</surname><given-names>V</given-names></name>
+<name><surname>Flouris</surname><given-names>G</given-names></name>
+<name><surname>Fundulaki</surname><given-names>I</given-names></name>
+<name><surname>Kotzinos</surname><given-names>D</given-names></name>
+<name><surname>Christophides</surname><given-names>V</given-names></name>
+</person-group>. <article-title>On detecting high-level changes in RDF/S KBs</article-title>. In: <source>Proceedings of international semantic Web conference</source>, <year>2009</year>, pp. <fpage>473</fpage>–<lpage>488</lpage>.</citation>
+</ref>
+<ref id="bibr14-0165551512463650">
+<label>[14]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tzitzikas</surname><given-names>Y</given-names></name>
+<name><surname>Theoharis</surname><given-names>Y</given-names></name>
+<name><surname>Andreou</surname><given-names>D</given-names></name>
+</person-group>. <article-title>On storage policies for semantic Web repositories that support versioning</article-title>. In: <source>Proceedings of European Semantic Web conference</source>, <year>2008</year>, pp. <fpage>705</fpage>–<lpage>719</lpage>.</citation>
+</ref>
+<ref id="bibr15-0165551512463650">
+<label>[15]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zeginis</surname><given-names>D</given-names></name>
+<name><surname>Tzitzikas</surname><given-names>Y</given-names></name>
+<name><surname>Christophides</surname><given-names>V</given-names></name>
+</person-group>. <article-title>On the foundations of computing deltas between RDF models</article-title>. In: <source>Proceedings of international Semantic Web conference</source>, <year>2007</year>, pp. <fpage>637</fpage>–<lpage>651</lpage>.</citation>
+</ref>
+<ref id="bibr16-0165551512463650">
+<label>[16]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zeginis</surname><given-names>D</given-names></name>
+<name><surname>Tzitzikas</surname><given-names>Y</given-names></name>
+<name><surname>Christophides</surname><given-names>V</given-names></name>
+</person-group>. <article-title>On computing deltas of RDF/S knowledge bases</article-title>. <source>ACM Transactions on the Web</source> <year>2011</year>; <volume>5</volume>(<issue>3</issue>): <fpage>14</fpage>.</citation>
+</ref>
+<ref id="bibr17-0165551512463650">
+<label>[17]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hayes</surname><given-names>P</given-names></name>
+<name><surname>McBride</surname><given-names>B</given-names></name>
+</person-group>. <article-title>RDF semantics</article-title>. <source>Technical Report, W3C Recommendation</source>, <year>2004</year>.</citation>
+</ref>
+<ref id="bibr18-0165551512463650">
+<label>[18]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Christophides</surname><given-names>V</given-names></name>
+<name><surname>Plexousakis</surname><given-names>D</given-names></name>
+<name><surname>Scholl</surname><given-names>M</given-names></name>
+<name><surname>Tourtounis</surname><given-names>S</given-names></name>
+</person-group>. <article-title>On labeling schemes for the Semantic Web</article-title>. In: <source>Proceedings of international World Wide Web conference</source>, <year>2003</year>, pp. <fpage>544</fpage>–<lpage>555</lpage>.</citation>
+</ref>
+<ref id="bibr19-0165551512463650">
+<label>[19]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Broekstra</surname><given-names>J</given-names></name>
+<name><surname>Kampman</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Inferencing and Truth maintenance in RDF Schema</article-title>. In: <source>Proceedings of workshop on practical and scalable semantic system</source>, <year>2003</year>.</citation>
+</ref>
+<ref id="bibr20-0165551512463650">
+<label>[20]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Shen</surname><given-names>W</given-names></name>
+<name><surname>Qu</surname><given-names>Y</given-names></name>
+</person-group>. <article-title>An RDF storage and query framework with flexible inference strategy</article-title>. In: <source>Proceedings of Asia–Pacific Web conference</source>, <year>2006</year>, pp. <fpage>166</fpage>–<lpage>175</lpage>.</citation>
+</ref>
+<ref id="bibr21-0165551512463650">
+<label>[21]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Stuckenschmidt</surname><given-names>H</given-names></name>
+<name><surname>Broekstra</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Time–space trade-offs in scaling up RDF schema reasoning</article-title>. . In: <source>Proceedings of workshop on scalable Semantic Web knowledge base system</source>, <year>2005</year>, pp. <fpage>172</fpage>–<lpage>181</lpage>.</citation>
+</ref>
+<ref id="bibr22-0165551512463650">
+<label>[22]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Broekstra</surname><given-names>J</given-names></name>
+<name><surname>Kampman</surname><given-names>A</given-names></name>
+<name><surname>Harmelen</surname><given-names>FV</given-names></name>
+</person-group>. <article-title>Sesame: A generic architecture for storing and querying RDF and RDF schema</article-title>. In: <source>Proceedings of international Semantic Web conference</source>, <year>2002</year>, pp. <fpage>54</fpage>–<lpage>68</lpage>.</citation>
+</ref>
+<ref id="bibr23-0165551512463650">
+<label>[23]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ognyanov</surname><given-names>D</given-names></name>
+<name><surname>Kiryakov</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Tracking changes in RDF(S) repositories</article-title>. In: <source>Proceedings of international conference on knowledge engineering and knowledge management</source>, <year>2002</year>, pp. <fpage>373</fpage>–<lpage>378</lpage>.</citation>
+</ref>
+<ref id="bibr24-0165551512463650">
+<label>[24]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Carroll</surname><given-names>JJ</given-names></name>
+</person-group>. <article-title>Signing RDF graphs</article-title>. In: <source>Proceedings of international Semantic Web conference</source>, <year>2003</year>, pp. <fpage>369</fpage>–<lpage>384</lpage>.</citation>
+</ref>
+<ref id="bibr25-0165551512463650">
+<label>[25]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Carroll</surname><given-names>JJ</given-names></name>
+<name><surname>Dickinson</surname><given-names>I</given-names></name>
+<name><surname>Dollin</surname><given-names>C</given-names></name>
+<name><surname>Reynolds</surname><given-names>D</given-names></name>
+<name><surname>Seaborne</surname><given-names>A</given-names></name>
+<name><surname>Wilkinson</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Jena: Implementing the Semantic Web recommendation</article-title>. In: <source>Proceedings of international World Wide Web conference</source>, <year>2004</year>, pp. <fpage>74</fpage>–<lpage>83</lpage>.</citation>
+</ref>
+<ref id="bibr26-0165551512463650">
+<label>[26]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Eder</surname><given-names>J</given-names></name>
+<name><surname>Wiggisser</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Change detection in ontologies using DAG comparison</article-title>. In: <source>Proceedings of international conference on advanced information systems engineering</source>, <year>2007</year>, pp. <fpage>21</fpage>–<lpage>35</lpage>.</citation>
+</ref>
+<ref id="bibr27-0165551512463650">
+<label>[27]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Leonardi</surname><given-names>E</given-names></name>
+<name><surname>Bhowmick</surname><given-names>SS</given-names></name>
+<name><surname>Madria</surname><given-names>S</given-names></name>
+</person-group>. <article-title>XANDY: Detecting changes on large unordered XML documents using relational databases</article-title>. In: <source>Proceedings of international conference on database systems for advanced applications</source>, <year>2005</year>, pp. <fpage>711</fpage>–<lpage>723</lpage>.</citation>
+</ref>
+<ref id="bibr28-0165551512463650">
+<label>[28]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Abadi</surname><given-names>DJ</given-names></name>
+<name><surname>Marcus</surname><given-names>A</given-names></name>
+<name><surname>Madden</surname><given-names>SR</given-names></name>
+<name><surname>Hollenbach</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Scalable semantic web data management using vertical partitioning</article-title>. In: <source>Proceedings of international conference on very large data bases</source>, <year>2007</year>, pp. <fpage>411</fpage>–<lpage>422</lpage>.</citation>
+</ref>
+<ref id="bibr29-0165551512463650">
+<label>[29]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wilkinson</surname><given-names>K</given-names></name>
+<name><surname>Sayers</surname><given-names>C</given-names></name>
+<name><surname>Kuno</surname><given-names>H</given-names></name>
+<name><surname>Reynolds</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Efficient RDF storage and retrieval in Jena2</article-title>. In: <source>Proceedings of workshop on Semantic Web and databases</source>, <year>2003</year>, pp. <fpage>131</fpage>–<lpage>150</lpage>.</citation>
+</ref>
+<ref id="bibr30-0165551512463650">
+<label>[30]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chong</surname><given-names>EI</given-names></name>
+<name><surname>Das</surname><given-names>S</given-names></name>
+<name><surname>Eadon</surname><given-names>G</given-names></name>
+<name><surname>Srinivasan</surname><given-names>J</given-names></name>
+</person-group>. <article-title>An efficient SQL-based RDF querying scheme</article-title>. In: <source>Proceedings of international conference on very large data bases</source>, <year>2005</year>, pp. <fpage>1216</fpage>–<lpage>1227</lpage>.</citation>
+</ref>
+<ref id="bibr31-0165551512463650">
+<label>[31]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Eisenberg</surname><given-names>A</given-names></name>
+<name><surname>Melton</surname><given-names>J</given-names></name>
+</person-group>. <article-title>SQL: 1999, formerly known as SQL 3</article-title>. <source>sigmod record</source> <year>1999</year>; <volume>28</volume>(<issue>1</issue>): <fpage>131</fpage>–<lpage>138</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

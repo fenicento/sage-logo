@@ -1,0 +1,857 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">UIX</journal-id>
+<journal-id journal-id-type="hwp">spuix</journal-id>
+<journal-title>Ultrasonic Imaging</journal-title>
+<issn pub-type="ppub">0161-7346</issn>
+<issn pub-type="epub">XXXX-XXXX</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage CA: Los Angeles, CA</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0161734613476176</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0161734613476176</article-id>
+<title-group>
+<article-title>An Approach to Unbiased Subsample Interpolation for Motion Tracking</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>McCormick</surname><given-names>Matthew M.</given-names></name>
+<xref ref-type="aff" rid="aff1-0161734613476176">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Varghese</surname><given-names>Tomy</given-names></name>
+<xref ref-type="aff" rid="aff2-0161734613476176">2</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-0161734613476176"><label>1</label>Kitware, Inc, Clifton Park, NY, USA</aff>
+<aff id="aff2-0161734613476176"><label>2</label>Department of Medical Physics, University of Wisconsin–Madison, USA</aff>
+<author-notes>
+<corresp id="corresp1-0161734613476176">Matthew M. McCormick, Kitware, Inc, 28 Corporate Drive, Clifton Park, NY 12065, USA. Email: <email>matt@mmmccormick.com</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>35</volume>
+<issue>2</issue>
+<fpage>76</fpage>
+<lpage>89</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2013</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Accurate subsample displacement estimation is necessary for ultrasound elastography because of the small deformations that occur and the subsequent application of a derivative operation on local displacements. Many of the commonly used subsample estimation techniques introduce significant bias errors. This article addresses a reduced bias approach to subsample displacement estimations that consists of a two-dimensional windowed-sinc interpolation with numerical optimization. It is shown that a Welch or Lanczos window with a Nelder–Mead simplex or regular-step gradient-descent optimization is well suited for this purpose. Little improvement results from a sinc window radius greater than four data samples. The strain signal-to-noise ratio (SNR) obtained in a uniformly elastic phantom is compared with other parabolic and cosine interpolation methods; it is found that the strain SNR ratio is improved over parabolic interpolation from 11.0 to 13.6 in the axial direction and 0.7 to 1.1 in the lateral direction for an applied 1% axial deformation. The improvement was most significant for small strains and displacement tracking in the lateral direction. This approach does not rely on special properties of the image or similarity function, which is demonstrated by its effectiveness with the application of a previously described regularization technique.</p>
+</abstract>
+<kwd-group>
+<kwd>subsample interpolation</kwd>
+<kwd>strain imaging</kwd>
+<kwd>motion tracking</kwd>
+<kwd>sinc reconstruction</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0161734613476176" sec-type="intro">
+<title>Introduction</title>
+<p>Accurate and precise subsample estimation of local displacements is critical for ultrasound-elastography-based applications. Recent movement toward transducers with higher center frequencies and broader bandwidths, with sampling frequencies barely satisfying the Shannon–Nyquist criterion, also underscore the need for accurate subsample estimation. Furthermore, acoustic noise also complicates displacement estimation. These conditions are a concern in ultrasound strain imaging where displacement estimates need precision on the order of micrometers; sample spacing in the axial direction is only 19 µm for a 40-MHz sampling rate. A reduction of subsample peak interpolation bias errors can extend the useful range of imaged strains for a given algorithm. Cespedes et al.<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref></sup> examined the theoretical limits for time-delay estimation using cross-correlation with parameters from a typical ultrasound system. They found that the standard deviation due to time quantization was 5.7 <italic>ns</italic>, which is much larger than the Cramer–Rao Lower Bound (CRLB) for the continuous case: 0.024 <italic>ns</italic>.</p>
+<p>This subsample delay estimation problem has been studied extensively in one dimension (1-D) for the sonar and radar fields, where use of cross-correlation as a similarity metric is dominant. If the signal is approximately narrowband, quadrature subsample delay techniques can be used.<sup><xref ref-type="bibr" rid="bibr2-0161734613476176">2</xref></sup> Maskell and Woods<sup><xref ref-type="bibr" rid="bibr3-0161734613476176">3</xref></sup> described a technique where the shift between signals is not determined by comparing them directly but by comparisons with shifted versions of a reference signal. The total delay is then determined to be the difference between the two delays to the reference signal.</p>
+<p>A number of techniques use the fact that the phase of the analytic signal’s cross-correlation in the vicinity of the signal shift will have a slope equivalent to the nominal centroid frequency and zero crossing at the shift.<sup><xref ref-type="bibr" rid="bibr4-0161734613476176">4</xref>,<xref ref-type="bibr" rid="bibr5-0161734613476176">5</xref></sup> Marple<sup><xref ref-type="bibr" rid="bibr4-0161734613476176">4</xref></sup> discusses the theory behind this method, and the scaling that must occur at the DC and Nyquist frequencies when dealing with discrete signals. Grennberg and Sandell<sup><xref ref-type="bibr" rid="bibr6-0161734613476176">6</xref></sup> described a fast subsample delay estimator calculated with the cross-correlation of the delayed signal with the Hilbert transform of the original signal using an arcsine. Other authors used similar approaches by taking the cross-correlation of base-band analytic signals from both the original and shifted signals.<sup><xref ref-type="bibr" rid="bibr5-0161734613476176">5</xref>,<xref ref-type="bibr" rid="bibr7-0161734613476176">7</xref></sup> The root is then found with an iterative modified Newton method. This approach only works for narrowband signals with small time delays. For larger time delays, strategies have to be used to prevent phase aliasing. However, when used, these approaches are advantageous because they are very precise, have minimal computational complexity, and can be performed in a single step. In medical ultrasound, the backscattered signal is generally beam formed along the axial direction, so these methods can only be used to calculate axial displacements. However, if unconventional beam-forming strategies are applied, phase can also be tracked in the lateral direction.<sup><xref ref-type="bibr" rid="bibr8-0161734613476176">8</xref></sup> Alternatively, a synthetic oscillatory signal can be generated by taking the inverse Fourier transform of half the transformed signal.<sup><xref ref-type="bibr" rid="bibr9-0161734613476176">9</xref></sup> Instead of the more prevalent cross-correlation/Fourier methods, Viola and Walker<sup><xref ref-type="bibr" rid="bibr10-0161734613476176">10</xref></sup> have worked on a sum-of-squared error/cubic spline method.<sup><xref ref-type="bibr" rid="bibr11-0161734613476176">11</xref></sup> After a cubic spline fit, the problem reduces to finding the roots of a polynomial whose order is proportional to the number samples in the fit.</p>
+<p>As studied in Viola and Walker,<sup><xref ref-type="bibr" rid="bibr10-0161734613476176">10</xref></sup> a straightforward and computationally intensive approach to determine a precise signal shift is to resample the image through interpolation before performing cross-correlation. Use of a matched filter during resampling may improve the result.<sup><xref ref-type="bibr" rid="bibr12-0161734613476176">12</xref></sup> Instead of resampling and recalculation of the cross-correlation, curve fitting can be applied. For example, a parabola<sup><xref ref-type="bibr" rid="bibr12-0161734613476176">12</xref><xref ref-type="bibr" rid="bibr13-0161734613476176"/><xref ref-type="bibr" rid="bibr14-0161734613476176"/><xref ref-type="bibr" rid="bibr15-0161734613476176"/>-<xref ref-type="bibr" rid="bibr16-0161734613476176">16</xref></sup> or cosine fit<sup><xref ref-type="bibr" rid="bibr17-0161734613476176">17</xref></sup> can be used in 1-D or an ellipsoid in 2-D.<sup><xref ref-type="bibr" rid="bibr18-0161734613476176">18</xref></sup> These methods are computationally efficient and easy to implement, but they suffer from bias errors because the underlying signal may not conform to the shape chosen.<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref>,<xref ref-type="bibr" rid="bibr14-0161734613476176">14</xref>,<xref ref-type="bibr" rid="bibr16-0161734613476176">16</xref>,<xref ref-type="bibr" rid="bibr19-0161734613476176">19</xref>,<xref ref-type="bibr" rid="bibr20-0161734613476176">20</xref></sup></p>
+<p>Curve-fitting bias errors can be avoided using signal reconstruction with sinc interpolation, which is the maximum likelihood estimator for interpolation.<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref>,<xref ref-type="bibr" rid="bibr13-0161734613476176">13</xref></sup> Cespedes et al.<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref></sup> examined the use of 1-D sinc reconstruction to locate the cross-correlation peak and found that it significantly outperforms parabolic or cosine interpolation. Reconstruction is computationally expensive, when compared with curve-fitting methods, and an optimization method must be used to find the peak location. Cespedes et al.<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref></sup> used a binary search method to decrease computation times.</p>
+<p>It has also been demonstrated that a simultaneous 2-D displacement vector estimate will generate better results than two independent 1-D displacement estimates.<sup><xref ref-type="bibr" rid="bibr9-0161734613476176">9</xref>,<xref ref-type="bibr" rid="bibr19-0161734613476176">19</xref><xref ref-type="bibr" rid="bibr20-0161734613476176"/>-<xref ref-type="bibr" rid="bibr21-0161734613476176">21</xref></sup> Sumi<sup><xref ref-type="bibr" rid="bibr22-0161734613476176">22</xref></sup> described an iterative 2-D phase-tracking technique, and Ebbini<sup><xref ref-type="bibr" rid="bibr23-0161734613476176">23</xref></sup> described a similar technique that iteratively searches for the location where the gradient vectors of the 2-D complex cross-correlation are orthogonal, which exists along the zero-phase contour.</p>
+<p>In this article, we propose the use of a 2-D sinc reconstruction method coupled with traditional numerical optimization techniques for subsample ultrasound-displacement estimation. Since parabolic methods remain the most popular method referenced in the literature, and to follow the analysis of Cespedes et al.,<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref></sup> we compare the new method with parabolic and cosine curve fitting. Performance is evaluated using the variation in the elastographic signal-to-noise ratio (SNRe) in tissue-mimicking (TM) experimental phantoms and numerical simulations. We examine the optimal sinc-filtering window radius and type, and the computational performance of the Nelder–Mead simplex and a regular-step gradient-descent optimizer.</p>
+</sec>
+<sec id="section2-0161734613476176" sec-type="materials|methods">
+<title>Materials and Method</title>
+<sec id="section3-0161734613476176">
+<title>Subsample Interpolation Algorithm</title>
+<p>In the article by Cespedes et al.,<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref></sup> a binary search algorithm improved the time required to localize the subsample 1-D cross-correlation peak. The diagram in <xref ref-type="fig" rid="fig1-0161734613476176">Figure 1</xref> explains how iterative sinc interpolation to find a subsample peak differs from parametric methods like parabolic or cosine fit. We framed this process as a multiparameter, single-valued cost-function numerical optimization problem. We applied traditional numerical optimization methods that have quicker convergence properties than a binary search and can be applied to multiple parameters. The cost function to be maximized was the cross-correlation function. The parameters to be optimized were the axial and lateral displacements.</p>
+<fig id="fig1-0161734613476176" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Diagrams of (a) parabolic interpolation, (b) cosine interpolation, and (c) iterative sinc interpolation explaining how peak interpolation is calculated in each case and how bias arises. For the parametric methods in (a) and (b), the three samples around the peak are interpolated with a function (shown with the dotted line) that does not necessarily match the underlying cross-correlation. The displacement from the analytically determined parametric peak has a large bias in (a) or smaller bias in (b) based on how well the form of the parametric function matches the cross-correlation. Iterative sinc interpolation shown in (c) is a different approach that results in reduced bias by applying a search for the subsample peak that converges on the true peak. Note that a 1-D interpolation and optimization are shown in (c) for illustrative purposes, but the method discussed in this article uses both 2-D interpolation and optimization.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613476176-fig1.tif"/>
+</fig>
+<p>We obtained subsample displacement values with 2-D sinc interpolation.<sup><xref ref-type="bibr" rid="bibr24-0161734613476176">24</xref>,<xref ref-type="bibr" rid="bibr25-0161734613476176">25</xref></sup> The sinc kernel, <italic>K</italic>(<italic>t</italic>) is given by,</p>
+<p><disp-formula id="disp-formula1-0161734613476176">
+<mml:math display="block" id="math1-0161734613476176">
+<mml:mrow>
+<mml:mi>K</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>=</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mtext>sinc</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>sin</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>π</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>π</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0161734613476176" xlink:href="10.1177_0161734613476176-eq1.tif"/>
+</disp-formula></p>
+<p>where <italic>w</italic>(<italic>t</italic>) denotes the window function. We examined different window functions shown in <xref ref-type="table" rid="table1-0161734613476176">Table 1</xref>.<sup><xref ref-type="bibr" rid="bibr24-0161734613476176">24</xref>,<xref ref-type="bibr" rid="bibr25-0161734613476176">25</xref></sup> Here, <italic>m</italic> is the window radius; the window is nonzero from <italic>−m</italic> to <italic>m</italic>.</p>
+<table-wrap id="table1-0161734613476176" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Sinc Window Functions.</p>
+</caption>
+<graphic alternate-form-of="table1-0161734613476176" xlink:href="10.1177_0161734613476176-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Window Name</th>
+<th align="center">Expression</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blackman</td>
+<td><inline-formula id="inline-formula1-0161734613476176">
+<mml:math display="inline" id="math2-0161734613476176">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>45</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>50</mml:mn>
+<mml:mi>cos</mml:mi>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext>π</mml:mtext>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>08</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td>Cosine</td>
+<td><inline-formula id="inline-formula2-0161734613476176">
+<mml:math display="inline" id="math3-0161734613476176">
+<mml:mrow>
+<mml:mi>cos</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext>π</mml:mtext>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>2</mml:mtext>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td>Hamming</td>
+<td><inline-formula id="inline-formula3-0161734613476176">
+<mml:math display="inline" id="math4-0161734613476176">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>54</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>46</mml:mn>
+<mml:mi>cos</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext>π</mml:mtext>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td>Lanczos</td>
+<td><inline-formula id="inline-formula4-0161734613476176">
+<mml:math display="inline" id="math5-0161734613476176">
+<mml:mrow>
+<mml:mi>sin</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext>π</mml:mtext>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td>Welch</td>
+<td><inline-formula id="inline-formula5-0161734613476176">
+<mml:math display="inline" id="math6-0161734613476176">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msup>
+<mml:mi>x</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mi>m</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>An interpolated normalized cross-correlation value, <italic>XCORR</italic>(<italic>x,y</italic>) was calculated with the sampled correlation values across the radius, and the window,<sup><xref ref-type="bibr" rid="bibr9-0161734613476176">9</xref></sup></p>
+<p><disp-formula id="disp-formula2-0161734613476176">
+<mml:math display="block" id="math7-0161734613476176">
+<mml:mrow>
+<mml:mi>X</mml:mi>
+<mml:mi>C</mml:mi>
+<mml:mi>O</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mspace width="0.75em"/>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mrow>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+<mml:mi>C</mml:mi>
+<mml:mi>O</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>K</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+<mml:mi>K</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0161734613476176" xlink:href="10.1177_0161734613476176-eq2.tif"/>
+</disp-formula></p>
+<p>The normalized cross-correlation values are the basis for interpolation, illustrated as the solid circles in <xref ref-type="fig" rid="fig1-0161734613476176">Figure 1</xref>.</p>
+<p>In this article, two simple optimization methods were examined: a regular-step gradient-descent and a Nelder–Mead simplex (amoeba) optimization. In the regular-step gradient-descent method, parameters are advanced along the direction of the negative of the gradient, which is calculated with the finite difference method. The step length is reduced by half when the sign of the gradient changes.<sup><xref ref-type="bibr" rid="bibr26-0161734613476176">26</xref></sup> The well-known Nelder–Mead simplex optimization advances a three-point simplex over the optimization space.</p>
+<p>We set the initial condition to be the sampled maximum of the normalized cross-correlation. The parameter space was the displacement in the axial and lateral directions defined in fractional samples. We proceeded with optimization until reaching convergence, which was defined with a minimum step length during the regular-step gradient-descent method and a parameter tolerance with the Nelder–Mead simplex method.</p>
+</sec>
+<sec id="section4-0161734613476176">
+<title>Motion-Tracking Algorithm</title>
+<p>The proposed subsample interpolation algorithm was used within an ultrasound block-matching motion-tracking context. Normalized cross-correlation was used as a similarity metric when comparing the matching blocks in the pre-deformation image with the image content in the post-deformation image search region. A multilevel tracking approach was used to improve search region initialization at the lowest level of the multilevel image pyramid. A three-level pyramid was used where the highest level was decimated by a factor of three in the axial direction and a factor of two in the lateral direction, and the middle level was decimated by a factor of two in the axial direction only. Before decimation, the data was filtered with a discrete Gaussian with variance (<italic>f</italic> / <italic>2</italic>)<sup>2</sup>, where <italic>f</italic> is the decimation factor.<sup><xref ref-type="bibr" rid="bibr27-0161734613476176">27</xref></sup> Matching-block sizes varied linearly from the top to bottom level with axial length of 1.3 mm and lateral width of 4.0mm at the top level to an axial length of 0.5 mm and lateral width of 2.2 mm at the bottom level. There was no block overlap. Although the time-bandwidth product of the windows used in this algorithm was small, the multiresolution techniques along with false-peak detection and signal stretching avoid errors otherwise observed in algorithms without these features.</p>
+<p>To remove false-peak tracking errors, displacements with strains greater than 15% magnitude were replaced with linearly interpolated values from outside the erroneous region. To improve correlation, matching blocks at lower levels were compressed according to the strain estimated at the previous level.<sup><xref ref-type="bibr" rid="bibr28-0161734613476176">28</xref></sup> The matching block was scaled by a factor of 1+ ε<sub><italic>d</italic></sub>, where ε<sub><italic>d</italic></sub> is the strain in direction <italic>d</italic> at its center and is resampled using sinc interpolation with a Lanczos window and radius four.</p>
+<p>To demonstrate that the proposed method is effective in finding the subsample peak in situations other than normalized cross-correlation with ultrasound radiofrequency (RF) data, we also examined interpolation after regularization with a Bayesian regularization method.<sup><xref ref-type="bibr" rid="bibr29-0161734613476176">29</xref></sup> As noted in the results, two iterations of the regularization method were applied to the normalized cross-correlation. The strain regularization sigma (SRS) parameter used in the algorithm was 0.15 in the axial direction and 0.075 in the lateral direction.</p>
+<p>Effectiveness of the algorithm was tested on both TM phantom and simulated numerical ultrasound images.</p>
+</sec>
+<sec id="section5-0161734613476176">
+<title>TM Phantom</title>
+<p>We collected ultrasound RF data on a TM phantom using a clinical ultrasound scanner, the Siemens S2000 (Siemens Ultrasound, Mountain View, California). The Siemens VFX9-4 linear array transducer acquired RF data at 40 MHz with an excitation frequency of 8.9 MHz and at a depth of 5.5 cm. This system had a full-width-half-maximum fractional bandwidth of 65%. Samples were taken in the lateral direction every 0.12 mm. The resolution in the lateral direction was 1.4 mm, which was measured on a wire-target phantom.</p>
+<p>A 95 × 95 × 95 mm, uniformly elastic oil-gelatin phantom was placed in a rigid, low-friction container and imaged from the top surface. Uni-axial, uniform, unconstrained compression was applied by placing the transducer surface in an acrylic plate. Slip boundary conditions were maintained at the interface of the phantom and plate by ensuring adequate oil was present for lubrication. Precise deformations in the intended directions were achieved by a motion table with three linear degrees of freedom and two rotational degrees of freedom. A reference RF frame was collected along with post-deformation frames at 0.5%, 1.0%, 3.0%, 5.0%, and 7.0% axial-strain magnitude. The position of the transducer was rotated and translated to obtain an uncorrelated scattering field, and the set of deformed frames were re-collected. This process was repeated to collect 30 independent trials at each applied deformation.</p>
+<p>A TM phantom with a spherical inclusion, a common test object for ultrasound elastography, was also imaged. The inclusion was stiffer than the background and the phantom was subjected to a compression of 1.0% axial strain.</p>
+</sec>
+<sec id="section6-0161734613476176">
+<title>Ultrasound and Mechanics Simulation</title>
+<p>Computer simulations were also performed to model the ultrasound and mechanical behavior of the clinical system and TM phantom. A numerical phantom was generated by simulating randomly positioned acoustic scatterers over a 40 × 40 × 10 mm volume. A transducer was modeled with a Gaussian spectrum having a center frequency of 8.0 MHz and a 40% fractional bandwidth, 128-element linear array with 0.15-mm-lateral-by-10-mm-elevational element dimensions, and a 0.2-mm element pitch.<sup><xref ref-type="bibr" rid="bibr30-0161734613476176">30</xref></sup> Focusing was fixed at a 20-mm depth.</p>
+<p>Displacements were applied to the scatterers assuming uni-axial compression of an incompressible material, that is, lateral strains were opposite in sign and half the magnitude of the axial directions. The same deformations applied to the TM phantom were simulated. Axial displacements started from zero at the transducer surface to a negative value at the bottom of the simulated phantom, and lateral displacements transitioned from negative to positive values across the phantom with zero lateral displacement at the lateral midline. New sets of randomly distributed scatterers were used to create 30 independent scattering fields with the corresponding RF data.</p>
+</sec>
+<sec id="section7-0161734613476176">
+<title>Experimental Protocol</title>
+<p>Following the analysis by Cespedes et al.,<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref></sup> we evaluated the effectiveness of the subsample interpolation method using the SNRe feature.</p>
+<p><disp-formula id="disp-formula3-0161734613476176">
+<mml:math display="block" id="math8-0161734613476176">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>m</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0161734613476176" xlink:href="10.1177_0161734613476176-eq3.tif"/>
+</disp-formula></p>
+<p>that is, the mean and standard deviation of the strain in a uniform phantom undergoing uni-axial compression. The SNRe estimate was evaluated over the applied deformations examined for both the TM phantom and numerical simulation, along the axial and lateral directions, and with and without regularization. The normal strain, ε, in direction <italic>x</italic> is the derivative of the displacement along direction <italic>x</italic> and, if multiplied by 100, represents the percentage elongation of a material.<sup><xref ref-type="bibr" rid="bibr31-0161734613476176">31</xref></sup> Error bars in the results are two times the standard error computed over 30 trials per point. Unless otherwise noted, a radius of four RF data samples was used with the Welch window and Nelder–Mead optimization.</p>
+<p>Variations in the SNRe are used to compare sinc interpolation with numerical optimization via the Nelder–Mead simplex or regular-step gradient-descent with parabolic interpolation, cosine interpolation, and no interpolation.</p>
+<p>The SNRe was also used to evaluate the parameters of the algorithm. With a window radius of four samples, we compare the Blackman, Cosine, Hamming, Lanczos, and Welch windows types. The effect of window radius was examined along with the convergence tolerance.</p>
+<p>Given a convergence tolerance of 1e-5 samples, we inserted time probes in our code to measure the average time required for convergence in an image on an Intel Core i5 CPU clocked at 3.2 GHz. We also measured the effect of the initial simplex offset on the number of iterations required for convergence when using the Nelder–Mead optimization method.</p>
+</sec>
+</sec>
+<sec id="section8-0161734613476176" sec-type="results">
+<title>Results</title>
+<p>The effectiveness of 2-D windowed-sinc interpolation when compared with parabolic, cosine, or no interpolation is shown in <xref ref-type="fig" rid="fig2-0161734613476176">Figure 2</xref>. The SNRe is shown across the range of strains in both the lateral and axial directions. As shown in <xref ref-type="fig" rid="fig2-0161734613476176">Figure 2a</xref>, no interpolation provides the worst performance, followed by cosine interpolation, parabolic interpolation, and windowed-sinc interpolation. While prior articles reported fewer bias errors with cosine interpolation relative to parabolic interpolation,<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref>,<xref ref-type="bibr" rid="bibr19-0161734613476176">19</xref></sup> differences in the signal or sampling rate may explain the better performance attributed to parabolic interpolation.</p>
+<fig id="fig2-0161734613476176" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Performance of interpolation methods is shown by comparing variations in the SNRe for 2-D sinc interpolation using either Nelder–Mead simplex or regular-step gradient-descent, parabolic interpolation, cosine interpolation, or no interpolation. (a) TM phantom axial SNRe with no regularization, (b) TM phantom lateral SNRe with no regularization, (c) TM phantom axial SNRe with Bayesian regularization, (d) TM phantom lateral SNRe with Bayesian regularization, (e) simulation axial SNRe with no regularization, (f) simulation lateral SNRe with no regularization, (g) axial SNRe with Bayesian regularization, and (h) lateral SNRe with Bayesian regularization.</p>
+<p><underline>SNRe</underline> = elastographic signal-to-noise ratio; TM = tissue mimicking.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613476176-fig2.tif"/>
+</fig>
+<p>Lower SNRe arises for low strains from electronic and quantization noise artifacts and increased signal decorrelation due to larger applied deformation. For example, once we reach 7% applied deformation, motion tracking was no longer effective due to signal decorrelation.<sup><xref ref-type="bibr" rid="bibr32-0161734613476176">32</xref></sup> For all the subplots shown in <xref ref-type="fig" rid="fig2-0161734613476176">Figure 2</xref>, sinc interpolation performs equally well regardless of the optimization method used. In the axial direction with no regularization, sinc interpolation is better than parabolic interpolation, but only significantly at lower applied deformation, for example, 0.5% and 1.0%. Due to ultrasound’s anisotropic resolution, lateral SNRe in <xref ref-type="fig" rid="fig2-0161734613476176">Figure 2b</xref> is generally much lower than in <xref ref-type="fig" rid="fig2-0161734613476176">Figure 2a</xref>. However, the same trend in effectiveness observed in <xref ref-type="fig" rid="fig2-0161734613476176">Figure 2a</xref> can be seen in <xref ref-type="fig" rid="fig2-0161734613476176">Figure 2b</xref>. In the lateral case, the benefits of sinc interpolation over parabolic interpolation are more dramatic. When regularization is applied in <xref ref-type="fig" rid="fig2-0161734613476176">Figure 2c</xref> and <xref ref-type="fig" rid="fig2-0161734613476176">2d</xref>), the curves shift up as expected with improved SNRe. The same ranking that resulted in the no-regularization case also occurs with regularization, although the difference between sinc and parabolic interpolation is reduced.</p>
+<p>Images of the inclusion phantom’s axial strain (<xref ref-type="fig" rid="fig3-0161734613476176">Figure 3</xref>), after compression to a 1.0% strain, reflect the outcomes on the uniform phantom. Image quality with no interpolation and cosine interpolation was significantly poorer than parabolic or sinc interpolation. The improvement of sinc interpolation over parabolic interpolation is less pronounced, but still significant. No regularization was applied, so some noise artifacts remain.</p>
+<fig id="fig3-0161734613476176" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Images demonstrate the axial-strain distribution of an inclusion phantom subjected to 1.0% axial-strain magnitude, with (a) no interpolation, (b) cosine interpolation, (c), parabolic interpolation, and (d) optimized sinc interpolation. Regularization was not applied in these images.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613476176-fig3.tif"/>
+</fig>
+<p>We also studied the dependence on the displacement convergence tolerance with the Nelder–Mead simplex optimization method. The tolerance is specified in units of data samples. Surprisingly, the SNRe is relatively stable across a range of values. Results in the regularization case and on simulation data were similar and are omitted for brevity. A tolerance of 1e-5 samples appears to be sufficient to generate consistent results.</p>
+<p>The significance of the window type on the lateral SNRe is displayed in <xref ref-type="fig" rid="fig4-0161734613476176">Figure 4</xref>. No significant impact was observed in the axial direction, and the lateral impact appears to be small but significant, even though a generous radius of four samples was used. The Hamming window provides the worst performance, which is consistent with the study conducted by Meijering et al.,<sup><xref ref-type="bibr" rid="bibr24-0161734613476176">24</xref></sup> which concluded that Welch, Cosine, and Lanczos windows are among the best sinc-approximation windows for medical images while the Hamming is among the worst.<sup><xref ref-type="bibr" rid="bibr24-0161734613476176">24</xref></sup></p>
+<fig id="fig4-0161734613476176" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Impact of the sinc window type on lateral SNRe is shown. Statistically significant differences were not observed along the axial direction. (a) Lateral SNRe with no regularization. (b) Lateral SNRe with regularization.</p>
+<p><italic>SNRe</italic> = elastographic signal-to-noise ratio.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613476176-fig4.tif"/>
+</fig>
+<p>Content in the sinc-interpolation calculation is determined by both the window type and the window radius. <xref ref-type="fig" rid="fig5-0161734613476176">Figure 5</xref> shows the effect of window radius in data samples on the lateral SNRe. Axial SNRe results are similar. For both the cases of regularization and no regularization, a radius of one or two samples is insufficient. In the case of no regularization, improvements appear up to a radius of five samples. In contrast, with regularization, little gain is accrued after three samples. This type of regularization localizes the content of the similarity function, which decreases the need for an expansive interpolation window.</p>
+<fig id="fig5-0161734613476176" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Impact of the sinc window radius in data samples is shown. The radius is the same in all directions. (a) Lateral SNRe with no regularization for the simulation and TM phantom with 0.5% and 1.5% nominal strain magnitude. (b) The same quantity with regularization.</p>
+<p><underline>SNRe</underline> = elastographic signal-to-noise ratio; TM = tissue mimicking.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613476176-fig5.tif"/>
+</fig>
+<p>Since the two optimization methods generate similar results, the preferred optimization method would be the one with improved computational efficiency. <xref ref-type="table" rid="table2-0161734613476176">Table 2</xref> shows mean optimization for a subsample displacement calculation. While sinc interpolation is much more computationally expensive than the parametric methods, the required time is still feasible for real-time imaging. The Nelder–Mead simplex optimization is slightly faster than gradient-descent optimization. <xref ref-type="fig" rid="fig6-0161734613476176">Figure 6</xref> shows that the best initial simplex offset in samples is approximately 0.2 to 0.3 samples. However, a poor choice for an initial simplex offset only generates about a 5% increase in optimization time.</p>
+<table-wrap id="table2-0161734613476176" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Optimization Times.</p>
+</caption>
+<graphic alternate-form-of="table2-0161734613476176" xlink:href="10.1177_0161734613476176-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Interpolation Method</th>
+<th align="center">Mean Optimization Time (µs) ± 2 × <italic>SE</italic></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Parabolic</td>
+<td>0.21 ± 0.022</td>
+</tr>
+<tr>
+<td>Cosine</td>
+<td>1.07 ± 0.021</td>
+</tr>
+<tr>
+<td>Sinc Nelder–Mead</td>
+<td>261 ± 5</td>
+</tr>
+<tr>
+<td>Sinc gradient descent</td>
+<td>277 ± 6</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig6-0161734613476176" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Number of iterations until convergence is reached given the initial simplex offset for both directions.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613476176-fig6.tif"/>
+</fig>
+</sec>
+<sec id="section9-0161734613476176" sec-type="discussion|conclusions">
+<title>Discussion and Conclusion</title>
+<p>Bias errors that occur with parametric interpolation methods can be attributed to a mismatch between the underlying function being interpolated and the parametric model. An advantage of sinc interpolation is that it is theoretically unbiased<sup><xref ref-type="bibr" rid="bibr1-0161734613476176">1</xref></sup> and therefore will perform optimally, despite the underlying signal. Unlike some of the methods discussed in the “Introduction,” this method is not dependent on the similarity metric being normalized cross-correlation, for example, or the signal being narrowband. The approach remained applicable when regularization is applied. In addition, we performed 2-D interpolation instead of separable 1-D interpolations, which may help explain some improvement seen in the relatively noisy lateral direction.</p>
+<p>Of course, real-world sinc interpolation has limitations due to quantization and finite window lengths. A similar approach that may have better performance is one that is incorporated into the motion-tracking algorithm by Brusseau et al.<sup><xref ref-type="bibr" rid="bibr33-0161734613476176">33</xref></sup> Determination of a subsample normalized cross-correlation peak is part of an optimization approach earlier in the process; with each subsample-shift calculation of the normalized cross-correlation involving resampling of the post-deformation image over the area of the matching block. However, this has a significantly higher computational cost.</p>
+<p>As shown in <xref ref-type="fig" rid="fig2-0161734613476176">Figure 2</xref>, as long as the optimization method can robustly converge to the solution, the choice of optimization method does not affect the accuracy of the result. This particular problem does not require complex optimization method because it is well behaved and only has two parameters, the axial and lateral displacements. If the problem is initialized close to the solution, and the similarity metric is smooth and without local maxima in the subsample location of the peak, the peak location is estimated accurately.</p>
+<p>Although 2-D sinc-interpolation-based subsample displacement estimation was not feasible in the past, acceleration of computation speeds and application of an optimization method make the method applicable to real-time imaging. Future advances in computing speed will occur with multicore CPUs and general-purpose graphics processing unit (GPGPUs), so parallelization is an important property of an algorithm. The proposed algorithm is parallelizable across each displacement pixel. In our tests, the Nelder–Mead simplex achieved convergence close to the gradient-descent method. While gradient-descent methods often converge with fewer iterations than gradient-free methods like the Nelder–Mead simplex, they also require calculation of the gradient at each iteration, which is computationally expensive in this case.</p>
+<p>There is a trade-off between accuracy and computational burden for the window length (radius) and convergence tolerance. A convergence tolerance of 1e-5 samples in each direction appears to be sufficient; no gains are observed with increasing tolerance. Diminishing returns will be obtained with a window radius higher than four samples. The Welch, Lanczos, or Cosine windows should be used to take the greatest advantage of the given radius, and the Hamming window should be avoided.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>The authors are grateful to the editors for their helpful comments and to Miss Carolyn Stolfi for assistance in editing the manuscript.</p>
+</ack>
+<fn-group>
+<fn fn-type="conflict">
+<label>Declaration of Conflicting Interests</label>
+<p>The author(s) declared no potential conflicts of interest with respect to the research, authorship, and/or publication of this article.</p>
+</fn>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>The author(s) disclosed receipt of the following financial support for the research, authorship, and/or publication of this article: This work is supported in part by the National Institutes of Health Grants R21 EB010098-01, R01 NS064034-01A2, and R01CA112192-S103. Dr. McCormick was also supported by Grant T90DK070079 and R90DK071515 from the National Institute of Diabetes and Digestive and Kidney Diseases.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0161734613476176">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cespedes</surname><given-names>I</given-names></name>
+<name><surname>Huang</surname><given-names>Y</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+<name><surname>Spratt</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Methods for estimation of subsample time delays of digitized echo signals</article-title>. <source>Ultrason Imaging</source>. <year>1995</year>;<volume>17</volume>:<fpage>142</fpage>.</citation>
+</ref>
+<ref id="bibr2-0161734613476176">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Maskell</surname><given-names>DL</given-names></name>
+<name><surname>Woods</surname><given-names>GS</given-names></name>
+</person-group>. <article-title>The discrete-time quadrature subsample estimation of delay</article-title>. <source>IEEE Trans Instrum Meas</source>. <year>2002</year>;<volume>51</volume>:<fpage>133</fpage>-<lpage>37</lpage>.</citation>
+</ref>
+<ref id="bibr3-0161734613476176">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Maskell</surname><given-names>D</given-names></name>
+<name><surname>Woods</surname><given-names>G</given-names></name>
+</person-group>. <article-title>The estimation of subsample time delay of arrival in the discrete-time measurement of phase delay</article-title>. <source>IEEE Trans Instrum Meas</source>. <year>1999</year>;<volume>48</volume>:<fpage>1227</fpage>-<lpage>231</lpage>.</citation>
+</ref>
+<ref id="bibr4-0161734613476176">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Marple</surname><given-names>SL</given-names></name>
+</person-group> <article-title>Estimating group delay and phase delay via discrete-time “analytic” cross-correlation</article-title>. <source>IEEE Trans Signal Process</source>. <year>1999</year>;<volume>47</volume>:<fpage>2604</fpage>-<lpage>607</lpage>.</citation>
+</ref>
+<ref id="bibr5-0161734613476176">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Pesavento</surname><given-names>A</given-names></name>
+<name><surname>Perrey</surname><given-names>C</given-names></name>
+<name><surname>Krueger</surname><given-names>M</given-names></name>
+<name><surname>Ermert</surname><given-names>H</given-names></name>
+</person-group>. <article-title>A time-efficient and accurate strain estimation concept for ultrasonic elastography using iterative phase zero estimation</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1999</year>;<volume>46</volume>:<fpage>1057</fpage>-<lpage>1067</lpage>.</citation>
+</ref>
+<ref id="bibr6-0161734613476176">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Grennberg</surname><given-names>A</given-names></name>
+<name><surname>Sandell</surname><given-names>M</given-names></name>
+<name><surname>Member</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Estimation of subsample time delay differences in narrowband ultrasonic echoes using the Hilbert transform correlation</article-title>. <year>1994</year>;<volume>41</volume>:<fpage>588</fpage>-<lpage>95</lpage>.</citation>
+</ref>
+<ref id="bibr7-0161734613476176">
+<label>7.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Fromageau</surname><given-names>J</given-names></name>
+<name><surname>Delachartre</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Description of a new strain and displacement estimator for elastography</article-title>. <conf-name>IEEE Symposium on Ultrasonics</conf-name>. <year>2003</year>;<volume>2</volume>:<fpage>1911</fpage>-<lpage>914</lpage>.</citation>
+</ref>
+<ref id="bibr8-0161734613476176">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Basarab</surname><given-names>A</given-names></name>
+<name><surname>Gueth</surname><given-names>P</given-names></name>
+<name><surname>Liebgott</surname><given-names>H</given-names></name>
+<name><surname>Delachartre</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Phase-based block matching applied to motion estimation with unconventional beamforming strategies</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>2009</year>;<volume>56</volume>:<fpage>945</fpage>-<lpage>57</lpage>.</citation>
+</ref>
+<ref id="bibr9-0161734613476176">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>X</given-names></name>
+<name><surname>Zohdy</surname><given-names>MJ</given-names></name>
+<name><surname>Emelianov</surname><given-names>SY</given-names></name>
+<name><surname>O’Donnell</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Lateral speckle tracking using synthetic lateral phase</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>2004</year>;<volume>51</volume>:<fpage>540</fpage>-<lpage>50</lpage>.</citation>
+</ref>
+<ref id="bibr10-0161734613476176">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Viola</surname><given-names>F</given-names></name>
+<name><surname>Walker</surname><given-names>WF</given-names></name>
+</person-group>. <article-title>A spline-based algorithm for continuous time-delay estimation using sampled data</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>2005</year>;<volume>52</volume>:<fpage>80</fpage>-<lpage>93</lpage>.</citation>
+</ref>
+<ref id="bibr11-0161734613476176">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Viola</surname><given-names>F</given-names></name>
+<name><surname>Coe</surname><given-names>RL</given-names></name>
+<name><surname>Owen</surname><given-names>K</given-names></name>
+<name><surname>Guenther</surname><given-names>DA</given-names></name>
+<name><surname>Walker</surname><given-names>WF</given-names></name>
+</person-group>. <article-title>MUlti-dimensional Spline-based estimator (MUSE) for motion estimation: algorithm development and initial results</article-title>. <source>Ann Biomed Eng</source>. <year>2008</year>;<volume>36</volume>:<fpage>1942</fpage>-<lpage>960</lpage>.</citation>
+</ref>
+<ref id="bibr12-0161734613476176">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lai</surname><given-names>X</given-names></name>
+<name><surname>Torp</surname><given-names>H</given-names></name>
+</person-group>. <article-title>Interpolation methods for time-delay estimation using cross-correlation method for blood velocity measurement</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1999</year>;<volume>46</volume>:<fpage>277</fpage>-<lpage>90</lpage>.</citation>
+</ref>
+<ref id="bibr13-0161734613476176">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Boucher</surname><given-names>R</given-names></name>
+<name><surname>Hassab</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Analysis of discrete implementation of generalized cross correlator</article-title>. <source>IEEE Trans Acoust Speech Signal Process</source>. <year>1981</year>;<volume>29</volume>:<fpage>609</fpage>-<lpage>11</lpage>.</citation>
+</ref>
+<ref id="bibr14-0161734613476176">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jacovitti</surname><given-names>G</given-names></name>
+<name><surname>Scarano</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Discrete time techniques for time delay estimation</article-title>. <source>IEEE Trans Signal Process</source>. <year>1993</year>;<volume>41</volume>:<fpage>525</fpage>-<lpage>33</lpage>.</citation>
+</ref>
+<ref id="bibr15-0161734613476176">
+<label>15.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Foster</surname><given-names>SG</given-names></name>
+<name><surname>Embree</surname><given-names>PM</given-names></name>
+<name><surname>O’Brien</surname><given-names>WR</given-names></name>
+</person-group>. <article-title>Flow velocity profile via time-domain correlation: error analysis and computer simulation</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1990</year>;<volume>37</volume>:<fpage>164</fpage>-<lpage>75</lpage>.</citation>
+</ref>
+<ref id="bibr16-0161734613476176">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Moddemeijer</surname><given-names>R</given-names></name>
+</person-group>. <article-title>On the determination of the position of extrema of sampled correlators</article-title>. <source>IEEE Trans Signal Process</source>. <year>1991</year>;<volume>39</volume>:<fpage>216</fpage>-<lpage>19</lpage>.</citation>
+</ref>
+<ref id="bibr17-0161734613476176">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>de Jong</surname><given-names>PGM</given-names></name>
+<name><surname>Arts</surname><given-names>T</given-names></name>
+<name><surname>Hoeks</surname><given-names>APG</given-names></name>
+<name><surname>Reneman</surname><given-names>RS</given-names></name>
+</person-group>. <article-title>Determination of tissue motion velocity by correlation interpolation of pulsed ultrasonic echo signals</article-title>. <source>Ultrason Imaging</source>. <year>1990</year>;<volume>12</volume>:<fpage>84</fpage>-<lpage>98</lpage>.</citation>
+</ref>
+<ref id="bibr18-0161734613476176">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Giunta</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Fine estimators of two-dimensional parameters and application to spatial shift estimation</article-title>. <source>IEEE Trans Signal Process</source>. <year>1999</year>;<volume>73</volume>:<fpage>57</fpage>-<lpage>3207</lpage>.</citation>
+</ref>
+<ref id="bibr19-0161734613476176">
+<label>19.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zahiri-Azar</surname><given-names>R</given-names></name>
+<etal/></person-group>. <article-title>Methods for the estimation of sub-sample motion of digitized ultrasound echo signals in two dimensions</article-title>. <source>Conf Proc IEEE Eng Med Biol Soc</source>. <year>2008</year>;<volume>2008</volume>:<fpage>5581</fpage>-<lpage>584</lpage>.</citation>
+</ref>
+<ref id="bibr20-0161734613476176">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Geiman</surname><given-names>BJ</given-names></name>
+<name><surname>Bohs</surname><given-names>LN</given-names></name>
+<name><surname>Anderson</surname><given-names>ME</given-names></name>
+<name><surname>Breit</surname><given-names>SM</given-names></name>
+<name><surname>Trahey</surname><given-names>GE</given-names></name>
+</person-group>. <article-title>A novel interpolation strategy for estimating subsample speckle motion</article-title>. <source>Phys Med Biol</source>. <year>2000</year>;<volume>45</volume>:<fpage>1541</fpage>-<lpage>552</lpage>.</citation>
+</ref>
+<ref id="bibr21-0161734613476176">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Konofagou</surname><given-names>E</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+</person-group>. <article-title>A new elastographic method for estimation and imaging of lateral displacements, lateral strains, corrected axial strains and Poisson’s ratios in tissues</article-title>. <source>Ultrasound Med Biol</source>. <year>1998</year>;<volume>24</volume>:<fpage>1183</fpage>-<lpage>199</lpage>.</citation>
+</ref>
+<ref id="bibr22-0161734613476176">
+<label>22.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sumi</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Fine elasticity imaging utilizing RF-echo phase matching method</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1999</year>;<volume>46</volume>:<fpage>158</fpage>-<lpage>66</lpage>.</citation>
+</ref>
+<ref id="bibr23-0161734613476176">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ebbini</surname><given-names>E</given-names></name>
+</person-group>. <article-title>Phase-coupled two-dimensional speckle tracking algorithm</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>2006</year>;<volume>53</volume>:<fpage>972</fpage>-<lpage>90</lpage>.</citation>
+</ref>
+<ref id="bibr24-0161734613476176">
+<label>24.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Meijering</surname><given-names>E</given-names></name>
+<name><surname>Niessen</surname><given-names>W</given-names></name>
+<name><surname>Pluim</surname><given-names>J</given-names></name>
+<name><surname>Viergever</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Quantitative comparison of sinc-approximating kernels for medical image interpolation</article-title>. In: <source>Taylor C,&amp; Colchester A, ed. Medical Image Computing and Computer-Assisted Intervention–MICCAI’99</source>. <publisher-name>Berlin: Springer</publisher-name>; <year>1999</year>; <fpage>210</fpage>-<lpage>217</lpage>.</citation>
+</ref>
+<ref id="bibr25-0161734613476176">
+<label>25.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Yoo</surname><given-names>TS</given-names></name>
+<etal/></person-group>. <article-title>Engineering and algorithm design for an image processing API: a technical report on ITK–The Insight Toolkit</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Westwood</surname><given-names>J</given-names></name>
+</person-group>, ed. <source>Medicine Meets Virtual Reality</source>. <publisher-loc>Amsterdam, Netherlands</publisher-loc>: <publisher-name>IOS Press</publisher-name>; <year>2002</year>; <volume>85</volume>:<fpage>586</fpage>-<lpage>92</lpage>.</citation>
+</ref>
+<ref id="bibr26-0161734613476176">
+<label>26.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Ibanez</surname><given-names>L</given-names></name>
+<name><surname>Schroeder</surname><given-names>W</given-names></name>
+<name><surname>Ng</surname><given-names>L</given-names></name>
+<name><surname>Cates</surname><given-names>J</given-names></name>
+</person-group>. <article-title>The ITK Software Guide</article-title>. <publisher-loc>Albany, NY</publisher-loc>: <publisher-name>Kitware, Inc</publisher-name>; <year>2005</year>.</citation>
+</ref>
+<ref id="bibr27-0161734613476176">
+<label>27.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Lindeberg</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Scale-Space Theory in Computer Vision</article-title>. <publisher-name>Dordrecht, The Netherlands: Kluwer Academic Publishers</publisher-name>;<year>1994</year>.</citation>
+</ref>
+<ref id="bibr28-0161734613476176">
+<label>28.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chaturvedi</surname><given-names>P</given-names></name>
+<name><surname>Insana</surname><given-names>MF</given-names></name>
+<name><surname>Hall</surname><given-names>TJ</given-names></name>
+</person-group>. <article-title>2D companding for noise reduction in strain imaging</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1998</year>;<volume>45</volume>:<fpage>179</fpage>-<lpage>91</lpage>.</citation>
+</ref>
+<ref id="bibr29-0161734613476176">
+<label>29.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>McCormick</surname><given-names>MM</given-names></name>
+<name><surname>Rubert</surname><given-names>N</given-names></name>
+<name><surname>Varghese</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Bayesian regularization applied to ultrasound strain imaging</article-title>. <source>IEEE Trans Biomed Eng</source>. <year>2011</year>;<volume>58</volume>:<fpage>1612</fpage>-<lpage>1620</lpage>.</citation>
+</ref>
+<ref id="bibr30-0161734613476176">
+<label>30.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>Y</given-names></name>
+<name><surname>Zagzebski</surname><given-names>JA</given-names></name>
+</person-group>. <article-title>A frequency domain model for generating B-mode images with array transducers</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1999</year>;<volume>46</volume>:<fpage>690</fpage>-<lpage>99</lpage>.</citation>
+</ref>
+<ref id="bibr31-0161734613476176">
+<label>31.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Lai</surname><given-names>WM</given-names></name>
+<name><surname>Rubin</surname><given-names>D</given-names></name>
+<name><surname>Krempl</surname><given-names>E</given-names></name>
+</person-group>. <article-title>Introduction to Continuum Mechanics</article-title>. <publisher-loc>Oxford, UK</publisher-loc>: <publisher-name>Elsevier</publisher-name>;<year>1993</year>.</citation>
+</ref>
+<ref id="bibr32-0161734613476176">
+<label>32.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Varghese</surname><given-names>T</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+</person-group>. <article-title>A theoretical framework for performance characterization of elastography: the strain filter</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1997</year>; <volume>44</volume>:<fpage>164</fpage>-<lpage>72</lpage>.</citation>
+</ref>
+<ref id="bibr33-0161734613476176">
+<label>33.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Brusseau</surname><given-names>E</given-names></name>
+<name><surname>Kybic</surname><given-names>J</given-names></name>
+<name><surname>Deprez</surname><given-names>J</given-names></name>
+<name><surname>Basset</surname><given-names>O</given-names></name>
+</person-group>. <article-title>2-D locally regularized tissue strain estimation from radio-frequency ultrasound images: theoretical developments and results on experimental data</article-title>. <source>IEEE Transactions on Medical Imaging</source>. <year>2008</year>;<volume>27</volume>:<fpage>145</fpage>-<lpage>60</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

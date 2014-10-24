@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+    @font-face {
+        font-family: "heroLight";
+        src: url(hero_light.ttf);
+    }
+
+    
+    body{
+        background: #232323;
+        margin:0;
+        overflow: hidden;;
+    }
+
+    .title{
+        font-family: "heroLight";
+        height: 100%;
+        width:100%;
+        position: absolute;
+        top:30px;
+        left:0;
+        text-align: center;
+    }
+
+    .bigdata{
+        font-size: 90px;
+        color: white;
+        letter-spacing: 10px;
+    }
+
+    .society{
+        font-size: 79px;
+        color: #F1F1C8;
+        letter-spacing: 10px;
+        display: inline-block;
+        margin-top: -10px;
+    }
+    #interactive{
+        position: relative;
+    }
+    #interactive svg{
+        font-family:Sans-Serif;
+        font-size:12px;
+        margin-top:90px;
+    }
+
+    #interactive svg circle {
+        fill: #ff9;
+    }
+
+    #inteactive svg text{
+        fill: #fff;
+        opacity: 0 !important;
+    }
+    .enlarge, .shrink{
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        font-size: 20px;
+        color:white;
+        z-index:1000;
+        cursor: pointer;;
+    }
+    .shrink{
+        display: none;
+    }
+</style>
+<body>
+<div class="title">
+
+    <span class="bigdata">BIG DATA</span><br/>
+    <span class="society">& SOCIETY</span></div>
+
+</div>
+<div id="interactive"></div>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+
+<script>
+
+var width = $( window ).width(),
+   height =  $( window ).height();
+
+var open=true;
+
+var link, node, txts;
+
+var force = d3.layout.force()
+        .charge(-440)
+        .gravity(0.1)
+        .linkStrength(1)
+        //.chargeDistance(300)
+        .friction(0.85)
+        .linkDistance(function(d){
+
+            return 140 - (d.value*14);
+        })
+    //.friction(0.9)
+    //.chargeDistance(100)
+        .size([width, height]);
+
+var svg = d3.select("#interactive").append("svg")
+        .attr("width", width)
+        .attr("height", height-100)
+
+
+d3.json("tagGraph2.json", function(error, graph) {
+
+
+    graph.nodes.forEach(function(d){
+        d.x = Math.random()*width/3+(width*2/3);
+        d.y =Math.random()*height/3;
+
+
+    })
+
+    force
+            .nodes(graph.nodes)
+            .links(graph.links)
+            .start();
+
+
+    link = svg.selectAll(".link")
+            .data(graph.links)
+            .enter().append("line")
+            .attr("class", "link")
+            .style("stroke", '#ffa')
+            .style("stroke-width", function(d) { return d.value; })
+            .style("stroke-opacity", function(d) { return d.value/5 });
+
+// define the nodes
+    node = svg.selectAll(".node")
+            .data(force.nodes())
+            .enter().append("g")
+            .attr("class", "node")
+            .on("click",deselect)
+            .call(force.drag);
+
+// add the nodes
+    node.append("circle")
+            .style("fill-opacity",0)
+            .attr("r", function(d) { return Math.sqrt(d.size/Math.PI)*8; })
+            .on("mouseover",function(d){
+                txts.filter(function(e){return e.name===d.name})
+                        .attr("x", function(e){return Math.sqrt(e.size/Math.PI)*8+3})
+                        .attr("y", 0)
+            })
+            .on("mouseout",function(d){
+                if(!d.sel) {
+                    txts.filter(function (e) {
+                        return e.name === d.name
+                    })
+                            .attr("x", function (e) {
+                                if (e.size > 1) return Math.sqrt(e.size/Math.PI)*8+3;
+                                else return -10000;
+                            })
+                            .attr("y", function (e) {
+                                if (e.size > 1) return 0;
+                                else return -10000;
+                            })
+                }
+            })
+            .on("click",select);
+
+// add the text
+    txts=node.append("text")
+            .attr("x", function(e){
+                if(e.size>1) return Math.sqrt(e.size/Math.PI)*8+3;
+                else return 10000;
+            })
+            .attr("y", function(e){
+                if(e.size>1) return 0;
+                else return 10000;
+            })
+            .style("opacity",0)
+            .style("fill","white")
+            .text(function(d) { return d.name; });
+
+
+    force.on("tick", function() {
+        node
+                .attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y + ")"; });
+
+
+        link.attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+
+
+        force.alpha(0.9)
+
+        d3.timer(function() { force.resume(); })
+        var prob = Math.random();
+        if(prob>0.95) rand();
+
+    });
+});
+
+
+var enlarge = function() {
+    open=true;
+    $( "#interactive" ).animate({
+        height: 800
+    }, 1000, function() {
+        $( "#interactive .enlarge").hide();
+        $( "#interactive .shrink").show();
+        force.alpha(0.2);
+
+    });
+
+    $( "#interactive svg" ).animate({
+        top:0,
+        right:0
+    }, 1000, function() {
+        svg.selectAll("circle").transition().duration(500).style("fill-opacity",0.7)
+        svg.selectAll("text").transition().duration(500).style("opacity",0.7)
+    });
+}
+
+
+var shrink = function() {
+
+    deselect();
+    open=false;
+    $( "#interactive" ).animate({
+        height: 170
+    }, 1000, function() {
+        $( "#interactive .enlarge").show();
+        $( "#interactive .shrink").hide();
+        force.alpha(0.2);
+    });
+
+    $( "#interactive svg" ).animate({
+        top:-340,
+        right:-340
+    }, 1000, function() {
+        svg.selectAll("circle").transition().duration(500).style("fill-opacity",0)
+        svg.selectAll("text").transition().duration(500).style("opacity",0)
+    });
+}
+
+
+var rand = function() {
+
+    var r = Math.random();
+    var a = node.filter(function(e,i){
+        return Math.round(node.size()*r)== i;
+    })
+
+    a.select("text")
+            .attr("x", function(e){return Math.sqrt(e.size / Math.PI) * 8 + 3})
+            .attr("y", 0);
+
+    a.selectAll("circle").transition().duration(1000).style("fill-opacity",0.7);
+    a.select("text").transition().duration(1000).style("opacity",1);
+
+
+   setTimeout(function(){
+        a.selectAll("circle").transition().duration(1000).style("fill-opacity",0);
+        a.select("text").transition().duration(1000).style("opacity",0);
+    },5000);
+
+}
+
+
+d3.selection.prototype.size = function() {
+    var n = 0;
+    this.each(function() { ++n; });
+    return n;
+};
+
+
+
+var select = function(d) {
+    if(open) {
+        d.sel = true;
+        d3.event.stopPropagation();
+
+        txts.attr("x", function (e) {
+            if (e.size > 1) return Math.sqrt(e.size / Math.PI) * 8 + 3;
+            else return 10000;
+        })
+                .attr("y", function (e) {
+                    if (e.size > 1) return 0;
+                    else return 10000;
+                })
+                .style("opacity", 0.7)
+
+
+        link.transition().duration(800).style("opacity", 0.1);
+        node.transition().duration(800).style("opacity", 0.1);
+
+
+        var sel = link.filter(function (e) {
+            return e.source.name === d.name || e.target.name === d.name;
+        }).style("opacity", 1);
+
+        sel.each(function (e) {
+
+           var n =  node.filter(function (f) {
+                return f.name === e.source.name || f.name === e.target.name;
+            })
+                   .transition().duration(800).style("opacity", 1)
+                   n .select("text")
+                    .attr("x", function(e){return Math.sqrt(e.size / Math.PI) * 8 + 3})
+                    .attr("y", 0)
+                    .style("opacity", 1);
+
+        })
+    }
+};
+
+var deselect = function() {
+    if(open) {
+        node.selectAll("circle").each(function (d) {
+            d.sel = false;
+        })
+        node.style("opacity", 1);
+        link.style("opacity", 1);
+        txts.attr("x", function (e) {
+            if (e.size > 1) return Math.sqrt(e.size / Math.PI) * 8 + 3;
+            else return 10000;
+        })
+                .attr("y", function (e) {
+                    if (e.size > 1) return 0;
+                    else return 10000;
+                })
+                .style("opacity", 0.7);
+    }
+
+}
+
+
+$("#interactive").on("click","svg",deselect);
+
+</script>
+
+
+
+</body>

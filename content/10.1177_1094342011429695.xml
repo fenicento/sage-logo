@@ -1,0 +1,1666 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">HPC</journal-id>
+<journal-id journal-id-type="hwp">sphpc</journal-id>
+<journal-title>The International Journal of High Performance Computing Applications</journal-title>
+<issn pub-type="ppub">1094-3420</issn>
+<issn pub-type="epub">1741-2846</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1094342011429695</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1094342011429695</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Lattice QCD on GPU clusters, using the QUDA library and the Chroma software system</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name>
+<surname>Joó</surname>
+<given-names>Bálint</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342011429695">1</xref>
+<xref ref-type="corresp" rid="corresp1-1094342011429695"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Clark</surname>
+<given-names>Mike A.</given-names>
+</name>
+<xref ref-type="aff" rid="aff2-1094342011429695">2</xref>
+</contrib>
+<bio>
+<title>Author’s Biographies</title>
+<p>
+<italic>Dr Bálint Joó</italic> received his PhD in theoretical physics from the University of Edinburgh in 2000. He has held post-doctoral positions at the University of Kentucky, working on Monte Carlo algorithm in lattice QCD; at Columbia University working as a member of the design team for the QCDOC supercomputer; and back at the University of Edinburgh investigating algorithms for chiral fermions. Since 2005, he has been working at the Jefferson Lab as a co-author and maintainer of the Chroma software system for Lattice QCD calculations. His interests lie in the areas of Lattice QCD algorithms (in particular solvers and Monte Carlo methods), high-performance computing (in particular, taking lattice QCD calculations to the exascale) and nuclear physics.</p>
+<p>
+<italic>Dr Mike Clark</italic> has a background in high-energy physics, having completed his doctoral research in Monte Carlo algorithms for lattice field theory in 2005, graduating from the University of Edinburgh. He subsequently moved to Boston University, developing adaptive multigrid algorithms and symplectic integrators. During this time, he initiated research into harnessing GPUs for lattice theory computation. In 2009, he moved to Harvard University to continue working on algorithms for GPUs and many-core processors, focusing on signal processing and multigrid algorithms. His present research lies at the interface between physics, algorithms and computation.</p>
+</bio>
+</contrib-group>
+<aff id="aff1-1094342011429695">
+<label>1</label>Thomas Jefferson National Accelerator Facility (Jefferson Lab), Newport News, VA, USA</aff>
+<aff id="aff2-1094342011429695">
+<label>2</label>Harvard-Smithsonian Center for Astrophysics, Cambridge, MA, USA</aff>
+<author-notes>
+<corresp id="corresp1-1094342011429695">Bálint Joó, Thomas Jefferson National Accelerator Facility (Jefferson Lab), 12000 Jefferson Avenue, Suite 3, MS 12B2, Room F217, Newport News, VA 23606, USA Email: <email>bjoo@jlab.org</email>
+</corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>11</month>
+<year>2012</year>
+</pub-date>
+<volume>26</volume>
+<issue>4</issue>
+<issue-title>Special Issue: Manycore and Accelerator-based High-performance Scientific Computing</issue-title>
+<fpage>386</fpage>
+<lpage>398</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>The QUDA library for optimized lattice quantum chromodynamics using GPUs, combined with a high-level application framework such as the Chroma software system, provides a powerful tool for computing quark propagators, a key step in current calculations of hadron spectroscopy, nuclear structure, and nuclear forces. In this contribution we discuss our experiences, including performance and strong scaling of the QUDA library and Chroma on the Edge Cluster at Lawrence Livermore National Laboratory and on various clusters at Jefferson Lab. We highlight some scientific successes and consider future directions for graphics processing units in lattice quantum chromodynamics calculations.</p>
+</abstract>
+<kwd-group>
+<kwd>Lattice QCD</kwd>
+<kwd>GPU Computing</kwd>
+<kwd>Chroma</kwd>
+<kwd>QUDA</kwd>
+<kwd>Nuclear Physics</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1094342011429695">
+<title>1 Introduction</title>
+<p>Quantum chromodynamics (QCD) is the theory of the strong nuclear force. It is a quantum field theory describing the interactions of quarks through the exchange of gauge bosons called gluons. As part of the highly successful Standard Model of particles and their interactions, QCD has an important role to play in both nuclear and high-energy physics. While the theory is formulated in terms of quark and gluon fields, individual quarks cannot be found in isolation and are bound by the gluons into hadrons such as protons and neutrons. The various quantum excitations of the quark and gluon fields give rise to a rich spectrum of hadronic states and QCD predicts the existence of exotic matter such as glueballs and hybrid quark–gluon states. Residual QCD interactions are responsible for binding hadrons together into nuclei. QCD input is also required for high-energy physics calculations, such as the determination of the angles in the unitarity triangle, which is related to the imbalance of matter and anti-matter in the universe. QCD calculations are challenging, however, because traditional perturbative approaches fail at low energies. Lattice QCD (LQCD) is the only known model-independent, non-perturbative technique for carrying out numerical calculations of QCD. Major efforts are underway to tackle the important physics questions outlined previously via LQCD calculations. In particular, calculations of the spectrum of hadrons and the identification of the states in the spectrum are key components of the theory program of Jefferson Lab (JLab) where these calculations inform the current and future experimental program and contribute to meeting the U.S. Department of Energy milestones and performance measures. The work on hybrid and exotic states is particularly synergistic with the flagship GlueX experiment of the up-coming JLab 12-GeV upgrade.</p>
+<p>LQCD calculations are computationally demanding and typically require large allocations on leadership class supercomputers. The rise of computing with general-purpose graphics processing units (GPGPUs or GPUs) has recently enabled a disruptive drop in the cost of calculations which are amenable to GPU acceleration. Many computer centers are now deploying clusters of GPU-accelerated nodes, and the heterogeneous nature of GPU-enabled cluster nodes is often taken as indicative of the path to exascale. The Fermi Tesla C2050 GPU from NVIDIA features a peak performance of around 1 teraflop per second (Tflops) in single precision with an internal bandwidth to global memory on the device of around 134 gibibytes per second (GiB/s)<sup>
+<xref ref-type="fn" rid="fn1-1094342011429695">1</xref>
+</sup>. However, communications between such devices within a node are constrained by the bandwidth of the Peripheral Control Interface Express (PCIe) bus connecting the devices to the host. The second-generation PCIe x16 bus features a bi-directional bandwidth of 14.9 GiB/s comprising 7.45 GiB/s in each direction. This can in principle pose a bottleneck for scaling bandwidth bound codes to multiple GPUs within a host. Another scaling bottleneck may be the fabric connecting nodes together. A popular interconnect at the time of writing is Quad Data Rate (QDR) Infiniband (IB), for which a single x4 lane provides a maximum theoretical bi-directional bandwidth of 2 × 32 gigabits per second (Gb/s) or 7.45 GiB/s. With this in mind, the space of options available to a GPU cluster architect wishing to maximize the performance to cost ratio of a cluster for a given application includes choices regarding the number of cards per node, the PCIe architecture of the nodes, and the interconnect between the nodes.</p>
+<p>In this contribution we report on our experiences using the Chroma software system for LQCD (<xref ref-type="bibr" rid="bibr15-1094342011429695">Edwards and Joo 2005</xref>) accelerated by the QUDA library (<xref ref-type="bibr" rid="bibr8-1094342011429695">Clark et al. 2010</xref>) of LQCD specific solvers for NVIDIA GPUs on three different cluster architectures. The clusters differ in terms of the number and type of GPUs used within the node, the PCIe architecture within a node and the interconnect fabric between the nodes. We first characterize the architectures by measuring achievable PCIe bandwidths on the nodes, after which we report on LQCD benchmarks and review some recent scientific results enabled through the use of GPU computing.</p>
+<p>The remainder of this contribution is organized as follows: in Section 2 we give a more detailed overview of LQCD calculations. We consider related efforts in Section 3. We discuss the architecture of the GPU clusters used in Section 4. Our bandwidth tests are described along with their results in Section 5 and our solver benchmarks are presented in Section 6. We round off the discussion with some recent results from hadron spectroscopy in Section 7 and we summarize in Section 8.</p>
+</sec>
+<sec id="section2-1094342011429695">
+<title>2 Lattice QCD calculations</title>
+<p>In an LQCD calculation, the four-dimensional space–time is discretized onto a four-dimensional lattice. Sites of the lattice are labelled by a site index <italic>x</italic>, which is a four-dimensional site index corresponding to coordinates (x, <italic>t</italic>), with x being a three-dimensional spatial and <italic>t</italic> corresponding to (Euclidean) time coordinates, respectively. A lattice with lengths <italic>L<sub>x</sub>
+</italic>, <italic>L<sub>y</sub>
+</italic>, <italic>L<sub>z</sub>
+</italic> and <italic>L<sub>t</sub>
+</italic> in the four space–time dimensions thus has a lattice volume of <italic>V</italic> = <italic>L<sub>x</sub>
+</italic>
+<italic>L<sub>y</sub>
+</italic>
+<italic>L<sub>z</sub>
+</italic>
+<italic>L<sub>t</sub>
+</italic> sites. It is typical to set the spatial dimensions equal: <inline-formula id="inline-formula1-1094342011429695">
+<mml:math id="mml-inline1-1094342011429695">
+<mml:msub>
+<mml:mi>L</mml:mi>
+<mml:mi>x</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>L</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msub>
+<mml:mi>L</mml:mi>
+<mml:mi>z</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi>L</mml:mi>
+</mml:math>
+</inline-formula>, and the volume is thus denoted <inline-formula id="inline-formula2-1094342011429695">
+<mml:math id="mml-inline2-1094342011429695">
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mi>L</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:msub>
+<mml:mi>L</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+</mml:math>
+</inline-formula>. Assuming a spatial lattice spacing between the sites of <italic>a<sub>s</sub>
+</italic> and a temporal lattice spacing of <italic>a<sub>t</sub>
+</italic>, the physical volume of the lattice is <inline-formula id="inline-formula3-1094342011429695">
+<mml:math id="mml-inline3-1094342011429695">
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">p</mml:mi>
+<mml:mi mathvariant="normal">h</mml:mi>
+<mml:mi mathvariant="normal">y</mml:mi>
+<mml:mi mathvariant="normal">s</mml:mi>
+</mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:msub>
+<mml:mi>a</mml:mi>
+<mml:mi>s</mml:mi>
+</mml:msub>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+</mml:mfenced>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:msub>
+<mml:mi>a</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:msub>
+<mml:mi>L</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:mfenced>
+</mml:math>
+</inline-formula>. Quark fields are discretized onto the lattice sites and are denoted as <italic>ψ</italic>(<italic>x</italic>). The continuum gluon fields <inline-formula id="inline-formula4-1094342011429695">
+<mml:math id="mml-inline4-1094342011429695">
+<mml:msub>
+<mml:mi>A</mml:mi>
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> are typically transcribed to their parallel transporters, and become <italic>SU</italic>(3) matrices ascribed to the edges (links) between lattice sites. Hence, the lattice gluon field between a site <italic>x</italic> and its neighbor <inline-formula id="inline-formula5-1094342011429695">
+<mml:math id="mml-inline5-1094342011429695">
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mo accent="true" stretchy="false">ˆ</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> in the <italic>μ</italic> direction is denoted by <inline-formula id="inline-formula6-1094342011429695">
+<mml:math id="mml-inline6-1094342011429695">
+<mml:msub>
+<mml:mi>U</mml:mi>
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mi>g</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:msubsup>
+<mml:mi>A</mml:mi>
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mi>k</mml:mi>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msup>
+<mml:mi mathvariant="italic">λ</mml:mi>
+<mml:mi>k</mml:mi>
+</mml:msup>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula> where <italic>a</italic> is the lattice spacing as appropriate to the dimension, <inline-formula id="inline-formula7-1094342011429695">
+<mml:math id="mml-inline7-1094342011429695">
+<mml:msup>
+<mml:mi mathvariant="italic">λ</mml:mi>
+<mml:mi>k</mml:mi>
+</mml:msup>
+</mml:math>
+</inline-formula> are the generators of the <italic>SU</italic>(3) group and <inline-formula id="inline-formula8-1094342011429695">
+<mml:math id="mml-inline8-1094342011429695">
+<mml:msubsup>
+<mml:mi>A</mml:mi>
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mi>k</mml:mi>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> are the components of the continuum gauge field in the Lie algebra <italic>su</italic>(3). The interactions between the quarks and gluons are dictated by a lattice form of the continuum action. The resulting lattice theory is a fully fledged lattice quantum field theory in its own right, and shares similarities with statistical mechanical spin systems. Details are beyond the scope of this paper and the interested reader is referred to for example <xref ref-type="bibr" rid="bibr10-1094342011429695">Creutz (1983)</xref>, <xref ref-type="bibr" rid="bibr30-1094342011429695">Rothe (2005)</xref> and <xref ref-type="bibr" rid="bibr25-1094342011429695">Montvay and Munster (1994)</xref>.</p>
+<p>Lattice computations typically proceed by a hybrid molecular-dynamics Monte Carlo method (<xref ref-type="bibr" rid="bibr11-1094342011429695">Duane et al. 1987</xref>; <xref ref-type="bibr" rid="bibr9-1094342011429695">Clark and Kennedy 2007</xref>), in which successive samples of gluon fields on the lattice are generated in sequence. A sample of the gluon fields on every link of the lattice is referred to as a <italic>gauge configuration</italic>. Gauge configuration generation proceeds by proposing a new configuration from the previous and subjecting the proposed configuration to a Metropolis accept/reject test. If a proposed configuration is rejected, the old configuration becomes the new one. The proposal of the new configuration from the old one proceeds by evolving its links according to Hamiltonian Molecular Dynamics (MD) through a fictitious MD time, treating the links as canonical coordinates. Since the MD is energy preserving to the order of the integrator, the acceptance rate can be tuned as desired by tuning the integrator step size. In between trajectories, canonical momenta to the links are drawn from a heat bath. This step boosts the system between hyperplanes of constant energy, and interleaving this step with the MD proposals should lead to an ergodic algorithm. If, in addition, the MD is reversible and area preserving, detailed balance is satisfied and the Monte Carlo process is guaranteed to settle into the equilibrium of the action. At this point many more configurations need to be generated for the computation of observables. This first phase of a lattice computation is a sequential Markov process, however it admits data parallelism. The lattice can be divided amongst the processors of a parallel computer. The action is local, and as a result, typically only nearest neighbor or next to nearest neighbor communications are needed. The numerically intensive part of this stage of the calculation is the evaluation of the forces in the MD, which involve the solution of variants of the lattice Dirac equation of the form:<disp-formula id="disp-formula1-1094342011429695">
+<mml:math id="mml-disp1-1094342011429695">
+<mml:msup>
+<mml:mi>M</mml:mi>
+<mml:mo>†</mml:mo>
+</mml:msup>
+<mml:mi>M</mml:mi>
+<mml:mi mathvariant="italic">ψ</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi mathvariant="italic">χ</mml:mi>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1094342011429695" xlink:href="10.1177_1094342011429695-eq1.tif"/>
+</disp-formula>
+<disp-formula id="disp-formula2-1094342011429695">
+<mml:math id="mml-disp2-1094342011429695">
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:msup>
+<mml:mi>M</mml:mi>
+<mml:mo>†</mml:mo>
+</mml:msup>
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">σ</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:mfenced>
+<mml:msub>
+<mml:mi mathvariant="italic">ψ</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi mathvariant="italic">χ</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-1094342011429695" xlink:href="10.1177_1094342011429695-eq2.tif"/>
+</disp-formula>where <italic>M</italic> is the quark–gluon interaction matrix also known as the Dirac matrix or Dirac operator. The operator acts in space–time, spin and color spaces, however unless otherwise specified, we suppress these internal-space indices for simplicity. In the first equation <italic>ψ</italic> and <italic>χ</italic> are the quark fields, which are vectors with 12 complex components per lattice site, corresponding to the tensor product of four spin and three color components, although again we have suppressed these indices for simplicity. In the second equation a family of shifted equations need to be solved for every shift <inline-formula id="inline-formula9-1094342011429695">
+<mml:math id="mml-inline9-1094342011429695">
+<mml:msub>
+<mml:mi mathvariant="italic">σ</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+</mml:math>
+</inline-formula>. The matrix <italic>M</italic> has dimension 12<italic>V</italic>, and a condition number that increases as some inverse power of the quark mass and the lattice spacings. As the input quark mass in <italic>M</italic> approaches its physical value, <italic>M</italic> becomes near singular.</p>
+<p>The second stage of the calculation is the evaluation of observables. For the study of hadrons a key component of observable construction is the quark propagator:<disp-formula id="disp-formula3-1094342011429695">
+<mml:math id="mml-disp3-1094342011429695">
+<mml:mi>G</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mfenced close="]" open="[">
+<mml:mrow>
+<mml:msup>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfenced>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">,</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-1094342011429695" xlink:href="10.1177_1094342011429695-eq3.tif"/>
+</disp-formula>where <italic>M</italic> is again the Dirac matrix. Elements of <italic>G</italic> are obtained by solving the system<disp-formula id="disp-formula4-1094342011429695">
+<mml:math id="mml-disp4-1094342011429695">
+<mml:mi>M</mml:mi>
+<mml:mi mathvariant="italic">ψ</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi mathvariant="italic">χ</mml:mi>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-1094342011429695" xlink:href="10.1177_1094342011429695-eq4.tif"/>
+</disp-formula>several times for different source vectors <italic>χ</italic>, and so this stage of the analysis is also dominated by the need to solve the lattice Dirac equation. However, now the work can be task parallelized over the available configurations. Hence, this work can be carried out quite cost effectively in a capacity mode of operation on smaller partitions, or on dedicated clusters. Our discussion of solvers on GPUs currently pertains most strongly to this step of the calculation.</p>
+<p>In the final stage of the analysis, propagators obtained in the second step are <italic>contracted</italic> to form correlation functions. As an example consider<disp-formula id="disp-formula5-1094342011429695">
+<mml:math id="mml-disp5-1094342011429695">
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mo fence="false" stretchy="false">〈</mml:mo>
+<mml:mrow>
+<mml:munder>
+<mml:mo movablelimits="false" stretchy="false">∑</mml:mo>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold">x</mml:mi>
+</mml:mrow>
+</mml:mrow>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">T</mml:mi>
+<mml:mi mathvariant="normal">r</mml:mi>
+</mml:mrow>
+</mml:mrow>
+
+<mml:msup>
+<mml:mi>G</mml:mi>
+<mml:mo>†</mml:mo>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>G</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo fence="false" stretchy="false">〉</mml:mo>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mrow>
+<mml:munderover>
+<mml:mo movablelimits="false" stretchy="false">∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mi mathvariant="normal">∞</mml:mi>
+</mml:munderover>
+</mml:mrow>
+<mml:msubsup>
+<mml:mi>A</mml:mi>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:msub>
+<mml:mi>E</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">,</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-1094342011429695" xlink:href="10.1177_1094342011429695-eq5.tif"/>
+</disp-formula>where the summation is over spatial sites x, and the expectation value <inline-formula id="inline-formula10-1094342011429695">
+<mml:math id="mml-inline10-1094342011429695">
+<mml:mo fence="false" stretchy="false">〈</mml:mo>
+<mml:mo stretchy="false">⋯</mml:mo>
+<mml:mo fence="false" stretchy="false">〉</mml:mo>
+</mml:math>
+</inline-formula> is taken over all available configurations in the ensemble, giving <italic>C</italic>(<italic>t</italic>) which is a correlation function coupling to the pseudo-scalar channel, containing contributions from all energy states <italic>E<sub>i</sub>
+</italic> in this channel. At large Euclidean time <italic>t</italic> one has <inline-formula id="inline-formula11-1094342011429695">
+<mml:math id="mml-inline11-1094342011429695">
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">→</mml:mo>
+<mml:msub>
+<mml:mi>A</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mi>e</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:msub>
+<mml:mi>E</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula> and one can extract the lowest energy <italic>E</italic>
+<sub>0</sub> which in this case would correspond to the rest mass of a The π meson. As the signals for higher states die out exponentially faster than the signals for lower states, extracting information for excited states is challenging as we discuss in Section 7.</p>
+</sec>
+<sec id="section3-1094342011429695">
+<title>2.1 The lattice Dirac equation</title>
+<p>As discussed previously the chief numerical cost in the first two stages of lattice calculations lie in the necessity to solve various forms of the lattice Dirac equation. In the Sheikholeslami–Wohlert (<xref ref-type="bibr" rid="bibr31-1094342011429695">Sheikholeslami and Wohlert 1985</xref>) (also known as Wilson–Clover) formulation of quarks on the lattice, the Dirac matrix takes the form<disp-formula id="disp-formula6-1094342011429695">
+<mml:math id="mml-disp6-1094342011429695">
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-1094342011429695" xlink:href="10.1177_1094342011429695-eq6.tif"/>
+</disp-formula>where <italic>A</italic> is the so-called ‘clover term’ and <italic>D</italic> is the so called Wilson–Dslash term, hereafter referred to as Dslash. Typically, the four-dimensional lattice sites are colored as even and odd (or red and black) and the system is solved via solving the Schur complement system. The Schur complement of <italic>M</italic> is<disp-formula id="disp-formula7-1094342011429695">
+<mml:math id="mml-disp7-1094342011429695">
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>M</mml:mi>
+<mml:mo accent="true" stretchy="false">˜</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>o</mml:mi>
+<mml:mi>o</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:msubsup>
+<mml:mi>A</mml:mi>
+<mml:mrow>
+<mml:mi>o</mml:mi>
+<mml:mi>o</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:msub>
+<mml:mi>D</mml:mi>
+<mml:mrow>
+<mml:mi>o</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msubsup>
+<mml:mi>A</mml:mi>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:msub>
+<mml:mi>D</mml:mi>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+<mml:mi>o</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">,</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-1094342011429695" xlink:href="10.1177_1094342011429695-eq7.tif"/>
+</disp-formula>where the labels ‘oo’ (odd–odd) and ‘ee’ (even–even) refer to operators diagonal in even–odd space, and ‘eo’ (even–odd) and ‘oe’ (odd–even) refer to operators that are off-diagonal in even–odd space (take data from sites of one color, to sites of another). The full solution is reconstructed after the solve. The <italic>A</italic> and <italic>A</italic>
+<sup>-1</sup> terms are completely local to a site, whereas the <italic>D</italic> operator is very much like a nearest-neighbor stencil. Although <inline-formula id="inline-formula12-1094342011429695">
+<mml:math id="mml-inline12-1094342011429695">
+<mml:mover accent="true">
+<mml:mi>M</mml:mi>
+<mml:mo accent="true" stretchy="false">˜</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> has half the dimension of <italic>M</italic> it is still large and sparse, so Krylov subspace methods such as conjugate gradients (<xref ref-type="bibr" rid="bibr19-1094342011429695">Hestenes and Stiefel 1952</xref>) and stabilized bi-conjugate gradients (<xref ref-type="bibr" rid="bibr33-1094342011429695">van der Vorst 1992</xref>) are typically used to solve the systems in Equations (1), (2) and (4).</p>
+<p>In a particular chiral basis, on each lattice site <italic>A</italic> splits into two blocks of 6 × 6 complex numbers. Each block is Hermitian and positive definite, and is typically stored as a diagonal and lower diagonal part. The storage for the lower diagonal part of a block is 15 complex numbers, whereas the storage for the diagonal part is 6 real numbers. The storage per site is thus 12 real numbers and 30 complex numbers or 72 words. Applying a block per site requires in addition the reading of the 12 component complex vector to which <italic>A</italic> is applied (24 words), performing the matrix multiply part (504 flops) and writing back the result. Hence, the arithmetic intensity of this part is 504 flops/120 words or 1.05 flops/byte in single precision (1 word = 4 bytes). The <italic>A</italic>
+<sup>-1</sup> terms retain the block structure of <italic>A</italic> and can be easily computed given the decomposition of <italic>A</italic> prior to the solve. Applications of <italic>A</italic>
+<sup>-1</sup> occur in the same way as applications of <italic>A</italic> incurring the same flops and data needs.</p>
+<p>The Dslash term is a nearest-neighbor operator that is similar in many ways to a four-dimensional stencil. The form of <italic>D</italic> is<disp-formula id="disp-formula8-1094342011429695">
+<mml:math id="mml-disp8-1094342011429695">
+<mml:mtable columnalign="right left" columnspacing="thickmathspace" displaystyle="true" rowspacing=".5em">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>D</mml:mi>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:mfrac>
+</mml:mrow>
+<mml:mrow>
+<mml:munderover>
+<mml:mo movablelimits="false" stretchy="false">∑</mml:mo>
+<mml:mrow>
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:munderover>
+</mml:mrow>
+<mml:msub>
+<mml:mi>U</mml:mi>
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo largeop="false" stretchy="false">⊗</mml:mo>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mi>I</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:mfenced>
+<mml:mo largeop="false" stretchy="false">⊗</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">δ</mml:mi>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mo accent="true" stretchy="false">ˆ</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msubsup>
+<mml:mi>U</mml:mi>
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mi>†</mml:mi>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mo accent="true" stretchy="false">ˆ</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo largeop="false" stretchy="false">⊗</mml:mo>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mi>I</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:mfenced>
+<mml:mo largeop="false" stretchy="false">⊗</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">δ</mml:mi>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mover accent="true">
+<mml:mi mathvariant="italic">μ</mml:mi>
+<mml:mo accent="true" stretchy="false">ˆ</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo stretchy="false">,</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-1094342011429695" xlink:href="10.1177_1094342011429695-eq8.tif"/>
+</disp-formula>where <italic>δ</italic> symbols indicate that the operator requires data from the neighboring site. The <inline-formula id="inline-formula13-1094342011429695">
+<mml:math id="mml-inline13-1094342011429695">
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>I</mml:mi>
+<mml:mo stretchy="false">±</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mi mathvariant="italic">μ</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> matrices are projectors in spin-space and their role is to pare down the 12 components (4 spin ⊗ 3 color) of the neighboring spinors to 6 (2 spin ⊗ 3 color) components. In a basis where none of the projectors are diagonal, this involves 12 flops per projector. The remaining 6 components form two 3-vectors in the space of color indices to which the <italic>U</italic> matrices (or their conjugates) may be multiplied. Each <italic>SU</italic>(3) matrix–vector operation costs 66 flops (as complex arithmetic is needed). The total cost of applying the operator for one <italic>output site</italic> is thus<disp-formula id="disp-formula9-1094342011429695">
+<mml:math id="mml-disp9-1094342011429695">
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">C</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">s</mml:mi>
+<mml:mi mathvariant="normal">t</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>8</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mn>12</mml:mn>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>66</mml:mn>
+</mml:mrow>
+</mml:mfenced>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mn>7</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>24</mml:mn>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>1320</mml:mn>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">f</mml:mi>
+<mml:mi mathvariant="normal">l</mml:mi>
+<mml:mi mathvariant="normal">o</mml:mi>
+<mml:mi mathvariant="normal">p</mml:mi>
+<mml:mi mathvariant="normal">s</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="false">,</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-1094342011429695" xlink:href="10.1177_1094342011429695-eq9.tif"/>
+</disp-formula>where the factor of 8 is from the 8 neighbors in 4 dimensions, the factors of 12 and 2 × 66 are as mentioned before and the factor of 7 × 24 is the floating point cost of accumulating the 8 resulting vectors in the sum. The data needs of applying the operator are the 8 neighboring 12 component vectors (192 words), and the 8 corresponding link matrices, totaling 336 words. The output is 24 words per site so the total memory throughput is 360 words. The arithmetic intensity of <italic>D</italic> is thus 1320/1440 ≈ 0.92 flops/byte in single precision and half that in double.</p>
+<p>For the even–odd preconditioned operator <inline-formula id="inline-formula14-1094342011429695">
+<mml:math id="mml-inline14-1094342011429695">
+<mml:mover accent="true">
+<mml:mi>M</mml:mi>
+<mml:mo accent="true" stretchy="false">˜</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula>, one can reuse the output of the <italic>D</italic> as the input of the <inline-formula id="inline-formula15-1094342011429695">
+<mml:math id="mml-inline15-1094342011429695">
+<mml:msup>
+<mml:mi>A</mml:mi>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula> term when constructing kernels which evaluate either <inline-formula id="inline-formula16-1094342011429695">
+<mml:math id="mml-inline16-1094342011429695">
+<mml:msubsup>
+<mml:mi>A</mml:mi>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:msub>
+<mml:mi>D</mml:mi>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+<mml:mi>o</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula17-1094342011429695">
+<mml:math id="mml-inline17-1094342011429695">
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:msubsup>
+<mml:mi>A</mml:mi>
+<mml:mrow>
+<mml:mi>o</mml:mi>
+<mml:mi>o</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:msub>
+<mml:mi>D</mml:mi>
+<mml:mrow>
+<mml:mi>o</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfenced>
+</mml:math>
+</inline-formula>. The former of these then has 1824 flops for reading in 408 words and writing out 24. The latter has an additional 12 flops for the same amount of data. These being the primary kernels used in the QCD solvers discussed here, one can see that the arithmetic intensity is around 1824/432 flops/word or about 1.06 in single precision and 0.53 in double precision. The matrix–vector product in the QCD solvers is therefore memory bandwidth bound.</p>
+</sec>
+<sec id="section4-1094342011429695">
+<title>2.2 The Chroma software system</title>
+<p>While the numerically intensive part of the calculation is the solution of the lattice Dirac equation, lattice QCD calculations require a whole infrastructure of code. As an example, in gauge generation there has to be a framework for carrying out the entire Monte Carlo algorithm including the MD, of which solving the Dirac equation is a part. In the observable calculation phase, the sources for the quark propagator solve need to be set up, and the resulting propagators need to be appropriately contracted. The Chroma software system for LQCD (<xref ref-type="bibr" rid="bibr15-1094342011429695">Edwards and Joo 2005</xref>) provides such a software framework.</p>
+<p>Chroma is built on top of the USQCD SciDAC software infrastructure (<xref ref-type="bibr" rid="bibr20-1094342011429695">Joo 2007</xref>, <xref ref-type="bibr" rid="bibr21-1094342011429695">2008</xref>). It relies on the lower QDP++ (QCD Data Parallel) layer to provide an abstraction of lattice-wide data types (gauge fields, quark fields, etc.). QDP++ hides the nature of the underlying parallel architecture and supplies such primitives as taking matrix and vector norms (reduction) and circular shifts (nearest-neighbor communication). An extremely valuable feature of QDP++ is that it provides for lattice-wide arithmetic expressions through expression template methods that deal with the various underlying index spaces appropriately allowing the users to write code in a natural way (without having to write explicit loops). QDP++ itself is parallelized over the USQCD QMP (QCD Message Passing) library. QMP provides a subset of operations that one would find in MPI. The original design goal for QMP was to have a small, flexible communications layer that can be directly implemented over custom QCD-specific hardware, such as that of the QCDOC supercomputer for which MPI was not available (<xref ref-type="bibr" rid="bibr5-1094342011429695">Boyle et al. 2004</xref>). These days, however, the reference MPI implementation of QMP is used in most instances. QDP++ also features on-node threading either using OpenMP or the USQCD SciDAC QMT (QCD Multi-Threading) library (<xref ref-type="bibr" rid="bibr6-1094342011429695">Chen and Watson 2007</xref>).</p>
+<p>While the lower levels of the USQCD stack abstract the parallel hardware and present a portable interface to users, Chroma in turn abstracts high-level constructs relevant to the physics calculations, such as linear operators over the lattice vectors, solvers and MD integrator algorithms. Abstractions also exist for the analysis side, for example to contract quark propagators into mesons and baryons, including new technologies for analysis such as <italic>distillation</italic> (<xref ref-type="bibr" rid="bibr29-1094342011429695">Peardon et al. 2009</xref>).</p>
+<p>Chroma can be driven by an input XML file, which binds to various measurement tasks in the Chroma library. Users can use Chroma for everyday calculational tasks, without having to write any C++ code at all, and the generation of XML input files can be straightforwardly carried out via scripts. This ease of use feature, the flexibility of gauge generation algorithms, the multitude of measurements and overall portability have resulted in Chroma gaining a large user base worldwide.</p>
+<p>In terms of optimization, the object-oriented class structure of Chroma makes it easy for developers to wrap optimized libraries such as QUDA, which shall be discussed below. By wrapping optimized code up as Chroma objects the optimized libraries gain the ‘look and feel’ of Chroma. They are also immediately available in the relevant Chroma measurements as drop-in replacements for the default Chroma class. In the case of specialized solvers, often all an external user will notice is the need to make a slight change to XML input files to specify the parameters of the specialized solver. This way Chroma can bring the benefits of specialized solvers to its user base.</p>
+</sec>
+<sec id="section5-1094342011429695">
+<title>2.3 The QUDA library</title>
+<p>QUDA (QCD with CUDA) is a high performance library of LQCD routines (primarily solvers) designed to work with NVIDIA GPUs over CUDA. The QUDA library is described in detail in <xref ref-type="bibr" rid="bibr8-1094342011429695">Clark et al. (2010)</xref>, and the library has recently been parallelized over multiple GPUs <xref ref-type="bibr" rid="bibr3-1094342011429695">Babich et al. (2010)</xref>. At the time of writing this contribution QUDA has reached version 0.3 and the source code has migrated to <italic>GitHub</italic>.<sup>
+<xref ref-type="fn" rid="fn2-1094342011429695">2</xref>
+</sup>
+</p>
+<p>As discussed previously, the linear operator involved in LQCD solvers is memory bandwidth bound. QUDA has tried to address this issue by several algorithmic enhancements:</p>
+<p>While the <italic>SU</italic>(3) link fields are 3 × 3 complex matrices, they can be also stored by keeping only the first two rows of the matrix. The third row can easily be reconstructed using a vector product operation on the first two. The matrices also admit storage as eight real numbers (coefficients of the <italic>SU</italic>(3) generators) in which case the reconstruction of the 3 × 3 matrix requires trigonometric functions.</p>
+<p>In a particular spin basis the <inline-formula id="inline-formula18-1094342011429695">
+<mml:math id="mml-inline18-1094342011429695">
+<mml:msub>
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mn>4</mml:mn>
+</mml:msub>
+</mml:math>
+</inline-formula> matrix is block diagonal (in spin-space) with 1 along the diagonal of the top 2 blocks and –1 on the diagonal of the bottom. This results in spin projection matrices in the Dslash term for the time direction, <inline-formula id="inline-formula19-1094342011429695">
+<mml:math id="mml-inline19-1094342011429695">
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mi>I</mml:mi>
+<mml:mo stretchy="false">±</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="italic">γ</mml:mi>
+<mml:mn>4</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfenced>
+</mml:math>
+</inline-formula> which trivially just pick the top or bottom two spin components of the input spinor in the time direction. Thus, for neighbors in the time direction, only half of the data needs to be loaded, and 24 flops per site are saved.</p>
+<p>QCD allows local basis transformations in color-space as a result of its gauge symmetry. The axial gauge corresponds to a transformation where links in the time direction are transformed to be unit matrices. This reduces the need to load two of the eight link matrices for each output site. The small amount of up-front work to effect the transformation is easily amortized during the solve. However, this technique should be used with care in single-precision calculations as the gauge transformation may induce rounding errors of a similar or greater degree than the single-precision solver residuum.</p>
+<p>By constructing mixed-precision solvers, GPU calculations can perform a majority of their work in reduced precision, and yet still reach the full precision desired in the solution. One approach to this is called <italic>iterative refinement</italic> which is a strategy where one solves for the error of the linear system with some reduced precision ‘inner’ solver, and once the error is reduced by a prescribed amount, a full precision ‘outer’ iteration corrects for the loss of precision incurred by the inner solver. This technique is also referred to as defect correction, where the outer iteration corrects for the defects introduced by the inner iteration. One downside of this technique is that the Krylov space built up by the inner iteration is discarded by the outer correction step. QUDA utilizes a technique known as <italic>reliable updates</italic>. This technique was designed originally to bring rounding errors in (uniform precision) BiCGStab under control (<xref ref-type="bibr" rid="bibr32-1094342011429695">Sleijpen and van der Vorst 1995</xref>). It is also an inner–outer scheme, where the inner iteration reduces the error by a factor <italic>δ</italic> after which the solution is updated with a group update and a <italic>flying restart</italic> is performed after the residuum has been corrected. The crucial observation of reliable updates was that the Krylov subspace need not be discarded when one performs the flying restart. If the residuum correction is performed in full precision, and the inner iteration is performed in reduced precision, the reliable updating process is equivalent to iterative refinement, but does not discard the Krylov subspace. Using mixed precision solvers QUDA can perform solves to full double precision accuracy, while using 16-bit fixed point precision (referred to hereafter as half-precision) in the inner solver.</p>
+<p>In our benchmarks, we work primarily with solves to single-precision accuracy unless otherwise stated. Mixed-precision solvers will be denoted as <italic>outer-precision–inner-precision</italic> solvers. As an example, referring to a <italic>single–half</italic>-precision solver would mean that the solver is good to single-precision accuracy (outer precision) with the inner iterations being performed in half-precision. As another example, <italic>single–single</italic> solver corresponds to a regular single precision solver with reliable updates. In our tests, in the inner solver, we typically use half-precision and two row storage for the <italic>SU</italic>(3) link fields. We do not use the axial gauge fixing technique in single precision, because undoing the transformation at the end introduces a noticeable numerical error in the solver result. In our double-precision reference benchmarks, however, we always employ the axial gauge fixing technique.</p>
+<p>While the above techniques enable very efficient kernels for computing the application of the matrix to a vector for QCD, Krylov solvers require additional level 1 BLAS-like operations such as <inline-formula id="inline-formula20-1094342011429695">
+<mml:math id="mml-inline20-1094342011429695">
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">←</mml:mo>
+<mml:mi mathvariant="italic">α</mml:mi>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>y</mml:mi>
+</mml:math>
+</inline-formula> (AXPY) which are extremely bandwidth bound. To this end in QUDA, where possible, numerous successive BLAS kernels are fused in order to reduce memory traffic and increase reuse. A typical example is when one performs an AXPY operation followed by a the calculation of the norm of the result. In this case the AXPY and the norm operation are fused into a single loop.</p>
+<p>Both the BLAS kernels, and the Dslash operator may be affected by the choice of the CUDA grid dimensions and thread-block sizes. Consequently QUDA features autotuning support to fine tune these parameters. Tuning of the BLAS currently happens at compile time, whereas tuning of the matrix vector product occurs at run time.</p>
+</sec>
+<sec id="section6-1094342011429695">
+<title>3 Related work</title>
+<p>The achievable PCIe bandwidth in systems with multiple GPUs were considered in several presentations for example <xref ref-type="bibr" rid="bibr27-1094342011429695">Obenschain and Corrigan (2010)</xref>; however, journal references are difficult to find. <xref ref-type="bibr" rid="bibr27-1094342011429695">Obenschain and Corrigan (2010)</xref> considered a system with dual input/output chipsets (IOH) which is similar to the JLab ARRA cluster in this work. However, to the best of the authors knowledge, there has not been a publication of PCIe bandwidth measured in GPU nodes, with a single PCIe bus and PLX switch.</p>
+<p>There have been several reports worldwide of performing LQCD calculations with GPUs (<xref ref-type="bibr" rid="bibr17-1094342011429695">Egri et al. 2007</xref>; <xref ref-type="bibr" rid="bibr8-1094342011429695">Clark et al. 2010</xref>; <xref ref-type="bibr" rid="bibr7-1094342011429695">Chiu et al. 2010</xref>), and recently multiple GPUs (<xref ref-type="bibr" rid="bibr3-1094342011429695">Babich et al. 2010</xref>; <xref ref-type="bibr" rid="bibr18-1094342011429695">Gottlieb et al. 2010</xref>; <xref ref-type="bibr" rid="bibr22-1094342011429695">Kim and Lee 2010</xref>; <xref ref-type="bibr" rid="bibr28-1094342011429695">Osaki and Ishikawa 2010</xref>). In the USA, a significant community has built up around the QUDA library, although we are aware of other efforts such as those of <xref ref-type="bibr" rid="bibr2-1094342011429695">Alexandru et al. (2011b</xref>,a), which have appeared while this paper was in the publication process.</p>
+<p>Other major freely available codes for LQCD include the MIMD Lattice Collaboration (MILC) code (<xref ref-type="bibr" rid="bibr4-1094342011429695">Bernard et al. 2010</xref>) and the Columbia Physics System.<sup>
+<xref ref-type="bibr" rid="bibr3-1094342011429695">3</xref>
+</sup> Of these, the MILC code is also interfaced to GPUs, using the QUDA library. However, the primary focus of the MILC code is a slightly different formulation of LQCD than what we consider here. The QUDA developer community has recently merged several offshoot projects targeting different LQCD formulations.</p>
+</sec>
+<sec id="section7-1094342011429695">
+<title>4 Hardware considered</title>
+<p>For the tests reported we used the GPU cluster at JLab, and the Edge Cluster in Lawrence Livermore National Laboratory (LLNL). We describe these systems in the following.</p>
+<p>The Edge cluster at LLNL was designed originally for visualization, and is composed of 206 nodes. Each node contains dual hexa-core Intel X5660 (Westmere) CPUs running at 2.8 GHz and two NVIDIA Tesla M2050 GPUs. The CPUs share a single IOH (Intel X58, rev. 22), which provides a total of 23.84 GiB/s bi-directional bandwidth, this is not quite sufficient to service two PCIe 2.0 x16 slots at full rate (29.8 GiB/s). The GPUs share a single PCIe slot through a PLX switch, and a QDR IB card occupies the remaining slot. The cluster is fully connected, so that it is possible to run jobs over the entire system. The nodes run version 2.6.18 of the Linux kernel (with some site-specific specializations) with CUDA driver version 260.19.12. Both CUDA Toolkit 3.0 and CUDA Toolkit 3.2rc12 are available. The Tesla M2050 GPUs are being operated with ECC error correction enabled.</p>
+<p>The JLab cluster was funded through the American Recovery and Reinvestment Act (ARRA) and contains GPUs in a variety of configurations. In all, the cluster contains 452 GPU units of which 156 are NVIDIA GTX 285 units, 168 are GTX 480 units and 128 are Tesla C2050s. The cluster is primarily composed of nodes containing 4 GPUs each, connected by IB. In contradistinction to the Edge cluster the JLab cluster is not fully connected, but is made up of two distinct clusters, split into several partitions, each of which is homogeneous in terms of GPU units. In our tests we used the C2050 partition and the GTX 480 partition of the so-called 10G cluster. The 10G cluster nodes contain two quad-core Intel E5630 (Westmere) CPUs running at 2.53 GHz, with each processor having its own respective IOH (X58, rev. 22) providing a theoretical total of 2×22.35 GiB/s PCIe bandwidth. Physically, the nodes have four PCIe 2.0 x16 slots in which the GPUs are seated, and two remaining PCIe 2.0 x4 slots in which the IB cards can be seated. The nodes containing C2050 GPUs have a single QDR IB card, but because of its placement in a x4 slot, it has performance equivalent to double data rate (DDR). The nodes containing GTX 480s have a single data rate (SDR) IB adaptor which operates at full SDR rate. All of the JLab nodes run version 2.6.18 of the Linux kernel (CentOS 5.3 Linux) with CUDA driver 195.36.24 and the codes are compiled using CUDA Toolkit version 3.0. The JLab Tesla C2050 nodes have ECC error correction enabled.</p>
+<p>The primary difference between the two clusters are the PCIe architecture and the inter-node interconnect. The GPU units are very similar and the CPUs are used only for streaming data when the QUDA solver is in operation. The JLab cluster provisions for twice as much PCIe bandwidth within the node as the Edge cluster, at the expense of a reduced internode bandwidth (as the IB cards in the JLab nodes need to sit in x4 slots instead of x8).</p>
+</sec>
+<sec id="section8-1094342011429695">
+<title>5 Bandwidth tests</title>
+<p>Currently, QUDA uses MPI (through QMP) for all inter-GPU communication. In order to send a message from one GPU to another, the message must be transferred from the first GPU to the host memory (over the PCIe bus) and then must be sent out on the internode network through the IB host adapter (via the PCIe bus). Further, unless one uses <italic>GPUDirect</italic>, there needs to be a host memory copy from the pinned buffers used by the GPU to those used by MPI. With multiple GPUs this can lead to contention on the PCIe bus and it was of interest to measure how much bandwidth each GPU could exhaust when working concurrently, and what the latencies of individual transfers are when multiple GPUs operate together. If one wanted to construct a full performance model, the relevant benchmarks would be ping–pong benchmarks between GPUs (within a node and between nodes). We have opted, for reasons of expediency, for simple host-to-device (H2D), device-to-host (D2H) and bi-directional (BiD) transfers run on the individual GPUs, but running concurrently. To implement the memory copies we used pinned memory on the host mapped into the GPU for zero-copy use. The bandwidth test was performed by queuing a large number of iterations of the transfer into a CUDA stream, and measuring the time for them all to complete. The transfer was then implemented by kernels on the GPU which were launched with each block having 1024 threads. The uni-directional tests (H2D and D2H) gave results compatible with those given by calling <italic>cudaMemcpyAsync</italic> to transfer the memory. Using kernels and zero-copy was ultimately preferred over <italic>cudaMemcpyAsync</italic> as it also allowed BiD transfers on the GTX 480 gaming cards. This test in principle also yields a latency measurement, however, the result would neglect synchronization costs between host and GPU which are amortized over the large number of iterations queued into the stream. A better method for measuring latencies would be to iterate over synchronous memory copies, which would include all of the relevant synchronization overhead. With this important caveat in mind, we note that our measured latency was about 2.8 <italic>μ</italic>s on both Tesla-based systems. Including all of the relevant synchronization can inflate this to O(10) <italic>μ</italic>s as discussed by Babich:2010:PQL:1884643.1884695 although we remark that the actual latency achieved may also be dependent other system specific factors such as the versions of the Linux kernel, CUDA driver, the BIOS, and IOH.</p>
+</sec>
+<sec id="section9-1094342011429695">
+<title>5.1 Edge cluster bandwidth results</title>
+<p>We show results for bandwidths on Edge in <xref ref-type="fig" rid="fig1-1094342011429695">Figure 1</xref>. We can see in <xref ref-type="fig" rid="fig1-1094342011429695">Figure 1</xref>(a) that we can sustain about 3 GiB/s per GPU in the D2H transfers, or a total of 6 GiB/s, which is the expected peak performance of the bus. The breakdown for D2H and BiD bandwidths is very similar, and we show the total PCIe bandwidths sustained in the node in <xref ref-type="fig" rid="fig1-1094342011429695">Figure 1</xref>(b). We can see here that in this system we can sustain a little more D2H bandwidth than H2D. Finally, we note that the BiD bandwidth is not twice the H2D or D2H bandwidth. While for messages less than 2 KiB the BiD is nearly twice the uni-directional bandwidth, for larger messages it is at best about 50% more (at 32 KiB) and is only 30% greater at 256 KiB messages.</p>
+<fig id="fig1-1094342011429695" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Bandwidths on Edge. (a) The breakdown of device-to-host bandwidth for two concurrent GPU transfers. (b) A comparison of H2D, D2H and BiD bandwidths.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429695-fig1.tif"/>
+</fig>
+</sec>
+<sec id="section10-1094342011429695">
+<title>5.2 JLab bandwidth results</title>
+<p>The results from a Tesla C2050 node of the JLab cluster, for the case when two GPUs are in use per node are shown in <xref ref-type="fig" rid="fig2-1094342011429695">Figure 2</xref>. We show the ideal situation here, where the MPI processes have been pinned so that each MPI process accesses a GPU on a different bus. Indeed, we see in <xref ref-type="fig" rid="fig2-1094342011429695">Figure 2</xref>(a) that each GPU can sustain a nearly equal amount of D2H PCIe bandwidth (and the H2D situation is similar). The total two GPU PCIe bandwidth sustained can be seen in <xref ref-type="fig" rid="fig2-1094342011429695">Figure 2</xref>(b). Here we can see that the improvement from BiD transfers is quite small, just under 20% for large messages.</p>
+<fig id="fig2-1094342011429695" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>JLab 2-GPU bandwidths. (a) The breakdown of device-to-host bandwidth for two concurrent GPU transfers. (b) A comparison of H2D, D2H and BiD bandwidths.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429695-fig2.tif"/>
+</fig>
+<p>The situation is somewhat different when running all four Tesla GPUs concurrently, as can be seen in <xref ref-type="fig" rid="fig3-1094342011429695">Figure 3</xref>. In this case, the maximum H2D bandwidth sustained is just around 4 GiB/s per GPU, or 8 GiB/s on each IOH compared with the theoretical maximum of 11.2 GiB/s per IOH (<xref ref-type="fig" rid="fig3-1094342011429695">Figure 3</xref>(a)). However, the D2H bandwidth measurement is disappointingly low at about 2.5 GiB/sec, as can be seen in <xref ref-type="fig" rid="fig3-1094342011429695">Figure 3</xref>(b). We do not know the reason for this imbalance in H2D and D2H bandwidths. A similar situation can be engineered in a two GPU case, when binding both GPUs to the same PCIe bus.</p>
+<fig id="fig3-1094342011429695" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>JLab 4-GPU bandwidths: (a) H2D; (b) D2H.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429695-fig3.tif"/>
+</fig>
+</sec>
+<sec id="section11-1094342011429695">
+<title>6 Inverter performance</title>
+<p>We show the performance of our QUDA inverter, as called through the Chroma code in <xref ref-type="fig" rid="fig4-1094342011429695">Figure 4</xref>. In <xref ref-type="fig" rid="fig4-1094342011429695">Figure 4</xref>(a) we show the strong scaling of the solver on a lattice of volume <inline-formula id="inline-formula21-1094342011429695">
+<mml:math id="mml-inline21-1094342011429695">
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>24</mml:mn>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>128</mml:mn>
+</mml:math>
+</inline-formula> sites on up to 32 GPUs, for various combinations of inner–outer precisions, on Edge. We see that the fastest is the single–half mixed-precision solver, but that the double–half mixed-precision solver which uses the gauge fixing trick is of comparable speed. Likewise pure single-precision solves and mixed double–single-precision solves are also comparable to each other in performance. However, the purely double-precision solver is much slower than all of the mixed-precision solvers.</p>
+<fig id="fig4-1094342011429695" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Inverter performances: (a) strong scaling on Edge, for a <inline-formula id="inline-formula27-1094342011429695">
+<mml:math id="mml-inline27-1094342011429695">
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>24</mml:mn>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>128</mml:mn>
+</mml:math>
+</inline-formula> problem in a variety of precisions; (b) single–half mixed precision BiCGStab for a 243×128 lattice on all three clusters; (c) double–half mixed precision for <inline-formula id="inline-formula28-1094342011429695">
+<mml:math id="mml-inline28-1094342011429695">
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>24</mml:mn>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>128</mml:mn>
+</mml:math>
+</inline-formula> on all three clusters; (d) single–half mixed precision for a <inline-formula id="inline-formula29-1094342011429695">
+<mml:math id="mml-inline29-1094342011429695">
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>32</mml:mn>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>128</mml:mn>
+</mml:math>
+</inline-formula> problem on all three clusters (GF denotes gauge fixing has been applied).</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429695-fig4.tif"/>
+</fig>
+<p>In <xref ref-type="fig" rid="fig4-1094342011429695">Figure 4</xref>(b) we compare the single–half mixed-precision solver on a lattice of volume 24<sup>3</sup>×128 sites across the Edge, JLab Tesla C2050 and JLab GTX 480 nodes. We can see that Edge scales the best with the scaling reaching its limit at about 16 GPUs. At 16 GPUs the local lattice is of size 24<sup>3</sup>×8, so there are eight time slices per GPU of which two are in the surface and need to be communicated. So at this point 25% of the data needs to be communicated. In contrast the scaling data for the JLab C2050 nodes comes to an end at eight GPUs, a factor of two earlier than Edge. Given that a node of Edge has less internal PCIe bandwidth than a JLab C2050 node, but that an Edge node can run QDR Infiniband at full bandwidth, whereas the C2050 can run its QDR interface at essentially only DDR speed, it is tempting to blame the difference in scaling on the Infiniband fabric. Indeed this is further supported by looking at the data for the JLab GTX 480 nodes, which stop scaling at four GPUs, and have an SDR IB interconnect. We note also, however, that while the GTX 480 nodes scale the worst, at two and four nodes they provide the highest raw performance sustaining an impressive 1 Tflops from a single four-GPU node. Since the GTX 480 nodes have only 1.5 GiB of internal memory, we cannot run the <inline-formula id="inline-formula22-1094342011429695">
+<mml:math id="mml-inline22-1094342011429695">
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>24</mml:mn>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>128</mml:mn>
+</mml:math>
+</inline-formula> problem on a single device, and we need at least two GPUs when running in single precision. <xref ref-type="fig" rid="fig4-1094342011429695">Figure 4</xref>(c) shows the performance of the solvers when working in a mixed double–half-precision mode of operation. Apart from not being able to fit the problem onto 1 GPU of the Tesla variety, and needing at least 4 GTX 480s, the primary features are very similar to <xref ref-type="fig" rid="fig4-1094342011429695">Figure 4</xref>(b).</p>
+<p>We show in <xref ref-type="fig" rid="fig4-1094342011429695">Figure 4</xref>(d) the performance data for our current largest lattice size with <inline-formula id="inline-formula23-1094342011429695">
+<mml:math id="mml-inline23-1094342011429695">
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>32</mml:mn>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>256</mml:mn>
+</mml:math>
+</inline-formula> sites which requires a minimum of eight GPUs. Although the scaling behavior of the GTX 480 nodes past eight GPUs is poor, however, at eight GPUs 2 Tflops are sustained, whereas the Tesla nodes need 16 GPUs to achieve comparable performance. The Tesla nodes can be comfortably scaled to 16 GPUs, but only Edge shows a significant performance increase when running on 32 GPUs. Once again, the fact that the JLab Tesla nodes reach their peak performance at a factor of two smaller job-size than the Edge units, and that the GTX 480s reach their plateau at a factor of two smaller size still suggest that the limiting factor is the IB fabric.</p>
+<p>Finally in <xref ref-type="fig" rid="fig5-1094342011429695">Figure 5</xref> we compare the performance of the solvers from QUDA with the default solver in Chroma which has been optimized using Streaming SIMD Extensions (SSE). We show the strong scaling curve for a cluster with nodes comprised of dual socket quad-core AMD Barcelona CPUs and for a cluster of dual socket quad-core Intel Nehalem CPUs. Both these clusters are located at JLab. We consider the performance of both Conjugate Gradients and an improved version of BiCGStab in single precision. We also indicate the performance of a single GPU (either a Tesla C2050, or a GTX 480) when running as part of a 4 GPU job performing mixed-precision (single–half) BiCGStab solves. We can see that a single Tesla GPU with error correction enabled performs at the equivalent rate of 90 Intel Nehalem cores, whereas a GTX 480 performs at the rate of about 146 Intel Nehalem cores. We make one important caveat here: although both the GPU and CPU codes are highly optimized, there is potential for further optimization on both platforms, e.g. multi-dimensional cache blocking, applying some of the GPU bandwidth saving tricks to the CPU etc.</p>
+<fig id="fig5-1094342011429695" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Comparison of the performance of GPU inversions with that of SSE2 optimized code.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429695-fig5.tif"/>
+</fig>
+</sec>
+<sec id="section12-1094342011429695">
+<title>7 Hadron spectroscopy</title>
+<p>The GPU cluster at LLNL has recently come into production use and the JLab clusters have been in operation for nearly a year. Prior to drawing our summary and future work we would like to give a brief taste of the kind of physics results which the GPU clusters have enabled.</p>
+<p>Part of the core mission of the JLab is the classification of the spectrum of hadrons. Using a new computational technique called ‘distillation’ a great deal of headway has been made in the investigation of the <italic>isoscalar meson spectrum</italic>. The computation of isoscalar meson states is very challenging for several reasons. First, excited states are hard to extract, since these states die out rapidly in the time direction of the lattice. Further, identifying the spin-parity quantum numbers is challenging since the hypercubic lattice on which LQCD is formulated breaks continuum rotational symmetries. Finally isoscalar states receive contributions from so-called <italic>disconnected diagrams</italic> from two quark lines, where the quarks in the meson are annihilated at the same point in space–time as the one on which they were created. These contributions typically have signals that are statistically very noisy.</p>
+<p>To solve these problems the following technologies need to be employed. An anisotropic lattice with a fine lattice spacing in the temporal direction is helpful to allow the extraction of the higher energy states, by providing a better resolution in their decay-direction (<xref ref-type="bibr" rid="bibr16-1094342011429695">Edwards et al. 2008</xref>; <xref ref-type="bibr" rid="bibr23-1094342011429695">Lin et al. 2009</xref>). The spin-parity identification can be solved by using a large basis of derivative-based continuum hadronic operators of known quantum numbers, subduced onto the irreducible representations of the cubic group. One then forms a matrix of correlation function from these operators and employs the variational method to obtain masses of the states, and the spin-parity identification is done by considering the overlap factors of the correlation functions onto the eigenvectors of this basis (<xref ref-type="bibr" rid="bibr12-1094342011429695">Dudek et al. 2009</xref>, <xref ref-type="bibr" rid="bibr13-1094342011429695">2010</xref>). Finally, to deal with the issue of statistical noise in the disconnected contribution one turns to a new technique called <italic>distillation</italic> (<xref ref-type="bibr" rid="bibr29-1094342011429695">Peardon et al. 2009</xref>) in which one effectively forms the propagator from every site on one time slice of the lattice to every site of every other timeslice. This is a so-called <italic>all-to-all</italic> propagator technology. This requires the inversion of the Dirac matrix on sources which are the eigenvectors of the three-dimensional lattice Laplacian on a given timeslice. Thus, for a configuration with temporal length <italic>L<sub>t</sub>
+</italic> sites, using <italic>N<sub>ev</sub>
+</italic> eigenvectors on every timeslice, considering <italic>N<sub>q</sub>
+</italic> quarks (for example a light quark, and a strange quark would mean <italic>N<sub>q</sub>
+</italic> = 2) and <italic>N<sub>s</sub>
+</italic> spin components one would need <inline-formula id="inline-formula24-1094342011429695">
+<mml:math id="mml-inline24-1094342011429695">
+<mml:msub>
+<mml:mi>L</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>q</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>s</mml:mi>
+</mml:msub>
+</mml:math>
+</inline-formula> solves of the lattice Dirac equation.</p>
+<p>Thus, to carry out a recent study of the spectrum of isoscalar mesons (<xref ref-type="bibr" rid="bibr14-1094342011429695">Dudek et al. 2011</xref>), 479 configurations were used with <italic>N<sub>q</sub>
+</italic> = 2, <italic>N<sub>t</sub>
+</italic> = 4, <italic>N<sub>ev</sub>
+</italic> = 64, <italic>N<sub>s</sub>
+</italic> = 4, <italic>N<sub>t</sub>
+</italic> = 128. This corresponds to 31 million solutions of the Dirac equation. Using the GPUs this work was carried out in a matter of approximately 1 month, whereas using cluster resources it would have taken over a year.</p>
+<p>We show in <xref ref-type="fig" rid="fig6-1094342011429695">Figure 6</xref> the isoscalar meson spectrum reproduced from <xref ref-type="bibr" rid="bibr14-1094342011429695">Dudek et al. (2011)</xref>. In the plot the columns represent different spin-parity quantum numbers, the boxes represent states in that channel. The vertical height of the boxes corresponds to the statistical uncertainty in the energies of the states. The proportion of black and green within a box corresponds to the relative light and strange quark content of the state. It can be seen that most states contain either mostly light, or strange quarks, however some states such as the <inline-formula id="inline-formula25-1094342011429695">
+<mml:math id="mml-inline25-1094342011429695">
+<mml:msup>
+<mml:mi mathvariant="italic">η</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:math>
+</inline-formula> or in the <inline-formula id="inline-formula26-1094342011429695">
+<mml:math id="mml-inline26-1094342011429695">
+<mml:msup>
+<mml:mn>1</mml:mn>
+<mml:mrow>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mo stretchy="false">+</mml:mo>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula> channel have a relatively large amount of mixing. The concrete mixing angle is indicated next to the states. Also shown on the plot are isovector states from <xref ref-type="bibr" rid="bibr13-1094342011429695">Dudek et al. (2010)</xref> (in gray) from the same lattices and glueball states computed in a quark-less Yang–Mills theory (<xref ref-type="bibr" rid="bibr26-1094342011429695">Morningstar and Peardon 1999</xref>).</p>
+<fig id="fig6-1094342011429695" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Isoscalar spectrum from <xref ref-type="bibr" rid="bibr14-1094342011429695">Dudek et al. (2011)</xref>. Box heights for a state correspond to statistical uncertainty. The amount of black/green in a box corresponds to light/strange quarks content of the state as <inline-formula id="inline-formula30-1094342011429695">
+<mml:math id="mml-inline30-1094342011429695">
+<mml:mfenced close=")" open="(">
+<mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mo form="prefix" movablelimits="false">cos</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+<mml:mi mathvariant="italic">α</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mrow>
+<mml:msup>
+<mml:mo form="prefix" movablelimits="false">sin</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+<mml:mi mathvariant="italic">α</mml:mi>
+</mml:mrow>
+</mml:mfenced>
+</mml:math>
+</inline-formula> for mixing angle α. Numerical values of α are quoted to the sides of the states. Grey rectangles are the corresponding isovector states from <xref ref-type="bibr" rid="bibr13-1094342011429695">Dudek et al. (2010)</xref> and pink rectangles are the masses of glueball states from <xref ref-type="bibr" rid="bibr26-1094342011429695">Morningstar and Peardon (1999)</xref>.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429695-fig6.tif"/>
+</fig>
+<p>
+<xref ref-type="bibr" rid="bibr14-1094342011429695">Dudek et al. (2011)</xref> were able to extract many excited states to a statistical precision of a few per cent, and managed to compute the quark mixing on each state. Further they have also managed to compute a spectrum for exotic quantum number channels and the calculations suggests that these states are mostly hybrid mesons. The spectrum of the mesons indicates that they should be within reach of the GlueX experiment of the JLab 12-GeV upgrade.</p>
+</sec>
+<sec id="section13-1094342011429695">
+<title>8 Summary and Future Work</title>
+<p>We have presented a basic introduction to LQCD from the point of view of a computational problem, and have discussed the basic components of the lattice Dirac operator for Wilson Clover fermions and their chief computational characteristics. We have presented the Chroma software system and the QUDA GPU solver library and discussed how in combination they have a great potential to enable the power of GPU computing for the analysis part of the LQCD workflow, namely the calculation of quark propagators.</p>
+<p>We have presented a study of PCIe bandwidths on the nodes of the Edge cluster at LLNL and on the Tesla nodes of the JLab ARRA cluster. We found that overall the JLab nodes are better provisioned with PCIe bandwidth for use by the GPUs, however physical limitations, namely the number of full-width PCIe slots, mean that if a node has a full complement of four GPUs, only a half-bandwidth (x4) slot is available for the IB connection. In contrast, the Edge nodes have two GPUs that share a single bus and a PLX switch, but allow the IB interface to run at full bandwidth.</p>
+<p>Looking at the performance of the QUDA solvers on these clusters we find that we are generally limited to job sizes of 8–16 GPUs at the current time, before strong scaling causes the performance to flatten as a function of GPUs. While such scaling is suitable for propagator calculations in the analysis phase of LQCD and has already enabled extraordinary physics calculations such as those discussed in Section 7, it is ultimately a strong limitation and will need to be overcome if we wish to enable the gauge generation phase on large GPU clusters or forthcoming GPU-based capability supercomputers, and our future work is heavily geared in this direction.</p>
+<p>Initially we will work towards parallelizing the QUDA solver in multiple dimensions, so that we can use more GPUs. Chroma has already been re-engineered to support calling the QUDA solvers from the main gauge generation algorithm. We are actively pursuing new ways of solving the lattice Dirac equation such as through domain-decomposition methods in which sub-domains can be placed on individual GPUs and the solution can proceed in a more loosely coupled way than currently (<xref ref-type="bibr" rid="bibr24-1094342011429695">Luscher 2005</xref>, <xref ref-type="bibr" rid="bibr28-1094342011429695">Osaki and Ishikawa 2010</xref>).</p>
+<p>As a last word, we note that while programming in CUDA is straightforward, having domain-specific abstractions such as the lattice-wide types and operations in QDP++ and the class structure of Chroma has proved highly beneficial to users for user productivity. Further, in order to fight Amdahl’s Law, eventually, much more than just the solver libraries will need to be moved onto the GPU (or other heterogeneous architectures on the road to the exascale). We foresee two approaches to this. The first one being driven by expediency, and the timetable for the potential arrival of GPU-based capability machines is the piecemeal replacements of components with GPU equivalents. A longer-term solution would be to port the domain-specific frameworks to the GPUs. This framework would never replace highly specialized components such as QUDA, but should provide enough efficiency to surmount Amdahl’s law, and yet be enough of a high-level domain-specific feature set to enable users to develop their own code. A standard, useable, portable and efficient programming model for extreme-scale computation could greatly assist in the creation of such a framework.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure" id="fn4-1094342011429695">
+<label>Funding</label>
+<p>Bálint Joó gratefully acknowledges funding through U.S. DOE project grants DE-FC02-06ER41440 and DE-FC02-06ER41449 (USQCD SciDAC project) and DE-AC05-06OR23177 under which Jefferson Science Associates LLC manages and operates Jefferson Lab. Mike A Clark acknowledges funding under NSF grant OCI-1060067.</p>
+</fn>
+</fn-group>
+<ack>
+<title>Acknowledgements</title>
+<p>The authors thank Lawrence Livermore National Laboratory, NERSC, and Jefferson Lab for the time given to carry out benchmarking on their clusters. Bálint Joó would like to thank Robert G Edwards and Chip Watson for reading this manuscript, and colleagues in the Hadron Spectrum collaboration for use of the figure from <xref ref-type="bibr" rid="bibr14-1094342011429695">Dudek et al. (2011)</xref> and elsewhere. Authored by Jefferson Science Associates, LLC. The U.S. Government retains a non-exclusive, paid-up, irrevocable, world-wide license to publish or reproduce this manuscript for U.S. Government purposes.</p>
+</ack>
+<notes>
+<fn-group>
+<title>Notes</title>
+<fn fn-type="other" id="fn1-1094342011429695">
+<label>1.</label>
+<p>NVIDIA quotes the Tesla C2050 memory bandwidth as 144 gigabytes per second (i.e. base-10 counting), for consistency with our results in Section 5, we shall denote all memory bandwidth measurements using base-2 counting.</p>
+</fn>
+<fn fn-type="other" id="fn2-1094342011429695">
+<label>2.</label>
+<p>GitHub is a hosting service for source code repositories using the git source code management system. It can be found on the web at <ext-link ext-link-type="uri" xlink:href="http://github.com">http://github.com</ext-link>. Out repository is <ext-link ext-link-type="uri" xlink:href="http://github.com/lattice/quda">http://github.com/lattice/quda</ext-link>.</p>
+</fn>
+<fn fn-type="other" id="fn3-1094342011429695">
+<label>3.</label>
+<p>See <ext-link ext-link-type="uri" xlink:href="http://phys.columbia.edu/~cqft/physics_sfw/physics_sfw.htm">http://phys.columbia.edu/~cqft/physics_sfw/physics_sfw.htm</ext-link>.</p>
+</fn>
+</fn-group>
+</notes>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1094342011429695">
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name>
+<surname>Alexandru</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Lujan</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Pelissier</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Gamari</surname>
+<given-names>B</given-names>
+</name>
+<name>
+<surname>Lee</surname>
+<given-names>FX</given-names>
+</name>
+</person-group> (<year>2011a</year>) <article-title>Efficient implementation of the overlap operator on multi-GPUs</article-title>, <comment>in press</comment>.</citation>
+</ref>
+<ref id="bibr2-1094342011429695">
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name>
+<surname>Alexandru</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Pelissier</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Gamari</surname>
+<given-names>B</given-names>
+</name>
+<name>
+<surname>Lee</surname>
+<given-names>F</given-names>
+</name>
+</person-group> (<year>2011b</year>) <article-title>Multi-mass solvers for lattice QCD on GPUs</article-title>, <comment>in press</comment>.</citation>
+</ref>
+<ref id="bibr3-1094342011429695">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Babich</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Clark</surname>
+<given-names>MA</given-names>
+</name>
+<name>
+<surname>Joó</surname>
+<given-names>B</given-names>
+</name>
+</person-group> (<year>2010</year>) <source>Parallelizing the QUDA Library for Multi-GPU Calculations in Lattice Quantum Chromodynamics. In <italic>Proceedings of the 2010 ACM/IEEE International Conference for High Performance Computing, Networking, Storage and Analysis (SC’10)</italic>
+</source>. <publisher-loc>Washington, DC</publisher-loc>: <publisher-name>IEEE Computer Society</publisher-name>, pp. <fpage>1</fpage>–<lpage>11</lpage>.</citation>
+</ref>
+<ref id="bibr4-1094342011429695">
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name>
+<surname>Bernard</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Burch</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>DeGrand</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>DeTar</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Gottlieb</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Heller</surname>
+<given-names>U</given-names>
+</name>
+<etal/>
+</person-group>. <collab collab-type="author">for the MILC Collaboration</collab> (<year>2010</year>). <article-title>The MILC code</article-title>. <ext-link ext-link-type="uri" xlink:href="http://www.physics.utah.edu/~detar/milc/milcv7.pdf">http://www.physics.utah.edu/~detar/milc/milcv7.pdf</ext-link>.</citation>
+</ref>
+<ref id="bibr5-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Boyle</surname>
+<given-names>P</given-names>
+</name>
+<name>
+<surname>Chen</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Christ</surname>
+<given-names>N</given-names>
+</name>
+<name>
+<surname>Clark</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Cohen</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Dong</surname>
+<given-names>Z</given-names>
+</name>
+<etal/>
+</person-group>. (<year>2004</year>) <article-title>QCDOC: A 10 Teraflops Computer for Tightly-Coupled Calculations</article-title>. In <source>Proceedings of the ACM/IEEE SC2004 Conference (SC’04)</source>, <fpage>p</fpage>. 40.</citation>
+</ref>
+<ref id="bibr6-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Chen</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Watson</surname>
+<given-names>W III</given-names>
+</name>
+</person-group> (<year>2007</year>) <article-title>Multi-threading performance on commodity multi-core processors</article-title>. In <source>Proceedings of 9th International Conference on High Performance Computing in Asia Pacific Region (HPCAsia)</source>.</citation>
+</ref>
+<ref id="bibr7-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Chiu</surname>
+<given-names>T-W</given-names>
+</name>
+<name>
+<surname>Hsieh</surname>
+<given-names>T-H</given-names>
+</name>
+<name>
+<surname>Mao</surname>
+<given-names>Y-Y</given-names>
+</name>
+<name>
+<surname>Ogawa</surname>
+<given-names>K</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>GPU-based conjugate gradient solver for lattice QCD with domain-wall fermions</article-title>. <source>PoS LATTICE2010</source>, <volume>030</volume>.</citation>
+</ref>
+<ref id="bibr8-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Clark</surname>
+<given-names>MA</given-names>
+</name>
+<name>
+<surname>Babich</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Barros</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Brower</surname>
+<given-names>RC</given-names>
+</name>
+<name>
+<surname>Rebbi</surname>
+<given-names>C</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Solving Lattice QCD systems of equations using mixed precision solvers on GPUs</article-title>. <source>Comput Phys Commun</source> <volume>181</volume>: <fpage>1517</fpage>–<lpage>1528</lpage>.</citation>
+</ref>
+<ref id="bibr9-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Clark</surname>
+<given-names>MA</given-names>
+</name>
+<name>
+<surname>Kennedy</surname>
+<given-names>AD</given-names>
+</name>
+</person-group> (<year>2007</year>) <article-title>Accelerating dynamical fermion computations using the rational hybrid Monte Carlo (RHMC) algorithm with multiple pseudofermion fields</article-title>. <source>Phys Rev Lett </source> <volume>98</volume>: <fpage>051</fpage>–<lpage>601</lpage>.</citation>
+</ref>
+<ref id="bibr10-1094342011429695">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Creutz</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>1983</year>) <source>Quarks, Gluons and Lattices (<italic>Cambridge Monographs On Mathematical Physics</italic>)</source>. <publisher-loc>Cambridge</publisher-loc>: <publisher-name>Cambridge University Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr11-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Duane</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Kennedy</surname>
+<given-names>AD</given-names>
+</name>
+<name>
+<surname>Pendleton</surname>
+<given-names>BJ</given-names>
+</name>
+<name>
+<surname>Roweth</surname>
+<given-names>D</given-names>
+</name>
+</person-group> (<year>1987</year>) <article-title>Hybrid Monte Carlo</article-title>. <source>Phys Lett B</source> <volume>195</volume>: <fpage>216</fpage>–<lpage>222</lpage>.</citation>
+</ref>
+<ref id="bibr12-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Dudek</surname>
+<given-names>JJ</given-names>
+</name>
+<name>
+<surname>Edwards</surname>
+<given-names>RG</given-names>
+</name>
+<name>
+<surname>Peardon</surname>
+<given-names>MJ</given-names>
+</name>
+<name>
+<surname>Richards</surname>
+<given-names>DG</given-names>
+</name>
+<name>
+<surname>Thomas</surname>
+<given-names>CE</given-names>
+</name>
+</person-group> (<year>2009</year>). <article-title>Highly excited and exotic meson spectrum from dynamical lattice QCD</article-title>. <source>Phys Rev Lett</source> <volume>103</volume>: <fpage>262</fpage>–<lpage>001</lpage>.</citation>
+</ref>
+<ref id="bibr13-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Dudek</surname>
+<given-names>JJ</given-names>
+</name>
+<name>
+<surname>Edwards</surname>
+<given-names>RG</given-names>
+</name>
+<name>
+<surname>Peardon</surname>
+<given-names>MJ</given-names>
+</name>
+<name>
+<surname>Richards</surname>
+<given-names>DG</given-names>
+</name>
+<name>
+<surname>Thomas</surname>
+<given-names>CE</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Toward the excited meson spectrum of dynamical QCD</article-title>. <source>Phys Rev D</source> <fpage>82</fpage>: <volume>034508</volume>.</citation>
+</ref>
+<ref id="bibr14-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Dudek</surname>
+<given-names>JJ</given-names>
+</name>
+<name>
+<surname>Edwards</surname>
+<given-names>RG</given-names>
+</name>
+<name>
+<surname>Joó</surname>
+<given-names>B</given-names>
+</name>
+<name>
+<surname>Peardon</surname>
+<given-names>MJ</given-names>
+</name>
+<name>
+<surname>Richards</surname>
+<given-names>DG</given-names>
+</name>
+<name>
+<surname>Thomas</surname>
+<given-names>CE.</given-names>
+</name>
+</person-group> (<year>2011</year>). <source>Isoscalar meson spectroscopy from lattice QCD. <italic>Phys Rev Lett</italic>, DOI</source>: <volume>1102</volume>.<fpage>4299</fpage>.</citation>
+</ref>
+<ref id="bibr15-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Edwards</surname>
+<given-names>RG</given-names>
+</name>
+<name>
+<surname>Joó</surname>
+<given-names>B</given-names>
+</name>
+</person-group> (<year>2005</year>) <article-title>The Chroma software system for lattice QCD</article-title>. <source>Nucl Phys Proc Suppl</source> <volume>140</volume>: <fpage>832</fpage>.</citation>
+</ref>
+<ref id="bibr16-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Edwards</surname>
+<given-names>RG</given-names>
+</name>
+<name>
+<surname>Joó</surname>
+<given-names>B</given-names>
+</name>
+<name>
+<surname>Lin</surname>
+<given-names>H-W</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>Tuning for three-flavors of anisotropic clover fermions with stout-link smearing</article-title>. <source>Phys Rev D</source> <fpage>78</fpage>: <volume>054501</volume>.</citation>
+</ref>
+<ref id="bibr17-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Egri</surname>
+<given-names>GI</given-names>
+</name>
+<name>
+<surname>Fodor</surname>
+<given-names>Z</given-names>
+</name>
+<name>
+<surname>Hoelbling</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Katz</surname>
+<given-names>SD</given-names>
+</name>
+<name>
+<surname>Ngrdi</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Szab</surname>
+<given-names>KK</given-names>
+</name>
+</person-group> (<year>2007</year>). <article-title>Lattice QCD as a video game</article-title>. <source>Comput Phys Commun</source> <volume>177</volume>: <fpage>631</fpage>–<lpage>639</lpage>.</citation>
+</ref>
+<ref id="bibr18-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Gottlieb</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Shi</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Torok</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Kindratenko</surname>
+<given-names>V</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>QUDA programming for staggered quarks</article-title>. <source>PoS LATTICE2010</source>, <volume>026</volume>.</citation>
+</ref>
+<ref id="bibr19-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Hestenes</surname>
+<given-names>MR</given-names>
+</name>
+<name>
+<surname>Stiefel</surname>
+<given-names>E</given-names>
+</name>
+</person-group> (<year>1952</year>) <article-title>Methods of conjugate gradients for solving linear systems</article-title>. <source>J Res Natl Bureau Standards</source> <volume>49</volume>: <fpage>409</fpage>–<lpage>436</lpage>.</citation>
+</ref>
+<ref id="bibr20-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Joó</surname>
+<given-names>B</given-names>
+</name>
+</person-group> (<year>2007</year>) <article-title>SciDAC-2 software infrastructure for lattice QCD</article-title>. <source>J Phys Conf Ser</source> <volume>78</volume>: <fpage>012</fpage>–<lpage>034</lpage>.</citation>
+</ref>
+<ref id="bibr21-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Joó</surname>
+<given-names>B</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>Continuing Progress on a Lattice QCD Software Infrastructure</article-title>. <source>J Phys Conf Ser</source> <volume>125</volume>: <fpage>012</fpage>–<lpage>066</lpage>.</citation>
+</ref>
+<ref id="bibr22-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Kim</surname>
+<given-names>H-J</given-names>
+</name>
+<name>
+<surname>Lee</surname>
+<given-names>W</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Multi GPU performance of conjugate gradient algorithm with staggered fermions</article-title>. <source>PoS LATTICE2010</source>, <volume>028</volume>.</citation>
+</ref>
+<ref id="bibr23-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Lin</surname>
+<given-names>H-W</given-names>
+</name>
+<name>
+<surname>Cohen</surname>
+<given-names>SD</given-names>
+</name>
+<name>
+<surname>Dudek</surname>
+<given-names>JJ</given-names>
+</name>
+<name>
+<surname>Edwards</surname>
+<given-names>RG</given-names>
+</name>
+<name>
+<surname>Joó</surname>
+<given-names>B</given-names>
+</name>
+<name>
+<surname>Richards DG et</surname>
+<given-names>al.</given-names>
+</name>
+</person-group> (<year>2009</year>) <article-title>First results from 2+1 dynamical quark flavors on an anisotropic lattice: light-hadron spectroscopy and setting the strange-quark mass</article-title>. <source>Phys Rev D</source> <fpage>79</fpage>: <volume>034502</volume>.</citation>
+</ref>
+<ref id="bibr24-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Luscher</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>2005</year>) <article-title>Schwarz-preconditioned HMC algorithm for two-flavour lattice QCD</article-title>. <source>Comput Phys Commun</source> <volume>165</volume>: <fpage>199</fpage>–<lpage>220</lpage>.</citation>
+</ref>
+<ref id="bibr25-1094342011429695">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Montvay</surname>
+<given-names>I</given-names>
+</name>
+<name>
+<surname>Munster</surname>
+<given-names>G</given-names>
+</name>
+</person-group> (<year>1994</year>) <source>Quantum Fields on a Lattice (<italic>Cambridge Monographs on Mathematical Physics</italic>)</source>. <publisher-loc>Cambridge</publisher-loc>: <publisher-name>Cambridge University Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr26-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Morningstar</surname>
+<given-names>CJ</given-names>
+</name>
+<name>
+<surname>Peardon</surname>
+<given-names>MJ</given-names>
+</name>
+</person-group> (<year>1999</year>) <article-title>The glueball spectrum from an anisotropic lattice study</article-title>. <source>Phys Rev D</source> <fpage>60</fpage>: <volume>034509</volume>.</citation>
+</ref>
+<ref id="bibr27-1094342011429695">
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name>
+<surname>Obenschain</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Corrigan</surname>
+<given-names>A</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Unstructured finite volume code on a cluster with multiple GPUs per node</article-title>. <ext-link ext-link-type="uri" xlink:href="http://www.nvidia.com/content/GTC-2010/pdfs/2234_GTC2010.pdf">http://www.nvidia.com/content/GTC-2010/pdfs/2234_GTC2010.pdf</ext-link>.</citation>
+</ref>
+<ref id="bibr28-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Osaki</surname>
+<given-names>Y</given-names>
+</name>
+<name>
+<surname>Ishikawa</surname>
+<given-names>K-I</given-names>
+</name>
+</person-group> (<year>2010</year>). <article-title>Domain Decomposition method on GPU cluster</article-title>. <source>PoS LATTICE2010</source>, <volume>036</volume>.</citation>
+</ref>
+<ref id="bibr29-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Peardon</surname>
+<given-names>MJ</given-names>
+</name>
+<name>
+<surname>Bulava</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Foley</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Morningstar</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Dudek</surname>
+<given-names>JJ</given-names>
+</name>
+<name>
+<surname>Edwards</surname>
+<given-names>RG. et al.</given-names>
+</name>
+</person-group> (<year>2009</year>) <article-title>A Novel quark-field creation operator construction for hadronic physics in lattice QCD</article-title>. <source>Phys Rev D</source> <fpage>80</fpage>: <volume>054506</volume>.</citation>
+</ref>
+<ref id="bibr30-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Rothe</surname>
+<given-names>HJ</given-names>
+</name>
+</person-group> (<year>2005</year>) <article-title>Lattice gauge theories: an introduction</article-title>. <source>World Sci Lect Notes Phys</source> <volume>74</volume>: <fpage>1</fpage>–<lpage>605</lpage>.</citation>
+</ref>
+<ref id="bibr31-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Sheikholeslami</surname>
+<given-names>B</given-names>
+</name>
+<name>
+<surname>Wohlert</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>1985</year>) <article-title>Improved continuum limit lattice action for QCD with Wilson fermions</article-title>. <source>Nucl Phys B</source> <volume>259</volume>: <fpage>572</fpage>.</citation>
+</ref>
+<ref id="bibr32-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Sleijpen</surname>
+<given-names>GLG</given-names>
+</name>
+<name>
+<surname>van der Vorst</surname>
+<given-names>HA</given-names>
+</name>
+</person-group> (<year>1995</year>) <article-title>Maintaining convergence properties of BiCGstab methods in finite precision arithmetic</article-title>. <source>Numer Algorithms</source> <volume>10</volume>: <fpage>203</fpage>–<lpage>223</lpage>.</citation>
+</ref>
+<ref id="bibr33-1094342011429695">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>van der Vorst</surname>
+<given-names>HA</given-names>
+</name>
+</person-group> (<year>1992</year>) <article-title>Bi-CGSTAB: a fast and smoothly converging variant of Bi-CG for the solution of nonsymmetric linear systems</article-title>. <source>SIAM J Sci Statist Comput</source> <volume>13</volume>: <fpage>631</fpage>–<lpage>644</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

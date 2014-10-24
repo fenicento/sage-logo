@@ -1,0 +1,1556 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">IVI</journal-id>
+<journal-id journal-id-type="hwp">spivi</journal-id>
+<journal-title>Information Visualization</journal-title>
+<issn pub-type="ppub">1473-8716</issn>
+<issn pub-type="epub">1473-8724</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1473871612469020</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1473871612469020</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Interactive ambient visualizations for soft advice</article-title>
+</title-group>
+<contrib-group content-type="issue">
+<contrib contrib-type="guest-editor">
+<name><surname>Telea</surname><given-names>Alexandru C.</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Görg</surname><given-names>Carsten</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Reiss</surname><given-names>Steven</given-names></name>
+</contrib>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Murphy-Hill</surname><given-names>Emerson</given-names></name>
+<xref ref-type="aff" rid="aff1-1473871612469020">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Barik</surname><given-names>Titus</given-names></name>
+<xref ref-type="aff" rid="aff1-1473871612469020">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Black</surname><given-names>Andrew P.</given-names></name>
+<xref ref-type="aff" rid="aff2-1473871612469020">2</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-1473871612469020"><label>1</label>North Carolina State University, USA</aff>
+<aff id="aff2-1473871612469020"><label>2</label>Portland State University, USA</aff>
+<author-notes>
+<corresp id="corresp1-1473871612469020">Emerson Murphy-Hill, North Carolina State University, Department of Computer Science, 890 Oval Drive, Campus Box 8206 Raleigh, NC 27695-8206, USA. Email: <email>emerson@csc.ncsu.edu</email>
+</corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>12</volume>
+<issue>2</issue>
+<issue-title>Special issue: Software Visualization</issue-title>
+<fpage>107</fpage>
+<lpage>132</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2013</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Some software packages offer the user <italic>soft advice</italic>: recommendations that are intended to help the user create high-quality artifacts but which may turn out to be <italic>bad</italic> advice. It is left to the user to determine whether the soft advice really will improve quality and to decide whether to adopt it. Visualizations can help the user in making this decision, but we believe that conventional visualizations are less than ideal. In this article, we describe an interactive ambient visualization to help users identify, understand, and interpret soft advice. Our visualization was developed to help programmers interpret <italic>code smells</italic>, which are indications that a software project may be suffering from design problems. We describe a laboratory experiment with 12 programmers that tests several hypotheses about our visualization. The findings suggest that our tool helps programmers to identify smells more effectively and to make more informed judgments about the design of the program under development. We then describe an application of our visualization technique in another domain: an English style and grammar advisor. This second application suggests that our technique can be applied to several domains and also suggests how the technique must be varied to make it domain specific.</p>
+</abstract>
+<kwd-group>
+<kwd>Software</kwd>
+<kwd>refactoring</kwd>
+<kwd>code smells</kwd>
+<kwd>design</kwd>
+<kwd>soft advice</kwd>
+<kwd>visualization</kwd>
+<kwd>ambient</kwd>
+<kwd>grammar</kwd>
+<kwd>style</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1473871612469020" sec-type="intro">
+<title>Introduction</title>
+<p>Liliana is a hypothetical programmer working on the Apache Tomcat project.<sup><xref ref-type="bibr" rid="bibr1-1473871612469020">1</xref></sup> Recently, she has had difficulty in adding functionality to the JNDIRealm class. This class contains several methods such as the following:
+<disp-quote>
+<p><bold>protected boolean</bold> compareCredentials(DirContext context,</p>
+<p>User info, String credentials) <bold>throws</bold> NamingException {</p>
+<p>…</p>
+<p>/* sync since super.digest() does this same thing */</p>
+<p><bold>synchronized (this) {</bold></p>
+<p>password = password.substring(5);</p>
+<p>md.reset();</p>
+<p>md.update(credentials.getBytes());</p>
+<p>String digestedPassword =</p>
+<p>new String(Base64.encode(md.digest()));</p>
+<p>validated = password.equals(digestedPassword);</p>
+<p>}</p>
+<p>…</p>
+</disp-quote></p>
+<p>Based on her experience and an inspection of the surrounding class, Liliana has concluded that the context and credential parameters should be encapsulated into a single object because these two parameters appear together in the parameter lists of seven different methods. After <italic>refactoring</italic> the code by creating a new class of objects that contain a context and some credentials, then using an object of the new class wherever a context and some credentials appear together, Liliana finds that it is much easier to add functionality to the program and that her productivity is improved.</p>
+<p>How did Liliana recognize that by creating a class now, she would improve her productivity later? The answer is what Fowler<sup><xref ref-type="bibr" rid="bibr2-1473871612469020">2</xref></sup> calls “code smells”: patterns in programs that make software difficult to build and maintain. Like odors from your kitchen garbage, smells in software suggest (but do not prove conclusively) that something might need attention. In Liliana’s case, the smell that she noticed is called D<sc>ata</sc> C<sc>lumps</sc>: it is produced when the same small group of data objects is used in several different places. D<sc>ata</sc> C<sc>lumps</sc> can make software more difficult to maintain because if the representation of one of the data objects changes or the protocol for manipulating those objects changes, then every location in which the group of objects appear must be examined to see if it needs to be modified.</p>
+<p>Based on programmers’ experience, many smells have been cataloged; Fowler’s<sup><xref ref-type="bibr" rid="bibr2-1473871612469020">2</xref></sup> book lists 22 different smells; other researchers (e.g. van Emden and Moonen<sup><xref ref-type="bibr" rid="bibr3-1473871612469020">3</xref></sup>) have subsequently proposed more smells. <xref ref-type="table" rid="table1-1473871612469020">Table 1</xref> lists a few interesting smells, including all those mentioned in this article.</p>
+<table-wrap id="table1-1473871612469020" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Some Java code smells identified by Fowler,<sup><xref ref-type="bibr" rid="bibr2-1473871612469020">2</xref></sup> van Emden and Moonen<sup><xref ref-type="bibr" rid="bibr3-1473871612469020">3</xref></sup> (indicated with *), and Drozdz et al.<sup><xref ref-type="bibr" rid="bibr4-1473871612469020">4</xref></sup> (indicated with ✝).</p>
+</caption>
+<graphic alternate-form-of="table1-1473871612469020" xlink:href="10.1177_1473871612469020-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Smell name</th>
+<th align="left">Short description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D<sc>ata</sc> C<sc>lumps</sc></td>
+<td>A group of data objects that is duplicated across code.</td>
+</tr>
+<tr>
+<td>F<sc>eature</sc> E<sc>nvy</sc></td>
+<td>A method is more interested in some other class than in its own class.</td>
+</tr>
+<tr>
+<td>F<sc>essage</sc> C<sc>hain</sc></td>
+<td>A series of method calls to “drill down” to a desired object.</td>
+</tr>
+<tr>
+<td>S<sc>witch</sc> S<sc>tatement</sc></td>
+<td>A <bold>switch</bold> statement, typically duplicated across code.</td>
+</tr>
+<tr>
+<td>T<sc>ypecast</sc>*</td>
+<td>The program makes frequent use of the typecast operation.</td>
+</tr>
+<tr>
+<td>I<sc>nstanceof</sc>*</td>
+<td>The <bold>instanceof</bold> operator is used to test an object’s interface or class.</td>
+</tr>
+<tr>
+<td>L<sc>ong</sc> M<sc>ethod</sc></td>
+<td>A method is too long to be easily understood.</td>
+</tr>
+<tr>
+<td>L<sc>arge</sc> C<sc>lass</sc></td>
+<td>A class contains too many instance variables or codes.</td>
+</tr>
+<tr>
+<td>P<sc>rimitive</sc> O<sc>bsession</sc></td>
+<td>The program uses primitive values like <bold>int</bold> and built-in classes like String instead of domain-specific objects like Range and TelephoneNumber.</td>
+</tr>
+<tr>
+<td>M<sc>agic</sc> N<sc>umber</sc>✝</td>
+<td>A literal value is used directly, rather than through a named constant.</td>
+</tr>
+<tr>
+<td>C<sc>omments</sc></td>
+<td>Thickly commented code is often bad code. Refactor the code, and the comments may well become superfluous.</td>
+</tr>
+<tr>
+<td>D<sc>uplicated</sc> C<sc>ode</sc></td>
+<td>The same code structure appears in more than one place.</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>Although smells are intended to help programmers find potential problems with their code, identifying and understanding code smells can be a difficult task for two reasons.</p>
+<list id="list1-1473871612469020" list-type="bullet">
+<list-item>
+<p>First, novice programmers sometimes cannot locate smells as proficiently as experienced programmers, as Mäntylä<sup><xref ref-type="bibr" rid="bibr5-1473871612469020">5</xref></sup> has demonstrated experimentally. For example, Liliana noticed D<sc>ata</sc> C<sc>lumps</sc> because of her programming experience and knowledge of the code. A less experienced programmer may not have noticed that there was a problem with the code at all and may have continued to slowly add functionality to JNDIRealm without understanding the cause of her low productivity.</p>
+</list-item>
+<list-item>
+<p>Second, even expert programmers can find it burdensome to inspect their code for smells. In Liliana’s case, she had to set aside time to manually inspect the code to look for any one of the more than 22 different smells—time that she could have used to add features or fix bugs. Without setting aside time specifically to find code smells, programmers may not notice them.</p>
+</list-item>
+</list>
+<p>For these reasons, a class of software tool called a smell detector has been developed to help programmers find code smells and understand their origin. Smell detectors have two parts: a code analysis algorithm, which may be simple or complex, depending on the smell, and a human interface, which presents the results of the analysis to the user.</p>
+<p>Smell detectors are an example of a tool that offers what we call <italic>soft advice</italic>. Soft advice is a recommendation produced by a piece of software that is intended to help the user do high-quality work but which may actually be bad advice: the user’s expertise is needed to judge whether quality will truly be improved. The recommendations of a smell detector are soft advice because they cannot be blindly applied; an experienced software developer must evaluate the costs and benefits of refactoring away a code smell.</p>
+<p>Several other types of tools offer soft advice, outside of the domain of software development. For example, the Firewall Policy Advisor makes recommendations to system administrators for security changes in enterprise networks,<sup><xref ref-type="bibr" rid="bibr6-1473871612469020">6</xref></sup> the Systems Operation Advisor makes recommendations to aircraft controllers for changes in aircraft fleets,<sup><xref ref-type="bibr" rid="bibr7-1473871612469020">7</xref></sup> and the DB2 advisor makes recommendations to database administrators for database indexes.<sup><xref ref-type="bibr" rid="bibr8-1473871612469020">8</xref></sup> In each of these soft advice systems, a human must be in the loop to make judgments.</p>
+<p>This article describes a novel smell detector called Stench Blossom that uses an interactive ambient visualization (section “Stench Blossom: a novel smell detector”). In section “Guidelines,” we distill a set of guidelines that capture the important characteristics of Stench Blossom; we believe that these guidelines will be useful to the designers of other smell detectors. We then describe an experiment to evaluate several hypotheses about Stench Blossom and its associated guidelines (section “Experiment”). In section “Visualizations for grammar smells,” we describe the application of the idea of interactive ambient visualization to another domain, English writing, and discuss some design implications. Finally, in section “Future work,” we discuss some potential future improvements for Stench Blossom and speculate about its broader applicability.</p>
+<p>This article is an extension of a prior conference paper<sup><xref ref-type="bibr" rid="bibr9-1473871612469020">9</xref></sup> where the primary contribution was the design and evaluation of a user interface for visualizing code smells. However, that work left open an important question: could the visualization techniques that we used for code smells be applied to other domains? This article answers that question in the affirmative; the major new contribution of this article appears in section “Visualizations for grammar smells,” which describes the application of our visualization technique to a domain outside of software development. (Readers familiar with our original conference publication may safely skip sections “Strench Blossom: a novel smell detector” through “Experiment” of this article, as the content is quite similar.)</p>
+</sec>
+<sec id="section2-1473871612469020">
+<title>Stench Blossom: a novel smell detector</title>
+<p>In this section, we describe the design of Stench Blossom, drawing from research on refactoring, ambient information display, interface agents, user interface design, and perceptual attention. We built this tool as a plugin for the Eclipse environment; it can be downloaded at (<ext-link ext-link-type="uri" xlink:href="http://multiview.cs.pdx.edu/refactoring/smells/">http://multiview.cs.pdx.edu/refactoring/smells/</ext-link>).</p>
+<p>The tool provides the programmer with three different views, which offer progressively more information about the smells in the code being visualized. By default, <italic>Ambient View</italic> is displayed continually while the programmer is coding; it indicates the strength of smells in the programmer’s current context and is illustrated in <xref ref-type="fig" rid="fig1-1473871612469020">Figure 1</xref>. If the programmer wishes to know more about a particular smell, she mouses over Ambient View to reveal <italic>Active View</italic>, shown in <xref ref-type="fig" rid="fig2-1473871612469020">Figure 2</xref>; this view names the displayed smells. Finally, if the programmer wants detailed information about a particular smell, she clicks on the smell name in Active View; this reveals <italic>Explanation View</italic>, shown in <xref ref-type="fig" rid="fig3-1473871612469020">Figure 3</xref>. We discuss each view in turn in the following subsections.</p>
+<fig id="fig1-1473871612469020" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Ambient View in Stench Blossom.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612469020-fig1.tif"/>
+</fig>
+<fig id="fig2-1473871612469020" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Active View in Stench Blossom.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612469020-fig2.tif"/>
+</fig>
+<fig id="fig3-1473871612469020" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Explanation View for the smell F<sc>eature</sc> E<sc>nvy</sc>.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612469020-fig3.tif"/>
+</fig>
+<sec id="section3-1473871612469020">
+<title>Ambient View</title>
+<p>Ambient View is visible behind the program text whenever the programmer is using the code editor (<xref ref-type="fig" rid="fig1-1473871612469020">Figure 1</xref>). Likewise, the static analysis engine in Stench Blossom runs silently in the background, so that the information that supports Ambient View is always available. We chose to make the tool constantly available so that it aligns with <italic>floss refactoring</italic>, where programmers frequently switch between refactoring and other kinds of code modification.<sup><xref ref-type="bibr" rid="bibr10-1473871612469020">10</xref></sup> This design choice is in contrast to that made by smell detectors that must be explicitly invoked to view their results, such as Crocodile;<sup><xref ref-type="bibr" rid="bibr11-1473871612469020">11</xref></sup> such tools are more appropriate to <italic>root canal refactoring</italic>, where the programmer spends significant, dedicated time refactoring as a software engineering activity separate from other change activities. We feel that aligning our tool with floss refactoring makes it more widely applicable because floss refactoring is the more common refactoring strategy.<sup><xref ref-type="bibr" rid="bibr12-1473871612469020">12</xref></sup></p>
+<p>The visualization displays smells related to the current programming context. This design decision also derives from our desire to support floss refactoring: our goal is to give the programmer information that will help her carry out her current programming task. A programmer is more likely to be hampered by smells emanating from the code that is the subject of her current programming task than by smells coming from unrelated code, so these are the smells that we choose to display; programmers are also more likely to act to remove smells that come from code that they are going to change anyway. This is in contrast to smell detectors that visualize an entire system, such as jCosmo<sup><xref ref-type="bibr" rid="bibr3-1473871612469020">3</xref></sup> or CodeCity;<sup><xref ref-type="bibr" rid="bibr13-1473871612469020">13</xref></sup> these tools are more appropriate for root canal refactoring, where the objective is to find and eliminate the worst system-wide smells to improve overall code quality. Our design choice also aligns with Mankoff et al.’s<sup><xref ref-type="bibr" rid="bibr14-1473871612469020">14</xref></sup> recommendation that “the information should be useful and relevant to the users in the intended setting.”</p>
+<p>The visualization is composed of sectors in a semicircle on the right-hand side of the editor pane. We call these sectors <italic>petals</italic>: each petal corresponds to a smell. We put the petals on the right-hand side of the editor to make the display less distracting: the right-hand side is the part of the pane least likely to contain code. Avoiding distracting developers from their current task was proposed as an important property of ambient software visualizations by Parnin and Görg.<sup><xref ref-type="bibr" rid="bibr15-1473871612469020">15</xref></sup> We keep the visualization simple, to avoid “information overload”;<sup><xref ref-type="bibr" rid="bibr16-1473871612469020">16</xref></sup> we do not, for example, display the names of the smells. We chose a fixed, radial pattern for the petals over a more conventional histogram because it may allow users to associate a particular direction with a particular smell, similar to the way in which, after repeated use, users of pie menus can associate items in the menu with a particular direction.<sup><xref ref-type="bibr" rid="bibr17-1473871612469020">17</xref></sup> For example, a programmer may learn that F<sc>eature</sc> E<sc>nvy</sc> always appears in the ↖ direction. While this circular design limits the number of petals that can be viewed at any one time, we have informally verified that this design scales to at least 20 petals while maintaining readability. Because of the multiple petals and the positions of those petals, our visualization has a <italic>high information capacity</italic> according to Pousman and Stasko’s<sup><xref ref-type="bibr" rid="bibr18-1473871612469020">18</xref></sup> taxonomy of ambient visualizations. At the same time, it uses a <italic>low representational fidelity</italic>
+<sup><xref ref-type="bibr" rid="bibr18-1473871612469020">18</xref></sup> because the Ambient View is so loosely coupled to the code and because the notion of smells is metaphorical. A similar circular visualization using a floral design was <italic>PeopleGarden</italic>, a visualization where a flower represents a person and a petal represents a post to a message board.<sup><xref ref-type="bibr" rid="bibr19-1473871612469020">19</xref></sup> The Scope tool, which uses a circular, radar-like visualization to keep the user aware of a variety of system notifications,<sup><xref ref-type="bibr" rid="bibr20-1473871612469020">20</xref></sup> is also similar to our tool.</p>
+<p>The length of the petal represents the strength of the smell, where a length of zero represents an absence of the smell, up to the full radius of the semicircle, which represents a very strong smell. For example, in <xref ref-type="fig" rid="fig1-1473871612469020">Figure 1</xref>, the petal in the ↑ direction (D<sc>ata</sc> C<sc>lumps</sc>) shows a strong smell, whereas the next petal to its left (F<sc>eature</sc> E<sc>nvy</sc>) shows a weaker smell. This is in contrast with smell visualizations that use a threshold, such as TRex<sup><xref ref-type="bibr" rid="bibr21-1473871612469020">21</xref></sup> and CodeNose,<sup><xref ref-type="bibr" rid="bibr22-1473871612469020">22</xref></sup> which do not report smells at all if their metrics fall below a threshold. We made this design decision because we suspect that code smells are highly subjective; if we had chosen a threshold, it would probably differ from the programmer’s preferred threshold, with the consequence that the tool will either miss smells that the programmer might want to see (false-negatives) or overemphasize smells that the programmer would rather ignore (false-positives). Such false-negatives and false-positives may erode programmers’ trust in the tool, making them less likely to use it in the future.</p>
+<p>Ambient View is drawn in pastel colors <italic>behind</italic> the code, in a fixed position on the screen. Our intent in designing it this way was to make it a frequent reminder and companion during code browsing and editing. In this sense, our visualization uses <italic>negotiated interruption</italic>, where the user is informed of the availability of information but is not forced to acknowledge it immediately.<sup><xref ref-type="bibr" rid="bibr23-1473871612469020">23</xref></sup> Robertson et al.<sup><xref ref-type="bibr" rid="bibr24-1473871612469020">24</xref></sup> have shown that programmers who use a debugger with negotiated interruption are more productive when completing debugging tasks than are programmers who use a debugger with immediate interruption. Likewise, we hope that Stench Blossom’s use of negotiated interruptions, instead of immediate interruptions, will allow programmers to be more productive while programming. Stench Blossom uses a <italic>somewhat low notification level</italic>, according to Pousman and Stasko’s<sup><xref ref-type="bibr" rid="bibr17-1473871612469020">17</xref></sup> taxonomy of ambient visualizations.</p>
+<p>The light coloration and simple shape of our visualization are also motivated by <italic>feature integration theory</italic>, which suggests that people initially search in parallel across their entire field of vision for simple visual features, such as color and orientation, to quickly and automatically perceive objects.<sup><xref ref-type="bibr" rid="bibr25-1473871612469020">25</xref></sup> After this initial perception, people expend more focused effort to perceive the object in greater depth. We intend that our visualization supports this initial stage of perception, so that programmers can effortlessly assess smells in their code, at least at a high level.</p>
+<p>The position of smells in the visualization was designed to give the programmer information at a glance. Each petal, corresponding to a smell, is placed on the semicircle so that the smell that is most obvious to the unaided eye is shown in the ↓ direction and the smell that is least likely to be noticed without the use of a tool is shown in the ↑ direction. This positioning information is replicated in the colors; the most obvious smell is shown in blue, while the least obvious is in orange, with the smells in between colored a gradient between blue and orange. The colors are not strictly necessary to interpret the visualization; the position of the petals alone imparts the information about obviousness. We chose blue and orange because these colors are value-neutral; programmers reported that an early design, where Stench Blossom used red and green, implied that some smells were “worse” than others.</p>
+<p>The purpose of the colors and petal positions is that if the programmer notices that the visualization is orange and top-heavy, the code is exhibiting smells that she is unlikely to be aware of, whereas if the visualization is blue and bottom-heavy, the code is exhibiting smells that she is likely to be aware of already. We ranked smells on this “obviousness continuum” because our intuition was that some smells are less obvious than others. For example, a L<sc>arge</sc> C<sc>lass</sc> is obvious when the programmer is coding within it, yet F<sc>eature</sc> E<sc>nvy</sc> is less obvious because the programmer needs to determine where each called method or accessed field resides. Stench Blossom displays the smells from top to bottom in the order listed in <xref ref-type="table" rid="table1-1473871612469020">Table 1</xref> for the first eight smells listed there. This ordering is based on our own intuition as programmers; other programmers may prefer a different order.</p>
+<p>By placing smells on the obviousness continuum, we have visually ranked the utility—the usefulness and the importance—of each smell. Gluck et al.<sup><xref ref-type="bibr" rid="bibr26-1473871612469020">26</xref></sup> have shown that matching the amount of attention attracted by a notification to the utility of the interruption decreases users’ annoyance and increases their perception of benefit. We hope that our visual ranking of smells can similarly decrease annoyance and increase the perception of benefit. At the same time, we have designed the user interface, so that it avoids distracting the programmer because, as Raskin<sup><xref ref-type="bibr" rid="bibr27-1473871612469020">27</xref></sup> puts it, “Systems should be designed to allow users to concentrate on their jobs.”</p>
+<p>In sum, the purpose of the visualization in Ambient View is to give a lightweight yet information-rich overview of the code smells present in the current programming context. We designed the visualization to impart this information quickly, so that the programmer need only glance at the visualization to decide whether further investigation is warranted. We have also built it to be aesthetically pleasing; Pousman and Stasko’s<sup><xref ref-type="bibr" rid="bibr18-1473871612469020">18</xref></sup> taxonomy of ambient visualizations would give it a “somewhat high aesthetic emphasis.”</p>
+</sec>
+<sec id="section4-1473871612469020">
+<title>Active View</title>
+<p>If the programmer chooses to investigate a particular smell, she moves the mouse over the offending petal. This transitions Stench Blossom to Active View and reveals the name of the offending smell, as shown in <xref ref-type="fig" rid="fig2-1473871612469020">Figure 2</xref>. If she then wants a full explanation of the cause of the smell, she need only click on the name: this transitions Stench Blossom to Explanation View.</p>
+<p>We chose to use progressive disclosure to display smell information for two reasons. First, because some types of smell information (such as the information relating to F<sc>eature</sc> E<sc>nvy</sc>) are highly complex, representing such complexity in a single visualization may be perceptually unscalable. Second, because we wanted Ambient View to be a simple visualization, it was natural to provide the programmer with a way to view in-depth information on demand. Our choice to use progressive disclosure contrasts with other smell detectors, such as Parnin et al.’s<sup><xref ref-type="bibr" rid="bibr28-1473871612469020">28</xref></sup> Noseprints tool, that display a single visualization of code smells. However, many existing smell detectors, especially ones that underline code that contains smells,<sup><xref ref-type="bibr" rid="bibr21-1473871612469020">21</xref>,<xref ref-type="bibr" rid="bibr22-1473871612469020">22</xref>,<xref ref-type="bibr" rid="bibr29-1473871612469020">29</xref>,<xref ref-type="bibr" rid="bibr30-1473871612469020">30</xref></sup> do include a basic form of progressive disclosure: they allow the user to mouse over an underlined piece of code to see the name of a smell that that code is exhibiting. Stench Blossom takes this technique one step further in Explanation View.</p>
+</sec>
+<sec id="section5-1473871612469020">
+<title>Explanation View</title>
+<p>Explanation View is designed to explain a selected smell in detail because simply reporting uniform metrics about the existence and strength of a smell, as we do in the Ambient View, may not be sufficient information to allow the programmer to decide whether and how to correct the smell. This aligns with Shneiderman’s<sup><xref ref-type="bibr" rid="bibr31-1473871612469020">31</xref></sup> recommendation that user interfaces should provide <italic>constructive guidance</italic>, so that the user can make intelligent choices about the next step (p. 58).</p>
+<p>Although we designed Stench Blossom to provide detailed information about the selected smell, we chose not to offer suggestions for how to refactor the code. We made this design choice for two reasons. First, as Shneiderman<sup><xref ref-type="bibr" rid="bibr32-1473871612469020">32</xref></sup> states, “experienced operators strongly desire the sense that they are in charge of the system” (p. 62). Second, in some cases, enumerating all the possible refactorings to deal with a smell may yield an overwhelming number of results. For example, given a L<sc>ong</sc> M<sc>ethod</sc>, the extract method refactoring may be applied to almost any combination of contiguous statements in the method; each of these refactorings would “carve up” the method in a different way. Instead, Stench Blossom is intended to give the programmer sufficient information to decide for herself on the best course of action.</p>
+<p>Naturally, the details provided in Explanation View vary from one smell to another, but most smells are explained using two components. Both are shown in <xref ref-type="fig" rid="fig3-1473871612469020">Figure 3</xref>, which illustrates the smell F<sc>eature</sc> E<sc>nvy</sc>. The first component, initially displayed at the top-right but movable by the user, is the summary pane: it summarizes the data collected by the smell analyzer. In the example, the summary pane shows that the current method uses only a single method (serialiseByteArray) from its own class, but a long list of methods from the class DHTTransportFullStats.</p>
+<p>The second component takes the form of annotations on the code in the editor. These show the origin of the smell. In <xref ref-type="fig" rid="fig3-1473871612469020">Figure 3</xref>, the programmer has moused over the name of the getVersion method in the summary pane: the place in the code where this method is used is boxed. References to methods and variables of external classes are highlighted; colors are used to distinguish references to one class from references to another. For example, in <xref ref-type="fig" rid="fig3-1473871612469020">Figure 3</xref>, all references to methods in DHTTransportImpl are colored pink. Color assignment here is arbitrary, although we attempt to make each color as different as possible from the other colors. We also intend that the programmer can use the overall extent of the colorization to estimate the extent of the smell in the code.</p>
+</sec>
+<sec id="section6-1473871612469020">
+<title>Implementation</title>
+<p>Stench Blossom serves as the common output for a number of individual smell analyzers. Each analyzer computes a scalar metric within a known range, which is used to determine the length of the corresponding petal in the Ambient View. Some of these metrics are quite complicated; the metric for F<sc>eature</sc> E<sc>nvy</sc>, for example, depends on the number of classes referenced, the number of references to each class, and the number of internal references.</p>
+<p>Because of this complexity, care was needed to avoid having the analysis slow down the response of the system to editing activity, which is after all the primary task. It proved adequate to have smell detection run in a background thread and to cache smell results for unchanged parts of the program. It may eventually prove necessary to rely on heuristics for some analyses in Ambient View and to commit to a full analysis only if the programmer moves to Active View, and thence to Explanation View.</p>
+<p>Showing smells related only to the current programming context—motivated by our desire to support floss refactoring—has the added benefit that it requires more modest analysis than system-wide smell visualizations. This is the key to the scalability of the implementation: even if the program being edited is large, only a small part of it—the “current context”—is being worked on at any given time. At present, the current context is defined as the method in which the user’s cursor lies. If the cursor is not in the code on the screen, then the tool shows a metaphorical trip wire in the middle of the editor; the method on the trip wire defines the current context. In the future, we may consider other definitions of context, such as Mylyn’s task contexts<sup><xref ref-type="bibr" rid="bibr33-1473871612469020">33</xref></sup> or Parnin and Görg’s<sup><xref ref-type="bibr" rid="bibr34-1473871612469020">34</xref></sup> usage contexts.</p>
+</sec>
+</sec>
+<sec id="section7-1473871612469020">
+<title>Guidelines</title>
+<p>Based on our experience in designing and building Stench Blossom, we have derived a number of characteristics that we believe may be useful in any smell detector for floss refactoring. In <xref ref-type="table" rid="table2-1473871612469020">Table 2</xref>, we capture these characteristics as a set of user interface guidelines. The guidelines are stated in a programmer-centric way; these same statements were used in our empirical evaluation. We believe that enumerating these guidelines is important because it captures the characteristics of Stench Blossom in a reusable form; this should help future tool designers to pick and choose which characteristics they want for their smell detector, without necessarily using an interactive ambient visualization. For example, a tool designer who wants to underline smells in an editor could implement <italic>Partiality</italic> by changing the underline color or intensity based on the obviousness of the smell.</p>
+<table-wrap id="table2-1473871612469020" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Our guidelines and the rationale behind them.</p>
+</caption>
+<graphic alternate-form-of="table2-1473871612469020" xlink:href="10.1177_1473871612469020-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Guideline</th>
+<th align="left">Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<italic>Restraint</italic>. The tool should not overwhelm me with the smells that it detects.</td>
+<td>Sometimes smells emanate from many pieces of code and sometimes one piece of code emits many smells. For example, the compareCredentials method from section “Introduction” gives off at least five code smells: D<sc>ata</sc> C<sc>lumps</sc>, P<sc>rimitive</sc> O<sc>bsession</sc>, L<sc>ong</sc> M<sc>ethod</sc>, C<sc>omments</sc>, <sc>and</sc> M<sc>agic</sc> N<sc>umber</sc>. Thus, a smell detector should not display smell information in such a way that a proliferation of code smells overloads the programmer.</td>
+</tr>
+<tr>
+<td>
+<italic>Relationality</italic>. When showing me details about code smells, the tool should show me the relationships between affected program elements.</td>
+<td>Some smells emanate not from a single point in the code but from the <italic>relationship</italic> between several noncontiguous pieces of code. For instance, a method exhibits F<sc>eature</sc> E<sc>nvy</sc> not because of a single reference to a parameter but because of a large number of references to parameters of foreign types and a small number of references to the fields and methods of <bold>this</bold> and other objects of the method’s own class. Thus, a smell detector should display smell information relationally when the smell is caused by the relationship between code fragments.</td>
+</tr>
+<tr>
+<td>
+<italic>Partiality</italic>. The tool should emphasize smells that are difficult to see with the naked eye.</td>
+<td>Programmers may find that there is more value in having a tool tell them about certain smells and less value in being told about other smells. This is because some smells, such as L<sc>ong</sc> M<sc>ethod</sc>, are visible at a glance, while others, such as F<sc>eature</sc> E<sc>nvy</sc>, require careful analysis.<sup><xref ref-type="bibr" rid="bibr5-1473871612469020">5</xref></sup> Thus, a smell detector should emphasize those smells that are difficult to recognize without a tool.</td>
+</tr>
+<tr>
+<td>
+<italic>Nondistracting</italic>. The tool should not distract me.</td>
+<td>It is important that a smell detector not encourage a programmer to refactor excessively because best practice dictates that programmers only refactor when it helps achieve another goal.<sup><xref ref-type="bibr" rid="bibr2-1473871612469020">2</xref></sup>
+</td>
+</tr>
+<tr>
+<td>
+<italic>Estimability</italic>. The tool should help me estimate the extent of a smell in the code.</td>
+<td>Smells such as D<sc>uplicated</sc> C<sc>ode</sc> may be spread throughout a whole class, whereas others may be localized in only one place. The extent of such spread can help the programmer determine whether a smell should be refactored away and how much effort and reward such a refactoring would entail.</td>
+</tr>
+<tr>
+<td>
+<italic>Availability</italic>. The tool should make smell information available to me at all times.</td>
+<td>The most popular tactic for refactoring occurs when a programmer interleaves frequent refactoring with other kinds of program modification—floss refactoring.<sup><xref ref-type="bibr" rid="bibr11-1473871612469020">11</xref></sup> Because analyzing smells is part of this interleaving, a smell detector that supports this tactic must help programmers to find smells quickly, without forcing them to go through a long process to see whether the tool has found any smells. Thus, a smell detector should make smell information available as soon as possible, with little or no effort on the part of the programmer.</td>
+</tr>
+<tr>
+<td>
+<italic>Unobtrusiveness</italic>. The tool should not block me from my other work while it analyzes or finds smells.</td>
+<td>The activities of coding and finding smells for refactoring are often tightly interleaved,<sup><xref ref-type="bibr" rid="bibr2-1473871612469020">2</xref>,<xref ref-type="bibr" rid="bibr11-1473871612469020">11</xref></sup> yet at the same time, automatic code analysis may be time-consuming, so much so that waiting for the analysis to complete may disrupt this interleaving. Thus, a smell detector should not stop the programmer from programming while it gathers, analyzes, and displays information about smells.</td>
+</tr>
+<tr>
+<td>
+<italic>Context-Sensitivity</italic>. The tool should tell me first and foremost about smells related to the code I am working on.</td>
+<td>Best practice dictates that refactoring only be done when it helps to accomplish an immediate programming goal;<sup><xref ref-type="bibr" rid="bibr2-1473871612469020">2</xref></sup> fixing a smell on code that is unrelated to the current programming task is a distraction from that task. So fixing smells in a context-<italic>insensitive</italic> manner may be an inefficient way of using resources or may even be counterproductive. Thus, a smell detector should point out smells relevant to the current programming context.</td>
+</tr>
+<tr>
+<td>
+<italic>Lucidity</italic>. In addition to finding smells for me, the tool should tell me why smells exist.</td>
+<td>Smells can be complex and difficult to understand because they may be subtle or flagrant, widespread or localized, or anywhere in between. A smell detector that communicates these properties may help give the programmer confidence in the detector’s analysis. Thus, a smell detector should go further than simply telling the programmer that a smell exists; it should help the programmer find the sources of the problem by explaining <italic>why</italic> the smell exists.</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section8-1473871612469020">
+<title>Experiment</title>
+<p>We conducted an experiment to test several hypotheses about Stench Blossom. In the experiment, we asked programmers to identify smells in code and make refactoring judgments based on smells, with and without Stench Blossom. To facilitate replication of this experiment, the experimenter’s notebook can be found in <xref ref-type="app" rid="app1-1473871612469020">Appendix 1</xref>. Other materials, including the codesets and results database, can be found at (<ext-link ext-link-type="uri" xlink:href="http://multiview.cs.pdx.edu/refactoring/experiments/">http://multiview.cs.pdx.edu/refactoring/experiments/</ext-link>).</p>
+<p>In designing the experiment, we chose to compare Stench Blossom against no tool, rather than comparing it against some existing tool. While it would be useful to compare different smell visualizations, no such comparison could in practice be fair. Existing smell detectors differ from ours in that they work for other languages or for considerably fewer smells, and thus, the results of such a comparison would necessarily conflate the effects of those differences with differences between visualizations. For instance, van Emden and Moonen’s<sup><xref ref-type="bibr" rid="bibr3-1473871612469020">3</xref></sup> tool implements only two smells (I<sc>nstanceof</sc> and T<sc>ypecast</sc>); conducting a comparative experiment against just these two smells would produce quite limited results.</p>
+<sec id="section9-1473871612469020">
+<title>Subjects</title>
+<p>We recruited a total of 12 subjects: 6 commercial Java developers and 6 students from a graduate class on relational database management systems. Subjects were recruited using an email message that stated that participants needed to be at least moderately familiar with Java and unfamiliar with Stench Blossom.</p>
+<p>Subjects from the class were asked to volunteer to participate in exchange for extra credit on one programming assignment. Professional subjects were drawn from a pool of local professional programmers who had volunteered previously at Java and Eclipse user group meetings. Professional subjects were not compensated.</p>
+<p>Based on self-reporting in a preexperiment questionnaire, it appeared that subjects arrived with the requisite amount of programming experience and a varied level of experience with refactoring and smells. All subjects had previously used integrated development environments (IDEs; 9 of 12 were Eclipse users) and were at least moderately familiar with Java. All professional subjects had some knowledge of refactoring, while four of six student subjects did. Four of six professional subjects had some knowledge of smells, while none of the student subjects did. Professional subjects reported a median of 12.5 years of programming experience, while student subjects reported 5.5 years.</p>
+<p><xref ref-type="table" rid="table3-1473871612469020">Table 3</xref> summarizes the demographics of the subjects, where each row represents a subject. The Class column indicates whether the subject was recruited from the graduate class. The Job Title column indicates each participant’s job title. The Experience column indicates how many years of programming experience each subject had. The remainder of the columns in the table will be explained shortly.</p>
+<table-wrap id="table3-1473871612469020" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Participant demographics and results summary.</p>
+</caption>
+<graphic alternate-form-of="table3-1473871612469020" xlink:href="10.1177_1473871612469020-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Class</th>
+<th align="left">Job title</th>
+<th align="left">Experience</th>
+<th align="left">Tool 1st</th>
+<th align="left">Code</th>
+<th align="left" colspan="2">Smells found<hr/></th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th/>
+<th/>
+<th/>
+<th align="left">No tool</th>
+<th align="left">Tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No</td>
+<td>Software Analyst</td>
+<td>7 years</td>
+<td>Yes</td>
+<td>AB</td>
+<td>11</td>
+<td>18</td>
+</tr>
+<tr>
+<td>No</td>
+<td>Software Developer</td>
+<td>30 years</td>
+<td>No</td>
+<td>AB</td>
+<td>9</td>
+<td>14</td>
+</tr>
+<tr>
+<td>No</td>
+<td>Advisory Software Engineer</td>
+<td>10 years</td>
+<td>Yes</td>
+<td>BA</td>
+<td>12</td>
+<td>22</td>
+</tr>
+<tr>
+<td>No</td>
+<td>Senior Software Engineer</td>
+<td>18 years</td>
+<td>No</td>
+<td>BA</td>
+<td>20</td>
+<td>35</td>
+</tr>
+<tr>
+<td>Yes</td>
+<td>IT Support</td>
+<td>9 years</td>
+<td>Yes</td>
+<td>AB</td>
+<td>17</td>
+<td>27</td>
+</tr>
+<tr>
+<td>Yes</td>
+<td>Graduate Teaching Assistant</td>
+<td>6 years</td>
+<td>No</td>
+<td>BA</td>
+<td>11</td>
+<td>23</td>
+</tr>
+<tr>
+<td>Yes</td>
+<td>Software Engineer</td>
+<td>4 years</td>
+<td>Yes</td>
+<td>BA</td>
+<td>22</td>
+<td>20</td>
+</tr>
+<tr>
+<td>Yes</td>
+<td>Technologist</td>
+<td>19 years</td>
+<td>No</td>
+<td>AB</td>
+<td>11</td>
+<td>22</td>
+</tr>
+<tr>
+<td>No</td>
+<td>Software Engineer</td>
+<td>15 years</td>
+<td>Yes</td>
+<td>BA</td>
+<td>14</td>
+<td>18</td>
+</tr>
+<tr>
+<td>Yes</td>
+<td>Hardware Validation Intern</td>
+<td>3 years</td>
+<td>Yes</td>
+<td>AB</td>
+<td>8</td>
+<td>13</td>
+</tr>
+<tr>
+<td>Yes</td>
+<td>Systems Engineer</td>
+<td>5 years</td>
+<td>No</td>
+<td>BA</td>
+<td>9</td>
+<td>17</td>
+</tr>
+<tr>
+<td>No</td>
+<td>Contract Programmer</td>
+<td>10 years</td>
+<td>No</td>
+<td>AB</td>
+<td>10</td>
+<td>22</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section10-1473871612469020">
+<title>Methodology</title>
+<p>We conducted the experiment using a laptop (1.7 GHz, 2 GB RAM, 15.4-inch-wide screen of 1280 × 800 pixels) with an external mouse. Each experiment was conducted one-on-one, with the first author as experiment administrator.</p>
+<p>Subjects were divided into four groups to mitigate learning effects via counterbalancing. Half of the subjects performed tasks without the aid of Stench Blossom first, then with the aid of it, while the other half used Stench Blossom first, then performed the task without it. In <xref ref-type="table" rid="table3-1473871612469020">Table 3</xref>, the Tool 1st column indicates whether subjects used the tool first. Within these two groups, half of the subjects worked over codeset A first, then B second, and half over codeset B first, then A second. In <xref ref-type="table" rid="table3-1473871612469020">Table 3</xref>, the Code column indicates this order for each subject. We chose codesets A and B to contain an approximately equal variety of smells. Each codeset contained four classes selected from the Vuze<sup><xref ref-type="bibr" rid="bibr35-1473871612469020">35</xref></sup> and core Java libraries.<sup><xref ref-type="bibr" rid="bibr36-1473871612469020">36</xref></sup></p>
+<p>We designed the experiment to last approximately 1 h. The experiment started with a training phase, then had three parts in which we tested four hypotheses, as described below.</p>
+<sec id="section11-1473871612469020">
+<title>Training</title>
+<p>Subjects were given eight 3″ × 5″ cards, each containing a smell name and description on the front and an example on the back. The eight smells on the cards were the first eight smells listed in <xref ref-type="table" rid="table1-1473871612469020">Table 1</xref>. Subjects were given a few minutes to read these cards and were told that they would later be asked to find smells as well as explore details of some smells.</p>
+</sec>
+<sec id="section12-1473871612469020">
+<title>Task 1: identifying smells in code</title>
+<p>Subjects were asked to skim four Java files, top to bottom, and mention any smells that they noticed. For two of the files, subjects looked for the smells manually, and for the other two, they used Stench Blossom. Before using Stench Blossom, the administrator gave each subject a demonstration and read aloud a short description of the Ambient View visualization.</p>
+<p>The subject then began the task, and the administrator recorded which of the eight smells the subject noticed and said aloud, with and without Stench Blossom. When using Stench Blossom, the subjects could simply repeat what the visualization was telling them, but in practice, most subjects appeared to cross-validate what the tool said by briefly looking over the code. This allowed us to test our first hypothesis:</p>
+<list id="list2-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Hypothesis 1. Programmers identify more smells using the tool than not using the tool</italic>. If the number of smells that subjects reported when using the tool significantly exceeds the number of smells when subjects were not using the tool, then the hypothesis is confirmed.</p>
+</list-item>
+</list>
+<p>Note that while this hypothesis may seem obviously true, little evidence exists in the literature to confirm it. The only experiment that we know of that has tested this hypothesis was performed by Parnin et al.,<sup><xref ref-type="bibr" rid="bibr28-1473871612469020">28</xref></sup> where one of the authors found more smells using a tool in a small software project than did five other code readers without a tool. Thus, our confirmation of this hypothesis serves to confirm Parnin et al.’s result, for an audience beyond the people who designed the tool: smell detectors can be effective in finding smells.</p>
+<p>We also asked subjects to evaluate, and say aloud, whether they agreed with the tool’s quantification of the smell. This allowed us to test another hypothesis:</p>
+<list id="list3-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Hypothesis 2. Code smells are subjective</italic>. If subjects expressed disagreement with each others’ estimation of smells and with the tool’s quantification of the smell, then the hypothesis is confirmed.</p>
+</list-item>
+</list>
+<p>Previous evidence for this hypothesis has been provided by Mäntylä et al.,<sup><xref ref-type="bibr" rid="bibr37-1473871612469020">37</xref></sup> who asked 12 developers from the same company to identify smells in their own closed-source software and compared that evaluation to a smell detector’s findings for three smells. They found that the findings of the developers and the findings of the tools did not correlate, confirming this hypotheses. Our study thus attempts to qualitatively replicate their findings in the context of more smells, a wider variety of programmers, and for open-source software.</p>
+</sec>
+<sec id="section13-1473871612469020">
+<title>Task 2: making refactoring judgments</title>
+<p>Next, subjects made refactoring judgments about code. When the subject used Stench Blossom, the administrator gave the subject a demonstration of the tool and read aloud a description of how the Explanation View displays F<sc>eature</sc> E<sc>nvy</sc>. The subject was then told the task was to “use the tool to help you make some judgments about the code: how widespread the F<sc>eature</sc> E<sc>nvy</sc> is, how likely you are to remove it, and how you might do it.” The subject performed this task in four different methods: two methods with Stench Blossom and two methods without. We recorded these judgments during the experiment. A similar task description was used when the subject did not use the tool.</p>
+<p>We used this task to evaluate the following hypothesis:</p>
+<list id="list4-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Hypothesis 3. Programmers make more confident and informed refactoring judgments when using the tool than when not using the tool</italic>. In the questionnaire (described in the next section), we asked subjects whether they felt that the tool helped them to make more confident and informed judgments. These two questions about being confident and informed allowed yes-or-no responses with optional comments. If the number of subjects who reported being more confident and informed about their judgments exceeded the number who did not, then the hypothesis is confirmed.</p>
+</list-item>
+</list>
+</sec>
+<sec id="section14-1473871612469020">
+<title>Questionnaire</title>
+<p>Finally, subjects were asked about their experiences using Stench Blossom and about their opinion of smell detectors in general. In the questionnaire, we also asked subjects to rate whether the nine usability guidelines (described in <xref ref-type="table" rid="table2-1473871612469020">Table 2</xref>) were important. Similar to a <italic>heuristic evaluation</italic>, where people evaluate a user interface according to a set of guidelines,<sup><xref ref-type="bibr" rid="bibr38-1473871612469020">38</xref></sup> our ratings instead tried to have subjects evaluate the guidelines themselves. By phrasing the guidelines in a programmer-centric way, we hoped that subjects could judge whether each guideline was important to them personally. Because the two tasks allowed the subject to explore the breadth and depth of our tool (several smells and all three views), we feel that the subjects were qualified to make an informed judgment about our tool and of the guidelines that it follows.</p>
+<p>Additionally, the questionnaire asked subjects to rate two other guidelines that a smell detector might exhibit but that we did <italic>not</italic> postulate in section “Guidelines” and which Stench Blossom does not follow.</p>
+<list id="list5-1473871612469020" list-type="bullet">
+<list-item>
+<p><italic>Decidability</italic>. “The tool should help me decide whether to remove a smell from the code,” similar to Shneiderman’s<sup><xref ref-type="bibr" rid="bibr31-1473871612469020">31</xref></sup> recommendation for constructive guidance (p. 58).</p>
+</list-item>
+<list-item>
+<p><italic>Consistency</italic>. “The tool should have a user interface consistent with the rest of the environment,” derived from Nielsen’s<sup><xref ref-type="bibr" rid="bibr39-1473871612469020">39</xref></sup> “consistency and standards” heuristic.</p>
+</list-item>
+</list>
+<p>We included these two guidelines because we postulate that they are <italic>not</italic> important to smell detectors. Thus, they provide a baseline against which to test the guidelines that we do postulate to be important. This leads to our fourth hypothesis:</p>
+<list id="list6-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Hypothesis 4. The guidelines represent desirable design considerations for smell detectors</italic>. If subjects rank the guidelines that we believe are important to smell detectors significantly higher than the guidelines that we believe are not important, then the hypothesis is confirmed.</p>
+</list-item>
+</list>
+</sec>
+</sec>
+<sec id="section15-1473871612469020">
+<title>Results</title>
+<p>The experiment confirmed <italic>Hypothesis 1</italic> that programmers identify more smells using the Stench Blossom tool than not using it. In <xref ref-type="table" rid="table3-1473871612469020">Table 3</xref>, the Smells Found columns indicate the number of smells identified with and without Stench Blossom. The median number of smells found without the assistance of Stench Blossom was 11, while the median number of smells found with the assistance of Stench Blossom was 21. The difference between smells found with Stench Blossom and those found without is statistically significant (<italic>p</italic> = .003, <italic>df</italic> = 11, <italic>z</italic> = 2.98, using a Wilcoxon matched-pairs signed-ranks test, where <italic>α</italic> = 5). This aligned with subjects’ opinions: all indicated that it was difficult to look for all eight smells at once without the assistance of the tool. All subjects indicated that the smell detector found information that they would not have found as quickly. Eight of the 12 indicated that the detector found information that they would not have found at all.</p>
+<p>When subjects did not use Stench Blossom, they sometimes found the task of recognizing smells difficult, suggesting that one factor that made Stench Blossom effective was that it served as memory aid. When the administrator asked subjects to look for the 8 smells in the code, subjects reported that they found it difficult to keep them all in mind at once. Overall, four subjects “somewhat agreed” and eight “strongly agreed” that “it was difficult to look for all 8 smells at the same time.” While looking for smells, a subject remarked “I realize [that] I forgot about the L<sc>ong</sc> M<sc>ethod</sc> one” and “<sc>Typecast</sc>: I’d totally forgotten,” even though this subject had reviewed the smells less than 10 min prior and was among the three subjects who rated themselves most knowledgeable about code smells. Likewise, even when readily apparent by inspection, some smells were overlooked by subjects. For example, after overlooking a <bold>switch</bold> statement several times, one subject commented “I can’t believe I didn’t see it.”</p>
+<p>The experiment provided evidence to support <italic>Hypothesis 2</italic> that smells are subjective. For example, several subjects had different definitions of what “too big” means for L<sc>ong</sc> M<sc>ethod</sc> and L<sc>arge</sc> C<sc>lass</sc>. Several subjects agreed with Stench Blossom—that counting the number of characters is useful for gauging how long something is—although some commented that the tool should not have included comments when gauging size. Other subjects stated that counting statements or expressions in the abstract syntax tree is the only useful metric for length. One subject noted that “if it fits on the page, it’s reasonable.” There was some indication, beyond L<sc>ong</sc> M<sc>ethod</sc> and L<sc>arge</sc> C<sc>lass</sc>, that other smells were subjective as well. For instance, one subject saw some instances of D<sc>ata</sc> C<sc>lumps</sc> as not a problem because the developers who wrote the code had little choice. Likewise, subjects made comments indicating that smells were not binary but encompassed a range of severity; for instance, smells were “borderline,” “obvious,” or “relative” to the surrounding code.</p>
+<p>The experiment confirmed <italic>Hypothesis 3</italic> that subjects make more confident and informed refactoring judgments when using the tool than when not using the tool. Ten of 12 subjects said that the tool improved their confidence in refactoring judgments, and 11 of 12 said that the tool helped them to make more informed judgments.</p>
+<p>A feature that appeared to help subjects make refactoring judgments was Stench Blossom’s ability to perform and express precise program analysis. Without the tool, several subjects inaccurately analyzed source code for F<sc>eature</sc> E<sc>nvy</sc>, which led to poorly informed refactoring judgments. The inaccuracy of the subjects’ analyses appeared to stem from their use of faulty heuristics. For example, one subject explicitly declared a heuristic that if the method being inspected “is static … [then] we’re not referencing … this class.” This heuristic, used by several developers, is faulty because static methods can access static fields. Using this heuristic will cause subjects to conclude that there is more F<sc>eature</sc> E<sc>nvy</sc> than actually exists, potentially resulting in unnecessary refactoring. Because Stench Blossom performed accurate program analysis, subjects did not need to rely on faulty heuristics and thus could make refactoring judgments that were confident and informed.</p>
+<p>The experiment confirmed <italic>Hypothesis 4</italic> that the guidelines represent desirable design considerations for smell detectors. Overall, subjects rated our guidelines as important to the design of smell detectors. <xref ref-type="table" rid="table4-1473871612469020">Table 4</xref> lists how subjects rated each guideline that we postulated in <xref ref-type="table" rid="table2-1473871612469020">Table 2</xref>. In the left column, the guideline name is listed (the subject had read the description of the guideline, but not the name of the guideline). The right columns list how the many subjects rated each guideline at what level of importance to the design of smell detectors. For example, 1 subject marked Unobtrusiveness as “Very Important” while 11 marked it as “Essential.” The aggregates of all responses are displayed; the darker the table cell, the more participants marked that response. In the table, guidelines are ordered by mean guideline scores. Guidelines that were not included in the originally postulated list of nine guidelines are <italic>italicized</italic> in <xref ref-type="table" rid="table4-1473871612469020">Table 4</xref>. Subjects tended to rank the postulated guidelines, as a whole, significantly higher than the guidelines that we did not postulate (<italic>p</italic> &lt; .001, <italic>df</italic> = 130, <italic>z</italic> = 3.69, using a Wilcoxon rank-sum test), suggesting that programmers believe that our guidelines are generally important to usable smell detectors. However, individually, only the Unobtrusiveness, Context-Sensitivity, and Restraint guidelines were ranked significantly higher than both guidelines that we did not postulate (<xref ref-type="table" rid="table5-1473871612469020">Table 5</xref>).</p>
+<table-wrap id="table4-1473871612469020" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Results of postexperiment guideline questionnaire.</p>
+</caption>
+<graphic alternate-form-of="table4-1473871612469020" xlink:href="10.1177_1473871612469020-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" colspan="6">How important is the characteristic to any smell detection tool?<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left">Not important</th>
+<th align="left">Somewhat important</th>
+<th align="left">Important</th>
+<th align="left">Very important</th>
+<th align="left">Essential</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unobtrusiveness</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>11</td>
+</tr>
+<tr>
+<td>Context-Sensitivity</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td>7</td>
+</tr>
+<tr>
+<td>Restraint</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td>7</td>
+</tr>
+<tr>
+<td>Partiality</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>6</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Estimability</td>
+<td>0</td>
+<td>0</td>
+<td>3</td>
+<td>3</td>
+<td>6</td>
+</tr>
+<tr>
+<td>Nondistracting</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>5</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Relationality</td>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td>4</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Availability</td>
+<td>1</td>
+<td>2</td>
+<td>2</td>
+<td>4</td>
+<td>3</td>
+</tr>
+<tr>
+<td>
+<italic>Consistency</italic>
+</td>
+<td>1</td>
+<td>2</td>
+<td>2</td>
+<td>5</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Lucidity</td>
+<td>3</td>
+<td>0</td>
+<td>3</td>
+<td>3</td>
+<td>3</td>
+</tr>
+<tr>
+<td>
+<italic>Decidability</italic>
+</td>
+<td>3</td>
+<td>2</td>
+<td>4</td>
+<td>2</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table5-1473871612469020" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Differences between postulated guidelines (at left) and guidelines that we did not postulate (top), compared using pairwise <italic>p</italic>-values calculated using a Wilcoxon rank-sum test.</p>
+</caption>
+<graphic alternate-form-of="table5-1473871612469020" xlink:href="10.1177_1473871612469020-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Consistency</th>
+<th align="left">Decidability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unobtrusiveness</td>
+<td>&lt;.001<xref ref-type="table-fn" rid="table-fn1-1473871612469020">*</xref></td>
+<td>&lt;.001<xref ref-type="table-fn" rid="table-fn1-1473871612469020">*</xref></td>
+</tr>
+<tr>
+<td>Context-Sensitivity</td>
+<td>.042<xref ref-type="table-fn" rid="table-fn1-1473871612469020">*</xref></td>
+<td>.003<xref ref-type="table-fn" rid="table-fn1-1473871612469020">*</xref></td>
+</tr>
+<tr>
+<td>Restraint</td>
+<td>.042<xref ref-type="table-fn" rid="table-fn1-1473871612469020">*</xref></td>
+<td>.003<xref ref-type="table-fn" rid="table-fn1-1473871612469020">*</xref></td>
+</tr>
+<tr>
+<td>Partiality</td>
+<td>.065</td>
+<td>.003<xref ref-type="table-fn" rid="table-fn1-1473871612469020">*</xref></td>
+</tr>
+<tr>
+<td>Estimability</td>
+<td>.086</td>
+<td>.004<xref ref-type="table-fn" rid="table-fn1-1473871612469020">*</xref></td>
+</tr>
+<tr>
+<td>Nondistracting</td>
+<td>.107</td>
+<td>.006<xref ref-type="table-fn" rid="table-fn1-1473871612469020">*</xref></td>
+</tr>
+<tr>
+<td>Relationality</td>
+<td>.742</td>
+<td>.086</td>
+</tr>
+<tr>
+<td>Availability</td>
+<td>.834</td>
+<td>.125</td>
+</tr>
+<tr>
+<td>Lucidity</td>
+<td>.858</td>
+<td>.286</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-1473871612469020">
+<p>Statistically significant differences are denoted with an asterisk symbol, at an <italic>α</italic> = 5 level.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>A minority of subjects appeared to believe that some guidelines are not at all important. For example, the postulated guideline that was judged the least important, Lucidity, was judged as “not important” by three subjects. Interestingly, these three subjects were all volunteers from the classroom and were the second, third, and fourth least experienced programmers among the 12 subjects. Our interpretation is that, perhaps, less experienced programmers do not value a tool that explains its reasoning because they believe that needing such an explanation is a sign of poor programming skills.</p>
+</sec>
+<sec id="section16-1473871612469020">
+<title>Limitations</title>
+<p>There are several limitations in the design of our experiment. We restricted subjects to discussing only 8 smells, when Fowler<sup><xref ref-type="bibr" rid="bibr2-1473871612469020">2</xref></sup> lists 22 code smells, and those 8 are not necessarily a representative sample. Likewise, we only focused on one smell in the Explanation View—F<sc>eature</sc> E<sc>nvy</sc>—so subjects’ refactoring judgments may be different for other kinds of smells. For the most part, subjects were unfamiliar with the source code; the results may be different for code with which they are familiar. A further limitation is that the source code that we selected may not be representative of all source code in the wild. Further studies are needed to validate our results for different smells, with code familiar to subjects and with a wider variety of code bases.</p>
+</sec>
+</sec>
+<sec id="section17-1473871612469020">
+<title>Visualizations for grammar smells</title>
+<p>In this section, we describe how we repurposed Stench Blossom as a style and grammar advisor. Our goal was to demonstrate the generalizability of interactive ambient visualizations by applying them to a domain outside software engineering. Revision in writing is an appropriate avenue for such a tool because a revision task can occur at any time in the subprocesses of writing, as opposed to being linearly performed in a single postwriting stage of the composing process.<sup><xref ref-type="bibr" rid="bibr40-1473871612469020">40</xref></sup></p>
+<sec id="section18-1473871612469020">
+<title>Implementation</title>
+<p>To closely parallel the implementation of visualizing code smells, the style and grammar advisor also uses Eclipse as its underlying editing environment. Specifically, we use TeXlipse,<sup><xref ref-type="bibr" rid="bibr41-1473871612469020">41</xref></sup> a plugin for editing LaTeX documents, to provide a convenient platform for retargeting Stench Blossom to English writing, rather than programming. This implementation decision also allows us to reuse much of the existing visualization framework.</p>
+<p>The retargeting of Stench Blossom as a style and grammar advisor is greatly facilitated by the use of the open-source style and grammar-checking library JLanguageTool.<sup><xref ref-type="bibr" rid="bibr42-1473871612469020">42</xref></sup> Designed by Daniel Naber, this library offers the ability to grammar check plain-text documents in multiple languages and includes an ample number of rule-based grammar patterns.</p>
+<p>The fact that JLanguageTool processes plain-text presents an interesting parsing challenge, since LaTeX is a markup language and LaTeX documents contain markup as well as text: special characters, variables, command and environment definitions and applications, and comments. Precautions must be taken before passing such a document to the JLanguageTool grammar checker by preprocessing the input LaTeX text. Specifically, LaTeX tags are stripped of programming commands before grammar checking the document; these commands are then added back after checking. This requires that we adjust the character positions to compensate for the grammar checker’s changes. While this eliminates many issues, such as formatting commands like bold or underline, our transformation does not actually compile or execute the LaTeX code. Consequently, if the LaTeX document contains programming statements that add or remove content from the document itself, these statements cannot be detected, causing incorrect input text to be sent to JLanguageTool. This issue is not unique to our implementation but is inherent to the fact that LaTeX is a Turing-complete programming language. The spelling engine of TeXlipse, for example, is similarly unable to spell-check text in macros.</p>
+<p>JLanguageTool first performs part-of-speech tagging; the core rule-checking engine then uses part-of-speech information and regular expressions to encode grammar rules. This type of grammar error detection and recommendation mechanism is thus roughly analogous to a generalized search and replace mechanism. This results in some limitations in the tool’s ability to recognize and encode complex grammar issues, such as incorrect parallel structures.</p>
+<p>Gamon<sup><xref ref-type="bibr" rid="bibr43-1473871612469020">43</xref></sup> summarizes the power of this form of recognition by identifying two extremes. The first is that of preposition and article errors, which require large amounts of contextual information to arrive at a correct identification. The second is that of overregularized verb inflection and is detectable without any contextual information. As an example of the second extreme, the word “goed” is incorrect, even without knowing the context; the word should be changed to “went”. Regular expression–based tools like JLanguageTool implement more checks in the latter category and fewer in the former. While the library offers the ability to write advanced contextual rules in Java, few such rules are provided in the JLanguageTool implementation. Implementing our visualization on top of these rules still provides useful information, although more advanced visualizations could be developed if more sophisticated grammar rules become available.</p>
+<p>JLanguageTool places grammar rules into a small number of distinct categories, so it was convenient to map each category to a separate petal. Within each category, the number of rules violated by the text in the visible document region determines the length of the petal. Categories include bad style, commonly confused words, nonstandard phrases, and possible typos; <xref ref-type="table" rid="table6-1473871612469020">Table 6</xref> shows a complete list of categories, along with representative rules from each.</p>
+<table-wrap id="table6-1473871612469020" position="float">
+<label>Table 6.</label>
+<caption>
+<p>Grammar categories within JLanguageTool and example rules for each.</p>
+</caption>
+<graphic alternate-form-of="table6-1473871612469020" xlink:href="10.1177_1473871612469020-table6.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Category</th>
+<th align="left">Description</th>
+<th align="left">Incorrect usage</th>
+<th align="left">Correct usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bad Style</td>
+<td>Starting a sentence with a numeral, starting a sentence with “Hopefully,” and three nouns in a row.</td>
+<td>
+<bold>12</bold> soldiers were killed!</td>
+<td>
+<bold>Twelve</bold> soldiers were killed!</td>
+</tr>
+<tr>
+<td>Capitalization</td>
+<td>Corrects case of incorrectly lowercased and uppercased words.</td>
+<td>Who do you think <bold>i</bold> am?</td>
+<td>Who do you think <bold>I</bold> am?</td>
+</tr>
+<tr>
+<td>Collocations</td>
+<td>Suggests collocations—associated words that often appear together.</td>
+<td>I’m going home <bold>today evening</bold>.</td>
+<td>I’m going home <bold>this evening</bold>.</td>
+</tr>
+<tr>
+<td>Commonly Confused Words</td>
+<td>Words that sound alike but that have different meanings.</td>
+<td>Please <bold>except</bold> my apologies.</td>
+<td>Please <bold>accept</bold> my apologies.</td>
+</tr>
+<tr>
+<td>General Grammar</td>
+<td>General grammar issues involving agreement and incorrect sentence structure.</td>
+<td>The dogs <bold>barks</bold> loudly.</td>
+<td>The dogs <bold>bark</bold> loudly.</td>
+</tr>
+<tr>
+<td>Miscellaneous</td>
+<td>Miscellaneous grammar issues, including repetition of words, double negations, and other types of duplicated words and phrases.</td>
+<td>
+<bold>The a</bold> thing is this.</td>
+<td>
+<bold>The</bold> thing is this.</td>
+</tr>
+<tr>
+<td>Nonstandard Phrases</td>
+<td>Phrases that are nonstandard for native English speakers but commonly said by nonnative speakers.</td>
+<td>No, <bold>in the moment</bold> not.</td>
+<td>No, <bold>currently</bold> not.</td>
+</tr>
+<tr>
+<td>Possible Typos</td>
+<td>Possible typos in words determined by context, which would not be detected using spell checking alone.</td>
+<td>Do not duplicate or redistribute <bold>in any from</bold>.</td>
+<td>Do not duplicate or redistribute <bold>in any form</bold>.</td>
+</tr>
+<tr>
+<td>Redundant Phrases</td>
+<td>Redundant expressions—the removal of one expression would be more concise without resulting in loss of clarity.</td>
+<td>Their voices <bold>blend together</bold> in lovely harmony.</td>
+<td>Their voices <bold>blend</bold> in lovely harmony.</td>
+</tr>
+<tr>
+<td>Slang</td>
+<td>Slang word or phrase is used in a formal context. Currently, JLanguageTool contains only a single rule in this category.</td>
+<td>Did you receive <bold>an invite</bold>?</td>
+<td>Did you receive <bold>an invitation</bold>?</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section19-1473871612469020">
+<title>Usage</title>
+<p><xref ref-type="fig" rid="fig4-1473871612469020">Figure 4</xref> shows a typical editing session within the TeXlipse environment. Hovering over the petal reveals a tooltip with the name of the category of that petal. The default behavior is that clicking on the name of the category toggles the Explanation View, which highlights the grammar issues within the visible document region. The user can opt to display the Explanation View for as many categories as she desires.</p>
+<fig id="fig4-1473871612469020" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Stench Blossom displaying grammar issues for the categories General Grammar and Possible Typos.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612469020-fig4.tif"/>
+</fig>
+<p>Obviousness for grammar issues is presented in a manner similar to code smells, with the least obvious grammatical errors presented in the ↑ direction and the most obvious errors presented in the ↓ direction. While code smells used a variety of different metrics for determining the size of a petal, the grammar visualization uses only the number of visible issues in the category to determine the size. We discuss the difficulty of designing appropriate metrics for obviousness and severity in the next two subsections.</p>
+</sec>
+<sec id="section20-1473871612469020">
+<title>Determining obviousness</title>
+<p>For code smells, we determined the obviousness of each smell using our experience as software developers. In doing so, we made the assumption that obviousness is an objective quality. For the grammar advisor, that is not so, and thus, the ordering of categories by obviousness raises some new difficulties.</p>
+<p>Evidence for the subjective nature of obviousness for errors in natural language comes both from our everyday experience and from the linguistics literature. Han et al.,<sup><xref ref-type="bibr" rid="bibr44-1473871612469020">44</xref></sup> for instance, states that one of the most complex problems faced by a nonnative speaker of English is the correct use of articles (a, an, and the) and that using articles correctly is particularly difficult for speakers of Japanese, Chinese, and other languages that do not have articles. It seems reasonable to conclude that a native English speaker might find issues of article agreement to be obvious, whereas a nonnative speaker may find them quite nonobvious, indeed immensely difficult to detect without the aid of a tool.</p>
+<p>A possible response might be to have the visualization use different scales of obviousness for native and nonnative writers, as determined by analyzing the text. This too is fraught with difficulties; it turns out that native and near-native speakers may not exhibit significant differences in competence. For example, Coppieters<sup><xref ref-type="bibr" rid="bibr45-1473871612469020">45</xref></sup> performed extensive interviews of French speakers and found that native and near-native speakers of French have strikingly different intuitions on French sentences, in spite of the fact that the two groups appear to be equivalent at the level of language use and proficiency.</p>
+<p>One solution is to allow the user to determine the ordering of the categories based on individual preferences. Indeed, this is exactly what we have done; the current obviousness rankings are a reflection of the authors’ preferences as native English speakers. Other solutions include asking the user directly (“Are you a native speaker?”), detecting the appropriate obviousness order based on the frequency with which the user makes certain grammatical mistakes or by providing a training session that scores the user’s ability to recognize grammar issues.</p>
+</sec>
+<sec id="section21-1473871612469020">
+<title>Determining severity</title>
+<p>Obviousness is only one metric in the design space of our visualization. It alone tells us nothing about the severity of the problem. Recall that the severity has a visual effect on the petal: increased severity corresponds to increased petal size. To analyze severity, it seems reasonable to look at which of the individual rules within a category have been violated. But how should we decide which rule violations are trivial and which serious?</p>
+<p>As with obviousness, there seems to be no clear-cut metric for severity. A plausible approach to determining the severity of each grammar rule might be to examine the literature on academic grading of writing samples. Unfortunately, there appears to be wide variability in this area. Lee,<sup><xref ref-type="bibr" rid="bibr46-1473871612469020">46</xref></sup> for example, investigated the grading behavior of Korean and native English-speaking graders and found that Korean graders were more severe in scoring grammar, sentence structure, and organization, whereas the native English graders were stricter on content and overall scores. Similarly, Derwing et al. conducted a study of native and nonnative speakers that identified grammatical errors in sentences and rated them on gravity and annoyance, two measures of severity. Their findings show differences between the two groups due to error salience and language awareness.<sup><xref ref-type="bibr" rid="bibr47-1473871612469020">47</xref></sup> They present evidence that nonnative speakers were significantly more annoyed by a high frequency of errors than native speakers, regardless of the kind of error, and that nonnative speakers considered all errors to be more serious than native speakers.</p>
+<p>For the purposes of visualization, we can approach this issue from two opposite directions. The first direction is to consider modifying the weighting of a rule so that the tool’s assessment of severity more closely matches the expectations of the user. The second direction is to have a panel of language experts decide on the severity of each error, to use this ranking to fix the weighting of each rule, and to use the tool as means to train the user by informing them of the “actual” severity of their grammar errors, which may or may not align with their perceived idea of the severity. In short, we can either let the user train the visualization or let the visualization train the user.</p>
+<p>Rather than deliberate over the most appropriate solution for classifying severity, our implementation simply uses the count of the number of issues in that category to determine the length of the petal; each rule violation is given equal weight. We use a linear scale with a maximum cap; through trial and error, it appears that a linear calculation for petal size is more appropriate for grammar issues than the logarithmic calculation that we use for code smells. We speculate that this may be because code has more repetitive elements due to its explicit structure and limited vocabulary when compared with the subtleties of natural language. Certainly, the issue of assigning severity to grammar errors is an open problem that merits further investigation.</p>
+</sec>
+<sec id="section22-1473871612469020">
+<title>Visualizing redundant phrases</title>
+<p>Most of the possible errors detected by JLanguageTool can be visualized quite adequately using simple highlighting in the Explanation View, as shown in <xref ref-type="fig" rid="fig4-1473871612469020">Figure 4</xref>. This is because most of the tool’s rules simply point out a problem word or phrase. However, a few rule-based patterns lend themselves to more expressive visualizations, among them, <italic>redundant phrases</italic>.</p>
+<p>In its simplest form, redundant phrasing, also known as pleonasm, can be described as a pair of expressions in which one of the pair can be removed without changing the overall meaning, such as the phrase “rustic country.” Redundant phrases are interesting in that while they have recommended replacements, small changes to the context surrounding the sentence can often allow the writer to choose either member of the redundant pair. For instance, in the phrase “ATM machine,” one could either remove the word machine or replace the abbreviation “ATM” by “automated teller.” The phrase “PM in the evening” could either be replaced by “PM” or “in the evening.” More complicated redundant phrases require more context. The redundant phrase “foreign import” could be replaced by either “foreign” or “import.” Here, the selection of expression depends on context. If the context is the prefix “is,” then the only choice is “foreign.” If, on the other hand, the context is “is an,” the only possible choice of expression is “import.”</p>
+<p>Because the user must choose between two resolutions and because redundant phrases occur as pairs of words or expressions, we provide a more informative visualization: <xref ref-type="fig" rid="fig5-1473871612469020">Figure 5</xref> shows the result of activating Explanation View for the Redundant Phrases petal. The entire redundant phrase is highlighted in color, but the expression that the JLanguageTool rule recommends be kept is surrounded by a box.</p>
+<fig id="fig5-1473871612469020" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Stench Blossom displaying an alternative visualization for Redundant Phrases.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612469020-fig5.tif"/>
+</fig>
+<p>Our visualization of redundant phrases also demonstrates the ability of Stench Blossom to encode additional information within its visualizations. Instead of simply indicating an error with highlighting, it is possible for the system to provide more information about the error, such as a suggested fix. If necessary, a separate visualization technique can be used for each category of error.</p>
+<p>Having described our implementation of a grammar advisor in Stench Blossom and examined some of the ways that the grammar domain differs from code smells, we now consider how our visualization technique differs from existing approaches to displaying grammar issues.</p>
+</sec>
+</sec>
+<sec id="section23-1473871612469020">
+<title>Differences from grammar advisors and writing activity visualizations</title>
+<p>In this section, we contrast Stench Blossom for grammar issues with existing approaches, such as the wavy underlines used by word processors like Microsoft Office, Computer Program, <ext-link ext-link-type="uri" xlink:href="http://office.microsoft.com">http://office.microsoft.com</ext-link> (2012). Open Office, Computer Program, <ext-link ext-link-type="uri" xlink:href="http://www.openoffice.org">http://www.openoffice.org</ext-link> (2012). At first glance, it may appear that our implementation is similar to these systems in the way it alerts the user to possible errors. However, there are key differences.</p>
+<p>While the wavy underlining technique shows that a grammar error exists, it does so for all errors on screen simultanously. Given a large and varying number of errors within the screen, the user may be overwhelmed and may find it difficult to isolate individual items of interest. In contrast, our implementation offers the ability to reveal classes of errors by selecting one or more categories, helping the user to focus her attention on each class of error in turn.</p>
+<p>A second difference is that existing systems present grammar errors without any visual context for the recommended correction. As we have shown using the example of redundant phrases, our system offers the ability to tailor the visualization for a particular category of errors to make it more effective for the user.</p>
+<p>The conventional model of writing in word processors like Microsoft Word interleaves use of the grammar tools with the writing process, much like writing code in an IDE. This flies in the face of a common approach to creative writing, which holds that it is important to separate the act of writing, which should be as free of distractions as possible, from the process of revision and improvement of what has already been written. For example, Boice<sup><xref ref-type="bibr" rid="bibr48-1473871612469020">48</xref></sup> reports that mixing creation with revision can lead to writers’ block, particularly in writers who tend toward perfectionism. A tool designed to promote distraction-free writing would attempt to provide a composition environment that hides or removes features that are not essential to the task of writing itself.</p>
+<p>A crop of such “distraction-free” editing tools have recently emerged. Examples are JDarkRoom,<sup><xref ref-type="bibr" rid="bibr49-1473871612469020">49</xref></sup> Q10,<sup><xref ref-type="bibr" rid="bibr50-1473871612469020">50</xref></sup> and WriteRoom.<sup><xref ref-type="bibr" rid="bibr51-1473871612469020">51</xref></sup> A sample screenshot of the editing environment Q10 is shown in <xref ref-type="fig" rid="fig6-1473871612469020">Figure 6</xref>. MacIntyre describes these distraction-free environments as “zenware,” noting that “unlike in Word, the choices are kept shrewdly off-screen: WriteRoom’s blank slate reduces the urge to twiddle with margins and other formatting gewgaws. Instead, I find myself forgoing cosmetic changes for more functional ones, like bumping up the type size when my office window light starts to falter.”<sup><xref ref-type="bibr" rid="bibr52-1473871612469020">52</xref></sup></p>
+<fig id="fig6-1473871612469020" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Distraction-free editing using Q10.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612469020-fig6.tif"/>
+</fig>
+<p>Our approach, using ambient visualization, does not go as far as the proponents of distraction-free writing would like, in completely separating the creative writing phase from a later editing and revision phase. Instead, we offer a compromise between the paradigms of integrated writing and distraction-free writing. During the creative writing phase, Explanation View is hidden by default, allowing the user to focus on generating content, although the Ambient View is still present. Should the user wish to switch to an editing and revision mode, she can interact with Stench Blossom to reveal any grammar issues of interest.</p>
+<p>As with Stench Blossom’s grammar advisor, other visualization tools have been developed to address various content generation and revision demands as related to writing activities. The VisRA readability visualization tool was built to help users identify and correct problems with English writing.<sup><xref ref-type="bibr" rid="bibr53-1473871612469020">53</xref></sup> VisRA provides several visualizations, but the most detailed is similar to Stench Blossom’s in that they both depict problems as continuous variables and both allow users to see several types of problem at once. The main differences are that Stench Blossom is ambient instead of task focused and that it provides more detailed information about the rationale behind its advice through progressive disclosure. In contrast with the floss revising strategy of Stench Blossom, which focuses on the current writing context, the Writing Blocks system is an alternative visualization tool that focuses on a more root canal revising approach through global activities that allow authors to visualize and understand the overall structure of documents.<sup><xref ref-type="bibr" rid="bibr54-1473871612469020">54</xref></sup> The authors envision that global tools such as Writing Blocks can be combined with local tools like Stench Blossom, depending on type of revision needing to be performed. Lastly, Popout Prism is an overview and detail document interface designed to replace the traditional “find and highlight” technique used in document search.<sup><xref ref-type="bibr" rid="bibr55-1473871612469020">55</xref></sup> Like Stench Blossom, Popout Prism utilizes perceptual principles to minimize distraction from the user’s primary activity by removing the emphasis in Detail View (analogous to our Active View) when the user is not specifically performing a navigation task.</p>
+<sec id="section24-1473871612469020">
+<title>Evaluation</title>
+<p>To evaluate our style and grammar advisor, we conducted a remote heuristic evaluation. We recruited evaluators through convenience sampling by contacting 10 human–computer interaction (HCI) experts in both academia and industry that were known to the authors, of which 7 responded. We asked these seven evaluators to watch a 2-min video demonstrating the usage of the grammar visualization. The video is based on the document and editing environment shown in <xref ref-type="fig" rid="fig4-1473871612469020">Figure 4</xref> and demonstrates typical interactions a user might perform when interacting with the advisor, such as scrolling through the document and toggling one or more categories. In the video, the visualization overlapped the text at all times.</p>
+<p>On a webpage, we provided evaluators with the following tool description:
+<disp-quote>
+<p>For this evaluation, the general tool has been purposed for the task of grammar checking a LaTeX document within Eclipse. Although we have implemented our tool in Eclipse with LaTeX, the visualization technique is not specific to these technologies. The visualization is intended to be shown at all times, and to be used while creating and editing a document.</p>
+<p>The visualization is composed of sectors in a semicircle on the right-hand side of the editor pane. We call these sectors petals: each petal corresponds to a grammar category. The radius of the petal is proportional to the severity, so that an increased severity corresponds to an increased petal size.</p>
+<p>Clicking on the petal toggles the highlighting of the grammar issues within the visible document region. For most categories, only simple highlighting is used, but more sophisticated highlighting is possible. For instance, for “Redundant Phrases,” the entire redundant phrase is highlighted, but with the addition of a box surrounding the expression indicating the recommended expression to keep.</p>
+</disp-quote></p>
+<p>After watching the video, we asked the experts to complete Mankoff et al.’s<sup><xref ref-type="bibr" rid="bibr14-1473871612469020">14</xref></sup> heuristic evaluation. They were allowed to rewatch the video as needed during the process of completing the evaluation. We asked each evaluator to identify both the positive and the negative aspects of the visualization for each heuristic. For the negative aspects of the heuristic, evaluators were additionally asked to indicate the severity of the issue from least severe (1) to most severe (5). To mitigate bias incurred as a result of the recruitment technique, we explicitly informed the evaluators that the primary purpose of a heuristic evaluation is to identify design problems and that strong criticism was expected and encouraged.</p>
+<sec id="section25-1473871612469020">
+<title>Results</title>
+<p>Mankoff et al.’s<sup><xref ref-type="bibr" rid="bibr14-1473871612469020">14</xref></sup> evaluation covers eight different heuristics: (1) useful and relevant information, (2) “peripherality” of display, (3) match between design of ambient display and environments, (4) sufficient information design, (5) consistent and intuitive mapping, (6) easy transition to more in-depth information, (7) visibility of state, and (8) aesthetic and pleasing design. We summarize each of these heuristics before presenting the evaluators’ comments.</p>
+<p>In presenting these results, the evaluators have been labeled as E1 through E7. When the evaluators identified a negative aspect, their assessment of the severity of the problem is indicated in parentheses. When we omit a comment from an evaluator, either the evaluator did not provide a comment or made an irrelevant comment. For example, a few of the comments were related to either the Eclipse IDE or JLanguageTool. As another example, due to the way in which the video demo was presented, E1 and E3 were inadvertently led to believe that the visualization tool presents all outstanding issues within the document rather than just the issues in the currently visible text; this led them to make irrelevant comments.</p>
+<p>We made one change to the tool before making the demonstration video. Since the visualization is designed to be shown at all times, the toolbar icon that allows the user to disable and enable the tool was removed in the demonstration.</p>
+<sec id="section26-1473871612469020">
+<title>Useful and relevant information</title>
+<p>Mankoff defines this heuristic as: the information should be useful and relevant to the users in the intended setting.</p>
+<list id="list7-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Positives</italic>. E1, E2, E4, and E7 indicated that presenting grammar issues in categories was a positive aspect of the design. E3 and E4 said that it was useful to be able to toggle information in one category on and off independently of other categories. E7 noted that selecting a category highlights the errors for that category.</p>
+</list-item>
+<list-item>
+<p><italic>Negatives</italic>. E1 indicated that to know where a category is, you have to interact with the visualization or memorize its position (3). E2 indicated that the mapping between the color and the problem type was unclear (1), as was the metric used for severity (2). E2 was also concerned that only a limited number of categories can be presented (2). E3 commented that it is difficult to differentiate categories when multiple categories are activated (3). Though E2 and E4 indicated that categorization was a positive aspect of the visualization, they also noted that they are not sure how useful it is to classify grammatical issues by category (1, 3).</p>
+</list-item>
+</list>
+</sec>
+<sec id="section27-1473871612469020">
+<title>Peripherality of display</title>
+<p><italic>Heuristic</italic>: the display should be unobtrusive and remain so unless it requires the user’s attention. User should be able to easily monitor the display.<sup><xref ref-type="bibr" rid="bibr14-1473871612469020">14</xref></sup></p>
+<list id="list8-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Positives</italic>. E1, E3, and E5 indicated that the display is unobtrusive. E2 commented that it allows people to focus on their main task, which is to edit the document. E4, E5, and E6 mentioned the translucency as a positive aspect that aided unobtrusiveness.</p>
+</list-item>
+<list-item>
+<p><italic>Negatives</italic>. E1, E2, E5, and E6 indicated a problem in that the visualization overlaps the text (3, 3, 4, 2). While most evaluators did not provide a reason for why this is a problem, E2 stated that having the colored petals beneath the black text and surrounded by a white background makes it noticeable and therefore affects the legibility. E2 and E4 questioned whether persistent display of the visualization was a good idea, particularly for distraction-free writing (3, 3). E3 was unsure whether varying petal length is necessary for the visualization, since all errors must eventually be corrected anyway (2).</p>
+</list-item>
+</list>
+</sec>
+<sec id="section28-1473871612469020">
+<title>Match between design of ambient display and environments</title>
+<p><italic>Heuristic</italic>: One should notice an ambient display because of a change in the data it is presenting and not because its design clashes with its environment.</p>
+<list id="list9-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Positives</italic>. E1 indicated that the visualization does not change unless a new error is introduced in the current display or unless you interact with it. E2, E5, and E6 mentioned that the colors are suited to the environment. E7 indicated that the design is ambient in that it falls into the background when reading the document.</p>
+</list-item>
+<list-item>
+<p><italic>Negatives</italic>. E1 believes that the typical use case for document editing is to correct issues as they arise. Consequently, the size of the petals would never increase to the point that they would become noticeable (4). Conversely, E1 and E7 indicated that if the petals grow too large, they are distracting (3, 2). E2, E3, and E5 all indicated that the overlay on existing text is distracting (1, 3, 4), an issue that was also identified in the display heuristic about peripherality. E5 added that some of the colors clash with the existing design of Eclipse (3), and E2 commented that the angles stand out when the document is scrolling, since most of the angles in Eclipse are horizontal or vertical (2).</p>
+</list-item>
+</list>
+</sec>
+<sec id="section29-1473871612469020">
+<title>Sufficient information design</title>
+<p><italic>Heuristic</italic>: The display should be designed to convey “just enough” information. Too much information cramps the display, and too little makes the display less useful.</p>
+<list id="list10-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Positives</italic>. E2 mentions that it displays a nice summary, and E3 indicates that it is the “right mix of detail” versus giving an overview. E4 felt that the visualization allows you to focus on the task at hand, and E5 indicated that the information being displayed is useful. E6 observed that there was good use of labels and highlighting. E7 noted that the visualization makes users aware that they might have issues without dominating the screen space.</p>
+</list-item>
+<list-item>
+<p><italic>Negatives</italic>. E6 indicated that some of the petal segments are missing or very small, making them hard to activate; in fact, all petals, regardless of size, can be selected with equal ease, but this was not clear from the video. Furthermore, if a petal is not shown, a user may not even realize that the tool is monitoring that category (3). E7 thought it was confusing not to know how many problems exist in relation to the petal size (3). All other evaluators either indicated issues related to JLanguageTool or evaluated this heuristic under the incorrect assumption that the visualization displays all errors in the entire document.</p>
+</list-item>
+</list>
+</sec>
+<sec id="section30-1473871612469020">
+<title>Consistent and intuitive mapping</title>
+<p><italic>Heuristic</italic>: Ambient displays should add minimal cognitive load. Cognitive load may be higher when users must remember what states or changes in the display mean. The display should be intuitive.</p>
+<list id="list11-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Positives</italic>. E1, E3, and E4 provided no positive aspects for the design for this heuristic. E2 indicated that the severity “makes perfect sense” in that the visualization grows when there are a lot of issues and shrinks when they are resolved; E5 and E7 made similar remarks. E6 felt that users would become used to the order of the categories over time.</p>
+</list-item>
+<list-item>
+<p><italic>Negatives</italic>. E1 and E4 intuitively felt that the petal should point to something in the document (5, 2). As a result of the demo, E1 perceived that there were more errors at the bottom of the document window than at the top because of the way the petals were arranged. E2, E4, E5, and E6 all had criticisms about the lack of obvious meaning with respect to the colors of the petals (2, 2, 2, 3). E3 and E4 observed that the user needs to mouse over the petals in order to remember what the categories are (2, 2). E6 observed that the highlighting of the other categories was light blue but that “Redundant Phrases” used a different color for each error in the category (2). E5 commented that this is an unusual visualization because most people think it is a pie, but it is not, since only the radius, and not the central angle, matters. Experts may think it is a rose diagram, but unlike a rose diagram, the order of the petals does not indicate orientation within the document (5). E5 further suggests that a bar graph may be an alternative visualization.</p>
+</list-item>
+</list>
+</sec>
+<sec id="section31-1473871612469020">
+<title>Easy transition to more in-depth information</title>
+<p><italic>Heuristic</italic>: if the display offers multileveled information, the display should make it easy and quick for users to find out more detailed information.</p>
+<list id="list12-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Positives</italic>. E1 and E5 mentioned that the interaction is intuitive, with E2 indicating that on-demand information makes sense. E2 also liked the fact that the “active hover area” is larger than the petal itself. E3, E4, and E7 commented that clicking a petal, mousing over the petal, and selecting categories were positive aspects of meeting this heuristic. E6 liked the fact that multilevel information is available.</p>
+</list-item>
+<list-item>
+<p><italic>Negatives</italic>. E1 indicated that certain functionality might be difficult to access because the colors of adjacent petals are difficult to distinguish (2). E2 and E6 were concerned that the user would accidentally click the document and not the visualization (1, 3). E5 believes that it is not immediately obvious that the pie menu is clickable, since such menus are still not very common in user interfaces today (3).</p>
+</list-item>
+</list>
+</sec>
+<sec id="section32-1473871612469020">
+<title>Visibility of state</title>
+<p><italic>Heuristic</italic>: an ambient display should make the states of the system noticeable. The transition from one state to another should be easily perceptible.</p>
+<list id="list13-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Positives</italic>. E1 and E2 indicated that there are very clear transitions between states and that it is easy to tell what state the tool is in. E4 indicated that the mouse hover actions change only one category at a time. E5 and E7 indicated that the petal growth is a positive indicator of the visibility of state.</p>
+</list-item>
+<list-item>
+<p><italic>Negatives</italic>. E3 was not sure how to tell when a category was active or inactive (2), and E4 noticed that there is no way to see all the errors at once without toggling each category petal one by one (3). E5 identified that the constantly changing petals could be quite distracting (3). E6 noted that, depending on position, the mouse rollover labels can obscure the problem that is being highlighted (4). E6 also observed that the darkness of some petals can obscure the text, which is yet another indication that it can be distracting for the visualization to overlay the text (1). E7 was unsure of the rate at which the petals grow (2).</p>
+</list-item>
+</list>
+</sec>
+<sec id="section33-1473871612469020">
+<title>Aesthetic and pleasing design</title>
+<p><italic>Heuristic</italic>: The display should be pleasing when it is placed in the intended setting.</p>
+<list id="list14-1473871612469020" list-type="simple">
+<list-item>
+<p><italic>Positives</italic>. E1, E2, E3, E4, and E5 identified the color scheme as being generally pleasing, with E3 indicating that the colors had low saturation, low contrast from the background, but were still visibly different. E7 indicated that the transparent display had a “good feel to it” and was well placed.</p>
+</list-item>
+<list-item>
+<p><italic>Negatives</italic>. E1 commented that the visualization is cluttered where it overlaps with the text, making it busy looking (2). E2 mentions that the angles are a bit jarring given the boxy look and feel of the document editor (1). E5 was unsure if users would be pleased with the visualization constantly changing as they type (3).</p>
+</list-item>
+</list>
+</sec>
+</sec>
+</sec>
+<sec id="section34-1473871612469020">
+<title>Evaluation summary</title>
+<p>An examination of the heuristic evaluation results reveals a set of issues that were commonly identified by many of the evaluators. A recurring issue with respect to color is that while the use of pastels is aesthetically pleasing, the colors should encode some form of intuitive meaning. Although we intended to have the blue-to-orange gradients signify less-obvious to more-obvious problems, this was not apparent to the evaluators. This problem exists despite the fact that the colors are not strictly necessary to interpret the visualization.</p>
+<p>Many of the evaluators also criticized the visualization for overlapping the text. This is a problem that was not so pronounced in code because code typically has hard line breaks and does not extend to the right-hand margin, whereas English text is usually word wrapped and so occupies the full width of the editing pane. This criticism suggests that users may want a separation between the visualization and the text.</p>
+<p>A number of other issues merit attention because they were identified by individual evaluators as very severe. In “Match between design of ambient display and environments,” E1 believes that the “typical use case” of document editing is to correct issues as they arise, which suggests a behavior that is reminiscent of “floss refactoring” for code smells. In such a scenario, the petals would likely remain small and hard to notice, and therefore, a binary representation (on or off) may be more valuable than a continuous representation for grammar issues. In contrast, E2 indicates that he “like[s] to get all the ideas down, not worrying about little issues like grammar,” which can be fixed in later iterations. In such a case, grammar issues would continue to accrue until the evaluator addressed them. We can infer that this evaluator seems to prefer a “root canal refactoring” approach to tackling grammar issues. The dichotomy is interesting because the Stench Blossom’s design originated from our desire to support floss refactoring. The received wisdom for code is that flossing is good; this is not so clear for writing.</p>
+<p>In the evaluation, E5 explicitly stated that the visualization can be confusing because it is a hybrid between a pie chart and a rose diagram. Implicitly, E1 and E4 mentioned the same issue because they felt that the petals should point to something; this supports the idea that the use of petals may be confusing. In the broader context, E2 mentioned the general idea of angles as being distracting because of the horizontal and vertical angles of most user interfaces, including Eclipse. E5’s suggestion that the visualization should instead represent issues as a bar graph would solve this particular problem.</p>
+<p>Some of the identified issues can be used to improve the tool, since they can be implemented by making small changes that do not conflict with Stench Blossom’s overall design. For instance, E3 was not sure when a category was active, an issue that can be resolved by rendering the active petals at full saturation whenever their explanation view is displayed. As for E1’s suggestion that users will not allow more than a few issues to accumulate at any one time, the function controlling petal size could also be adjusted, so that even a small number of issues for a category quickly amplifies the size of the petal.</p>
+<p>Many of the evaluators’ criticisms may stem from the fact that they may have unconsciously been comparing Stench Blossom against existing grammar tools that use the “wavy underlining” user interface. For instance, some evaluators questioned whether categorizing issues is useful in the first place. This is an unavoidable shortcoming of this style of evaluation: a new visualization may be criticized for being “different,” even though these differences may offer affordances for addressing style and grammar issues that are not available in existing tools. For example, existing grammar-checking tools may simply omit the presentation of subjective issues (such as starting a sentence with a conjunction) or frequently occurring issues (such as passive voice), to avoid overwhelming the user. A benefit of Stench Blossom’s “difference” is that it offers a means to display a greater range of style and grammar issues because the user can choose to view them selectively or not at all.</p>
+</sec>
+</sec>
+<sec id="section35-1473871612469020">
+<title>Future work</title>
+<p>We feel that future work on Stench Blossom could proceed in at least three directions. First, the Stench Blossom smell detector can be improved in several ways. Second, the Stench Blossom grammar tool can also be improved. Third, the concepts used in the design of Stench Blossom may be beneficial in other areas.</p>
+<sec id="section36-1473871612469020">
+<title>Improvements to Stench Blossom</title>
+<p>As we discussed in section “Experiment,” subjects sometimes did not agree with the tool’s estimate of the strength of a code smell. One way to deal with this would be to allow the programmer to drag the edges of the petals toward or away from the center of the visualization, so that the visualization more closely matches the intuition of the developer. This would provide a convenient way for developers to specify individual preferences so that the tool can adapt to those preferences in the future. Likewise, if developers do not agree with our ranking of the obviousness of smells, then the visualization could allow the developer to change the petals’ vertical ordering by dragging the petals.</p>
+<p>Some subjects in the evaluation suggested that there were fundamental differences in the granularity of the smells, and displaying them uniformly was confusing. Specifically, Large Class was at the class level, while the other smells were at the method level. In future versions of Stench Blossom, making a visual distinction between the different levels of granularity may help programmers understand the visualization more quickly.</p>
+<p>Another possible modification to Stench Blossom would be to display information about which smells are increasing or decreasing as a programmer is coding rather than displaying information about the code as it is now (we thank Bill Pugh for this suggestion). Using this information, the programmer would be made aware of the effect that her changes are having on the smelliness of the code.</p>
+</sec>
+<sec id="section37-1473871612469020">
+<title>Grammar improvements to Stench Blossom</title>
+<p>The addition of more elaborate rules in the JLanguageTool library would provide an avenue for more advanced visualizations. Since most rules are based on patterns, grammar issues in JLanguageTool are detected locally rather than globally. For instance, a possible bad style issue not correctly detected is that of mixed verb tenses within a document. One visualization could color verbs from one tense in a color and verbs from another tense in a different color. The user could then visually determine the weighting between the two verb tenses and make an appropriate decision.</p>
+<p>A current limitation of the Stench Blossom system is that there is no assisted correction. For rules that require minimal context, such as overregularized verb inflection (“goed” versus “went”), the system should provide a user interface to quickly correct the issue. Right-clicking on the visualized word and selecting an appropriate correction from a drop down menu is one possible solution. For redundant phrases, the user might opt to double-click on the expression they wish to keep, telling the system to automatically remove the other.</p>
+</sec>
+<sec id="section38-1473871612469020">
+<title>Further applications</title>
+<p>We feel that the visualization technique and guidelines that we have presented in this article are useful beyond the code smell and grammar tools that we have described. Based on our experience implementing Stench Blossom in these two domains, we believe that it is useful for visualizing information that has the following properties:</p>
+<list id="list15-1473871612469020" list-type="bullet">
+<list-item>
+<p>Acting on the information is not an urgent priority;</p>
+</list-item>
+<list-item>
+<p>Users interpret the information subjectively;</p>
+</list-item>
+<list-item>
+<p>The information relates to complex properties of artifacts;</p>
+</list-item>
+<list-item>
+<p>The information relates to user-changeable properties of artifacts, but users are unlikely to completely eliminate those properties; and</p>
+</list-item>
+<list-item>
+<p>The information is useful primarily in the context of working with existing artifacts for tasks loosely related to that information.</p>
+</list-item>
+</list>
+<p>These properties may hold for other tools used in software development and for soft advice systems in other domains.</p>
+<p>As an example of another software development tool that might benefit from our guidelines, consider Ensemble, a system that recommends collaborators to software developers, based on the work that they are doing.<sup><xref ref-type="bibr" rid="bibr56-1473871612469020">56</xref></sup> Ensemble might notice that Ira is working in a method, recognize that three other developers are currently working on similar methods, and then recommend that Ira collaborate with those developers. Generalizing our Estimability guideline suggests that Ensemble should give an approximation of how much effort would be required if Ira took Ensemble’s advice and collaborated with one of the other developers. For instance, the tool might tell Ira that Jan is working from home today (high effort to collaborate), Kim has a meeting in a few minutes (medium effort), and Lou has an open schedule and is sitting in close proximity to Ira (low effort).</p>
+<p>Our experience in applying our visualization technique to a grammar advisor has widened our view of what interactive ambient visualizations can be used for. For example, although our code smell detector and grammar advisor both work over text-based artifacts, our visualization technique may be useful for other artifacts such as graphic design documents. In such documents, a graphic designer may be using a program like Adobe Illustrator or CorelDRAW to creatively compose a graphical depiction for an intended audience, such as the logo for a business or a poster for a conference. Like programming and writing, graphic design has numerous soft guidelines that not only produce quality results when followed but also can produce quality results when expertly disobeyed. Examples of such guidelines include “use one or two odd shapes and make the rest regular shapes” and “use the same color palette throughout.”<sup><xref ref-type="bibr" rid="bibr57-1473871612469020">57</xref></sup> Standard highlighting techniques where the graphic design document is constantly analyzed for guideline violations and violations are immediately shown as highlights on the document (similar to text underlines) is especially inappropriate in the graphic design setting; such highlights would immediately pollute and distort the document’s aesthetic value. Instead, we hypothesize that using interactive ambient visualizations can provide immediate feedback to graphic designers without diminishing the aesthetic experience.</p>
+</sec>
+</sec>
+<sec id="section39-1473871612469020" sec-type="conclusions">
+<title>Conclusion</title>
+<p>Tools that offer soft advice can help the users of a software system to improve the quality of their work. However, soft advice should ideally be delivered in a way that is deeply explanatory, that does not overwhelm the user, that is not obtrusive or distracting, that is sensitive to the user’s working context, that is easily accessible at all times, that depicts relationships between artifacts, that emphasizes difficult-to-identify issues, and that helps the user to estimate the extent of the underlying problem. Our experience building, using, and evaluating Stench Blossom, in the context of both code smells and grammar issues, has allowed us to reflect on why these ideals are important and how they can be achieved. We hope that this research has helped to clarify the role of tools that present soft advice: not front and center stage, where they get in the way of the primary task, but in the background, always ready to offer advice on when requested, but keeping a low profile when the user is focused on other tasks.</p>
+</sec>
+</body>
+<back>
+<app-group>
+<app id="app1-1473871612469020">
+<title>Appendix 1</title>
+<p>On the following pages, you will find the experimenter’s notebook used in the experiment, including the pretest questionnaire, experiment administrator’s guide, posttest questionnaire, and 3″ × 5″ code smell cards.</p>
+<graphic id="img1-1473871612469020" position="anchor" xlink:href="10.1177_1473871612469020-img1.tif"/>
+</app>
+</app-group>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>The National Science Foundation partially funded this research under grant CCF-0520346.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1473871612469020">
+<label>1.</label>
+<citation citation-type="web">
+<collab>Apache</collab>. <article-title>Tomcat, Computer Program</article-title>, <ext-link ext-link-type="uri" xlink:href="http://tomcat.apache.org/">http://tomcat.apache.org/</ext-link> (<year>2012</year>).</citation>
+</ref>
+<ref id="bibr2-1473871612469020">
+<label>2.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Fowler</surname><given-names>M.</given-names></name>
+</person-group> <source>Refactoring: improving the design of existing code</source>. <publisher-loc>Boston, MA</publisher-loc>: <publisher-name>Addison-Wesley Longman Publishing Co., Inc</publisher-name>., <year>1999</year>.</citation>
+</ref>
+<ref id="bibr3-1473871612469020">
+<label>3.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>van Emden</surname><given-names>E</given-names></name>
+<name><surname>Moonen</surname><given-names>L</given-names></name>
+</person-group>. <article-title>Java quality assurance by detecting code smells</article-title>. In: <conf-name>Proceedings of the ninth working conference on reverse engineering</conf-name>, <conf-loc>Richmond, VA, USA</conf-loc>, <conf-date>28 October - 1 November 2002</conf-date>, pp. <fpage>97</fpage>–<lpage>106</lpage>. <conf-loc>IEEE Computer Society, Los Alamitos, CA, USA</conf-loc>.</citation>
+</ref>
+<ref id="bibr4-1473871612469020">
+<label>4.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Drozdz</surname><given-names>M</given-names></name>
+<name><surname>Kourie</surname><given-names>DG</given-names></name>
+<name><surname>Watson</surname><given-names>BW</given-names></name>
+<etal/>
+</person-group>. <article-title>Refactoring tools and complementary techniques</article-title>. In: <conf-name>AICCSA’06: proceedings of the IEEE international conference on computer systems and applications</conf-name>, <conf-loc>Dubai/Sharjah, UAE</conf-loc>, <conf-date>8-11 March 2006</conf-date>, pp. <fpage>685</fpage>–<lpage>688</lpage>. <conf-loc>IEEE Computer Society, Los Alamitos, CA, USA</conf-loc>.</citation>
+</ref>
+<ref id="bibr5-1473871612469020">
+<label>5.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Mäntylä</surname><given-names>MV</given-names></name>
+</person-group>. <article-title>An experiment on subjective evolvability evaluation of object-oriented software: explaining factors and interrater agreement</article-title>. In: <conf-name>Proceedings of the international symposium on empirical software engineering</conf-name>, <conf-loc>Noosa Heads, Queensland, Australia</conf-loc>, <conf-date>17-18 November 2005</conf-date>, pp. <fpage>287</fpage>–<lpage>296</lpage>. <conf-loc>IEEE, Los Alamitos, California</conf-loc>.</citation>
+</ref>
+<ref id="bibr6-1473871612469020">
+<label>6.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Al-Shaer</surname><given-names>ES</given-names></name>
+<name><surname>Hamed</surname><given-names>HH</given-names></name>
+</person-group>. <article-title>Firewall policy advisor for anomaly discovery and rule editing</article-title>. In: <source>IFIP/IEEE eighth international symposium on integrated network management</source>, <conf-loc>Colorado Springs, USA</conf-loc>, <fpage>24</fpage>-<lpage>28</lpage> <month>March</month> <year>2003</year>, <conf-loc>pp. 17–30. Kluwer Academic Publishers, Norwell</conf-loc>, Massachusetts.</citation>
+</ref>
+<ref id="bibr7-1473871612469020">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Rakshit</surname><given-names>A</given-names></name>
+<name><surname>Krishnamurthy</surname><given-names>N</given-names></name>
+<name><surname>Yu</surname><given-names>G.</given-names></name>
+</person-group> <article-title>System operations advisor: a real-time decision support system for managing airline operations at united airlines</article-title>. <source>Interfaces</source> <year>1996</year>; <volume>26</volume>(<issue>2</issue>): <fpage>50</fpage>–<lpage>58</lpage>.</citation>
+</ref>
+<ref id="bibr8-1473871612469020">
+<label>8.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Valentin</surname><given-names>G</given-names></name>
+<name><surname>Zuliani</surname><given-names>M</given-names></name>
+<name><surname>Zilio</surname><given-names>DC</given-names></name>
+<etal/>
+</person-group>. <article-title>DB2 advisor: an optimizer smart enough to recommend its own indexes</article-title>. In: <conf-name>Proceedings of the 16th international conference on data engineering</conf-name>, <conf-loc>San Diego, California, USA</conf-loc>, <conf-date>28 February - 3 March 2000</conf-date>, pp. <fpage>101</fpage>–<lpage>110</lpage>. <conf-loc>IEEE, Los Alamitos, CA, USA</conf-loc>.</citation>
+</ref>
+<ref id="bibr9-1473871612469020">
+<label>9.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Murphy-Hill</surname><given-names>E</given-names></name>
+<name><surname>Black</surname><given-names>AP</given-names></name>
+</person-group>. <article-title>An interactive ambient visualization for code smells</article-title>. In: <conf-name>Proceedings of the 5th International Symposium on Software Visualization (SOFTVIS ′10)</conf-name>. <conf-loc>ACM, New York, USA</conf-loc>, pp. <fpage>5</fpage>-<lpage>14</lpage>. DOI=<pub-id pub-id-type="doi">10.1145/1879211.1879216</pub-id>. <ext-link ext-link-type="uri" xlink:href="http://doi.acm.org/10.1145/1879211.1879216">http://doi.acm.org/10.1145/1879211.1879216</ext-link>.</citation>
+</ref>
+<ref id="bibr10-1473871612469020">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Murphy-Hill</surname><given-names>E</given-names></name>
+<name><surname>Black</surname><given-names>AP.</given-names></name>
+</person-group> <article-title>Refactoring tools: fitness for purpose</article-title>. <source>IEEE Software</source> <year>2008</year>; <volume>25</volume>(<issue>5</issue>): <fpage>38</fpage>–<lpage>44</lpage>.</citation>
+</ref>
+<ref id="bibr11-1473871612469020">
+<label>11.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Simon</surname><given-names>F</given-names></name>
+<name><surname>Steinbrückner</surname><given-names>F</given-names></name>
+<name><surname>Lewerentz</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Metrics based refactoring</article-title>. In: <conf-name>Proceedings of the fifth European conference on software maintenance and reengineering</conf-name>, <conf-loc>Lisbon, Portugal</conf-loc>, <conf-date>14-16 March 2001</conf-date>, pp. <fpage>30</fpage>–<lpage>38</lpage>. <conf-loc>IEEE Computer Society, Los Alamitos, CA, USA</conf-loc>.</citation>
+</ref>
+<ref id="bibr12-1473871612469020">
+<label>12.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Murphy-Hill</surname><given-names>E</given-names></name>
+<name><surname>Parnin</surname><given-names>C</given-names></name>
+<name><surname>Black</surname><given-names>AP.</given-names></name>
+</person-group> <article-title>How we refactor, and how we know it</article-title>. In: <conf-name>ICSE ’09: proceedings of the 31st international conference on software engineering</conf-name>, <conf-loc>Vancouver, Canada</conf-loc>, <conf-date>16–24 May 2009</conf-date>, <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr13-1473871612469020">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wettel</surname><given-names>R</given-names></name>
+<name><surname>Lanza</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Visually localizing design problems with disharmony maps</article-title>. In: <conf-name>Proceedings of the ACM 2008 symposium on software visualization</conf-name> (eds <person-group person-group-type="editor">
+<name><surname>Koschke</surname><given-names>R</given-names></name>
+<name><surname>Hundhausen</surname><given-names>CD</given-names></name>
+<name><surname>Telea</surname><given-names>A</given-names></name></person-group>), <conf-loc>Ammersee, Germany</conf-loc>, <conf-date>16–17 September 2008</conf-date>, pp. <fpage>155</fpage>–<lpage>164</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr14-1473871612469020">
+<label>14.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Mankoff</surname><given-names>J</given-names></name>
+<name><surname>Dey</surname><given-names>AK</given-names></name>
+<name><surname>Hsieh</surname><given-names>G</given-names></name>
+<etal/>
+</person-group>. <article-title>Heuristic evaluation of ambient displays</article-title>. In <conf-name>CHI ’03: proceedings of the Sigchi conference on human factors in computing systems</conf-name>, <conf-loc>Florida, USA</conf-loc>, <conf-date>05-10 April 2003</conf-date>, pp. <fpage>169</fpage>–<lpage>176</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr15-1473871612469020">
+<label>15.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Parnin</surname><given-names>C</given-names></name>
+<name><surname>Görg</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Design guidelines for ambient software visualization in the workplace. Visualizing software for understanding and analysis</article-title>, <year>2007</year>. In: <conf-name>4th IEEE international workshop on VISSOFT</conf-name>, <conf-loc>Alberta, Canada</conf-loc>, <conf-date>25-26 June 2007</conf-date>, pp. <fpage>18</fpage>–<lpage>25</lpage>. <conf-loc>IEEE, Los Alamitos, CA, USA</conf-loc>.</citation>
+</ref>
+<ref id="bibr16-1473871612469020">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Maes</surname><given-names>P.</given-names></name>
+</person-group> <article-title>Agents that reduce work and information overload</article-title>. <source>Commun ACM</source> <year>1994</year>; <volume>37</volume>(<issue>7</issue>): <fpage>30</fpage>–<lpage>40</lpage>.</citation>
+</ref>
+<ref id="bibr17-1473871612469020">
+<label>17.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Callahan</surname><given-names>J</given-names></name>
+<name><surname>Hopkins</surname><given-names>D</given-names></name>
+<name><surname>Weiser</surname><given-names>M</given-names></name>
+<etal/>
+</person-group>. <article-title>An empirical comparison of pie vs. linear menus</article-title>. In: <conf-name>CHI ’88: proceedings of the SIGCHI conference on human factors in computing systems</conf-name>, <conf-loc>Florence, Italy</conf-loc>, <conf-date>5-10 April 1988</conf-date>, pp. <fpage>95</fpage>–<lpage>100</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr18-1473871612469020">
+<label>18.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pousman</surname><given-names>Z</given-names></name>
+<name><surname>Stasko</surname><given-names>J</given-names></name>
+</person-group>. <article-title>A taxonomy of ambient information systems: four patterns of design</article-title>. In: <conf-name>Proceedings of the working conference on advanced visual interfaces, AVI ’06</conf-name>, <conf-loc>Venezia, Italy</conf-loc>, <conf-date>23-26 May 2006</conf-date>, pp. <fpage>67</fpage>–<lpage>74</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr19-1473871612469020">
+<label>19.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Xiong</surname><given-names>R</given-names></name>
+<name><surname>Donath</surname><given-names>J</given-names></name>
+</person-group>. <article-title>PeopleGarden: creating data portraits for users</article-title>. In: <conf-name>Proceedings of the 12th annual ACM symposium on user interface software and technology, UIST ’99</conf-name>, <conf-loc>Asheville, NC</conf-loc>, <conf-date>7–10 November 1999</conf-date>, pp. <fpage>37</fpage><lpage>44</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr20-1473871612469020">
+<label>20.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Van Dantzich</surname><given-names>M</given-names></name>
+<name><surname>Robbins</surname><given-names>D</given-names></name>
+<name><surname>Horvitz</surname><given-names>E</given-names></name>
+<etal/>
+</person-group>. <article-title>Scope: providing awareness of multiple notifications at a glance</article-title>. In: <source>Proceedings of the working conference on advanced visual interfaces, AVI ’02</source>, <conf-loc>Trento, Italy</conf-loc>, <conf-date>22–24 May 2002</conf-date>, pp. <fpage>267</fpage>–<lpage>281</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr21-1473871612469020">
+<label>21.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Neukirchen</surname><given-names>H</given-names></name>
+<name><surname>Bisanz</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Utilising code smells to detect quality problems in TTCN-3 test suites</article-title>. In: <conf-name>Proceedings of the 19th IFIP international conference on testing of communicating systems and 7th international workshop on formal approaches to testing of software</conf-name>, <conf-loc>Tallinn, Estonia</conf-loc>, <conf-date>26-29 June 2007</conf-date>, pp. <fpage>228</fpage>–<lpage>243</lpage>. <conf-loc>Springer, Heidelberg</conf-loc>.</citation>
+</ref>
+<ref id="bibr22-1473871612469020">
+<label>22.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Slinger</surname><given-names>S.</given-names></name>
+</person-group> <source>Code smell detection in eclipse</source>. Master’s Thesis, <publisher-name>Delft University of Technology</publisher-name>, <publisher-loc>The Netherlands</publisher-loc>, <year>2005</year>.</citation>
+</ref>
+<ref id="bibr23-1473871612469020">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>McFarlane</surname><given-names>D.</given-names></name>
+</person-group> <article-title>Comparison of four primary methods for coordinating the interruption of people in human-computer interaction</article-title>. <source>Human Compu</source> <year>2002</year>; <volume>17</volume>(<issue>1</issue>): <fpage>63</fpage>–<lpage>139</lpage>.</citation>
+</ref>
+<ref id="bibr24-1473871612469020">
+<label>24.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Robertson</surname><given-names>TJ</given-names></name>
+<name><surname>Prabhakararao</surname><given-names>S</given-names></name>
+<name><surname>Burnett</surname><given-names>M</given-names></name>
+<etal/>
+</person-group>. <article-title>Impact of interruption style on end-user debugging</article-title>. In: <conf-name>CHI ’04: proceedings of the SIGCHI conference on human factors in computing systems</conf-name>, <conf-loc>Vienna, Austria</conf-loc>, <conf-date>24-29 April 2004</conf-date>, pp. <fpage>287</fpage>–<lpage>294</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr25-1473871612469020">
+<label>25.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Treisman</surname><given-names>AM</given-names></name>
+<name><surname>Gelade</surname><given-names>G.</given-names></name>
+</person-group> <article-title>A feature-integration theory of attention</article-title>. <source>Cognitive Psychol</source> <year>1980</year>; <volume>12</volume>(<issue>1</issue>): <fpage>97</fpage>–<lpage>136</lpage>.</citation>
+</ref>
+<ref id="bibr26-1473871612469020">
+<label>26.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Gluck</surname><given-names>J</given-names></name>
+<name><surname>Bunt</surname><given-names>A</given-names></name>
+<name><surname>McGrenere</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Matching attentional draw with utility in interruption</article-title>. In: <conf-name>CHI ’07: proceedings of the SIGCHI conference on human factors in computing systems</conf-name>, <conf-loc>San Jose, California, USA</conf-loc>, <conf-date>28 April - 3 May 2007</conf-date>, pp. <fpage>41</fpage>–<lpage>50</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr27-1473871612469020">
+<label>27.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Raskin</surname><given-names>J.</given-names></name>
+</person-group> <source>The humane interface: new directions for designing interactive systems</source>. <publisher-name>ACM Press/Addison-Wesley Publishing Co.</publisher-name>, <year>2000</year>, <publisher-loc>New York</publisher-loc>.</citation>
+</ref>
+<ref id="bibr28-1473871612469020">
+<label>28.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Parnin</surname><given-names>C</given-names></name>
+<name><surname>Görg</surname><given-names>C</given-names></name>
+<name><surname>Nnadi</surname><given-names>O</given-names></name>
+</person-group>. <article-title>A catalogue of lightweight visualizations to support code smell inspection</article-title>. In: <conf-name>Proceedings of the ACM 2008 symposium on software visualization</conf-name> (eds <person-group person-group-type="editor">
+<name><surname>Koschke</surname><given-names>R</given-names></name>
+<name><surname>Hundhausen</surname><given-names>CD</given-names></name>
+<name><surname>Telea</surname><given-names>A</given-names></name></person-group>), <conf-loc>Ammersee, Germany</conf-loc>, <conf-date>16–17 September 2008</conf-date>, pp. <fpage>77</fpage>–<lpage>86</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr29-1473871612469020">
+<label>29.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hayashi</surname><given-names>S</given-names></name>
+<name><surname>Saeki</surname><given-names>M</given-names></name>
+<name><surname>Kurihara</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Supporting refactoring activities using histories of program modification</article-title>. <source>IEICE T Inf Syst</source> <year>2006</year>; <volume>4</volume>: <fpage>1403</fpage>–<lpage>1412</lpage>.</citation>
+</ref>
+<ref id="bibr30-1473871612469020">
+<label>30.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Tsantalis</surname><given-names>N</given-names></name>
+<name><surname>Chaikalis</surname><given-names>T</given-names></name>
+<name><surname>Chatzigeorgiou</surname><given-names>A</given-names></name>
+</person-group>. <article-title>JDeodorant: identification and removal of type-checking bad smells</article-title>. In: <source>CSMR</source>, <publisher-loc>Athens, Greece</publisher-loc>, <day>1–4</day> <month>April</month> <year>2008</year>, pp. <fpage>329</fpage>–<lpage>331</lpage>. <publisher-name>IEEE Computing Society</publisher-name>, <publisher-loc>Los Alamitos, CA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr31-1473871612469020">
+<label>31.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Shneiderman</surname><given-names>B.</given-names></name>
+</person-group> <article-title>System message design: guidelines and experimental results</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Badre</surname><given-names>A</given-names></name>
+<name><surname>Shneiderman</surname><given-names>B</given-names></name>
+</person-group> (eds) <source>Directions in human/computer interaction, human/computer interaction</source>, ch. 3. <publisher-loc>Norwood, NJ</publisher-loc>: <publisher-name>Ablex Publishing Corporation</publisher-name>, <year>1982</year>, pp. <fpage>55</fpage>–<lpage>78</lpage>.</citation>
+</ref>
+<ref id="bibr32-1473871612469020">
+<label>32.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Shneiderman</surname><given-names>B.</given-names></name>
+</person-group> <source>Designing the user interface: strategies for effective human-computer interaction</source>. <edition>2nd ed.</edition> <publisher-loc>Boston, MA</publisher-loc>: <publisher-name>Addison-Wesley Longman Publishing Co., Inc</publisher-name>., <year>1987</year>.</citation>
+</ref>
+<ref id="bibr33-1473871612469020">
+<label>33.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kersten</surname><given-names>M</given-names></name>
+<name><surname>Murphy</surname><given-names>GC</given-names></name>
+</person-group>. <article-title>Mylar: a degree-of-interest model for IDEs</article-title>. In: <conf-name>AOSD ’05: proceedings of the 4th international conference on aspect-oriented software development</conf-name>, <conf-loc>Lancaster, UK</conf-loc>, <conf-date>22-26 March 2005</conf-date>, pp. <fpage>159</fpage>–<lpage>168</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr34-1473871612469020">
+<label>34.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Parnin</surname><given-names>C</given-names></name>
+<name><surname>Görg</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Building usage contexts during program comprehension</article-title>. In: <conf-name>ICPC ’06: proceedings of the 14th IEEE international conference on program comprehension</conf-name>, <conf-loc>Athens, Greece</conf-loc>, <conf-date>14–16 June 2006</conf-date>, pp. <fpage>13</fpage>–<lpage>22</lpage>. <conf-loc>IEEE Computer Society, Los Alamitos, CA</conf-loc>.</citation>
+</ref>
+<ref id="bibr35-1473871612469020">
+<label>35.</label>
+<citation citation-type="web">
+<collab>Azureus Software and Vuze, Computer Program</collab>, <ext-link ext-link-type="uri" xlink:href="http://vuze.com">http://vuze.com</ext-link> (<year>2012</year>).</citation>
+</ref>
+<ref id="bibr36-1473871612469020">
+<label>36.</label>
+<citation citation-type="web">
+<collab>Oracle</collab>. <article-title>OpenJDK, Computer Program</article-title>, <ext-link ext-link-type="uri" xlink:href="http://openjdk.java.net">http://openjdk.java.net</ext-link> (<year>2012</year>).</citation>
+</ref>
+<ref id="bibr37-1473871612469020">
+<label>37.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Mantyla</surname><given-names>MV</given-names></name>
+<name><surname>Vanhanen</surname><given-names>J</given-names></name>
+<name><surname>Lassenius</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Bad Smells” Humans as Code Critics</article-title>. In: <conf-name>Proceedings of the 20th IEEE International Conference on Software Maintenance (ICSM ′04)</conf-name>, <conf-loc>IEEE Computer Society, Washington, DC, USA</conf-loc>, <year>2004</year>, pp. <fpage>399</fpage>–<lpage>408</lpage>.</citation>
+</ref>
+<ref id="bibr38-1473871612469020">
+<label>38.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Nielsen</surname><given-names>J</given-names></name>
+<name><surname>Molich</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Heuristic evaluation of user interfaces</article-title>. In: <conf-name>CHI ’90: proceedings of the SIGCHI conference on human factors in computing systems</conf-name>, <conf-loc>Seattle, Washington, USA</conf-loc>, <conf-date>01-05 April 1990</conf-date>, pp. <fpage>249</fpage>–<lpage>256</lpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr39-1473871612469020">
+<label>39.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Nielsen</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Ten usability heuristics</article-title>. <source>Internet</source>, <ext-link ext-link-type="uri" xlink:href="http://www.useit.com/papers/heuristic/heuristic_list.html">http://www.useit.com/papers/heuristic/heuristic_list.html</ext-link> (<year>2005</year>).</citation>
+</ref>
+<ref id="bibr40-1473871612469020">
+<label>40.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Fitzgerald</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Research on revision in writing</article-title>. <source>Rev Educ Res</source> <year>1987</year>; <volume>57</volume>(<issue>4</issue>): <fpage>481</fpage>–<lpage>506</lpage>.</citation>
+</ref>
+<ref id="bibr41-1473871612469020">
+<label>41.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Karlsson</surname><given-names>K.</given-names></name>
+</person-group> <article-title>TeXlipse, Computer Program</article-title>, <ext-link ext-link-type="uri" xlink:href="http://texlipse.sourceforge.net">http://texlipse.sourceforge.net</ext-link> (<year>2012</year>).</citation>
+</ref>
+<ref id="bibr42-1473871612469020">
+<label>42.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Naber</surname><given-names>D.</given-names></name>
+</person-group> <source>A rule-based style and grammar checker</source>. Diploma Thesis, <publisher-name>Technische Fakultat and Universitat Bielefeld</publisher-name>, <publisher-loc>Germany</publisher-loc>, <year>2003</year>.</citation>
+</ref>
+<ref id="bibr43-1473871612469020">
+<label>43.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Gamon</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Using mostly native data to correct errors in learners’ writing: a meta-classifier approach</article-title>. In: <conf-name>Human language technologies: the 2010 annual conference of the North American chapter of the association for computational linguistics. HLT ’10</conf-name>, <conf-loc>Los Angeles, CA, USA</conf-loc>, <conf-date>2-4 June 2010</conf-date>, pp. <fpage>163</fpage>–<lpage>171</lpage>. <conf-loc>Association for Computational Linguistics, Stroudsburg, PA</conf-loc>.</citation>
+</ref>
+<ref id="bibr44-1473871612469020">
+<label>44.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Han</surname><given-names>N-R</given-names></name>
+<name><surname>Chodorow</surname><given-names>M</given-names></name>
+<name><surname>Leacock</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Detecting errors in English article usage by non-native speakers</article-title>. <source>Nat Lang Eng</source> <year>2006</year>; <volume>12</volume>(<issue>02</issue>): <fpage>115</fpage>–<lpage>129</lpage>.</citation>
+</ref>
+<ref id="bibr45-1473871612469020">
+<label>45.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Coppieters</surname><given-names>R.</given-names></name>
+</person-group> <article-title>Competence differences between native and near-native speakers</article-title>. <source>Language</source> <year>1987</year>; <volume>63</volume>(<issue>3</issue>): <fpage>544</fpage>–<lpage>573</lpage>.</citation>
+</ref>
+<ref id="bibr46-1473871612469020">
+<label>46.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lee</surname><given-names>H-K.</given-names></name>
+</person-group> <article-title>Native and nonnative rater behavior in grading Korean students’ English essays</article-title>. <source>Asia Pac Educ Rev</source> <year>2009</year>; <volume>10</volume>: <fpage>387</fpage>–<lpage>397</lpage>.</citation>
+</ref>
+<ref id="bibr47-1473871612469020">
+<label>47.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Derwing</surname><given-names>TM</given-names></name>
+<name><surname>Rossiter</surname><given-names>MJ</given-names></name>
+<name><surname>Ehrensberger-Dow</surname><given-names>M.</given-names></name>
+</person-group> <article-title>‘They speaked and wrote real good’: judgements ofnon-native and native grammar</article-title>. <source>Lang Aware</source> <year>2002</year>; <volume>11</volume>(<issue>2</issue>): <fpage>84</fpage>–<lpage>99</lpage>.</citation>
+</ref>
+<ref id="bibr48-1473871612469020">
+<label>48.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Boice</surname><given-names>R.</given-names></name>
+</person-group> <source>Professors as writers</source>. <publisher-loc>Stillwater, OK</publisher-loc>: <publisher-name>New Forum Press</publisher-name>, <year>1990</year>.</citation>
+</ref>
+<ref id="bibr49-1473871612469020">
+<label>49.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Jauncey</surname><given-names>D.</given-names></name>
+</person-group> <article-title>JDarkRoom, Computer Program</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.codealchemists.com/jdarkroom">http://www.codealchemists.com/jdarkroom</ext-link> (<year>2012</year>).</citation>
+</ref>
+<ref id="bibr50-1473871612469020">
+<label>50.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Bernal</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Q10, Computer Program</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.baara.com/q10/">http://www.baara.com/q10/</ext-link> (<year>2012</year>).</citation>
+</ref>
+<ref id="bibr51-1473871612469020">
+<label>51.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Grosjean</surname><given-names>J.</given-names></name>
+</person-group> <article-title>WriteRoom, Computer Program</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.hogbaysoftware.com/products/writeroom">http://www.hogbaysoftware.com/products/writeroom</ext-link> (<year>2012</year>).</citation>
+</ref>
+<ref id="bibr52-1473871612469020">
+<label>52.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>MacIntyre</surname><given-names>J.</given-names></name>
+</person-group> <article-title>The Tao of Screen, Computer Program</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.slate.com/id/2182744">http://www.slate.com/id/2182744</ext-link> (<year>2012</year>).</citation>
+</ref>
+<ref id="bibr53-1473871612469020">
+<label>53.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Oelke</surname><given-names>D</given-names></name>
+<name><surname>Spretke</surname><given-names>D</given-names></name>
+<name><surname>Stoffel</surname><given-names>A</given-names></name>
+<etal/>
+</person-group>. <article-title>Visual readability analysis: how to make your writings easier to read</article-title>. In: <conf-name>IEEE symposium on visual analytics science and technology (VAST)</conf-name>, <conf-loc>Salt Lake City, UT, USA</conf-loc>, <conf-date>24-29 October 2010</conf-date>, pp. <fpage>123</fpage>–<lpage>130</lpage>.</citation>
+</ref>
+<ref id="bibr54-1473871612469020">
+<label>54.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Xu</surname><given-names>S</given-names></name>
+<name><surname>Shibata</surname><given-names>H.</given-names></name>
+</person-group> <article-title>Writing blocks: a visualization to support global revising</article-title>. In: <conf-name>Proceedings of the 2007 conference of the computer-human interaction special interest group (CHISIG) of Australia on computer-human interaction: design: activities, artifacts and environments—OZCHI ’07</conf-name>, <conf-loc>Adelaide, Australia</conf-loc>, <conf-date>28-30 November 2007</conf-date>, p. <fpage>61</fpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr55-1473871612469020">
+<label>55.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Suh</surname><given-names>B</given-names></name>
+<name><surname>Woodruff</surname><given-names>A</given-names></name>
+<name><surname>Rosenholtz</surname><given-names>R</given-names></name>
+<etal/>
+</person-group>. <article-title>Popout prism</article-title>. In: <conf-name>Proceedings of the SIGCHI conference on human factors in computing systems changing our world, changing ourselves—CHI ’02</conf-name>, <conf-loc>Minneapolis, Minnesota USA</conf-loc>, <conf-date>20-25 April 2002</conf-date>, p. <fpage>251</fpage>. <conf-loc>ACM, New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr56-1473871612469020">
+<label>56.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Xiang</surname><given-names>PF</given-names></name>
+<name><surname>Ying</surname><given-names>ATT</given-names></name>
+<name><surname>Cheng</surname><given-names>P</given-names></name>
+<etal/>
+</person-group>. <article-title>Ensemble: a recommendation tool for promoting communication in software teams</article-title>. In: <conf-name>RSSE ’08: proceedings of the 2008 international workshop on recommendation systems for software engineering</conf-name>. <conf-loc>Atlanta, Georgia</conf-loc>, <conf-date>10 November 2008</conf-date>, pp. <fpage>1</fpage>–<lpage>2</lpage>. <conf-loc>ACM, New York, USA</conf-loc>.</citation>
+</ref>
+<ref id="bibr57-1473871612469020">
+<label>57.</label>
+<citation citation-type="web">
+<collab>The basics of graphic design</collab>. <source>Internet</source>, <ext-link ext-link-type="uri" xlink:href="http://www.online.tusc.k12.al.us/tutorials/grdesign/grdesign.htm">http://www.online.tusc.k12.al.us/tutorials/grdesign/grdesign.htm</ext-link></citation>
+</ref>
+</ref-list>
+</back>
+</article>

@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JLA</journal-id>
+<journal-id journal-id-type="hwp">spjla</journal-id>
+<journal-title>Journal of Laboratory Automation</journal-title>
+<issn pub-type="ppub">2211-0682</issn>
+<issn pub-type="epub">1540-2452</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage CA: Los Angeles, CA</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/2211068212460237</article-id>
+<article-id pub-id-type="publisher-id">10.1177_2211068212460237</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Technology Brief</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Clarity</article-title>
+<subtitle>An Open-Source Manager for Laboratory Automation</subtitle>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Delaney</surname><given-names>Nigel F.</given-names></name>
+<xref ref-type="aff" rid="aff1-2211068212460237">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Rojas Echenique</surname><given-names>José I.</given-names></name>
+<xref ref-type="aff" rid="aff1-2211068212460237">1</xref>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Marx</surname><given-names>Christopher J.</given-names></name>
+<xref ref-type="aff" rid="aff1-2211068212460237">1</xref>
+<xref ref-type="aff" rid="aff2-2211068212460237">2</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-2211068212460237">
+<label>1</label>Department of Organismic and Evolutionary Biology, Harvard University, Cambridge, Massachusetts, USA</aff>
+<aff id="aff2-2211068212460237">
+<label>2</label>Faculty of Arts and Sciences Center for Systems Biology, Harvard University, Cambridge, Massachusetts, USA</aff>
+<author-notes>
+<corresp id="corresp1-2211068212460237">Christopher J. Marx, Department of Organismic and Evolutionary Biology, Harvard University, 16 Divinity Avenue, Cambridge, MA, 02143, USA Email: <email>cmarx@oeb.harvard.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>18</volume>
+<issue>2</issue>
+<fpage>171</fpage>
+<lpage>177</lpage>
+<permissions>
+<copyright-statement>© 2012 Society for Laboratory Automation and Screening</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Society for Laboratory Automation and Screening</copyright-holder>
+</permissions>
+<abstract>
+<p>Software to manage automated laboratories, when interfaced with hardware instruments, gives users a way to specify experimental protocols and schedule activities to avoid hardware conflicts. In addition to these basics, modern laboratories need software that can run multiple different protocols in parallel and that can be easily extended to interface with a constantly growing diversity of techniques and instruments. We present Clarity, a laboratory automation manager that is hardware agnostic, portable, extensible, and open source. Clarity provides critical features including remote monitoring, robust error reporting by phone or email, and full state recovery in the event of a system crash. We discuss the basic organization of Clarity, demonstrate an example of its implementation for the automated analysis of bacterial growth, and describe how the program can be extended to manage new hardware. Clarity is mature, well documented, actively developed, written in C# for the Common Language Infrastructure, and is free and open-source software. These advantages set Clarity apart from currently available laboratory automation programs. The source code and documentation for Clarity is available at <ext-link ext-link-type="uri" xlink:href="http://code.google.com/p/osla/">http://code.google.com/p/osla/</ext-link>.</p>
+</abstract>
+<kwd-group>
+<kwd>laboratory information managements systems (LIMS)</kwd>
+<kwd>informatics and software</kwd>
+<kwd>robotics and instrumentation engineering</kwd>
+<kwd>HTS high-throughput screening</kwd>
+<kwd>automated biology</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-2211068212460237" sec-type="intro">
+<title>Introduction</title>
+<p>Robotic automation is revolutionizing research in fields including clinical science,<sup><xref ref-type="bibr" rid="bibr1-2211068212460237">1</xref></sup> genomics,<sup><xref ref-type="bibr" rid="bibr2-2211068212460237">2</xref></sup> and systems biology.<sup><xref ref-type="bibr" rid="bibr3-2211068212460237">3</xref>,<xref ref-type="bibr" rid="bibr4-2211068212460237">4</xref></sup> Automated laboratories can produce better, more consistent data; can have lower operating costs; and can be scaled up easily. As more laboratories begin to embrace the benefits of automation, the programs that are used to manage laboratory instruments will have to confront the needs of a new and more diverse group of users.</p>
+<p>Software to manage automated laboratories has to interface with hardware instruments, give users a way to describe the activities that make up experimental protocols, and schedule these activities in a way that avoids hardware conflicts. In addition to these basic requirements, modern laboratories need software that can run multiple different protocols in parallel. In a laboratory with independent investigators who share common equipment, software has to be able to schedule parallel protocols on demand without interrupting running protocols. It is also essential for software to be easily extensible so that it can adapt to a constantly growing diversity of techniques and instruments.</p>
+<p>Here we present Clarity, a laboratory automation manager designed to meet the challenges of modern laboratory automation. Clarity is hardware agnostic, portable, extensible, and open source. Furthermore, it provides critical features that include remote monitoring, robust error reporting by phone or email, and full state recovery in the event of a system crash. We present the basic organization of Clarity, an example of its implementation for the automated analysis of bacterial growth, and a description of how the program can be extended with new instrument interfaces and graphical user interfaces.</p>
+</sec>
+<sec id="section2-2211068212460237">
+<title>General Attributes of the Organization of Clarity</title>
+<sec id="section3-2211068212460237">
+<title>Hardware and Task Management</title>
+<p>The automation of even the most rudimentary laboratory procedures often requires the orchestration of multiple specialized instruments. Instruments usually serve different functions and communicate with the computer in different ways. However, instruments are unified by their purpose: to perform meaningful activities during an experiment.</p>
+<p>In Clarity, each instrument is associated with a dedicated instrument interface (<xref ref-type="fig" rid="fig1-2211068212460237"><bold>Fig. 1</bold></xref>). The instrument interface handles the low-level communication between software and hardware and defines a set of meaningful activities that the instrument can perform during the course of an experiment. The interface to a robotic arm, for example, might define an activity to move the arm to a specific location or lift a microtiter plate. This activity could then appear as a step in the protocol for an experiment. The instrument interface would be responsible for loading the positions of the incubator and spectrometer from a configuration file, for instructing the robotic arm to power the right motors in the right sequence, and for reporting back to Clarity in the event of any hardware errors.</p>
+<fig id="fig1-2211068212460237" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>A diagram of Clarity’s important components and their organization. Solid arrows indicate direct communication (e.g., the protocol-scheduling engine calls methods in the instrument interfaces that define activities); dashed arrows indicate connections over Internet protocols.</p>
+</caption>
+<graphic xlink:href="10.1177_2211068212460237-fig1.tif"/></fig>
+<p>Clarity also supports virtual instruments. Virtual instruments do not correspond to hardware; instead, they are meant to perform completely computational activities during experiments. They can be used to write log or data files, to organize hardware instrument interfaces for multi-instrument activities, or to monitor data output to make decisions about the course of an experiment.</p>
+</sec>
+<sec id="section4-2211068212460237">
+<title>Protocol Execution</title>
+<p>Protocols define the activities that make up an experiment.<sup><xref ref-type="bibr" rid="bibr5-2211068212460237">5</xref></sup> A simple protocol can consist of a list of activities and the times at which they should be performed. More complex protocols can incorporate control flow elements such as loops and conditional statements. Conditions are evaluated by virtual instruments and can therefore depend on anything that the program has access to, including data files, protocol details, and program state. Protocols can be written using a simple protocol description language based on XML, the eXtensible Markup Language.<sup><xref ref-type="bibr" rid="bibr6-2211068212460237">6</xref></sup> <xref ref-type="fig" rid="fig2-2211068212460237"><bold>Figure 2</bold></xref> contains a simplified snippet from a typical protocol file. Alternatively, Clarity is equipped with a graphical protocol editor. Using the protocol editor, the user simply chooses activities from an interactive list and arranges them to specify her protocol. After providing an email address and phone number, for error reporting, the user can save the protocol to an XML file and use Clarity to execute it.</p>
+<fig id="fig2-2211068212460237" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>A simplified example of an XML protocol file.</p>
+</caption>
+<graphic xlink:href="10.1177_2211068212460237-fig2.tif"/></fig>
+<p>Clarity’s scheduling engine keeps track of running protocols and uses the instrument interfaces to call the right activities at the right times. Scheduling is complicated by conflicts, which can arise when multiple users run protocols at the same time and on the same instruments. To resolve conflicts, the scheduler runs a simple and flexible algorithm: (1) When an activity finishes, it activates the scheduler. (2) The scheduler inspects the uncompleted activities of the remaining protocols and identifies the activity with the earliest prescribed time. (3) If that time is in the future, Clarity waits; otherwise, it executes the activity immediately. This algorithm is not ideal for procedures that are extremely time sensitive, but it is easy to run dynamically, meaning that new protocols can be added at any time without stopping the execution of running protocols.</p>
+<p>Clarity’s basic scheduling algorithm is designed to be easy to understand and to simply avoid any resource conflicts between different protocols. It runs multiple protocols in parallel by alternating which protocol is running serially at any moment, giving exclusive control of the entire system to one executing protocol and passing control of the system to another protocol (or context switching) only after the currently executing protocol has stopped using the system resources and returned them to a ready state. However, Clarity, being open source, can also implement more complex scheduling schemes and run protocols in a truly concurrent manner that uses multiple instruments simultaneously for different tasks. Such parallel execution can, however, create resource conflicts, race conditions, deadlocks, and other problems. This is particularly difficult in the laboratory automation context, because which state a protocol is suspended in can be very important. For instance, we might not want to remove an item from an incubator and place it in a liquid handler if it will be some time before the liquid handler finishes its current task and is available to do the next step. For this reason, specifying a framework that optimally handles all possible concurrency issues, ensures that all the available instrument interfaces can provide enough information for the framework to appropriately make decisions (such as the time required to execute instructions), and does not introduce too much complexity to new users is difficult.</p>
+<p>Instead of providing a general solution, Clarity’s design assumes that the parallel execution problem for any specific usage scenario will be easier to solve by writing code for an idiosyncratic implementation than specifying what the problem for a general framework will be. Clarity provides the tools for a user to code relatively easily a more truly concurrent scheduler. Clarity allows users to implement concurrent operations through the use of virtual instrument classes. Instrument interfaces and virtual instrument objects can have direct access to the scheduler, the instruments, and all the loaded protocols. A user can simply write a virtual instrument that examines the entire system state and adjust the protocols and their execution order accordingly. Clarity also allows virtual instruments to handle events generated by its engine based on instrument processes, allowing them to respond to the actions taken by different protocols. A walk-through tutorial showing how to create concurrent or dynamic protocols and allow users to write more sophisticated scheduling algorithms to replace Clarity’s simple scheduler is part of Clarity’s online documentation. Clarity’s modular organization, open-source license, thorough documentation, and community support make it especially amenable to this kind of customization. However, we emphasize that it will be the responsibility of anyone implementing such custom scheduling operations to ensure that the problems that can arise in parallel computing, such as deadlocks and race conditions, do not occur.</p>
+</sec>
+<sec id="section5-2211068212460237">
+<title>Error Reporting and Recovery</title>
+<p>An unavoidable aspect of laboratory automation is that instruments can malfunction in the course of protocol execution. Some instrument interfaces can recognize and recover from common errors without user intervention. When an instrument interface encounters an error that it cannot handle, Clarity logs the error and immediately stops protocol execution. At this point, Clarity tries to alert the owners of the affected protocols about the error. Based on the user’s preference, Clarity can send emails or text messages with detailed information about the probable causes of the error. Clarity can also call users’ phone numbers to alert them at any hour of the day and night.</p>
+<p>Error reporting is handled jointly by Clarity and a remote alarm server. The alarm server runs on a separate computer and exchanges information with Clarity over the Internet. This ensures that users continue to get error reports in the event that one of the computers malfunctions. The alarm server also lets users monitor running protocols. Users can install a monitoring program on a home computer and use it to connect to the alarm server over the Internet. The monitor displays upcoming activities, protocol information, and video from user-installed cameras.</p>
+<p>Once notified, a user can often resolve problems remotely. Each instrument interface defines methods to reinitialize its associated instrument. The user can use Clarity’s logs or the video cameras to determine whether an instrument needs to be reinitialized. If so, the user can activate the right recovery method from Clarity’s graphical user interface.</p>
+<p>Clarity always maintains a backup of the program’s state: the list of running protocols and the list of activities that have yet to be performed. Before and after executing any activity, Clarity updates this backup. This ensures that when errors occur, there is a record of the program’s state that can be used to rescue experiments. Once the problem is fixed, the backup can be loaded into a new instance of Clarity to continue running experiments as before.</p>
+</sec>
+<sec id="section6-2211068212460237">
+<title>Graphical Interface</title>
+<p>Users interact with Clarity’s components—hardware and virtual instrument interfaces, the protocol-scheduling engine, and the remote alarm server—through a graphical interface (<xref ref-type="fig" rid="fig3-2211068212460237"><bold>Fig. 3</bold></xref>). The main menu allows users to load and save program states, load protocols, and manage the remote alarm server. The body of the interface is organized into tabs, making it easy for users to add location-specific features. The main tab displays running protocols, instrument statuses, a log of errors, and controls to start and stop protocol execution. The error recovery tab provides methods to recover and reinitialize connected instruments. Additional tabs can be implemented to control specific instruments or to carry out location specific tasks.</p>
+<fig id="fig3-2211068212460237" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>The main tab of Clarity’s graphical use interface. This is where users can control protocol execution. The main tab also displays information about the currently running protocols, all scheduled activities, the statuses of hardware instruments, and an error log.</p>
+</caption>
+<graphic xlink:href="10.1177_2211068212460237-fig3.tif"/></fig>
+<p>Clarity’s graphical interface updates itself automatically to accommodate new instrument interfaces. For example, the graphical protocol editor automatically includes activities from new or custom instruments. When it starts, the protocol editor generates its list of activities dynamically by inspecting all available instrument interfaces. The error recovery tab is also generated at run time. Clarity’s self-updating user interface means that users can create custom instrument interfaces without worrying about integrating them with the rest of the program.</p>
+</sec></sec>
+<sec id="section7-2211068212460237">
+<title>Clarity in Action: Implementation for Automated Analysis of Bacterial Growth</title>
+<p>To demonstrate a typical use case, we describe our laboratory’s use of Clarity to manage a series of instruments for automated monitoring of bacterial growth (<xref ref-type="fig" rid="fig4-2211068212460237"><bold>Fig. 4</bold></xref>). A major effort in our group is to evolve replicate populations of one or more bacterial species in the laboratory as a means to study the physiological basis of adaptation.<sup><xref ref-type="bibr" rid="bibr7-2211068212460237">7</xref></sup> Given that single experiments can involve hundreds of replicate populations, we maintain populations in 48-well microtiter plates that are stacked on an arbitrary-access, shaking tower that holds up to 38 plates. To maintain optimal growth of our study organism, <italic>Methylobacterium extorquens</italic>, we house the shaking tower, as well as the rest of the system, in a temperature-controlled environmental room at 30 °C and use a commercial humidifier to augment the humidity to ~75% relative humidity to minimize evaporation. Under these conditions, the primary component of fitness is the exponential growth rate of the culture.<sup><xref ref-type="bibr" rid="bibr8-2211068212460237">8</xref></sup> By using a multiwell plate reader to take optical density readings over multiple days, we can assay the growth rate of nearly 2000 strains concurrently.</p>
+<fig id="fig4-2211068212460237" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Our hardware configuration for tracing bacterial growth curves in an automated manner.</p>
+</caption>
+<graphic xlink:href="10.1177_2211068212460237-fig4.tif"/></fig>
+<p>Users load a 48-well plate—already containing the needed media and cultures—onto the shaking tower. Using Clarity’s graphical interface, the user specifies parameters of the growth curve protocol (e.g., number of measurements), selects the correct position on the tower, enters a file name for the data, and provides email addresses and phone numbers for error reporting. At this point, the user can also choose to apply the protocol to multiple plates, specifying their positions on the shaking tower. Then, the user initiates the protocol. A video demonstrating an automated measurement of optical density of a 48-well plate is available at <ext-link ext-link-type="uri" xlink:href="http://www.evolvedmicrobe.com/LabAutomation.html">http://www.evolvedmicrobe.com/LabAutomation.html</ext-link>. Briefly, the protocol proceeds as follows: (1) The robotic spatula removes the microtiter plate from the specified position and places it on the transfer station. (2) A vacuum suction cup raises the plate’s lid, and the plate base is moved toward the robotic arm. (3) The arm grasps the plate base, swings into position above the multiwell plate reader, and lowers the plate onto that instrument’s loading platform. (4) The plate is lowered into the plate reader, and optical density readings are taken. A virtual instrument records the reading and all the relevant metadata to a spreadsheet. (5) Activities 1 to 4 are repeated in reverse to return the plate to the transfer station, replace the lid, and load the plate back into the tower. Each of the above activities is specified by the protocol, initiated by the scheduler, mediated through an instrument interface, and carried out by a particular instrument.</p>
+<p>The data produced by Clarity are not only high throughput but also high quality. Because the 48-well plates allow for effective mixing and aeration—and due to our efforts to optimize the growth medium for <italic>Methylobacterium</italic><sup><xref ref-type="bibr" rid="bibr9-2211068212460237">9</xref></sup>—we routinely observe per-capita growth that is incredibly stable throughout exponential phase (<xref ref-type="fig" rid="fig5-2211068212460237"><bold>Fig. 5A</bold></xref>). Using a software package we have developed,<sup><xref ref-type="bibr" rid="bibr10-2211068212460237">10</xref></sup> we can reliably measure small differences in growth rates (<xref ref-type="fig" rid="fig5-2211068212460237"><bold>Fig. 5B</bold></xref>). Because these small differences can have dramatic evolutionary consequences, it is crucial that our data be as high quality as possible. The required precision, scale, and extended timeline of our work preclude performing these experiments in the absence of automation.</p>
+<fig id="fig5-2211068212460237" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>An example set of bacterial growth curves measured by Clarity. (<bold>A</bold>) The replicates represent a comparison of the optical density measured for over 50 h for two isolates (red and green; 18 replicates of each) of a strain of <italic>Methylobacterium extorquens</italic> AM1 evolved during an evolution experiment from the same ancestor. Note that in the inset, the log-linear increase in density indicates the remarkable constancy of per-capita growth throughout these conditions. (<bold>B</bold>) Analysis of the doubling times of the two strains indicates the precision by which we can estimate this exponential rate.</p>
+</caption>
+<graphic xlink:href="10.1177_2211068212460237-fig5.tif"/></fig>
+</sec>
+<sec id="section8-2211068212460237">
+<title>Customizing Clarity</title>
+<p>Clarity is easy to extend or customize with new instrument interfaces. Custom instrument interfaces can be written to control new hardware instruments or to carry out computational activities by implementing virtual instruments. Instrument interfaces can be written in any language that conforms to the Common Language Infrastructure.<sup><xref ref-type="bibr" rid="bibr11-2211068212460237">11</xref></sup> Because most modern programming languages have a Common Language Infrastructure implementation, almost anyone with some programming experience can write a custom instrument. Furthermore, instrument interfaces are implemented as independent libraries that are loaded dynamically; this means that they can be included in the program without recompiling Clarity.</p>
+<p>Clarity’s online documentation<sup><xref ref-type="bibr" rid="bibr12-2211068212460237">12</xref></sup> includes a tutorial on implementing a new instrument interface. There we demonstrate how to implement a virtual instrument to send email updates on the progress of running protocols. Every instrument interface will be different in the way that it handles communication with a hardware instrument—or email server—but all conform to a standard way of communicating with Clarity. Basically, every instrument interface needs to inherit from Clarity’s BaseInstrumentClass class. This ensures that all interfaces define an instrument status flag, a recovery method, and a method to release system resources. In addition, BaseInstrumentClass implements a method to initialize location specific variables (e.g., network details) using XML configuration files. The class membership also serves to identify instrument interface classes. When the program starts, it looks for members of BaseInstrumentClass to include in the list of available instruments.</p>
+<p>It is also possible to customize Clarity’s graphical user interface. For example, we make extensive use of a tab that facilitates the design of growth curve protocols. The online documentation includes a template graphical user interface that can be tweaked and customized easily. Alternatively, because protocols reside in XML files, one can write a standalone protocol-generating application that would not need to interface with Clarity directly. Instructions for customizing the user interface and sample interface templates are available in Clarity’s documentation. Clarity is currently designed to manage lab instruments and execute instructions with them; however, it does not include a specific framework to manage the data generated by these experiments. A recent open-source database schema was published, AutoLabDB,<sup><xref ref-type="bibr" rid="bibr13-2211068212460237">13</xref></sup> that would be useful for this endeavor, and future development will likely focus on implementing database interactions through virtual instruments in Clarity.</p>
+</sec>
+<sec id="section9-2211068212460237" sec-type="conclusions">
+<title>Conclusions</title>
+<p>Clarity is mature, well-documented, and actively developed software for managing laboratory automation. We manage two automated laboratories with Clarity and plan on continuing to release bug fixes and new features. Because the success of a software project depends on the availability of quality support for new users, we maintain up-to-date documentation for Clarity online and are available to answer questions on a dedicated email list.<sup><xref ref-type="bibr" rid="bibr12-2211068212460237">12</xref></sup> Clarity is written in the C# language and runs on the Common Language Infrastructure.<sup><xref ref-type="bibr" rid="bibr11-2211068212460237">11</xref></sup> This means that the program can run on most software and hardware platforms (including Windows, OS X, and GNU/Linux operating systems). It also means that Clarity can be developed in almost any programming language.</p>
+<p>Although Clarity currently has support for only a few instrument types, if a common protocol existed for interfacing with devices, it would be possible to have Clarity generically interact with any device implementing that protocol. Recently, the Standardization in Lab Automation (SiLA) consortium has created standards for device control interfaces that expose devices as web services and communicates with them using the simple object access protocol.<sup><xref ref-type="bibr" rid="bibr14-2211068212460237">14</xref></sup> Devices using such a protocol could readily be made available for use in Clarity, and this is an active goal of the development team, but we are hindered only because we do not have access to any devices implementing the standardized protocols.</p>
+<p>Clarity is open source under a free software license. This ensures that experiments performed by Clarity are as reproducible as possible because anyone can inspect the source code to determine how the program works and because experiments are specified in full detail by sharable XML protocols. It also ensures that Clarity remains flexible because anyone can modify the source code to fit particular needs. Most importantly, the open source paradigm means that every contribution to Clarity benefits the whole community of users. These advantages set Clarity apart from the other currently available laboratory automation programs.<sup><xref ref-type="bibr" rid="bibr15-2211068212460237">15</xref><xref ref-type="bibr" rid="bibr16-2211068212460237"/>–<xref ref-type="bibr" rid="bibr17-2211068212460237">17</xref></sup></p>
+</sec>
+</body>
+<back>
+<ack>
+<p>Co-authors N. F. Delaney and J. I. Rojas Echenique contributed equally to this work. We thank D. G. Robinson for his useful comments on this article.</p>
+</ack>
+<fn-group>
+<fn fn-type="conflict">
+<label>Declaration of Conflicting Interests</label>
+<p>The authors declared no potential conflicts of interest with respect to the research, authorship, and/or publication of this article.</p></fn>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>The authors disclosed receipt of the following financial support for the research, authorship, and/or publication of this article: This work was supported by grants from the NIH (GM078209) and NSF (DEB-0845893).</p></fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-2211068212460237">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Boyd</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Robotic Laboratory Automation</article-title>. <source>Science</source> <year>2002</year>, <volume>295</volume>, <fpage>517</fpage>–<lpage>518</lpage>.</citation>
+</ref>
+<ref id="bibr2-2211068212460237">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mardis</surname><given-names>E. R.</given-names></name>
+</person-group> <article-title>A Decade’s Perspective on DNA Sequencing Technology</article-title>. <source>Nature</source> <year>2011</year>, <volume>470</volume>, <fpage>198</fpage>–<lpage>203</lpage>.</citation>
+</ref>
+<ref id="bibr3-2211068212460237">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>King</surname><given-names>R. D.</given-names></name>
+<name><surname>Rowland</surname><given-names>J.</given-names></name>
+<name><surname>Oliver</surname><given-names>S. G.</given-names></name>
+<name><surname>Young</surname><given-names>M.</given-names></name>
+<name><surname>Aubrey</surname><given-names>W.</given-names></name>
+<name><surname>Byrne</surname><given-names>E.</given-names></name>
+<name><surname>Liakata</surname><given-names>M.</given-names></name>
+<name><surname>Markham</surname><given-names>M.</given-names></name>
+<name><surname>Pir</surname><given-names>P.</given-names></name>
+<name><surname>Soldatova</surname><given-names>L. N.</given-names></name>
+<name><surname>Sparkes</surname><given-names>A.</given-names></name>
+<name><surname>Whelan</surname><given-names>K. E.</given-names></name>
+<name><surname>Clare</surname><given-names>A.</given-names></name>
+</person-group> <article-title>The Automation of Science</article-title>. <source>Science</source> <year>2009</year>, <volume>324</volume>, <fpage>85</fpage>–<lpage>89</lpage>.</citation>
+</ref>
+<ref id="bibr4-2211068212460237">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zimmermann</surname><given-names>H. F.</given-names></name>
+<name><surname>Degussa</surname><given-names>J. R.</given-names></name>
+</person-group> <article-title>A Fully Automated Robotic System for High Throughput Fermentation</article-title>. <source>J. Lab. Autom</source>. <year>2006</year>, <volume>11</volume>, <fpage>134</fpage>–<lpage>137</lpage>.</citation>
+</ref>
+<ref id="bibr5-2211068212460237">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Schäfer</surname><given-names>R.</given-names></name>
+</person-group> <article-title>Concepts for Dynamic Scheduling in the Laboratory</article-title>. <source>J. Lab. Autom</source>. <year>2004</year>, <volume>9</volume>, <fpage>382</fpage>–<lpage>397</lpage>.</citation>
+</ref>
+<ref id="bibr6-2211068212460237">
+<label>6.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Bray</surname><given-names>T.</given-names></name>
+<name><surname>Paoli</surname><given-names>J.</given-names></name>
+<name><surname>Sperberg-McQueen</surname><given-names>C. M.</given-names></name>
+<name><surname>Maler</surname><given-names>E.</given-names></name>
+<name><surname>Yergeau</surname><given-names>F.</given-names></name>
+</person-group> <article-title>Extensible Markup Language (XML)</article-title>. <year>2008</year>, <ext-link ext-link-type="uri" xlink:href="http://www.w3.org/XML/Core/#Publications">http://www.w3.org/XML/Core/#Publications</ext-link>. <access-date>Accessed June 2012</access-date>.</citation>
+</ref>
+<ref id="bibr7-2211068212460237">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lee</surname><given-names>M.-C.</given-names></name>
+<name><surname>Chou</surname><given-names>H.-H.</given-names></name>
+<name><surname>Marx</surname><given-names>C. J.</given-names></name>
+</person-group> <article-title>Asymmetric, Bimodal Trade-offs during Adaptation of <italic>Methylobacterium</italic> to Distinct Growth Substrates</article-title>. <source>Evolution</source> <year>2009</year>, <volume>63</volume>, <fpage>2816</fpage>–<lpage>2830</lpage>.</citation>
+</ref>
+<ref id="bibr8-2211068212460237">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chou</surname><given-names>H.-H.</given-names></name>
+<name><surname>Chiu</surname><given-names>H.-C.</given-names></name>
+<name><surname>Delaney</surname><given-names>N. F.</given-names></name>
+<name><surname>Segrè</surname><given-names>D.</given-names></name>
+<name><surname>Marx</surname><given-names>C. J.</given-names></name>
+</person-group> <article-title>Diminishing Returns Epistasis among Beneficial Mutations Decelerates Adaptation</article-title>. <source>Science</source> <year>2011</year>, <volume>332</volume>, <fpage>1190</fpage>–<lpage>1192</lpage>.</citation>
+</ref>
+<ref id="bibr9-2211068212460237">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Delaney</surname><given-names>N. F.</given-names></name>
+<name><surname>Kaczmarek</surname><given-names>M. E.</given-names></name>
+<name><surname>Ward</surname><given-names>L. M.</given-names></name>
+<name><surname>Lee</surname><given-names>M.-C.</given-names></name>
+<name><surname>Marx</surname><given-names>C. J.</given-names></name>
+</person-group> <article-title>Development of an Optimized Medium, Strain and High-Throughput Culturing Methods for <italic>Methylobacterium extorquens</italic></article-title>. <source>PLoS One</source> <year>2012.</year> In preparation.</citation>
+</ref>
+<ref id="bibr10-2211068212460237">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Delaney</surname><given-names>N. F.</given-names></name>
+<name><surname>Kaczmarek</surname><given-names>M. E.</given-names></name>
+<name><surname>Marx</surname><given-names>C. J.</given-names></name>
+</person-group> <article-title>Curve Fitter: Open-Source Software for Minimizing Sources of Bias and Variance in Microbial Growth Curves.</article-title> <source>PLoS One</source> <year>2012.</year> In preparation.</citation>
+</ref>
+<ref id="bibr11-2211068212460237">
+<label>11.</label>
+<citation citation-type="book">
+<collab>Standard ECMA-335: Common Language Infrastructure (CLI)</collab>. <source>ECMA (European Association for Standardizing Information and Communication Systems)</source>, <publisher-loc>Geneva, Switzerland</publisher-loc>, <year>2002</year>.</citation>
+</ref>
+<ref id="bibr12-2211068212460237">
+<label>12.</label>
+<citation citation-type="web">
+Clarity’s web page. <ext-link ext-link-type="uri" xlink:href="http://code.google.com/p/osla/">http://code.google.com/p/osla/</ext-link>. <access-date>Accessed June 2012</access-date>.</citation>
+</ref>
+<ref id="bibr13-2211068212460237">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sparkes</surname><given-names>A</given-names></name>
+<name><surname>Clare</surname><given-names>A</given-names></name>
+</person-group>. <article-title>AutoLabDB: A Substantial Open Source Database Schema to Support a High-Throughput Automated Laboratory</article-title>. <source>Bioinformatics</source> <year>2012</year>, <volume>28</volume>, <fpage>1390</fpage>–<lpage>1397</lpage>.</citation>
+</ref>
+<ref id="bibr14-2211068212460237">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bär</surname><given-names>H.</given-names></name>
+<name><surname>Hochstrasser</surname><given-names>R.</given-names></name>
+<name><surname>Papenfulß</surname><given-names>B.</given-names></name>
+</person-group> <article-title>SiLA: Basic Standards for Rapid Integration in Laboratory Automation</article-title>. <source>J. Lab. Autom</source>. <year>2012</year>, <volume>17</volume>(<issue>2</issue>), <fpage>86</fpage>–<lpage>95</lpage>.</citation>
+</ref>
+<ref id="bibr15-2211068212460237">
+<label>15.</label>
+<citation citation-type="web">
+<article-title>Overlord3, Real-Time Static Dynamic Scheduling Laboratory Automation Software</article-title>. <ext-link ext-link-type="uri" xlink:href="http://www.paa.co.uk/labauto/products/software/p-overlord3.asp">http://www.paa.co.uk/labauto/products/software/p-overlord3.asp</ext-link>. <access-date>Accessed June 2012</access-date>.</citation>
+</ref>
+<ref id="bibr16-2211068212460237">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Gentsch</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Flexible Laboratory Automation to Meet the Challenge of the ’90s</article-title>. <source>Chemometrics and Intelligent Laboratory Systems</source> <year>1993</year>, <volume>21</volume>, <fpage>229</fpage>–<lpage>233</lpage>.</citation>
+</ref>
+<ref id="bibr17-2211068212460237">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Benn</surname><given-names>N. D.</given-names></name>
+<name><surname>Liscouski</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Discussion of Open-Source Methodologies in Laboratory Automation</article-title>. <source>J. Lab. Autom</source>. <year>2009</year>, <volume>14</volume>, <fpage>82</fpage>–<lpage>89</lpage>.</citation>
+</ref></ref-list>
+</back>
+</article>

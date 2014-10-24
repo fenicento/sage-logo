@@ -1,0 +1,1611 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">SIM</journal-id>
+<journal-id journal-id-type="hwp">spsim</journal-id>
+<journal-title>SIMULATION</journal-title>
+<issn pub-type="ppub">0037-5497</issn>
+<issn pub-type="epub">1741-3133</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0037549713487403</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0037549713487403</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Modeling and simulation of train movements under scheduling and control for a fixed-block railway network using cellular automata</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Zhou</surname><given-names>Yonghua</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Mi</surname><given-names>Chao</given-names></name>
+</contrib>
+<aff id="aff1-0037549713487403">School of Electronic and Information Engineering, Beijing Jiaotong University, China</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0037549713487403">Yonghua Zhou, School of Electronic and Information Engineering, Beijing Jiaotong University, Beijing 100044, China. Email: <email>yhzhou@bjtu.edu.cn</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>6</month>
+<year>2013</year>
+</pub-date>
+<volume>89</volume>
+<issue>6</issue>
+<fpage>771</fpage>
+<lpage>783</lpage>
+<permissions>
+<copyright-statement>© 2013 The Society for Modeling and Simulation International</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="society">Simulation Councils Inc.</copyright-holder>
+</permissions>
+<abstract>
+<p>The dynamics of train movements is not only determined by the control strength of the train, but also by the interdependence between trains and the scheduling command that specifies the allowable movement distance and speed. This paper attempts to propose a generalized simulation model of train movements using cellular automata so that the scheduling commands are incorporated into the model. Based on the concept of instantaneous movement authority, the proposed model generally decomposes the entire trip into a series of movements on each block section with speed limits at the start and endpoints of, as well as within, the section. It realizes the dynamic speed updates analogous to the feedback adjustments of realistic train movements, and describes both the dynamics of the train itself and the interactions between trains with adjustable parameters. The control strategies are reflected in the configurations of the acceleration and the deceleration. The autonomous, restrictive and synergistic aspects of train movements are completely represented. The model and the simulation algorithm are applied to simulate the train movements with and without the scheduling commands. The observed phenomena can be replicated, and the rationality of simulation results has been analyzed about the speed updates and the performances under the typical scheduling strategies. The proposed simulation model can facilitate the establishment of measures to maximize the transport efficiency of the railway network.</p>
+</abstract>
+<kwd-group>
+<kwd>cellular automata</kwd>
+<kwd>simulation</kwd>
+<kwd>train movement</kwd>
+<kwd>scheduling and control</kwd>
+<kwd>railway traffic network</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0037549713487403" sec-type="intro">
+<title>1. Introduction</title>
+<p>The rapid progress of railway construction has given rise to the increasing interest in the study about the dynamics of railway traffic. The modeling and simulation of the dynamics of train movements is a powerful support for the planning, adjustment and optimization of the operation of a railway network. The constitutions and adjustments of operation plans rely on the model of train movements to justify their implementation effectiveness. The model capturing the dynamics of railway traffic can be employed to predict the performance improvements of control measures and scheduling strategies for the analysis and decision.</p>
+<p>According to the interests of decision makers in the time granularity, the description of train movements can adopt the time-based and event-based methods.<sup><xref ref-type="bibr" rid="bibr1-0037549713487403">1</xref>,<xref ref-type="bibr" rid="bibr2-0037549713487403">2</xref></sup> In the time-based method, the time span is divided into the equally spaced intervals, and in each time interval, the train movement is calculated. However, in the event-based method, the calculation of the train movement profile is driven by the predefined events such as departure from and arrival at a certain place. The time-based method concerns more about the train movement in each time interval, while the event-based one only focuses on the responses to the related events.</p>
+<p>In terms of modeling tools, the train dynamics can be represented by mathematical models, such as state-space equations,<sup><xref ref-type="bibr" rid="bibr3-0037549713487403">3</xref></sup> and rule-based models, such as cellular automata (CAs).<sup><xref ref-type="bibr" rid="bibr4-0037549713487403">4</xref><xref ref-type="bibr" rid="bibr5-0037549713487403"/><xref ref-type="bibr" rid="bibr6-0037549713487403"/><xref ref-type="bibr" rid="bibr7-0037549713487403"/><xref ref-type="bibr" rid="bibr8-0037549713487403"/><xref ref-type="bibr" rid="bibr9-0037549713487403"/><xref ref-type="bibr" rid="bibr10-0037549713487403"/>–<xref ref-type="bibr" rid="bibr11-0037549713487403">11</xref></sup> The state-space equations, suitable for real-time control, accurately depict the dynamics using one-order differential equations with the fewest state variables. The CA model, introduced in the 1940s by von Neumann and Ulam, is one kind of generalized description approach of complex physical and biological movements.<sup><xref ref-type="bibr" rid="bibr12-0037549713487403">12</xref></sup> Utilizing the CAs, the dynamics of a class of complex systems is described with the state transitions in the discrete time and space (<italic>cells</italic>). The CA model is very appropriate for the description of autonomous, restrictive and synergistic movements, such as traffic flow. The one-dimensional NaSch model is one of the important microscopic traffic simulation models for road traffic.<sup><xref ref-type="bibr" rid="bibr13-0037549713487403">13</xref><xref ref-type="bibr" rid="bibr14-0037549713487403"/>–<xref ref-type="bibr" rid="bibr15-0037549713487403">15</xref></sup> The displacement of an object is denoted as the updated speed, which is determined by the acceleration and deceleration rules and by the transition constraints that the adjacent cells bring about at the current time step. Compared with other methods, the microscopic traffic simulation can precisely and realistically replicate the vehicle driving behaviors.<sup><xref ref-type="bibr" rid="bibr16-0037549713487403">16</xref></sup></p>
+<p>Based on the NaSch model, the basic CA models for railway traffic have been presented to reproduce the observed complex phenomena in the realistic moving- and fixed-block control systems.<sup><xref ref-type="bibr" rid="bibr4-0037549713487403">4</xref><xref ref-type="bibr" rid="bibr5-0037549713487403"/>–<xref ref-type="bibr" rid="bibr6-0037549713487403">6</xref></sup> Several improved models have been proposed to explore the railway traffic flow. Zhou et al.<sup><xref ref-type="bibr" rid="bibr7-0037549713487403">7</xref></sup> put forward a CA model for the moving-like block system, where the location unit is not infinitesimal, to investigate the effects of the main factors, such as the length of the location unit, the train time interval and the initial delay on the delay propagation. Tang and Li<sup><xref ref-type="bibr" rid="bibr8-0037549713487403">8</xref></sup> presented a CA model to capture the driver reactions to train movements, and the consistency of time headways calculated by the proposed model with their respective theoretical values has been revealed. Li et al.<sup><xref ref-type="bibr" rid="bibr9-0037549713487403">9</xref></sup> proposed the CA model considering the speed limits for the four-aspect fixed-block system to explore the effects of the proportion of freight trains, the dwell times at stations and the number of platforms on the operation of railway traffic. Xun et al.<sup><xref ref-type="bibr" rid="bibr10-0037549713487403">10</xref></sup> put up the train-following CA model based on the speed limit function to update the train speeds for the moving-block system, and investigated how the main factors, such as time interval and initial delay, affect the delay propagation. Zhou and Mi<sup><xref ref-type="bibr" rid="bibr11-0037549713487403">11</xref></sup> proposed a generalized CA model considering both scheduling and control to describe the autonomous, restrictive and synergistic movements in the moving-block railway system.</p>
+<p>The modeling and simulation of railway traffic have been utilized in the analysis, decision and improvement on the operation of railway systems. Kesling and Whittaker<sup><xref ref-type="bibr" rid="bibr17-0037549713487403">17</xref></sup> proposed the simulation model to analyze the structural reliability of rails under train schedules. Sharma et al.<sup><xref ref-type="bibr" rid="bibr18-0037549713487403">18</xref></sup> established the decision support system utilizing the techniques of artificial intelligence, simulation and operational research for the train operation planning. Dessouky and Leachman<sup><xref ref-type="bibr" rid="bibr19-0037549713487403">19</xref></sup> proposed the simulation modeling methodology to analyze the performances of a complex railway network, such as delay and capacity. Paolucci and Pesenti<sup><xref ref-type="bibr" rid="bibr20-0037549713487403">20</xref></sup> developed the object-oriented simulator to support the design of train timetables and on-line control policies for the underground railways. Lu et al.<sup><xref ref-type="bibr" rid="bibr21-0037549713487403">21</xref></sup> put up the graphical technique to represent train movements and the deadlock-free algorithm to dispatch trains satisfying the speed limits on railway lines and maintaining the adequate headways between trains. Song and Kim<sup><xref ref-type="bibr" rid="bibr22-0037549713487403">22</xref></sup> presented the real-time discrete event system specification for the design and safety analysis of the railway crossing control system. Mekni et al.<sup><xref ref-type="bibr" rid="bibr23-0037549713487403">23</xref></sup> presented the multi-agent geo-simulation techniques to represent the train behaviors in risk areas in large-scale virtual geographic environments so that the functioning, the operation efficiency and the safety of railway traffic can be improved. Berger et al.<sup><xref ref-type="bibr" rid="bibr24-0037549713487403">24</xref></sup> put forward the simulation approach to make intelligent decisions on wait policies for railway delay management. Nageshwaraniyer et al.<sup><xref ref-type="bibr" rid="bibr25-0037549713487403">25</xref></sup> proposed the two-level hierarchical simulation-based framework to optimize the revenues of coal mining and railway transportation.</p>
+<p>Scheduling is also one kind of basic behavior that manipulates the dynamics of train operation besides the direct control. Generally, trains run according to preset plans. However, some unanticipated events might impede the normal operation of trains, such as equipment failure, communication interrupt, unavoidable delay, bad weather, etc. As a result, conflicts of occupying block sections might happen, that is, two trains may claim the same block section at the same time at the nodes of the railway network. In order to resolve the conflicts and resume the operation, trains should run under the scheduling commands. Although the railway network is a decentralized autonomous control system, that is, each train itself can determine how far and fast it should run, in order to resolve the conflicts and improve the performances of total railway network, scheduling plays an indispensable role.</p>
+<p>This paper attempts to propose one kind of generalized simulation model of train movements for the fixed-block railway system considering both scheduling and control at an abstract level. The proposed model is utilized to simulate the train operation under several scheduling strategies, and rational results can be attained. Much literature dealing with train scheduling and timetabling simplifies the dynamics of the train and the interdependence between trains with the rough estimation of running time on track segments. The proposed model involves the description of the dynamics of acceleration, deceleration, speed holding and cooperation; thus, a more accurate prediction of train movements and evaluation of scheduling strategies can be achieved.</p>
+<p>The rest of this paper is organized as follows. Section 2 describes typical scheduling scenarios. Section 3 elucidates the scheduling simulation algorithm and the model of train movements considering scheduling and control. Section 4 illustrates the simulation results of the proposed model and algorithm at the aspects of capturing train dynamics and supporting the analysis and decision of operation planning. Finally, conclusions are drawn and the future work is pointed out in Section 5.</p>
+</sec>
+<sec id="section2-0037549713487403">
+<title>2. Scheduling in a railway network</title>
+<p>The railway line is segmented into many sections in the fixed-block control system, and the occupying state of each section is detected and indicated by the corresponding track circuit. Once one train occupies a section, the other train cannot enter into the same section until it is released by the train occupying it. Such a process is called <italic>section blocked</italic>. Each section in the railway line is also called block section. If there exists such an instant where two trains occupy the same section, a conflict or collision will happen. In this case, in order to avoid abrupt braking and guarantee operational safety, one train will run according to the scheduling command issued in advance, which intentionally specifies how long and fast the train can run in view of the operation status of railway network at the instant of issuing the command.</p>
+<p><xref ref-type="fig" rid="fig1-0037549713487403">Figure 1</xref> demonstrates the four representative scheduling conditions. <xref ref-type="fig" rid="fig1-0037549713487403">Figure 1(a)</xref> denotes that train <italic>i</italic> has a higher passing privilege at the convergent junction than train <italic>j</italic>, which is specified by the scheduling command. <xref ref-type="fig" rid="fig1-0037549713487403">Figure 1(b)</xref> represents that train <italic>j</italic> passes first through the crossover junction; however, train <italic>i</italic> operates according to the scheduling command. <xref ref-type="fig" rid="fig1-0037549713487403">Figure 1(c)</xref> describes that train <italic>i</italic> stops at a station according to the scheduling command to wait for train <italic>j</italic>’s passing through the station without a stop. <xref ref-type="fig" rid="fig1-0037549713487403">Figure 1(d)</xref> depicts that train <italic>j</italic> departs first, although train <italic>i</italic>’s departure time is scheduled to be earlier than that of train <italic>j</italic>. The train running according to the scheduling command is defined as the <italic>scheduled one</italic>. The train going to wait at the station is called the <italic>overtaken</italic><italic>one</italic>, and the train granted permission to pass first is called the <italic>overtaking one</italic>.</p>
+<fig id="fig1-0037549713487403" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Scheduling in a railway network. (a) Train <italic>i</italic> passes first and train <italic>j</italic> should stop before the convergent junction. (b) Train <italic>j</italic> passes first and train <italic>i</italic> should stop before the crossover junction. (c) Train <italic>i</italic> waits at the station and train <italic>j</italic> firstly passes through the station. (d) Train <italic>i</italic> waits at the station for train <italic>j</italic>’s first departure.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549713487403-fig1.tif"/>
+</fig>
+<p>Aside from resolving the conflict, the scheduling command can improve the transient performance of train movements. Set <xref ref-type="fig" rid="fig1-0037549713487403">Figure 1(a)</xref> as an example to explain this viewpoint under the three-aspect signaling system. Suppose that trains <italic>j</italic> and <italic>k</italic> belong to the same transport line. If there is no scheduling command for trains <italic>i</italic> and <italic>j</italic>, when trains <italic>k</italic> and <italic>i</italic> successively occupy the section at the junction (<italic>junction section</italic>), there will be an abrupt decrease of empty cells in front of <italic>i</italic> and <italic>j</italic>, respectively, which might lead to abrupt braking. <xref ref-type="fig" rid="fig2-0037549713487403">Figures 2(a)</xref> and <xref ref-type="fig" rid="fig2-0037549713487403">(b)</xref> display the train movements under the scheduling commands for trains <italic>i</italic> and <italic>j</italic>, respectively. In <xref ref-type="fig" rid="fig2-0037549713487403">Figure 2(a)</xref>, when train <italic>k</italic> enters into the junction section, train <italic>i</italic> will enter into the section adjacent to the junction one. However, the signal in front of train <italic>i</italic> will suddenly change from green to red; therefore, abrupt speed fall is unavoidable. If train <italic>i</italic> receives the scheduling command when it prepares to enter the second section adjacent to the junction one, it may not be necessary for its emergent braking. When train <italic>k</italic> leaves the junction section, the scheduling command should be cancelled, or the operation efficiency will be affected, since in that instant, train <italic>i</italic> will adjust its speed according to the front empty cells with respect to train <italic>k</italic>. Similarly, as shown in <xref ref-type="fig" rid="fig2-0037549713487403">Figure 2(b)</xref>, when train <italic>i</italic> enters into the junction section, train <italic>j</italic> has run according to the scheduling command starting from the position two block sections away from the junction section to abstain from the abrupt speed descent. Immediately after train <italic>i</italic> leaves the junction section, the scheduling command can be cancelled, and train <italic>j</italic> will set the front empty cells with respect to train <italic>i</italic> as the reference of speed update.</p>
+<fig id="fig2-0037549713487403" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Train movements under the scheduling commands. (a) When train <italic>k</italic> passes the junction section, train <italic>i</italic> has run according to the scheduling command. (b) When train <italic>i</italic> passes the junction section, train <italic>j</italic> has run according to the scheduling command.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549713487403-fig2.tif"/>
+</fig>
+<p>In the fixed-block control system, the signal for a block section is configured by signaling equipment, such as signal lamps or track circuits, to denote the speed at which a train can be permitted to pass through the start point of, and within, that section. If the start point of a section is configured with the green signal, however, the endpoint of that section is not configured with the same one, so we define the section as the <italic>marginally green one</italic>. Based on this definition, the discussion with respect to <xref ref-type="fig" rid="fig2-0037549713487403">Figures 2(a)</xref> and <xref ref-type="fig" rid="fig2-0037549713487403">(b)</xref> is extended to the following conclusion, which is applicable to the generalized fixed-block control system.</p>
+<p>
+<disp-quote>
+<p><bold><italic>Proposition 1</italic>:</bold> In the fixed-block control system, when one train runs through the junction section, it will become the front adjacent train to the one belonging to the other line, and might make this subsequent train abruptly brake. If this train runs according to the scheduling command starting from the position just outside the marginally green section at an appropriate time, the movement dynamics of the train can be improved with a remarkable margin. After the train at the junction section has left it, the scheduling command should be cancelled.</p>
+</disp-quote>
+</p>
+</sec>
+<sec id="section3-0037549713487403">
+<title>3. Model considering scheduling and control</title>
+<sec id="section4-0037549713487403">
+<title>3.1. Scheduling simulation process</title>
+<p>The scheduling simulation process is composed of four procedures, that is, to predict the operation states using the model of train movements; to identify the sections with occupying conflicts and abrupt braking; to re-simulate the railway operation under the feasible scheduling strategies and select the best one to produce scheduling commands; and to issue the scheduling commands and cancel them at the corresponding time. Based on Proposition 1, the simulation process of train movements considering scheduling commands is described as follows using the pseudo codes:</p>
+<p>FOR each running train</p>
+<p> BEGIN</p>
+<p>  <?ri?>IF there are two trains going to enter the same junction section</p>
+<p>   BEGIN</p>
+<p>    <?ri?>Apply certain scheduling strategy to decide the running privileges of trains going to enter the conflict junction.</p>
+<p>    <?ri?>Make the simulation time recede to the instant when the scheduled train positioned just outside the marginally green section at current time.</p>
+<p>    <?ri?>Re-simulate and update the movement records of the scheduled train under that scheduling strategy until the current instant.</p>
+<p>   END</p>
+<p>  <?ri?>IF there is any train having entered the junction section AND IF there is any train with abrupt braking caused by the train at junction</p>
+<p>   BEGIN</p>
+<p>    <?ri?>Make the simulation time recede to the instant when the scheduled train positioned just outside the marginally green section at current time.</p>
+<p>    <?ri?>Re-simulate and update the movement records of the scheduled train under that scheduling strategy until the current instant.</p>
+<p>   END</p>
+<p>  <?ri?>IF there is any inbound train selected to wait at the station for other train’s first passing</p>
+<p>   <?ri?>Issue the scheduling command to the scheduled train to specify its arrival endpoint when it positions just outside the marginally green section if it is at the section or before it departs if it is at the station.</p>
+<p>  <?ri 2,10,32pt?>Update the movement records using the model discussed in Section 3.2 if a train has the privilege to move.</p>
+<p>  IF there is any train has passed the junction section</p>
+<p>   <?ri?>Cancel the scheduling command for its related scheduled train</p>
+<p>  <?ri?>IF there is any overtaking train has passed the station</p>
+<p>   <?ri?>Cancel the scheduling command for its related overtaken train</p>
+<p> END</p>
+<p>The scheduling simulation process deals with testing the performance of alternative scheduling strategies, which are the potential solutions to resolve the conflicts and assign the specific running privileges. There exist various heuristic and intelligent algorithms to find out the optimal scheduling strategies.<sup><xref ref-type="bibr" rid="bibr26-0037549713487403">26</xref><xref ref-type="bibr" rid="bibr27-0037549713487403"/><xref ref-type="bibr" rid="bibr28-0037549713487403"/>–<xref ref-type="bibr" rid="bibr29-0037549713487403">29</xref></sup> Two basic scheduling strategies are as follows: <sup><xref ref-type="bibr" rid="bibr27-0037549713487403">27</xref></sup></p>
+<list id="list1-0037549713487403" list-type="order">
+<list-item>
+<p>first come, first served (FCFS): to give the precedence to the train arriving first at the junction section, which commonly exists in railway practice;</p>
+</list-item>
+<list-item>
+<p>first leave, first served (FLFS): to grant the privilege to the train entering and traversing the junction section first, which is the compromise between the two common dispatching rules, that is, (i) granting priority to the fast trains, and (ii) granting priority to the train arriving first.</p>
+</list-item>
+</list>
+</sec>
+<sec id="section5-0037549713487403">
+<title>3.2. Simulation model of train movements</title>
+<p>The train’s speed is constrained by the traction and braking characteristics of the train itself, and the external factors such as the conditions of track lines, including the adhesion coefficient, the track curvature and gradient, the distance between the train and its front adjacent one, the temporary speed restriction, and the arrival endpoint specified by the scheduling command. In order to establish the unified model of train movements for the fixed-block system, we define three kinds of target points as follows.</p>
+<list id="list2-0037549713487403" list-type="order">
+<list-item>
+<p>
+<italic>p<sub>a</sub></italic>: the start point of the block section that the front adjacent train is occupying, which can be detected utilizing signaling equipment. The speed limit <italic>v<sub>a</sub></italic> at that point is generally set to be 0.</p>
+</list-item>
+<list-item>
+<p>
+<italic>p<sub>b</sub></italic>: the endpoint of the block section the train is occupying where there is the speed limit <italic>v<sub>b</sub></italic> determined by the signal color denoted by the signal lamp or the code of the track circuit.</p>
+</list-item>
+<list-item>
+<p>
+<italic>p<sub>c</sub></italic>: the endpoint specified by the scheduling command where the speed limit <italic>v<sub>c</sub></italic> is generally specified to be 0.</p>
+</list-item>
+</list>
+<p>Suppose that the distances from the current train to the above three kinds of target points are <italic>d<sub>a</sub>, d<sub>b</sub></italic> and <italic>d<sub>c</sub></italic>, respectively. If there exists <italic>p<sub>c</sub></italic>, the allowable distance that the train can move (<italic>movement authority</italic>) is determined by</p>
+<p>
+<disp-formula id="disp-formula1-0037549713487403">
+<label>(1)</label>
+<mml:math display="block" id="math1-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>min</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0037549713487403" xlink:href="10.1177_0037549713487403-eq1.tif"/>
+</disp-formula>
+</p>
+<p>However, the scheduling command has its life cycle. Let <italic>LC</italic>(<italic>sc</italic>) = 1 denote the scheduling command is still active and <italic>LC</italic>(<italic>sc</italic>) = 0 otherwise. In order to avert the effect of the value of <italic>d<sub>c</sub></italic> when the scheduling command is inactive, <xref ref-type="disp-formula" rid="disp-formula1-0037549713487403">equation (1)</xref> should be revised as:</p>
+<p>
+<disp-formula id="disp-formula2-0037549713487403">
+<label>(1′)</label>
+<mml:math display="block" id="math2-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>min</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mi>LC</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>sc</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>LC</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>sc</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0037549713487403" xlink:href="10.1177_0037549713487403-eq2.tif"/>
+</disp-formula>
+</p>
+<p>In view of the current instant, the distance of the train from its current position to the nearest target point <italic>p<sub>t</sub></italic> (<italic>instantaneous movement authority</italic>) is defined as</p>
+<p>
+<disp-formula id="disp-formula3-0037549713487403">
+<label>(2)</label>
+<mml:math display="block" id="math3-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>min</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0037549713487403" xlink:href="10.1177_0037549713487403-eq3.tif"/>
+</disp-formula>
+</p>
+<p>Considering the life cycle of the scheduling command, <xref ref-type="disp-formula" rid="disp-formula3-0037549713487403">Equation (2)</xref> should be revised as</p>
+<p>
+<disp-formula id="disp-formula4-0037549713487403">
+<label>(2′)</label>
+<mml:math display="block" id="math4-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>min</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mi>LC</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>sc</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mo>min</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>LC</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>sc</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0037549713487403" xlink:href="10.1177_0037549713487403-eq4.tif"/>
+</disp-formula>
+</p>
+<p>Given the speed <italic>v<sub>t</sub></italic> at the target point <italic>p<sub>t</sub></italic>, the distance <italic>d<sub>t</sub></italic> to <italic>p<sub>t</sub></italic>, and the allowable deceleration rate <italic>b</italic>, in order to avoid exceeding the speed limit at <italic>p<sub>t</sub></italic>, the current speed <italic>v<sub>n</sub></italic> of the train should be controlled below the following:</p>
+<p>
+<disp-formula id="disp-formula5-0037549713487403">
+<label>(3)</label>
+<mml:math display="block" id="math5-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>b</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msqrt>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0037549713487403" xlink:href="10.1177_0037549713487403-eq5.tif"/>
+</disp-formula>
+</p>
+<p>We call the curve engendered by <xref ref-type="disp-formula" rid="disp-formula5-0037549713487403">Equation (3)</xref> the basic speed limit one. From <xref ref-type="disp-formula" rid="disp-formula5-0037549713487403">Equation (3)</xref>, we can directly obtain the following proposition:<disp-quote>
+<p><bold><italic>Proposition 2</italic>:</bold> If at certain instant, the train’s current speed <italic>v<sub>n</sub></italic> and its distance <italic>d<sub>t</sub></italic> to the target point <italic>p<sub>t</sub></italic> satisfy <xref ref-type="disp-formula" rid="disp-formula5-0037549713487403">Equation (3)</xref>, the train can arrive at <italic>p<sub>t</sub></italic> with the target speed <italic>v<sub>t</sub></italic> at the deceleration of <italic>b</italic> when there is no other speed restriction.</p>
+</disp-quote>
+</p>
+<p>From Proposition 2, we can derive that when <italic>ν<sub>n</sub></italic> is located below the basic speed limit curve, the train can accelerate, keep the current speed and decelerate. What state the train will locate at is determined by <italic>d<sub>t</sub></italic>. The NaSch CA model denotes the displacement of a cell as the velocity at the next simulation step. Taking this into account, we put forward Proposition 3 as follows.</p>
+<p>
+<disp-quote>
+<p><bold><italic>Proposition 3</italic>:</bold> Suppose that the deceleration rate is <italic>b</italic>, the position to the nearest target point <italic>p<sub>t</sub></italic> is <italic>d<sub>t</sub></italic>, the corresponding target speed is <italic>v<sub>t</sub></italic>, and the current speed is <italic>v<sub>n</sub></italic>:</p>
+<p>(a) if <inline-formula id="inline-formula1-0037549713487403">
+<mml:math display="inline" id="math6-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, the train can accelerate;</p>
+<p>(b) if <inline-formula id="inline-formula2-0037549713487403">
+<mml:math display="inline" id="math7-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, the train can keep the current speed <italic>v<sub>n</sub></italic>; and</p>
+<p>(c) if <inline-formula id="inline-formula3-0037549713487403">
+<mml:math display="inline" id="math8-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&lt;</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, the train will decelerate to <italic>v<sub>t</sub></italic>.</p>
+</disp-quote>
+</p>
+<p>Recall that there exist various speed limits, such as the maximal speed of the train <italic>v</italic><sub>max</sub>, and those incurred by the line conditions and specified by the scheduling commands. We denote them as <italic>v</italic><sub>lim</sub> (<italic>x</italic>) in a unified way, where <italic>x</italic> is the position that the train locates at on the track line. In practice, if the train’s velocity is over the speed limit, the train will absolutely decelerate, which is called a process of <italic>automatic train protection</italic> (ATP). If the train’s velocity does not exceed the speed limit, the train might accelerate, remain (hold) the current speed or decelerate, as Proposition 3 describes. Define that <italic>x<sub>n</sub></italic> and <italic>x<sub>n</sub></italic><sub>+1</sub> are the positions of the train at the current and next instants, respectively; <italic>v<sub>n</sub></italic><sub>+1</sub> is the velocity at the next instant; and <italic>a</italic> is the acceleration rate. The CA model of train movements incorporating scheduling commands is described as follows:</p>
+<list id="list3-0037549713487403" list-type="simple">
+<list-item>
+<p>(1) Speed update</p>
+</list-item>
+<list-item>
+<p>IF <inline-formula id="inline-formula4-0037549713487403">
+<mml:math display="inline" id="math9-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>lim</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula5-0037549713487403">
+<mml:math display="inline" id="math10-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>max</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula></p>
+</list-item>
+<list-item>
+<p>ELSEIF <inline-formula id="inline-formula6-0037549713487403">
+<mml:math display="inline" id="math11-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>lim</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> AND <inline-formula id="inline-formula7-0037549713487403">
+<mml:math display="inline" id="math12-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≥</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula8-0037549713487403">
+<mml:math display="inline" id="math13-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula></p>
+</list-item>
+<list-item>
+<p>ELSE</p>
+</list-item>
+<list-item>
+<p> BEGIN</p>
+</list-item>
+<list-item>
+<p>  IF <inline-formula id="inline-formula9-0037549713487403">
+<mml:math display="inline" id="math14-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula10-0037549713487403">
+<mml:math display="inline" id="math15-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>min</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula></p>
+</list-item>
+<list-item>
+<p>  ELSEIF <inline-formula id="inline-formula11-0037549713487403">
+<mml:math display="inline" id="math16-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula12-0037549713487403">
+<mml:math display="inline" id="math17-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula></p>
+</list-item>
+<list-item>
+<p>  ELSE</p>
+</list-item>
+<list-item>
+<p>   BEGIN</p>
+</list-item>
+<list-item>
+<p>    IF <inline-formula id="inline-formula13-0037549713487403">
+<mml:math display="inline" id="math18-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≠</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula14-0037549713487403">
+<mml:math display="inline" id="math19-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula></p>
+</list-item>
+<list-item>
+<p>    ELSE <inline-formula id="inline-formula15-0037549713487403">
+<mml:math display="inline" id="math20-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>min</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>max</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula></p>
+</list-item>
+<list-item>
+<p>   END</p>
+</list-item>
+<list-item>
+<p> END</p>
+</list-item>
+<list-item>
+<p>(2) Position update</p>
+</list-item>
+</list>
+<p>
+<disp-formula id="disp-formula6-0037549713487403">
+<mml:math display="block" id="math21-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0037549713487403" xlink:href="10.1177_0037549713487403-eq6.tif"/>
+</disp-formula>
+</p>
+<p>
+<?h4?>In the above model, the detectable current speed <italic>v<sub>n</sub></italic> is applied to the estimation of the instantaneous braking reference distance, denoted as <inline-formula id="inline-formula16-0037549713487403">
+<mml:math display="inline" id="math22-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. The driver or the driving equipment of the train is always judging if <italic>v<sub>n</sub></italic> exceeds the speed limit <inline-formula id="inline-formula17-0037549713487403">
+<mml:math display="inline" id="math23-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>lim</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and enquiring if <italic>v<sub>n</sub></italic> can be decelerated to <italic>v<sub>t</sub></italic> at <italic>p<sub>t</sub></italic> with <italic>d<sub>t</sub></italic>. The basic idea of the model is firstly to judge the tendency of the speed update, and secondly to update the speed. It models one kind of feedback adjustment based on the target distance and speed, which can be observed in practice. It is worth pointing out that the acceleration <italic>a</italic> and the deceleration <italic>b</italic>, related to <italic>d<sub>t</sub>, d<sub>r</sub>, v<sub>n</sub></italic> and so on, are determined by the control strategies, such as time-optimal and energy-efficient controls.<sup><xref ref-type="bibr" rid="bibr30-0037549713487403">30</xref><xref ref-type="bibr" rid="bibr31-0037549713487403"/><xref ref-type="bibr" rid="bibr32-0037549713487403"/>–<xref ref-type="bibr" rid="bibr33-0037549713487403">33</xref></sup> The deceleration <italic>b</italic> is also determined by the braking mode, such as service or emergency braking, according to the degree of the difference between <italic>v<sub>n</sub></italic> and <inline-formula id="inline-formula18-0037549713487403">
+<mml:math display="inline" id="math24-0037549713487403">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>lim</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>; <italic>a</italic> and <italic>b</italic> are the adjustable parameters for various types of train.</p>
+</sec>
+</sec>
+<sec id="section6-0037549713487403" sec-type="results">
+<title>4. Simulation results</title>
+<p>The simulated railway network is shown in <xref ref-type="fig" rid="fig3-0037549713487403">Figure 3</xref>. The network has five stations, that is, <italic>A, B, C, D</italic> and <italic>E</italic>. Two transport lines, lines 1 and 2, are designed in this simulation. Lines 1 and 2 are from station <italic>A</italic> to <italic>E</italic> and <italic>B</italic> to <italic>D</italic>, respectively, passing junction sections <italic>F</italic> and <italic>G</italic> and with a stop at station <italic>C</italic>. Only one platform is employed at the first and last stations for lines 1 and 2, and two platforms are provided for the common use of two lines. The network structure is typical with the convergent and branched junctions and the selectable platforms at the station. Track segments <italic>AF, BF, FC, CG, GD</italic> and <italic>GE</italic> are composed of 50, 30, 30, 30, 30 and 50 block sections, respectively. The length of each block section is <italic>BL</italic> = 1000 cells with each cell 1 m. The maximal speeds of trains along lines 1 and 2 are <inline-formula id="inline-formula19-0037549713487403">
+<mml:math display="inline" id="math25-0037549713487403">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>=</mml:mo>
+<mml:mn>45</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula20-0037549713487403">
+<mml:math display="inline" id="math26-0037549713487403">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>=</mml:mo>
+<mml:mn>35</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> cells/s, that is, 162 and 126 km/h, respectively. A four-aspect fixed-block control system is installed in the railway network. The speed limits for green, green–yellow, yellow and red signals are <italic>v<sub>g</sub></italic> = 45, <italic>v<sub>gy</sub></italic> = 36, <italic>v<sub>y</sub></italic> = 27 and <italic>v<sub>r</sub></italic> = 0 cell/s, respectively. The acceleration and deceleration rates are <italic>a</italic> = 1 and <italic>b</italic> = 1 cell/s<sup><xref ref-type="bibr" rid="bibr2-0037549713487403">2</xref></sup> (in absolute value), respectively. The dwell time at each station for lines 1 and 2 is <italic>T<sub>d</sub></italic> = 120 s. The speed limit at junction sections <italic>F</italic> and <italic>G</italic> is set to be 22 cells/s. The simulation step is set as 1 s, and the maximal simulation time is 7200 s.</p>
+<fig id="fig3-0037549713487403" position="float">
+<label>Figure 3.</label>
+<caption><p>Railway network.</p></caption><graphic xlink:href="10.1177_0037549713487403-fig3.tif"/></fig>
+<sec id="section7-0037549713487403">
+<title>4.1. Train movements without scheduling</title>
+<p>
+<xref ref-type="fig" rid="fig4-0037549713487403">Figures 4</xref> and <xref ref-type="fig" rid="fig5-0037549713487403">5</xref> demonstrate the simulation results of testing the rules of speed updates of train movements without scheduling. Both lines 1 and 2 begin to dispatch the train at instant 0, and the interval of departure time (IDT) <italic>T<sub>i</sub></italic> is 360 s. Twenty trains are dispatched for lines 1 and 2, respectively.</p>
+<fig id="fig4-0037549713487403" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Diagram of space, time and speed relationship. (a) and (c) are for line 1. (b) and (d) are for line 2.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549713487403-fig4.tif"/>
+</fig>
+<fig id="fig5-0037549713487403" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>The mechanism of speed update for train 1000. (a) and (b) depict the various space constraints during the total trip. (c) shows the speed profile from 1142 to 3092 s. (d) and (f) represent the space constraints and speed from 1870 to 2160 s. (e) and (g) are the profiles of space constraints and speed from 2450 to 2560 s.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549713487403-fig5.tif"/>
+</fig>
+<p>
+<xref ref-type="fig" rid="fig4-0037549713487403">Figure 4</xref> represents the diagram of space, time and speed relationship of lines 1 and 2. Because there exist the common track sections of <italic>FC</italic> and <italic>CG</italic> for lines 1 and 2, the position of the train on its own line is projected onto that on the other line when its movements are described on the other line. In <xref ref-type="fig" rid="fig4-0037549713487403">Figure 4(a)</xref>, the space–time lines starting from 50,000 cells demonstrate the movements of trains on line 2 from the angle of line 1. Similarly, in <xref ref-type="fig" rid="fig4-0037549713487403">Figure 4(b)</xref>, the space–time lines starting from 30,000 cells depict the movements of trains on line 1 from the angle of line 2. <xref ref-type="fig" rid="fig4-0037549713487403">Figures 4(c)</xref> and <xref ref-type="fig" rid="fig4-0037549713487403">(d)</xref> also show the dynamics of train movements on the other line for lines 1 and 2, respectively. They sketch the four-time main accelerating and decelerating processes, respectively, that is, accelerating two times towards the maximal speed from the stations and two times from the turnouts, decelerating two times to the speed limit at the turnouts, and decelerating two times to 0 at the stations. Before coming to the intermediate station <italic>C</italic>, because of more front empty cells, the fast trains on line 1 are not obviously influenced by the slow ones on line 2. However, station <italic>C</italic> restricts the train movements because of their dwell time. After leaving the station, the trains on line 1 have to be subject to the constraints of fewer spaces brought about by the front adjacent trains belonging to line 2 until they have passed the second junction section <italic>G</italic>. Thus, the speed fluctuations of trains on line 1 can be distinctly observed in <xref ref-type="fig" rid="fig4-0037549713487403">Figures 4(c)</xref> or <xref ref-type="fig" rid="fig4-0037549713487403">(d)</xref> before they arrive at junction section <italic>G</italic>.</p>
+<p>
+<xref ref-type="fig" rid="fig5-0037549713487403">Figure 5</xref> reveals in detail the reason why trains should accelerate and decelerate, setting the first train on line 1, numbered as 1000, as an example, whose front is the first train of line 2, numbered as 2000, on the track segments of <italic>FC</italic> and <italic>CG</italic>, as shown in <xref ref-type="fig" rid="fig4-0037549713487403">Figures 4(a)</xref> or <xref ref-type="fig" rid="fig4-0037549713487403">(b)</xref>. If there is no scheduling command, <italic>d<sub>a</sub></italic> = <italic>d<sub>m</sub>, d<sub>b</sub></italic> = <italic>d<sub>t</sub></italic>, and <italic>d<sub>c</sub></italic> is meaningless. In <xref ref-type="fig" rid="fig5-0037549713487403">Figure 5(a)</xref>, if there is no train in front of the current train, <italic>d<sub>a</sub></italic> is set as the distance from that train to the front adjacent station. There is an abrupt change of <italic>d<sub>a</sub></italic> when train 2000 enters junction section <italic>F</italic> or leaves section <italic>G</italic>. <xref ref-type="fig" rid="fig5-0037549713487403">Figure 5(b)</xref> shows the periodic variations of <italic>d<sub>b</sub></italic> and <italic>d<sub>t</sub></italic>. <xref ref-type="fig" rid="fig5-0037549713487403">Figure 5(c)</xref> minutely portrays the processes of speed variations, except the monotonous acceleration when the train initiates from the departure station and the deceleration when it arrives at the terminus. We define the process successively having acceleration, holding, deceleration and holding as one period of speed variations. <xref ref-type="fig" rid="fig5-0037549713487403">Figure 5(c)</xref> points out that there exist 31 periods of speed variation during the total trip of train 1000. In <xref ref-type="fig" rid="fig5-0037549713487403">Figures 5(d)</xref> and <xref ref-type="fig" rid="fig5-0037549713487403">(e)</xref>, <inline-formula id="inline-formula21-0037549713487403">
+<mml:math display="inline" id="math27-0037549713487403">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gy</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula22-0037549713487403">
+<mml:math display="inline" id="math28-0037549713487403">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula23-0037549713487403">
+<mml:math display="inline" id="math29-0037549713487403">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math></inline-formula> stand for the positions starting to brake so as to ensure the speeds of the train to descend from <italic>v<sub>g</sub></italic> to <italic>v<sub>gy</sub>, v<sub>gy</sub></italic> to <italic>v<sub>y</sub></italic> and <italic>v<sub>y</sub></italic> to <italic>v<sub>r</sub></italic> at the end of the corresponding block section, respectively. When the train moves to point <italic>H</italic>, it begins to decelerate to <italic>v<sub>gy</sub></italic>. At point <italic>I</italic>, the front adjacent train has released its occupied block section, which leads to the step change of one block-section length of <italic>d<sub>a</sub></italic> and <italic>d<sub>m</sub></italic>. In this case, the train acquires the opportunities to accelerate to <italic>v<sub>g</sub></italic> and to hold this speed until it runs to point <italic>J</italic>. After point <italic>J</italic>, the train’s velocity falls down to <italic>v<sub>gy</sub></italic> and is held until it moves to point <italic>K</italic>. From points <italic>K</italic> and <italic>L</italic>, the train begins to decelerate to <italic>v<sub>y</sub></italic> and <italic>v<sub>r</sub></italic>, respectively. In <xref ref-type="fig" rid="fig5-0037549713487403">Figures 5(e)</xref> and <xref ref-type="fig" rid="fig5-0037549713487403">(g)</xref>, when the train arrives at points <italic>N, O, P</italic> and <italic>Q</italic>, it begins to decelerate. When it encounters the abrupt changes of <italic>d<sub>a</sub></italic> and <italic>d<sub>m</sub></italic>, it starts to accelerate. After accelerating to a certain speed, it begins to decelerate and then enters into the speed-holding phase. A similar analysis can be undertaken to justify the remained periods of speed variations.</p>
+</sec>
+<sec id="section8-0037549713487403">
+<title>4.2. Scheduling and performance improvement</title>
+<p>In order to demonstrate the abrupt decline of the speed, we make line 1 dispatch the train at instant 0 and line 2 dispatch the train at instant 261 s. <italic>T<sub>i</sub></italic> is still set to be 360 s. The simulation results are shown in <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6</xref>. If there is no scheduling, train 2000 arrives at junction section <italic>F</italic> at the moment of 1259 s (see point <italic>V</italic> in <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(a)</xref>), while at that time, train 1000 is approaching that block section (see <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(b)</xref>) at the speed of 22 cells/s (see <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(i)</xref>). Because there is an abrupt decline of <italic>d<sub>a</sub></italic> (see <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(c)</xref>) and <italic>d<sub>m</sub></italic> (see <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(g)</xref>), train 1000 will stop before the junction section at the deceleration rate of 22 cells/s<sup>2</sup> (see <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(i)</xref>), which is on one hand an unrealistic deceleration, and on the other hand far beyond the one at which the passengers feel comfortable, not to mention this case without scheduling is very dangerous. Most drivers and passengers will feel significantly uncomfortable when the vehicle deceleration is greater than 3–4 m/s<sup>2</sup> (in absolute value).<sup><xref ref-type="bibr" rid="bibr34-0037549713487403">34</xref></sup> At instant 1186 s, train 1000 arrives just before the marginally green block section (see point <italic>X</italic> in <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(b)</xref>); it is an appropriate time to issue the scheduling command with enough time margin for the speed adjustment even if at the maximum speed. When the scheduling command specifying the endpoint just before junction section <italic>F</italic> is issued, <italic>d<sub>c</sub></italic> will take effect (see <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(f)</xref>). The train arrives at the scheduling endpoint at the moment of 1276 s (see point <italic>Y</italic> in <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(b)</xref>). Train 2000 leaves the junction section at instant 1304 s (see point <italic>W</italic> in <xref ref-type="fig" rid="fig6-0037549713487403">Figure 6(a)</xref>), which is the moment to cancel the scheduling command. From <xref ref-type="fig" rid="fig6-0037549713487403">Figures 6(i)</xref> and <xref ref-type="fig" rid="fig6-0037549713487403">(j)</xref>, we can draw a conclusion that the speed performance has improved under the control of the scheduling command.</p>
+<fig id="fig6-0037549713487403" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Scheduling and performance improvement for train 1000. (a) is the space–time diagram for train 2000. (b), (c) and (e)–(j) demonstrate the plots of space constraints and speed variations. (d) represents the difference between <italic>d<sub>a</sub></italic> values with and without scheduling for (c).</p>
+</caption>
+<graphic xlink:href="10.1177_0037549713487403-fig6.tif"/>
+</fig>
+</sec>
+<sec id="section9-0037549713487403">
+<title>4.3. Conflict resolution and station scheduling</title>
+<p>In order to observe the phenomena that the conflicts happen, we make line 1 dispatch the train at instant 0 and line 2 dispatch the train at instant 262 s. We design three simulation cases to cover the scheduling behaviors described in <xref ref-type="fig" rid="fig2-0037549713487403">Figure 2</xref>. Two basic scheduling strategies are utilized in those cases, that is, FCFS and FLFS.</p>
+<list id="list4-0037549713487403" list-type="simple">
+<list-item>
+<p>
+<italic>Case 1</italic>: FCFS is applied to junction section <italic>F</italic>.</p>
+</list-item>
+<list-item>
+<p>
+<italic>Case 2</italic>: FLFS is applied to junction section <italic>F</italic>.</p>
+</list-item>
+<list-item>
+<p>
+<italic>Case 3</italic>: FCFS is applied to junction section <italic>F</italic>, and the slow trains on line 2 yield one time to hinder adjacent fast trains on line 1 at station <italic>C</italic>.</p>
+</list-item>
+</list>
+<p>
+<?h4?>Empirically, FLFS can bring less delay than FCFS. However, station scheduling is not always of high performance, which is the compromise between the time increase because of waiting and the delay propagation incurred, and the time decrease because of the acceleration after scheduling. The actual running time of trains is compared with the time when only one train runs to the same position without the effects of other trains. In this way, the operation time performance of the railway network under various scheduling strategies is measured by the ideal case. We can allege that if all trains run towards and at the maximal speed in the railway network, the mutual effects between trains have been lessened to the minimum degree; thus, the scheduling strategies tend to be time-optimal, which represents an ideal state to improve the transport efficiency.</p>
+<p>The simulation for three cases is undertaken at various IDTs, as shown in <xref ref-type="fig" rid="fig7-0037549713487403">Figure 7</xref>. From <xref ref-type="fig" rid="fig7-0037549713487403">Figure 7</xref>, we can learn that there exists a slight difference between the performances of cases 1 and 2 at the IDTs of 120 and 150 s. At those IDTs, the railway network has a high density because <italic>T<sub>d</sub></italic> = 120 s. As shown in <xref ref-type="fig" rid="fig8-0037549713487403">Figures 8(a)</xref>–<xref ref-type="fig" rid="fig8-0037549713487403">(d)</xref>, the mutual effects and restraints between trains are intense; thus, the performance has only improved a little through FLFS. On the contrary, the performance has been deteriorated in case 3 at those IDTs. This is because the scheduling at the station has caused much waiting time and its backward propagation, which cannot be made up by the time decrease after scheduling in the high-density network. The delayed trains on line 2 further influence the trains on line 1. The obvious speed descending and even stopping can be observed in <xref ref-type="fig" rid="fig8-0037549713487403">Figures 8(e)</xref> and <xref ref-type="fig" rid="fig8-0037549713487403">(f)</xref>. Consequently, the average delay has increased greatly for lines 1 and 2 alone, as well as for both of them.</p>
+<fig id="fig7-0037549713487403" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Average delay for lines 1 and 2 in three cases. (a) is for line 1. (b) is for line 2. (c) is for both lines 1 and 2.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549713487403-fig7.tif"/>
+</fig>
+<fig id="fig8-0037549713487403" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Diagram of space, time and speed relationship at the interval of departure time of 120 s. (a) and (b) are for lines 1 and 2 in case 1, respectively. (c) and (d) are for lines 1 and 2 in case 2, respectively. (e) and (f) are for lines 1 and 2 in case 3, respectively.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549713487403-fig8.tif"/>
+</fig>
+<p>At other IDTs, the movements of the trains on line 1 are affected by those on line 2, which run ahead in case 1, as shown in <xref ref-type="fig" rid="fig9-0037549713487403">Figures 9(a)</xref> and <xref ref-type="fig" rid="fig9-0037549713487403">(b)</xref>, and thus the speed fluctuations of the trains on line 1 are intense. In <xref ref-type="fig" rid="fig9-0037549713487403">Figure 9(d)</xref>, there exists a few speed fluctuations when the trains run before station <italic>C</italic>, which implies a fast running speed and few mutual interactions in case 2. However, the speed fluctuations are a little strong for the trains on line 1 after they have passed station <italic>C</italic>, which is because their fast advances have gradually shortened the allowable movement distances ahead (see <xref ref-type="fig" rid="fig9-0037549713487403">Figure 9(c)</xref>). As a result, at the IDTs except 120 and 150 s, the average delay in case 2 is less than that in case 1 for line 1 (see <xref ref-type="fig" rid="fig7-0037549713487403">Figure 7(a)</xref>), while the average delay in case 2 is a little more than that in case 1 for line 2 (see <xref ref-type="fig" rid="fig7-0037549713487403">Figure 7(b)</xref>). In case 3, the velocities of the trains on line 1 are restrained by the trains on line 2 when they run before station <italic>C</italic> (see <xref ref-type="fig" rid="fig9-0037549713487403">Figures 9(e)</xref> and <xref ref-type="fig" rid="fig9-0037549713487403">(f)</xref>). However, after the station scheduling, the trains on line 1 lead those on line 2 to run with the faster speeds. Hence, at the IDTs except 120 and 150 s, the average delay in case 3 is less than that in case 1 but greater than that in case 2 for line 1 (see <xref ref-type="fig" rid="fig7-0037549713487403">Figure 7(a)</xref>), while the average delay in case 3 is a little greater than that in case 1 and greater than that in case 2 for line 2 (see <xref ref-type="fig" rid="fig7-0037549713487403">Figure 7(b)</xref>). In the end, the average delay of all trains in case 3 gradually locates between those in case 1 and case 2 with the increase of IDT (see <xref ref-type="fig" rid="fig7-0037549713487403">Figure 7(c)</xref>).</p>
+<fig id="fig9-0037549713487403" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>Diagram of space, time and speed relationship at the interval of departure time of 360 s. (a) and (b) are for lines 1 and 2 in case 1, respectively. (c) and (d) are for lines 1 and 2 in case 2, respectively. (e) and (f) are for lines 1 and 2 in case 3, respectively.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549713487403-fig9.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section10-0037549713487403" sec-type="conclusions">
+<title>5. Conclusions</title>
+<p>In this paper, we have proposed a generalized model for a fixed-block railway network considering both scheduling and control. The proposed model has explicitly discriminated three kinds of target points, that is, the endpoint of arrival that the signaling equipment can detect, the endpoint of the block section currently occupied, and the endpoint of arrival that the scheduling command specifies. These three kinds of target points do maneuver the movements of trains in reality. The current speed <italic>v<sub>n</sub></italic>, as an annexed component, is explicitly incorporated into the computing of <italic>d<sub>r</sub></italic> to improve the feasibility of the speed update. In addition, our model sets a series of continuous block sections with speed restrictions at the endpoints of and within the sections (sometimes they are different) as a basis to produce the basic speed limit curve, which benefits the disposal of various kinds of speed restrictions. In the actual case, the estimated <italic>d<sub>t</sub></italic> and the adopted <italic>a</italic> and <italic>b</italic> will make the speed fluctuate around the basic speed limit curve. Analogous to the actual train control, the model allows feedback adjustments if <italic>v<sub>n</sub></italic> does not approach the limit.</p>
+<p>We have proposed utilizing the CA model for train movements to support the planning and real-time decision of railway operation. The main procedures are to predict the potential conflicts and the places needing performance improvement through simulation, and then to re-simulate the train movements under certain scheduling commands. Scheduling can improve time performance and the safety, and avoid abrupt deceleration. It can decrease the mutual entanglement among trains to furnish more space for the potential speed uplift, and make trains run at the maximal speed as much as possible if the time-optimal control is pursued. However, it cannot always take favorable effects, which is difficult to be theoretically elucidated; thus, the simulation through more accurate and computing-allowable models will facilitate the identification of operation conflicts and the evaluation of scheduling performances.</p>
+<p>This paper aims at outlining the basic rules of acceleration, deceleration and speed holding under the manipulation of instantaneous target speeds and distances, and replicating and justifying the tempo-spatial dynamics of train movements. The selection of adjustable parameters will make the model approach the realistic train movements, such as the variables <italic>a</italic> and <italic>b</italic> corresponding to various control strategies, the estimation deviation of <italic>d<sub>t</sub></italic>, and the different levels of braking measures adopted according to the degree of difference between the current speed and the limit. The model of train movements considering the slight randomness, as an open issue, is worth further study.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>The authors would like to wholeheartedly thank the associate editor and the four anonymous reviewers for their constructive comments on improving this paper.</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work was supported by the Fundamental Research Funds for the Central Universities of China (Grant No. 2009JBM006) and by the National Natural Science Foundation of China (Grant No. 61074138).</p>
+</fn>
+</fn-group>
+<bio>
+<title>Author biographies</title>
+<p><bold>Yonghua Zhou</bold> is an associate professor in the school of electronic and information engineering at Beijing Jiaotong University. He holds a PhD degree in control theory and control engineering from Tsinghua University. He has been visiting scholar at the Center for Systems Science, Yale University. He has published more than 30 papers in international journals and conference proceedings. His research interests include the modeling, optimization and control of large-scale transport systems.</p>
+<p><bold>Chao Mi</bold> is a graduate student in traffic information engineering and control at Beijing Jiaotong University. His research interests center on the modeling, simulation and scheduling of train movements.</p>
+</bio>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0037549713487403">
+<label>1.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Ho</surname><given-names>TK</given-names></name>
+<name><surname>Mao</surname><given-names>BH</given-names></name>
+<name><surname>Yang</surname><given-names>ZX</given-names></name>
+</person-group>. <article-title>A multi-train movement simulator with moving block signalling</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Brebbia</surname><given-names>CA</given-names></name>
+<name><surname>Allan</surname><given-names>J</given-names></name>
+<name><surname>Hill</surname><given-names>RJ</given-names></name><etal/>
+</person-group>. (eds), <source>WIT transactions on the built environment: computers in railways VI</source>, <publisher-name>Portugal</publisher-name>, <publisher-loc>WIT Press</publisher-loc>, <year>1998</year>, pp.<fpage>782</fpage>–<lpage>791</lpage>.</citation>
+</ref>
+<ref id="bibr2-0037549713487403">
+<label>2.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Goodman</surname><given-names>CJ</given-names></name>
+<name><surname>Siu</surname><given-names>LK</given-names></name>
+<name><surname>Ho</surname><given-names>TK</given-names></name>
+</person-group>. <article-title>A review of simulation models for railway system</article-title>. In: <conf-name>proceedings of IEEE international conference on developments in mass transit system</conf-name>, <conf-loc>London</conf-loc>, <publisher-name>IEEE Conference Publication</publisher-name>, <year>1998</year>, pp.<fpage>80</fpage>–<lpage>85</lpage>.</citation>
+</ref>
+<ref id="bibr3-0037549713487403">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chou</surname><given-names>M</given-names></name>
+<name><surname>Xia</surname><given-names>X</given-names></name>
+<name><surname>Kayserb</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Modelling and model validation of heavy-haul trains equipped with electronically controlled pneumatic brake systems</article-title>. <source>Control Eng Pract</source> <year>2007</year>; <volume>15</volume>: <fpage>501</fpage>–<lpage>509</lpage>.</citation>
+</ref>
+<ref id="bibr4-0037549713487403">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>KP</given-names></name>
+<name><surname>Gao</surname><given-names>ZY</given-names></name>
+<name><surname>Ning</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Cellular automaton model for railway traffic</article-title>. <source>J Comput Phys</source> <year>2005</year>; <volume>209</volume>: <fpage>179</fpage>–<lpage>192</lpage>.</citation>
+</ref>
+<ref id="bibr5-0037549713487403">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>KP</given-names></name>
+<name><surname>Gao</surname><given-names>ZY</given-names></name>
+<name><surname>Ning</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Modeling the railway traffic using cellular automata model</article-title>. <source>Int J Mod Phys C</source> <year>2005</year>; <volume>16</volume>: <fpage>921</fpage>–<lpage>932</lpage>.</citation>
+</ref>
+<ref id="bibr6-0037549713487403">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ning</surname><given-names>B</given-names></name>
+<name><surname>Li</surname><given-names>KP</given-names></name>
+<name><surname>Gao</surname><given-names>ZY</given-names></name>
+</person-group>. <article-title>Modeling fixed-block railway signaling system using cellular automata model</article-title>. <source>Int J Mod Phys C</source> <year>2005</year>; <volume>16</volume>: <fpage>1793</fpage>–<lpage>1801</lpage>.</citation>
+</ref>
+<ref id="bibr7-0037549713487403">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zhou</surname><given-names>HL</given-names></name>
+<name><surname>Gao</surname><given-names>ZY</given-names></name>
+<name><surname>Li</surname><given-names>KP</given-names></name>
+</person-group>. <article-title>Cellular automaton model for moving-like block system and study of train’s delay propagation</article-title>. <source>Acta Phys Sin</source> <year>2006</year>; <volume>55</volume>: <fpage>1706</fpage>–<lpage>1710</lpage>.</citation>
+</ref>
+<ref id="bibr8-0037549713487403">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tang</surname><given-names>T</given-names></name>
+<name><surname>Li</surname><given-names>KP</given-names></name>
+</person-group>. <article-title>Traffic modeling for moving-block train control system</article-title>. <source>Commun Theor Phys</source> <year>2007</year>; <volume>47</volume>: <fpage>601</fpage>–<lpage>606</lpage>.</citation>
+</ref>
+<ref id="bibr9-0037549713487403">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>F</given-names></name>
+<name><surname>Gao</surname><given-names>ZY</given-names></name>
+<name><surname>Li</surname><given-names>KP</given-names></name>
+</person-group>. <article-title>Analysis of the property of train flow in the fixed autoblock systems</article-title>. <source>Acta Phys Sin</source> <year>2007</year>; <volume>56</volume>: <fpage>3158</fpage>–<lpage>3165</lpage>.</citation>
+</ref>
+<ref id="bibr10-0037549713487403">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Xun</surname><given-names>J</given-names></name>
+<name><surname>Ning</surname><given-names>B</given-names></name>
+<name><surname>Li</surname><given-names>K.-P</given-names></name>
+</person-group>. <article-title>Network-based train-following model and study of train’s delay propagation</article-title>. <source>Acta Phys Sin</source> <year>2007</year>; <volume>56</volume>: <fpage>5158</fpage>–<lpage>5164</lpage>.</citation>
+</ref>
+<ref id="bibr11-0037549713487403">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zhou</surname><given-names>Y</given-names></name>
+<name><surname>Mi</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Modeling train movement for moving-block railway network using cellular automata</article-title>. <source>Comput Model Eng Sci</source> <year>2012</year>; <volume>83</volume>: <fpage>1</fpage>–<lpage>21</lpage>.</citation>
+</ref>
+<ref id="bibr12-0037549713487403">
+<label>12.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>von Neumann</surname><given-names>J</given-names></name>
+</person-group>. In: <person-group person-group-type="editor">
+<name><surname>Burks</surname><given-names>AW</given-names></name>
+</person-group> (ed.), <source>Theory of self-reproducing automata</source>. <publisher-loc>Urbana, IL</publisher-loc>: <publisher-name>University of Illinois Press</publisher-name>, <year>1966</year>.</citation>
+</ref>
+<ref id="bibr13-0037549713487403">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Nagel</surname><given-names>K</given-names></name>
+<name><surname>Schreckenberg</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Cellular automaton models for freeway traffic</article-title>. <source>J Phys I</source> <year>1992</year>; <volume>2</volume>: <fpage>2221</fpage>–<lpage>2229</lpage>.</citation>
+</ref>
+<ref id="bibr14-0037549713487403">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Nagel</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Particle hopping models and traffic flow theory</article-title>. <source>Phys Rev E</source> <year>1996</year>; <volume>53</volume>: <fpage>4655</fpage>–<lpage>4672</lpage>.</citation>
+</ref>
+<ref id="bibr15-0037549713487403">
+<label>15.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chowdhury</surname><given-names>D</given-names></name>
+<name><surname>Santen</surname><given-names>L</given-names></name>
+<name><surname>Schadschneider</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Statistical physics of vehicular traffic and some related systems</article-title>. <source>Phys Rep</source> <year>2000</year>, <volume>329</volume>: <fpage>199</fpage>–<lpage>329</lpage>.</citation>
+</ref>
+<ref id="bibr16-0037549713487403">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Errampalli</surname><given-names>M</given-names></name>
+<name><surname>Okushima</surname><given-names>M</given-names></name>
+<name><surname>Akiyama</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Development of the microscopic traffic simulation model with the fuzzy logic technique</article-title>. <source>Simulation</source> <year>2013</year>; <volume>89</volume>: <fpage>87</fpage>–<lpage>101</lpage>.</citation>
+</ref>
+<ref id="bibr17-0037549713487403">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kesling</surname><given-names>GD</given-names></name>
+<name><surname>Whittaker</surname><given-names>IC</given-names></name>
+</person-group>. <article-title>A simulation model of railroad reliability</article-title>. <source>Simulation</source> <year>1985</year>; <volume>44</volume>: <fpage>168</fpage>–<lpage>180</lpage>.</citation>
+</ref>
+<ref id="bibr18-0037549713487403">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sharma</surname><given-names>G</given-names></name>
+<name><surname>Asthana</surname><given-names>RGS</given-names></name>
+<name><surname>Goel</surname><given-names>S</given-names></name>
+</person-group>. <article-title>A knowledge-based simulation approach (K-SIM) for train operation and planning</article-title>. <source>Simulation</source> <year>1994</year>; <volume>62</volume>: <fpage>381</fpage>–<lpage>391</lpage>.</citation>
+</ref>
+<ref id="bibr19-0037549713487403">
+<label>19.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Dessouky</surname><given-names>MM</given-names></name>
+<name><surname>Leachman</surname><given-names>RC</given-names></name>
+</person-group>. <article-title>A simulation modeling methodology for analyzing large complex rail networks</article-title>. <source>Simulation</source> <year>1995</year>; <volume>65</volume>: <fpage>131</fpage>–<lpage>142</lpage>.</citation>
+</ref>
+<ref id="bibr20-0037549713487403">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Paolucci</surname><given-names>M</given-names></name>
+<name><surname>Pesenti</surname><given-names>R</given-names></name>
+</person-group>. <article-title>An object-oriented approach to discrete-event simulation applied to underground railway systems</article-title>. <source>Simulation</source> <year>1999</year>; <volume>72</volume>: <fpage>372</fpage>–<lpage>383</lpage>.</citation>
+</ref>
+<ref id="bibr21-0037549713487403">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lu</surname><given-names>Q</given-names></name>
+<name><surname>Dessouky</surname><given-names>MM</given-names></name>
+<name><surname>Leachman</surname><given-names>RC</given-names></name>
+</person-group>. <article-title>Modeling train movements through complex rail networks</article-title>. <source>ACM Trans Model Comput Simulat</source> <year>2004</year>; <volume>14</volume>: <fpage>48</fpage>–<lpage>75</lpage>.</citation>
+</ref>
+<ref id="bibr22-0037549713487403">
+<label>22.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Song</surname><given-names>HS</given-names></name>
+<name><surname>Kim</surname><given-names>TG</given-names></name>
+</person-group>. <article-title>Application of real-time DEVS to analysis of safety-critical embedded control systems: railroad crossing control example</article-title>. <source>Simulation</source> <year>2005</year>; <volume>81</volume>: <fpage>119</fpage>–<lpage>136</lpage>.</citation>
+</ref>
+<ref id="bibr23-0037549713487403">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mekni</surname><given-names>M</given-names></name>
+<name><surname>Sahli</surname><given-names>N</given-names></name>
+<name><surname>Moulin</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Using multi-agent geo-simulation techniques for the detection of risky areas for trains</article-title>. <source>Simulation</source> <year>2010</year>; <volume>86</volume>: <fpage>763</fpage>–<lpage>775</lpage>.</citation>
+</ref>
+<ref id="bibr24-0037549713487403">
+<label>24.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Berger</surname><given-names>A</given-names></name>
+<name><surname>Hoffmann</surname><given-names>R</given-names></name>
+<name><surname>Lorenz</surname><given-names>U</given-names></name><etal/>
+</person-group>. <article-title>Online railway delay management: hardness, simulation and computation</article-title>. <source>Simulation</source> <year>2011</year>; <volume>87</volume>: <fpage>616</fpage>–<lpage>629</lpage>.</citation>
+</ref>
+<ref id="bibr25-0037549713487403">
+<label>25.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Nageshwaraniyer</surname><given-names>SS</given-names></name>
+<name><surname>Son</surname><given-names>YJ</given-names></name>
+<name><surname>Dessureault</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Simulation-based optimal planning for material handling networks in mining</article-title>. <source>Simulation</source> <year>2013</year>; <volume>89</volume>: <fpage>330</fpage>–<lpage>345</lpage>.</citation>
+</ref>
+<ref id="bibr26-0037549713487403">
+<label>26.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zhou</surname><given-names>X</given-names></name>
+<name><surname>Zhong</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Single-track train timetabling with guaranteed optimality: branch-and-bound algorithms with enhanced lower bounds</article-title>. <source>Transp Res B Methodological</source> <year>2007</year>; <volume>41</volume>: <fpage>320</fpage>–<lpage>341</lpage>.</citation>
+</ref>
+<ref id="bibr27-0037549713487403">
+<label>27.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>D’Ariano</surname><given-names>A</given-names></name>
+<name><surname>Pacciarelli</surname><given-names>D</given-names></name>
+<name><surname>Pranzo</surname><given-names>M</given-names></name>
+</person-group>. <article-title>A branch and bound algorithm for scheduling trains in a railway network</article-title>. <source>Eur J Oper Res</source> <year>2007</year>; <volume>183</volume>: <fpage>643</fpage>–<lpage>657</lpage>.</citation>
+</ref>
+<ref id="bibr28-0037549713487403">
+<label>28.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mu</surname><given-names>S</given-names></name>
+<name><surname>Dessouky</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Scheduling freight trains traveling on complex networks</article-title>. <source>Transp Res B Methodological</source> <year>2011</year>, <volume>45</volume>: <fpage>1103</fpage>–<lpage>1123</lpage>.</citation>
+</ref>
+<ref id="bibr29-0037549713487403">
+<label>29.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tsang</surname><given-names>CW</given-names></name>
+<name><surname>Ho</surname><given-names>TK</given-names></name>
+<name><surname>Ip</surname><given-names>KH</given-names></name>
+</person-group>. <article-title>Train schedule coordination at an interchange station through agent negotiation</article-title>. <source>Transp Sci</source> <year>2011</year>, <volume>45</volume>: <fpage>258</fpage>–<lpage>270</lpage>.</citation>
+</ref>
+<ref id="bibr30-0037549713487403">
+<label>30.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cheng</surname><given-names>J</given-names></name>
+<name><surname>Howlett</surname><given-names>PG</given-names></name>
+</person-group>. <article-title>Application of critical velocities to the minimisation of fuel consumption in the control of trains</article-title>. <source>Automatica</source> <year>1992</year>; <volume>28</volume>: <fpage>165</fpage>–<lpage>169</lpage>.</citation>
+</ref>
+<ref id="bibr31-0037549713487403">
+<label>31.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Howlett</surname><given-names>PG</given-names></name>
+<name><surname>Pudney</surname><given-names>PJ</given-names></name>
+</person-group>. <source>Energy-efficient train control</source>. <publisher-loc>London</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>1995</year>.</citation>
+</ref>
+<ref id="bibr32-0037549713487403">
+<label>32.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Khmelnitsky</surname><given-names>E</given-names></name>
+</person-group>. <article-title>On an optimal control problem of train operation</article-title>. <source>IEEE Trans Autom Control</source> <year>2000</year>; <volume>45</volume>: <fpage>1257</fpage>–<lpage>1266</lpage>.</citation>
+</ref>
+<ref id="bibr33-0037549713487403">
+<label>33.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Liu</surname><given-names>R</given-names></name>
+<name><surname>Golovitcher</surname><given-names>I</given-names></name>
+</person-group>. <article-title>Energy-efficient operation of rail vehicles</article-title>. <source>Transp Res A Pol Pract</source> <year>2003</year>, <volume>37</volume>: <fpage>917</fpage>–<lpage>932</lpage>.</citation>
+</ref>
+<ref id="bibr34-0037549713487403">
+<label>34.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Moon</surname><given-names>S</given-names></name>
+<name><surname>Moon</surname><given-names>I</given-names></name>
+<name><surname>Yi</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Design, tuning, and evaluation of a full-range adaptive cruise control system with collision avoidance</article-title>. <source>Control Eng Pract</source> <year>2009</year>; <volume>17</volume>: <fpage>442</fpage>–<lpage>455</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

@@ -1,0 +1,2987 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">SIM</journal-id>
+<journal-id journal-id-type="hwp">spsim</journal-id>
+<journal-title>SIMULATION</journal-title>
+<issn pub-type="ppub">0037-5497</issn>
+<issn pub-type="epub">1741-3133</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0037549712470733</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0037549712470733</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Abstraction of agent interaction processes: Towards large-scale multi-agent models</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Sarraf Shirazi</surname><given-names>Abbas</given-names></name>
+<xref ref-type="aff" rid="aff1-0037549712470733">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>von Mammen</surname><given-names>Sebastian</given-names></name>
+<xref ref-type="aff" rid="aff1-0037549712470733">1</xref>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Jacob</surname><given-names>Christian</given-names></name>
+<xref ref-type="aff" rid="aff1-0037549712470733">1</xref>
+<xref ref-type="aff" rid="aff2-0037549712470733">2</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-0037549712470733"><label>1</label>Department of Computer Science, Faculty of Science, University of Calgary, Canada</aff>
+<aff id="aff2-0037549712470733"><label>2</label>Department of Biochemistry and Molecular Biology, Faculty of Medicine, University of Calgary, Canada</aff>
+<author-notes>
+<corresp id="corresp1-0037549712470733">Christian Jacob, University of Calgary, 2500 University Drive NW, Calgary, AB, Canada T2N 1N4. Email: <email>cjacob@ucalgary.ca</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>89</volume>
+<issue>4</issue>
+<fpage>524</fpage>
+<lpage>538</lpage>
+<permissions>
+<copyright-statement>© 2013 The Society for Modeling and Simulation International</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="society">Simulation Councils Inc.</copyright-holder>
+</permissions>
+<abstract>
+<p>The typically large numbers of interactions in agent-based simulations come at considerable computational costs. In this article, we present an approach to reduce the number of interactions based on behavioural patterns that recur during runtime. We employ machine learning techniques to abstract the behaviour of groups of agents to cut down computational complexity while preserving the inherent flexibility of agent-based models. The learned abstractions, which subsume the underlying model agents’ interactions, are constantly tested for their validity: after all, the dynamics of a system may change over time to such an extent that previously learned patterns would not reoccur. An invalid abstraction is, therefore, removed again from the system. The creation and removal of abstractions continues throughout the course of a simulation in order to ensure an adequate adaptation to the system dynamics. Experimental results on biological agent-based simulations show that our proposed approach can successfully reduce the computational complexity during the simulation while maintaining the freedom of arbitrary interactions.</p>
+</abstract>
+<kwd-group>
+<kwd>agent-based simulation</kwd>
+<kwd>collective behaviour</kwd>
+<kwd>abstraction</kwd>
+<kwd>optimization</kwd>
+<kwd>online learning</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0037549712470733" sec-type="intro">
+<title>1. Introduction</title>
+<p>Phase transitions in complex systems cannot be inferred from the properties of the underlying parts. Rather they occur due to the interactions of the involved variables.<sup><xref ref-type="bibr" rid="bibr1-0037549712470733">1</xref></sup> The agent-based modelling approach is a well-suited means to model complex systems, as it provides each part of the system with the ability to change its own state and to interact with other parts. Agent-based computational models have also gained great popularity as they can address heterogenous populations, noise, spatial and temporal relationships.<sup><xref ref-type="bibr" rid="bibr2-0037549712470733">2</xref><xref ref-type="bibr" rid="bibr3-0037549712470733"/><xref ref-type="bibr" rid="bibr4-0037549712470733"/>–<xref ref-type="bibr" rid="bibr5-0037549712470733">5</xref></sup></p>
+<p>The flexibility of agent-based models renders their simulation computationally inefficient.<sup><xref ref-type="bibr" rid="bibr6-0037549712470733">6</xref></sup> As each agent could potentially interact with all of the other <italic>n</italic> agents, merely identifying who interacts with whom becomes a computationally expensive task: <inline-formula id="inline-formula1-0037549712470733">
+<mml:math display="inline" id="math1-0037549712470733">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> in the worst case. To overcome this problem, agent-based simulations are often limited to fixed neighbourhoods in discrete lattice spaces as implemented by cellular automata.<sup><xref ref-type="bibr" rid="bibr7-0037549712470733">7</xref><xref ref-type="bibr" rid="bibr8-0037549712470733"/>–<xref ref-type="bibr" rid="bibr9-0037549712470733">9</xref></sup> However, the ability of a model to continuously change the interaction topology among the agents is crucial to trace, for instance, the dynamics of transportation effects<sup><xref ref-type="bibr" rid="bibr10-0037549712470733">10</xref></sup> or developmental processes.<sup><xref ref-type="bibr" rid="bibr11-0037549712470733">11</xref></sup></p>
+<p>In this article, we present an approach to apply machine learning techniques such as evolutionary algorithms, neural networks, and clustering in order to reduce the computational costs of an agent-based simulation while preserving its inherent flexibility. In particular, we show how groups of agents that exhibit behavioural patterns can be reduced to single agents with (computationally) simplified interaction rules. In order to identify a group of agents that can be substituted by a single agent, either neighbouring agents form a group or, more generically, an <italic>observer agent</italic> monitors arbitrary groups of agents and substitutes them based on their exhibited behavioural patterns. As the agents’ interactions may vary over time, the learned behavioural patterns may lose their validity. Therefore, confidence values determine the lifespan of the learned behavioural abstractions. Continuous re-evaluation of these confidence values allows for a self-organized optimization process in which the substitutions are adaptively created and revoked.</p>
+<p>The remainder of this paper is organized as follows. Section 2 reviews related works in multi-agent modelling and abstraction. In Section 3, we first show how we can use artificial neural networks (ANNs) to learn the collective behaviour of agent groups. Next, we present an approach that relies on genetic programming (GP) and manages agent hierarchies dynamically, i.e. it does not destroy the learned abstractions completely should their confidence values drop, but only incrementally, as needed. In this context, we also elucidate the algorithm that ensures the validity of any learned patterns. Section 4 further refines the introduced approaches to consider arbitrary types of agent interactions including collisions and state changes. In order to demonstrate the effectiveness of this refined approach, we apply it to an agent-based blood coagulation simulation. Finally, concluding remarks are presented in Section 5.</p>
+</sec>
+<sec id="section2-0037549712470733">
+<title>2. Related work</title>
+<p>Abstract knowledge represents higher-order patterns that occur in lower-level concepts. It bears the essence of a system and ignores unnecessary details.<sup><xref ref-type="bibr" rid="bibr12-0037549712470733">12</xref>,<xref ref-type="bibr" rid="bibr13-0037549712470733">13</xref></sup> Higher-order patterns emerge from the interactions of the parts, or agents, of a system.<sup><xref ref-type="bibr" rid="bibr4-0037549712470733">4</xref></sup> In natural systems the formation of higher-order patterns happens across several scales of time and space, which renders their complete description impossible. However, it has been suggested that one could approximate the multiple scales of natural systems and their interdependencies by means of computational models that incorporate hierarchies of agents. High-level agents in such hierarchies correspond to high degrees of abstraction of the system processes. In this section, we briefly describe some of the related works that motivated or addressed this concept.</p>
+<sec id="section3-0037549712470733">
+<title>2.1 From bottom-up to abstract models</title>
+<p>Artificial chemistries<sup><xref ref-type="bibr" rid="bibr14-0037549712470733">14</xref></sup> and computational developmental systems, such as L-systems,<sup><xref ref-type="bibr" rid="bibr15-0037549712470733">15</xref></sup> relational growth grammars,<sup><xref ref-type="bibr" rid="bibr16-0037549712470733">16</xref></sup> or swarm grammars,<sup><xref ref-type="bibr" rid="bibr17-0037549712470733">17</xref></sup> explicitly, often visually trace the emergence of high-level structures based on simple constituents. These constituents may be represented as formal symbols or as entities in physics simulations. Complex interaction patterns can emerge from even the most simple interactions. Autocatalytic networks, for example, denote patterns of chemical reactions that nurture one another.<sup><xref ref-type="bibr" rid="bibr18-0037549712470733">18</xref></sup> Stable interaction networks may even exhibit the property of self-replication.<sup><xref ref-type="bibr" rid="bibr19-0037549712470733">19</xref></sup> As a result, the formation of intertwined entities is promoted and hierarchies of increasing complexity emerge in nature.<sup><xref ref-type="bibr" rid="bibr20-0037549712470733">20</xref></sup></p>
+<p>Rasmussen et al. designed a computational model based on artificial chemistries, in which structures are formed with an increase in complexity and with different functionalities: from monomers to polymers to micelles.<sup><xref ref-type="bibr" rid="bibr21-0037549712470733">21</xref></sup> Although these experiments clearly retrace the formation of patterns at several levels of scale, Dorin and McCormack claim that such phenomena are not surprising given the model’s simplicity. Dorin and McCormack argue that it takes considerably more effort to determine the novelties at higher levels in the hierarchy.<sup><xref ref-type="bibr" rid="bibr22-0037549712470733">22</xref></sup></p>
+<p>A first step toward the identification of high-level patterns is to gain clarity about the abstractions inherent in an agent model to begin with. Bosse et al. propose the classification of types and levels of abstraction of agent-based models based on the following dimensions:<sup><xref ref-type="bibr" rid="bibr23-0037549712470733">23</xref></sup></p>
+<list id="list1-0037549712470733" list-type="simple">
+<list-item>
+<p><bold>The process abstraction dimension</bold> deals with the behaviour representation of an agent, e.g. whether an agent is modelled by its inputs and outputs, whether other variables like beliefs or desires are also considered, or whether even lower level properties of an agent are modelled.</p>
+</list-item>
+<list-item>
+<p><bold>The temporal dimension</bold> deals with the definition of the agents’ behaviours over smaller or longer periods of time.</p>
+</list-item>
+<list-item>
+<p><bold>The agent cluster dimension</bold> specifies the granularity of the agent-based model, i.e. whether an individual agent represents an entity or a cluster of entities.</p>
+</list-item>
+</list>
+<p>Ralambondrainy et al. identify the complex task of observing a simulation, for which they propose a separate multi-agent system.<sup><xref ref-type="bibr" rid="bibr24-0037549712470733">24</xref></sup> They describe an ontology to facilitate the communications of the agents in the second system. The observation agents have three main tasks, namely (1) acquisition of observational elements, (2) processing of simulation results, and (3) presentation of the results to human actors. Although the second system does not affect the original simulation, the notion of a separate system with the ability to present higher-level, abstract knowledge emphasizes the necessity to have external observers in the simulation.</p>
+<p>Several approaches rely on a priori definitions to identify emergent patterns in agent-based simulations. Servat et al. acknowledge that simulation states can provide clues for the introduction and configuration of high-order agents.<sup><xref ref-type="bibr" rid="bibr25-0037549712470733">25</xref></sup> However, they insist on the necessity to predefine the behaviours of high-level agents. The same is true for Chen et al.’s formalism which they specifically use for validating predicted behaviours.<sup><xref ref-type="bibr" rid="bibr3-0037549712470733">3</xref>,<xref ref-type="bibr" rid="bibr26-0037549712470733">26</xref></sup></p>
+<p>In order to capture emergent phenomena, Dessalles and Phan foresaw a system in which detectors would identify emergent patterns and subsume the activity of the respective lower level objects.<sup><xref ref-type="bibr" rid="bibr1-0037549712470733">1</xref></sup> Similarly, Denzinger and Hamdan introduce a modelling agent that observes perceivable behaviours of other agents and maps them to a predefined stereotype.<sup><xref ref-type="bibr" rid="bibr27-0037549712470733">27</xref></sup> However, Denzinger and Hamdan also present a novel aspect: The periodic re-evaluation of the agents’ behaviours gives the modelling agent the opportunity to adjust the mappings in accordance with the dynamics of the system. Not only might the local interaction patterns change over time, but high-level phenomena might also influence the underlying layers. Lavelle et al. use the term <italic>immergence</italic>, or downward causation, to describe the impact of high-level organizations on entities at lower scales.<sup><xref ref-type="bibr" rid="bibr28-0037549712470733">28</xref></sup> They postulate that explicit functions must be defined to bridge between micro and macro levels.</p>
+<p>Cardon proposes three organizational levels to control the behaviour of a multi-agent system.<sup><xref ref-type="bibr" rid="bibr29-0037549712470733">29</xref></sup> The constituent agents are defined in the aspectual level. A geometrical mapping of aspectual agents forms the second level called the morphological level. Using a simplified, higher-level representation of agents in the morphological level, analysis agents in the evocation level identify the current state of the simulation and control the agents in the aspectual level by tampering their behaviour. This approach provides self-adaptability in the system while enforcing a degree of control on the behaviour of the system as a whole.</p>
+<p>von Mammen et al. introduced the concept of <italic>self-organized middle-out abstraction (SOMO)</italic>, where observer agents monitor the interaction history of sets of agents, use motif discovery to detect recurrent patterns, and create hierarchies of high-level agents that subsume the lower interacting agencies.<sup><xref ref-type="bibr" rid="bibr30-0037549712470733">30</xref></sup> Although they do not exclude the possibility of a relationship between learned high-order patterns and emergent phenomena found in nature, SOMO primarily targets an increase of efficiency by repeatedly substituting groups of agents by individual high-level instances that work at lower computational costs.</p>
+<p>The authors of the present article have previously demonstrated that high-level agent substitution indeed results in a reduction of computational cost.<sup><xref ref-type="bibr" rid="bibr31-0037549712470733">31</xref>,<xref ref-type="bibr" rid="bibr32-0037549712470733">32</xref></sup> In particular, we deployed ANNs and GP, two established inductive learning methods, to learn agent abstractions in a model of a biological signaling pathway. Clusters of biological substrates and their corresponding activation patterns were substituted by meta-agents. We recently extended our earlier implementation by introducing observer agents that are able to abstract arbitrary patterns of groups of agents.<sup><xref ref-type="bibr" rid="bibr6-0037549712470733">6</xref></sup></p>
+</sec>
+<sec id="section4-0037549712470733">
+<title>2.2 Toward a framework for multi-scale modelling</title>
+<p>As technology advances the design of multi-scale models becomes more prominent. As long as these approaches merely connect models of different scales and feed back and forth the computed results as variable parameters, the challenge can be addressed with the right level of domain knowledge and software engineering skills.<sup><xref ref-type="bibr" rid="bibr33-0037549712470733">33</xref>,<xref ref-type="bibr" rid="bibr34-0037549712470733">34</xref></sup> As discussed in Section 2.1, there are only few concepts that address the issue of automatic identification and abstraction of emergent patterns, which is crucial for a system that would identify new levels as a result of the computational process.</p>
+<p>Martins et al. review different multi-scale models (from biomolecules to cells, tissues and organs) and conclude that despite the lack of a quantitative model of a cell, such models may help understand cancer growth and its therapy.<sup><xref ref-type="bibr" rid="bibr35-0037549712470733">35</xref></sup> Erson and Cavusoglu propose a software framework for multi-scale model integration and simulation;<sup><xref ref-type="bibr" rid="bibr36-0037549712470733">36</xref></sup> however, no specific modelling technique is described. There are a few physical multi-scale models, e.g. CPM<sup><xref ref-type="bibr" rid="bibr37-0037549712470733">37</xref></sup> and Synergetics.<sup><xref ref-type="bibr" rid="bibr38-0037549712470733">38</xref></sup> However, as of yet, there is no universally adopted computational framework for the assembly of multi-scale biological models.<sup><xref ref-type="bibr" rid="bibr39-0037549712470733">39</xref></sup></p>
+<p>Bassingthwaighte et al. identify a systems approach for developing multi-scale models which includes six steps:<sup><xref ref-type="bibr" rid="bibr40-0037549712470733">40</xref></sup> (1) the definition of the model at its highest level of resolution, (2) the abstraction of patterns (“reduced-form modules”), (3) the identification of valid parameter ranges of these abstractions, (4) the observation of the variables of the system, (5) replacement of higher-resolution models with abstractions, and (6) the validation of the performance of the multi-scale model against available real-world data. The authors further discuss open challenges of their approach such as parameter identification in closed-loop systems and the identification of input–output delays.</p>
+</sec>
+</sec>
+<sec id="section5-0037549712470733">
+<title>3. Abstraction in the MAPK signaling pathways</title>
+<p>A signaling pathway describes how information travels from the receptors of a cell to an inside target.<sup><xref ref-type="bibr" rid="bibr41-0037549712470733">41</xref></sup> Typically, the information ripples through a cascade of biochemical reactions that are carried out by enzymes. The mitogen-activated protein kinase (MAPK) pathway plays a key role in the cell cycle and is documented extensively. It is responsible for responses to extracellular stimuli and regulates cellular activities, such as gene expression, mitosis and differentiation.<sup><xref ref-type="bibr" rid="bibr8-0037549712470733">8</xref></sup> In the MAPK signaling pathway proposed by Huang and Ferrell,<sup><xref ref-type="bibr" rid="bibr42-0037549712470733">42</xref></sup> a hypothetical enzyme E1 stimulates the cell and results in an increase in production of the MAPK-PP enzyme (<xref ref-type="fig" rid="fig1-0037549712470733">Figure 1(a)</xref>). In another model,<sup><xref ref-type="bibr" rid="bibr43-0037549712470733">43</xref></sup> a negative feedback loop causes sustained oscillations in the production of MAPK-PP (<xref ref-type="fig" rid="fig1-0037549712470733">Figure 1(b)</xref>).</p>
+<fig id="fig1-0037549712470733" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>(a) The MAPK signaling pathway<sup><xref ref-type="bibr" rid="bibr42-0037549712470733">42</xref></sup> and (b) The MAPK signaling pathway with a negative feedback.<sup><xref ref-type="bibr" rid="bibr43-0037549712470733">43</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig1.tif"/>
+</fig>
+<p>The diagram in <xref ref-type="fig" rid="fig1-0037549712470733">Figure 1</xref> describes the interaction topology of substrates. Numerical differential equation solvers are used to calculate their concentration updates over the course of time. For example, the update formula for the MAPK-PP concentration is given as follows:</p>
+<p><disp-formula id="disp-formula1-0037549712470733">
+<label>(1)</label>
+<mml:math display="block" id="math2-0037549712470733">
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>MAPK</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>PP</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>dt</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>9</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0037549712470733" xlink:href="10.1177_0037549712470733-eq1.tif"/>
+</disp-formula></p>
+<p><disp-formula id="disp-formula2-0037549712470733">
+<label>(2)</label>
+<mml:math display="block" id="math3-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>MKK</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>PP</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>MAPK</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>MAPK</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>P</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0037549712470733" xlink:href="10.1177_0037549712470733-eq2.tif"/>
+</disp-formula></p>
+<p><disp-formula id="disp-formula3-0037549712470733">
+<label>(3)</label>
+<mml:math display="block" id="math4-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>9</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>9</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>MAPK</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>PP</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>9</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>MAPK</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>PP</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0037549712470733" xlink:href="10.1177_0037549712470733-eq3.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula2-0037549712470733">
+<mml:math display="inline" id="math5-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula3-0037549712470733">
+<mml:math display="inline" id="math6-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula4-0037549712470733">
+<mml:math display="inline" id="math7-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>9</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula5-0037549712470733">
+<mml:math display="inline" id="math8-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>9</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> are constants and [<inline-formula id="inline-formula6-0037549712470733">
+<mml:math display="inline" id="math9-0037549712470733">
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>] is the current concentration of substrate <inline-formula id="inline-formula7-0037549712470733">
+<mml:math display="inline" id="math10-0037549712470733">
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The complete set of update equations can be found in Huang and Ferrell<sup><xref ref-type="bibr" rid="bibr42-0037549712470733">42</xref></sup> and Kholodenko.<sup><xref ref-type="bibr" rid="bibr43-0037549712470733">43</xref></sup></p>
+<p>Amigoni and Schiaffonati present three approaches to multi-agent simulations of the MAPK pathway.<sup><xref ref-type="bibr" rid="bibr41-0037549712470733">41</xref></sup> In the first approach, each chemical reaction is represented as an agent.<sup><xref ref-type="bibr" rid="bibr8-0037549712470733">8</xref></sup> The second approach translates each intracellular component into an agent that uses a blackboard mechanism<sup><xref ref-type="bibr" rid="bibr44-0037549712470733">44</xref></sup> to interact with other agents in the system.<sup><xref ref-type="bibr" rid="bibr45-0037549712470733">45</xref></sup> In the third model, each molecular entity acts as an agent.<sup><xref ref-type="bibr" rid="bibr46-0037549712470733">46</xref></sup> For our model, we follow the last approach and consider each substrate a loosely defined, independent agent. Their behaviours are determined by the interaction graphs shown in <xref ref-type="fig" rid="fig2-0037549712470733">Figure 2</xref> and the update formulas given in <xref ref-type="disp-formula" rid="disp-formula1-0037549712470733">Equations (1)</xref>–<xref ref-type="disp-formula" rid="disp-formula3-0037549712470733">(3)</xref>.</p>
+<fig id="fig2-0037549712470733" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Agent interaction graphs for the MAPK signaling pathways of <xref ref-type="fig" rid="fig1-0037549712470733">Figure 1</xref>.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig2.tif"/>
+</fig>
+<sec id="section6-0037549712470733">
+<title>3.1 Creating meta-agents</title>
+<p>In our system, an agent maintains a list of all of its neighbours and it logs their respective interactions in so-called interaction histories. It weighs the relationships with its neighbours based on its <italic>correlation coefficient</italic>. A correlation coefficient between two statistical variables indicates their linear dependency. A correlation coefficient of zero implies that two variables are independent, whereas <inline-formula id="inline-formula8-0037549712470733">
+<mml:math display="inline" id="math11-0037549712470733">
+<mml:mrow>
+<mml:mo>±</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> indicates highly correlated variables. The greater the correlation between two variables, the more similar is their function. Given a series of <inline-formula id="inline-formula9-0037549712470733">
+<mml:math display="inline" id="math12-0037549712470733">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> measurements of agents <italic>s</italic> and <italic>t</italic> in the form of <inline-formula id="inline-formula10-0037549712470733">
+<mml:math display="inline" id="math13-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula11-0037549712470733">
+<mml:math display="inline" id="math14-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where <inline-formula id="inline-formula12-0037549712470733">
+<mml:math display="inline" id="math15-0037549712470733">
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, their correlation coefficient (<inline-formula id="inline-formula13-0037549712470733">
+<mml:math display="inline" id="math16-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ρ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>) is defined as follows:</p>
+<p><disp-formula id="disp-formula4-0037549712470733">
+<label>(4)</label>
+<mml:math display="block" id="math17-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ρ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0037549712470733" xlink:href="10.1177_0037549712470733-eq4.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula14-0037549712470733">
+<mml:math display="inline" id="math18-0037549712470733">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula15-0037549712470733">
+<mml:math display="inline" id="math19-0037549712470733">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> are the mean values, and <inline-formula id="inline-formula16-0037549712470733">
+<mml:math display="inline" id="math20-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula17-0037549712470733">
+<mml:math display="inline" id="math21-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> are standard deviations of <italic>s</italic> and <italic>t</italic>, respectively.</p>
+<graphic id="img1-0037549712470733" position="anchor" xlink:href="10.1177_0037549712470733-img1.tif"/>
+<graphic id="img2-0037549712470733" position="anchor" xlink:href="10.1177_0037549712470733-img2.tif"/>
+<p>Each agent periodically checks whether its correlation coefficient with each neighbour is greater than some threshold <inline-formula id="inline-formula18-0037549712470733">
+<mml:math display="inline" id="math22-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>edge</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. If this is the case, they form an initial meta-agent. This heuristic process is repeated in order to identify a cluster of agents that are highly correlated (Algorithm 1). <xref ref-type="fig" rid="fig3-0037549712470733">Figure 3</xref> shows an example in which <italic>Agent A</italic> finds <italic>Agent C</italic> and <italic>Agent E</italic>, and they form a meta-agent. The set of new neighbours is the union of all neighbours of the underlying nodes.</p>
+<fig id="fig3-0037549712470733" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Example of an interaction graph. The edges denote the correlation coefficients. (a) <italic>Agent A, Agent C</italic>, and <italic>Agent E</italic> form a meta-agent. (b) The new neighbours of this meta-agent are <italic>Agent B</italic> and <italic>Agent D</italic>.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig3.tif"/>
+</fig>
+</sec>
+<sec id="section7-0037549712470733">
+<title>3.2 Learning the group behaviour</title>
+<p>A new meta-agent replaces its underlying agents and interacts on their behalf. In order to approximate the subsumed agents’ group behaviour, a learning algorithm such as ANNs, evolutionary algorithms, or motif search in time series can be deployed. The learning algorithm extracts the group behaviour from the interaction histories that are locally stored with each agent.</p>
+</sec>
+<sec id="section8-0037549712470733">
+<title>3.3 Monitoring the validity of modules</title>
+<p>Owing to changes in the overall system, meta-agents might exhibit invalid behaviours at some point. Therefore, we check the validity of each meta-agent periodically by comparing its deployed behaviour with its expected behaviour.</p>
+<p>The correlation coefficients of the underlying agents serve as a heuristic indicator as they triggered the formation of the meta-agent (<inline-formula id="inline-formula19-0037549712470733">
+<mml:math display="inline" id="math23-0037549712470733">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>ρ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>st</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula>). According to Algorithm 2, we compare the current correlation coefficients of the meta-agent to previous values for each individual agent: if the difference is larger than some threshold, we consider the meta-agent invalid. As a consequence, we break down its hierarchy and set its underlying agents free.</p>
+</sec>
+<sec id="section9-0037549712470733">
+<title>3.4 Results</title>
+<p>To validate the performance of our approach, we conducted a series of experiments on both MAPK models. The experiments are determined by the following five parameters (<xref ref-type="table" rid="table1-0037549712470733">Table 1</xref>): we let the system run for some time <inline-formula id="inline-formula20-0037549712470733">
+<mml:math display="inline" id="math24-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wait</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and then start looking for meta-agents within a given time interval <inline-formula id="inline-formula21-0037549712470733">
+<mml:math display="inline" id="math25-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>find</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The waiting time <inline-formula id="inline-formula22-0037549712470733">
+<mml:math display="inline" id="math26-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wait</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is important as the system has to reach a rather stable condition before the abstraction algorithm starts to work. We keep monitoring the system in predefined intervals, <inline-formula id="inline-formula23-0037549712470733">
+<mml:math display="inline" id="math27-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>monitor</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. In order to integrate agents and to form meta-agents, the correlation coefficient between two agents, or the value of an edge in the interaction graph, should be greater than some threshold <inline-formula id="inline-formula24-0037549712470733">
+<mml:math display="inline" id="math28-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>edge</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Finally, a meta-agent is valid as long as its correlation coefficients with its neighbours do not exceed the original correlation coefficients by a threshold <inline-formula id="inline-formula25-0037549712470733">
+<mml:math display="inline" id="math29-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>valid</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Working values for <inline-formula id="inline-formula26-0037549712470733">
+<mml:math display="inline" id="math30-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>valid</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula27-0037549712470733">
+<mml:math display="inline" id="math31-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>edge</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> have been found through trial and error (<xref ref-type="table" rid="table1-0037549712470733">Table 1</xref>).</p>
+<table-wrap id="table1-0037549712470733" position="float">
+<label>Table 1 .</label>
+<caption>
+<p>Model parameters.</p>
+</caption>
+<graphic alternate-form-of="table1-0037549712470733" xlink:href="10.1177_0037549712470733-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Parameter name</th>
+<th align="left">Symbol</th>
+<th align="left">Value in the first</th>
+<th align="left">Value in the second</th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th align="left">MAPK model</th>
+<th align="left">MAPK model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Delay before finding meta-agents</td>
+<td><inline-formula id="inline-formula28-0037549712470733">
+<mml:math display="inline" id="math32-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wait</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>1200</td>
+<td>1500</td>
+</tr>
+<tr>
+<td>Meta-agent finding interval</td>
+<td><inline-formula id="inline-formula29-0037549712470733">
+<mml:math display="inline" id="math33-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>find</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>300</td>
+<td>300</td>
+</tr>
+<tr>
+<td>Monitoring interval</td>
+<td><inline-formula id="inline-formula30-0037549712470733">
+<mml:math display="inline" id="math34-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>monitor</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>20</td>
+<td>20</td>
+</tr>
+<tr>
+<td>Validity threshold</td>
+<td><inline-formula id="inline-formula31-0037549712470733">
+<mml:math display="inline" id="math35-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>valid</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.1</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Edge threshold</td>
+<td><inline-formula id="inline-formula32-0037549712470733">
+<mml:math display="inline" id="math36-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>edge</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.95</td>
+<td>0.7</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<sec id="section10-0037549712470733">
+<title>3.4.1 ANN learning</title>
+<p>First, we present an experiment that utilizes feed-forward ANNs with the back-propagation learning algorithm<sup><xref ref-type="bibr" rid="bibr47-0037549712470733">47</xref></sup> to train meta-agents. The structure of an ANN is determined by its inputs and outputs as well as the number of nodes in the hidden layer. Since agents in our model are not aware of their dependent agents (they only know about their outgoing edges in the interaction graph), the output of the network should simply be all of the underlying agents. In the example shown in <xref ref-type="fig" rid="fig3-0037549712470733">Figure 3</xref>, outputs are <italic>Agents A, C</italic> and <italic>E</italic>. The input nodes of the network are composed of all of the internal and their externally connected nodes (<italic>Agents A, C, D</italic> and <italic>E</italic> in <xref ref-type="fig" rid="fig3-0037549712470733">Figure 3</xref>). As for the number of nodes in the hidden layer, we follow a simple rule-of-thumb and set it to the number of <inline-formula id="inline-formula33-0037549712470733">
+<mml:math display="inline" id="math37-0037549712470733">
+<mml:mrow>
+<mml:mi>inputs</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p><xref ref-type="fig" rid="fig4-0037549712470733">Figure 4(a)</xref> shows the result of applying our approach to the first MAPK model in terms of the number of agents. Initially, there are eight model agents in the system. We use the term “model agent” to emphasize their role in the original model, as opposed to meta-agents that are introduced as part of the abstraction process. The identification of meta-agents starts at <inline-formula id="inline-formula34-0037549712470733">
+<mml:math display="inline" id="math38-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wait</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1200</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The resulting pattern of periodic creation and destruction of meta-agents (<xref ref-type="fig" rid="fig4-0037549712470733">Figure 4(a)</xref>) stems from the fact that a meta-agent’s probability to become invalid increases with its number of subsumed model agents. In general, a meta-agent becomes invalid even if one of its subsumed agents becomes invalid. Therefore, after the system is reduced to a single meta-agent, it breaks and releases all of the eight model agents.</p>
+<p><xref ref-type="fig" rid="fig4-0037549712470733">Figure 4(b)</xref> shows that the concentration computed by the agent-based pathway model successfully resembles that of the partial differential equation (PDE) solver. <xref ref-type="fig" rid="fig4-0037549712470733">Figure 4(c)</xref> shows the result of the same algorithm for the second MAPK pathway. Since this model is periodic, the algorithm successively finds, trains and breaks meta-agents over time. The great number of spikes in <xref ref-type="fig" rid="fig4-0037549712470733">Figure 4(c)</xref> implies that the meta-agents are only valid for a short period of time.</p>
+<fig id="fig4-0037549712470733" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Adaptive modularization results for the MAPK pathway models of <xref ref-type="fig" rid="fig1-0037549712470733">Figure 1</xref>: (a), (c) number of agents; (b), (d) concentration of MAPK-PP.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig4.tif"/>
+</fig>
+</sec>
+<sec id="section11-0037549712470733">
+<title>3.4.2 GP learning and dynamic hierarchies</title>
+<p>In a second experiment, we utilize GP to find the function that approximates the group behaviour subsumed by a meta-agent. We include four mathematical operations (+, -, *, /) in the function set of the GP algorithm, whereas the internal nodes of the interaction graph serve as the available terminals. Using a heuristic learning algorithm such as GP enables us to control the speed of learning and to perform a distributed search for good solutions.</p>
+<p>The qualitative difference of this second approach compared with the presented ANN approach is the introduction of dynamic agent hierarchies. Previously, the destruction of a meta-agent set free all of the associated model agents. Now, meta-agents store references to their underlying model agents only in the first instance of the learning process. Meta-agents that subsume lower-level meta-agents store those instead, which results in a hierarchy of meta-agents with the original model agents as its leaves. When a meta-agent becomes invalid and is destroyed, its underlying agents, whether meta-agents or model agents, are released back into the simulation (<xref ref-type="fig" rid="fig5-0037549712470733">Figure 5</xref>).</p>
+<fig id="fig5-0037549712470733" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Difference between the non-hierarchical and the hierarchical approach to agent abstraction: when a non-hierarchical agent is destroyed, all of the associated model agents are released back into the simulation (shown at thetop). In the other case (at the bottom), the hierarchical configuration stored with a meta-agent is restored resultingin one meta-agent and one model agent.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig5.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig6-0037549712470733">Figure 6(a)</xref> compares the performance of the hierarchical and the previously presented non-hierarchical approach. After <inline-formula id="inline-formula35-0037549712470733">
+<mml:math display="inline" id="math39-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wait</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1200</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the non-hierarchical approach reduces the number of agents faster, but it cannot maintain any of the abstractions once the meta-agent becomes invalid at around <inline-formula id="inline-formula36-0037549712470733">
+<mml:math display="inline" id="math40-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1700</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula37-0037549712470733">
+<mml:math display="inline" id="math41-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>2500</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. When the hierarchical meta-agent becomes invalid, its underlying hierarchy is restored: a single meta-agent breaks down at <inline-formula id="inline-formula38-0037549712470733">
+<mml:math display="inline" id="math42-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>2200</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and releases <inline-formula id="inline-formula39-0037549712470733">
+<mml:math display="inline" id="math43-0037549712470733">
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> meta-agents back into the system (compared with <inline-formula id="inline-formula40-0037549712470733">
+<mml:math display="inline" id="math44-0037549712470733">
+<mml:mrow>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> model agents). In both experiments, a meta-agent subsuming the behaviour of a larger number of agents becomes invalid very fast. This explains why an all-encompassing meta-agent does not stay long in the system (<inline-formula id="inline-formula41-0037549712470733">
+<mml:math display="inline" id="math45-0037549712470733">
+<mml:mrow>
+<mml:mn>2100</mml:mn>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>&lt;</mml:mo>
+<mml:mn>2200</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> in <xref ref-type="fig" rid="fig6-0037549712470733">Figure 6(a)</xref>). <xref ref-type="fig" rid="fig6-0037549712470733">Figure 6(b)</xref> shows the MAPK concentration over time produced by the hierarchical approach and compared to the results of the PDE solver.</p>
+<p>As <xref ref-type="fig" rid="fig6-0037549712470733">Figure 6(c)</xref> shows, both experiments performed similarly on the second MAPK pathway. The number of spikes in both approaches suggests that neither learning method makes a significant difference in case of periodicity. We reason that the short period of validity in both presented approaches is the result of using the correlation coefficient to measure how closely two agents work together. Since the correlation coefficient varies from <inline-formula id="inline-formula42-0037549712470733">
+<mml:math display="inline" id="math46-0037549712470733">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> to <inline-formula id="inline-formula43-0037549712470733">
+<mml:math display="inline" id="math47-0037549712470733">
+<mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> over a periodic signal, it fails to capture the similarity of two agents in a periodic system. This result suggests that we have to look for other indicators when dealing with a periodic system.</p>
+<fig id="fig6-0037549712470733" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Results for the MAPK pathway model of <xref ref-type="fig" rid="fig1-0037549712470733">Figure 1</xref>: (a), (c) number of agents (solid line: our hierarchical approach; dashed line: non-hierarchical approach proposed by Sarraf Shirazi<sup><xref ref-type="bibr" rid="bibr31-0037549712470733">31</xref></sup>); (b), (d) concentration of MAPK-PP.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig6.tif"/>
+</fig>
+</sec>
+</sec>
+</sec>
+<sec id="section12-0037549712470733">
+<title>4. Self-organized middle-out learning and abstraction</title>
+<p>In the third approach, we introduce <italic>observer agents</italic>, or <italic>observers</italic>, that coexist alongside of the model agents in the simulation space (<xref ref-type="fig" rid="fig7-0037549712470733">Figure 7</xref>). The simulation framework treats both kinds of agents equally, i.e. each of these agent types is considered for interactions at each simulation step. Instead of an external algorithm (Section 3.4.2), the <italic>observer agents</italic> now handle the creation and management of abstraction hierarchies based on the interaction processes performed by model agents.</p>
+<fig id="fig7-0037549712470733" position="float">
+<label>Figure 7.</label>
+<caption>
+<p><italic>Observers</italic> <inline-formula id="inline-formula44-0037549712470733">
+<mml:math display="inline" id="math48-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>Obs</mml:mtext>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula45-0037549712470733">
+<mml:math display="inline" id="math49-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>Obs</mml:mtext>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> inside the simulation space monitor a subset of agents and log necessary information based on their configuration.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig7.tif"/>
+</fig>
+<p>Once an <italic>observer</italic> successfully identifies an interaction pattern, it acts as a meta-agent that replaces the individual behaviours previously maintained by the model agents that led to the identified pattern. Acting as a meta-agent, the <italic>observer</italic> itself becomes subjected to observation. In order to verify their validity, <italic>observers</italic> would check whether the deployment of the subsumed individual behaviours would yield an outcome different from the predictions of the learned pattern. If the discrepancy between these two outcomes exceeds a given threshold, the <italic>observer</italic> omits its learned pattern and restores the subsumed individual behaviours.</p>
+<p>The success of the abstraction system depends on the configuration of the deployed <italic>observer agents</italic>. In the following paragraphs, we explain one way how they can replace the individual behaviours with a group behaviour and how the <italic>observer agents</italic> can validate, maintain, or abandon the learned patterns throughout the course of a simulation.</p>
+<sec id="section13-0037549712470733">
+<title>4.1 Observer configuration</title>
+<p>Like any other agent in a multi-agent system, an <italic>observer</italic> can be defined as <inline-formula id="inline-formula46-0037549712470733">
+<mml:math display="inline" id="math50-0037549712470733">
+<mml:mrow>
+<mml:mi>ag</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Sit</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>Act</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>Dat</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ag</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, a 4-tuple composed of a set <inline-formula id="inline-formula47-0037549712470733">
+<mml:math display="inline" id="math51-0037549712470733">
+<mml:mrow>
+<mml:mi>Sit</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> of situations, a set <inline-formula id="inline-formula48-0037549712470733">
+<mml:math display="inline" id="math52-0037549712470733">
+<mml:mrow>
+<mml:mi>Act</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> of actions, a set <inline-formula id="inline-formula49-0037549712470733">
+<mml:math display="inline" id="math53-0037549712470733">
+<mml:mrow>
+<mml:mi>Dat</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> of internal data, and a decision function <inline-formula id="inline-formula50-0037549712470733">
+<mml:math display="inline" id="math54-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ag</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula><sup><xref ref-type="bibr" rid="bibr48-0037549712470733">48</xref></sup>. At any point in time, the agent decides to perform an action based on its situation and internal data. This decision is captured in a decision function <inline-formula id="inline-formula51-0037549712470733">
+<mml:math display="inline" id="math55-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ag</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>:</mml:mo>
+<mml:mi>Sit</mml:mi>
+<mml:mo>×</mml:mo>
+<mml:mi>Dat</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:mi>Act</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>. In rule-based agent architectures, <inline-formula id="inline-formula52-0037549712470733">
+<mml:math display="inline" id="math56-0037549712470733">
+<mml:mrow>
+<mml:mi>Dat</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> can be re-written as <inline-formula id="inline-formula53-0037549712470733">
+<mml:math display="inline" id="math57-0037549712470733">
+<mml:mrow>
+<mml:mtext>Intvar</mml:mtext>
+<mml:mo>×</mml:mo>
+<mml:mtext>RS</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where Intvar is a set of values for internal variables and RS is a set of interaction rules:</p>
+<p><disp-formula id="disp-formula5-0037549712470733">
+<mml:math display="block" id="math58-0037549712470733">
+<mml:mrow>
+<mml:mi mathvariant="bold">if</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mtext>condition</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi mathvariant="bold">then</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mtext>execute</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>act</mml:mi>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0037549712470733" xlink:href="10.1177_0037549712470733-eq5.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula54-0037549712470733">
+<mml:math display="inline" id="math59-0037549712470733">
+<mml:mrow>
+<mml:mi>act</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>Act</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and condition is a statement about the situation the agent is in and the actual values of the variables in Intvar. Both condition and <inline-formula id="inline-formula55-0037549712470733">
+<mml:math display="inline" id="math60-0037549712470733">
+<mml:mrow>
+<mml:mi>act</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> might involve other agents called interaction partners.</p>
+<p><italic>Observers</italic> are configured to log the interactions of model agents in their interaction histories: <inline-formula id="inline-formula56-0037549712470733">
+<mml:math display="inline" id="math61-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>IH</mml:mtext>
+<mml:mrow>
+<mml:mtext>Exec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is used to log executed interactions, whereas <inline-formula id="inline-formula57-0037549712470733">
+<mml:math display="inline" id="math62-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>IH</mml:mtext>
+<mml:mrow>
+<mml:mtext>NExec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> logs the numbers of considered but not executed actions (<xref ref-type="table" rid="table2-0037549712470733">Tables 2</xref> and <xref ref-type="table" rid="table3-0037549712470733">3</xref>). An <inline-formula id="inline-formula58-0037549712470733">
+<mml:math display="inline" id="math63-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>IH</mml:mtext>
+<mml:mrow>
+<mml:mtext>Exec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> entry may contain any information related to an observed interaction. For instance, an <italic>observer</italic> may store that the model agent <inline-formula id="inline-formula59-0037549712470733">
+<mml:math display="inline" id="math64-0037549712470733">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> executed an action <inline-formula id="inline-formula60-0037549712470733">
+<mml:math display="inline" id="math65-0037549712470733">
+<mml:mrow>
+<mml:mi>act</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>Act</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> with time stamp <inline-formula id="inline-formula61-0037549712470733">
+<mml:math display="inline" id="math66-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> along with the set of interaction partners <inline-formula id="inline-formula62-0037549712470733">
+<mml:math display="inline" id="math67-0037549712470733">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<table-wrap id="table2-0037549712470733" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Interaction history of executed actions (<inline-formula id="inline-formula63-0037549712470733">
+<mml:math display="inline" id="math68-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>IH</mml:mtext>
+<mml:mrow>
+<mml:mtext>Exec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>) inside an <italic>observer</italic>.</p>
+</caption>
+<graphic alternate-form-of="table2-0037549712470733" xlink:href="10.1177_0037549712470733-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Time</th>
+<th align="left">Agent</th>
+<th align="left">Action</th>
+<th align="left">Interaction partners</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><inline-formula id="inline-formula64-0037549712470733">
+<mml:math display="inline" id="math69-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula65-0037549712470733">
+<mml:math display="inline" id="math70-0037549712470733">
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>Activate</td>
+<td><inline-formula id="inline-formula66-0037549712470733">
+<mml:math display="inline" id="math71-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula67-0037549712470733">
+<mml:math display="inline" id="math72-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula68-0037549712470733">
+<mml:math display="inline" id="math73-0037549712470733">
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>Activate</td>
+<td><inline-formula id="inline-formula69-0037549712470733">
+<mml:math display="inline" id="math74-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula70-0037549712470733">
+<mml:math display="inline" id="math75-0037549712470733">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula71-0037549712470733">
+<mml:math display="inline" id="math76-0037549712470733">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula72-0037549712470733">
+<mml:math display="inline" id="math77-0037549712470733">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula73-0037549712470733">
+<mml:math display="inline" id="math78-0037549712470733">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula74-0037549712470733">
+<mml:math display="inline" id="math79-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula75-0037549712470733">
+<mml:math display="inline" id="math80-0037549712470733">
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>Activate</td>
+<td><inline-formula id="inline-formula76-0037549712470733">
+<mml:math display="inline" id="math81-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula77-0037549712470733">
+<mml:math display="inline" id="math82-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula78-0037549712470733">
+<mml:math display="inline" id="math83-0037549712470733">
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>7</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>Activate</td>
+<td><inline-formula id="inline-formula79-0037549712470733">
+<mml:math display="inline" id="math84-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table3-0037549712470733" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Interaction history of computed but unexecuted actions (<inline-formula id="inline-formula80-0037549712470733">
+<mml:math display="inline" id="math85-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>IH</mml:mtext>
+<mml:mrow>
+<mml:mtext>Nxec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>) inside an <italic>observer</italic>.</p>
+</caption>
+<graphic alternate-form-of="table3-0037549712470733" xlink:href="10.1177_0037549712470733-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Time</th>
+<th align="left">Action</th>
+<th align="left">Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><inline-formula id="inline-formula81-0037549712470733">
+<mml:math display="inline" id="math86-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>Activate</td>
+<td><inline-formula id="inline-formula82-0037549712470733">
+<mml:math display="inline" id="math87-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula83-0037549712470733">
+<mml:math display="inline" id="math88-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>Activate</td>
+<td><inline-formula id="inline-formula84-0037549712470733">
+<mml:math display="inline" id="math89-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula85-0037549712470733">
+<mml:math display="inline" id="math90-0037549712470733">
+<mml:mrow>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula86-0037549712470733">
+<mml:math display="inline" id="math91-0037549712470733">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td><inline-formula id="inline-formula87-0037549712470733">
+<mml:math display="inline" id="math92-0037549712470733">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>⋮</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula88-0037549712470733">
+<mml:math display="inline" id="math93-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>15</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>Activate</td>
+<td><inline-formula id="inline-formula89-0037549712470733">
+<mml:math display="inline" id="math94-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>15</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula90-0037549712470733">
+<mml:math display="inline" id="math95-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>23</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>Activate</td>
+<td><inline-formula id="inline-formula91-0037549712470733">
+<mml:math display="inline" id="math96-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>23</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula92-0037549712470733">
+<mml:math display="inline" id="math97-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>32</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>Activate</td>
+<td><inline-formula id="inline-formula93-0037549712470733">
+<mml:math display="inline" id="math98-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>32</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>An <italic>observer</italic> extracts group behaviours from the logged data by applying a pattern recognition algorithm. In this section, we present results based on clustering, which will be explained next.</p>
+</sec>
+<sec id="section14-0037549712470733">
+<title>4.2 Learning and abstraction</title>
+<p>In our prototype, an <italic>observer</italic> logs interaction partners in combination with the time of the interaction. Once the interaction history <inline-formula id="inline-formula94-0037549712470733">
+<mml:math display="inline" id="math99-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>IH</mml:mtext>
+<mml:mrow>
+<mml:mtext>Exec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> has grown beyond a certain threshold, the <italic>observer</italic> applies a <italic>k</italic>-means clustering algorithm<sup><xref ref-type="bibr" rid="bibr49-0037549712470733">49</xref></sup> to find a large cluster <inline-formula id="inline-formula95-0037549712470733">
+<mml:math display="inline" id="math100-0037549712470733">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> of overlapping interaction partners. The similarity between two interactions is calculated based on the number of overlapping interaction partners. When the <italic>observer</italic> finds such a cluster, it infers a generalized group behaviour from the clustered individual interactions by combining their features. The first feature is the set of overlapping interaction partners that are constant for the learned action. Second, the <italic>observer</italic> needs to know when and at which rate it should execute the learned action.</p>
+<p>The <italic>observer</italic> first finds the time range <inline-formula id="inline-formula96-0037549712470733">
+<mml:math display="inline" id="math101-0037549712470733">
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> of the executed action from all of the individual interactions in <inline-formula id="inline-formula97-0037549712470733">
+<mml:math display="inline" id="math102-0037549712470733">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Two cases might happen here: (1) an interaction only occurs within a bound time range; (2) an interaction continuously occurs over time or the <italic>observer</italic> is uncertain whether it has had enough time to determine an upper bound <inline-formula id="inline-formula98-0037549712470733">
+<mml:math display="inline" id="math103-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> of the time range. In order to address the latter case, the <italic>observer</italic> compares the two most recent time stamps an interaction occurs in <inline-formula id="inline-formula99-0037549712470733">
+<mml:math display="inline" id="math104-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>IH</mml:mtext>
+<mml:mrow>
+<mml:mtext>Exec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. If the difference exceeds the observation time, the <italic>observer</italic> sets <inline-formula id="inline-formula100-0037549712470733">
+<mml:math display="inline" id="math105-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> to <inline-formula id="inline-formula101-0037549712470733">
+<mml:math display="inline" id="math106-0037549712470733">
+<mml:mrow>
+<mml:mi>∞</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p>Next, the <italic>observer</italic> extracts the rate of execution defined as the number of executed interactions divided by the number of total computations of the interaction:</p>
+<p><disp-formula id="disp-formula6-0037549712470733">
+<label>(5)</label>
+<mml:math display="block" id="math107-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>exec</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mtext>I</mml:mtext>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>Exec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mtext>I</mml:mtext>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>Exec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mtext>ihn</mml:mtext>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>ihn</mml:mtext>
+<mml:mo>∈</mml:mo>
+<mml:mtext>I</mml:mtext>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>NExec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>and</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>ihn</mml:mtext>
+<mml:mo>.</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0037549712470733" xlink:href="10.1177_0037549712470733-eq6.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula102-0037549712470733">
+<mml:math display="inline" id="math108-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>IH</mml:mtext>
+<mml:mrow>
+<mml:mtext>Exec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the set of executed interactions, ihn is the set of considered but not executed interactions whose timestamp is in <inline-formula id="inline-formula103-0037549712470733">
+<mml:math display="inline" id="math109-0037549712470733">
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula104-0037549712470733">
+<mml:math display="inline" id="math110-0037549712470733">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> denotes the size of a set.</p>
+<p>For example, all of the <inline-formula id="inline-formula105-0037549712470733">
+<mml:math display="inline" id="math111-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>IH</mml:mtext>
+<mml:mrow>
+<mml:mtext>Exec</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> records in <xref ref-type="table" rid="table2-0037549712470733">Tables 2</xref> and <xref ref-type="table" rid="table3-0037549712470733">3</xref> constitute a cluster in which <inline-formula id="inline-formula106-0037549712470733">
+<mml:math display="inline" id="math112-0037549712470733">
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is inferred from the first column. The second column (<inline-formula id="inline-formula107-0037549712470733">
+<mml:math display="inline" id="math113-0037549712470733">
+<mml:mrow>
+<mml:mi>ags</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>) is discarded and regarded as wildcard, the set of interaction partners is fixed to <inline-formula id="inline-formula108-0037549712470733">
+<mml:math display="inline" id="math114-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula109-0037549712470733">
+<mml:math display="inline" id="math115-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>exec</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is calculated as described above.</p>
+<p>Finally, the <italic>observer</italic> removes the action <inline-formula id="inline-formula110-0037549712470733">
+<mml:math display="inline" id="math116-0037549712470733">
+<mml:mrow>
+<mml:mi>act</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> from the model agent. From now on, it performs the action on the model agent’s behalf. For instance, an <italic>observer</italic> may learn that action <inline-formula id="inline-formula111-0037549712470733">
+<mml:math display="inline" id="math117-0037549712470733">
+<mml:mrow>
+<mml:mi>act</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> of an agent <inline-formula id="inline-formula112-0037549712470733">
+<mml:math display="inline" id="math118-0037549712470733">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> occurs at <inline-formula id="inline-formula113-0037549712470733">
+<mml:math display="inline" id="math119-0037549712470733">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>.</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and executes it on <inline-formula id="inline-formula114-0037549712470733">
+<mml:math display="inline" id="math120-0037549712470733">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>’s behalf with an according probability <inline-formula id="inline-formula115-0037549712470733">
+<mml:math display="inline" id="math121-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>exec</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Since the <italic>observer</italic> also learns the interaction partners an action depends on, the computational resources to identify those are saved as well.</p>
+</sec>
+<sec id="section15-0037549712470733">
+<title>4.3 Validation of the learned behaviours</title>
+<p>After some time, a learned behaviour may no longer be valid. In order to monitor the reliability of a learned behaviour, it is initialized with an unbiased confidence value <inline-formula id="inline-formula116-0037549712470733">
+<mml:math display="inline" id="math122-0037549712470733">
+<mml:mrow>
+<mml:mi>con</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>initial</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>50</mml:mn>
+<mml:mi>%</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>. At regular time intervals, the <italic>observer</italic> lets some model agents execute their original interactions. The confidence value is regulated based on the difference between the actual behaviour of model agents compared with the behaviour expected by the <italic>observer</italic> (<xref ref-type="fig" rid="fig8-0037549712470733">Figure 8</xref>). In our prototype, we only consider the difference in interaction partners. The time at which an individual interaction occurs or the rate at which model agents execute their interactions could also be incorporated into the comparison. A confidence measure below a given threshold indicates that a learned group behaviour is not valid any longer and that the <italic>observer</italic> has to restore the model agents’ original behaviours.</p>
+<fig id="fig8-0037549712470733" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Flow chart of the validation step. At some interval, the <italic>observer</italic> selects a random subset of the observed agents and restores their individual behaviours. The result of their interactions is evaluated in the next iteration to regulate the confidence value. The <italic>observer</italic> continues to execute the group behaviour for all other agents.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig8.tif"/>
+</fig>
+</sec>
+<sec id="section16-0037549712470733">
+<title>4.4 Experiments</title>
+<p>The outlined self-organized optimization method can be employed in arbitrary agent simulations. Biological simulations are particularly suitable applications as biological entities will be directly modelled as agents. When simulating biological systems at the level of inter-cellular and inter-molecular interactions, actions are mostly triggered by collisions or internal agent states. We applied our proposed method to an agent-based simulation of blood coagulation described in this section. All of the experiments were repeated 10 times to ensure that a particular experiment did not bias the results.</p>
+<sec id="section17-0037549712470733">
+<title>4.4.1 Model Setup</title>
+<p>Blood coagulates at wound sites because of the interplay of various bio-agents, e.g. platelets, fibrinogens and serotonins. If a collagen protein collides with a platelet, the platelet becomes activated. In case an activated platelet collides with the wound site, it secretes several chemicals which in turn activate more platelets in the blood vessel. Gradually, a network of fibrins together with a platelet plug form a clot around the wound site (<xref ref-type="fig" rid="fig9-0037549712470733">Figure 9</xref>). We modelled 12 blood factors as agents whose behaviours are expressed as a set of interaction rules. There are 10 different interactions which fall into two categories: (1) state-dependent interactions and (2) collision-dependent interactions. The actions themselves introduce local state changes of the agents (represented as internal variables), or they produce or remove agents in the simulation. The simulation starts with 10 agents and ends up with nearly 140 interacting agents (<xref ref-type="fig" rid="fig10-0037549712470733">Figure 10</xref>).</p>
+<fig id="fig9-0037549712470733" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>The blood coagulation simulation at different time steps (<inline-formula id="inline-formula117-0037549712470733">
+<mml:math display="inline" id="math123-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>). The process is observed from two different perspectives: inside and outside of the vessel.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig9.tif"/>
+</fig>
+<fig id="fig10-0037549712470733" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>Blood coagulation simulation: number of agents over time.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig10.tif"/>
+</fig>
+</sec>
+<sec id="section18-0037549712470733">
+<title>4.4.2 Observer setup</title>
+<p>Each interaction is monitored by an <italic>observer</italic> that records only the interaction partners. <xref ref-type="table" rid="table4-0037549712470733">Table 4</xref> lists all the important parameters in our system. Once an <italic>observer</italic> monitors an interaction long enough (<inline-formula id="inline-formula118-0037549712470733">
+<mml:math display="inline" id="math124-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wait</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>), it applies a <italic>k</italic>-means clustering algorithm to create <inline-formula id="inline-formula119-0037549712470733">
+<mml:math display="inline" id="math125-0037549712470733">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> clusters. The centroid of the largest cluster is considered to be the learned group behaviour for which <inline-formula id="inline-formula120-0037549712470733">
+<mml:math display="inline" id="math126-0037549712470733">
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula121-0037549712470733">
+<mml:math display="inline" id="math127-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>exec</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> are inferred. The <italic>observer</italic> subsumes the learned interaction by executing it on behalf of the model agents. In predefined intervals, <inline-formula id="inline-formula122-0037549712470733">
+<mml:math display="inline" id="math128-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>interval</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the <italic>observer</italic> randomly chooses a subset of the subsumed behaviours and allows the model agents to execute their original interactions. The size of this subset is determined by <inline-formula id="inline-formula123-0037549712470733">
+<mml:math display="inline" id="math129-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ratio</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. After some time, <inline-formula id="inline-formula124-0037549712470733">
+<mml:math display="inline" id="math130-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>length</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the <italic>observer</italic> subsumes this subset again and validates its abstractions based on the resulting interaction compared to the expected result. The confidence of the learned pattern is regulated accordingly. If the confidence of a pattern is less than some threshold <inline-formula id="inline-formula125-0037549712470733">
+<mml:math display="inline" id="math131-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>conf</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the learned pattern will be removed from the simulation.</p>
+<table-wrap id="table4-0037549712470733" position="float">
+<label>Table 4.</label>
+<caption>
+<p>System parameters.</p>
+</caption>
+<graphic alternate-form-of="table4-0037549712470733" xlink:href="10.1177_0037549712470733-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Parameter name</th>
+<th align="left">Symbol</th>
+<th align="left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Delay before learning</td>
+<td><inline-formula id="inline-formula126-0037549712470733">
+<mml:math display="inline" id="math132-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wait</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>350</td>
+</tr>
+<tr>
+<td>Validation interval</td>
+<td><inline-formula id="inline-formula127-0037549712470733">
+<mml:math display="inline" id="math133-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>interval</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>70</td>
+</tr>
+<tr>
+<td>Validation length</td>
+<td><inline-formula id="inline-formula128-0037549712470733">
+<mml:math display="inline" id="math134-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>length</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>10</td>
+</tr>
+<tr>
+<td>Validation ratio</td>
+<td><inline-formula id="inline-formula129-0037549712470733">
+<mml:math display="inline" id="math135-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ratio</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>30%</td>
+</tr>
+<tr>
+<td>Confidence threshold</td>
+<td><inline-formula id="inline-formula130-0037549712470733">
+<mml:math display="inline" id="math136-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>conf</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>0.3</td>
+</tr>
+<tr>
+<td>Number of clusters in <italic>k</italic>-means</td>
+<td><inline-formula id="inline-formula131-0037549712470733">
+<mml:math display="inline" id="math137-0037549712470733">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td>10</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section19-0037549712470733">
+<title>4.4.3 Results</title>
+<p>The presented prototype implementation successfully identified several group behaviours within the simulation. For example, “Random walk” is a self-triggering action found to be executed with probability <inline-formula id="inline-formula132-0037549712470733">
+<mml:math display="inline" id="math138-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>exec</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>100</mml:mn>
+<mml:mi>%</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula133-0037549712470733">
+<mml:math display="inline" id="math139-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>∞</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. “Adhere” is an interaction executed in <inline-formula id="inline-formula134-0037549712470733">
+<mml:math display="inline" id="math140-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>172</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>∞</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> with probability <inline-formula id="inline-formula135-0037549712470733">
+<mml:math display="inline" id="math141-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>exec</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>65</mml:mn>
+<mml:mi>%</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>. “Self-activation” is another collision-based example with <inline-formula id="inline-formula136-0037549712470733">
+<mml:math display="inline" id="math142-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>exec</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>8</mml:mn>
+<mml:mi>%</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula137-0037549712470733">
+<mml:math display="inline" id="math143-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>173</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>190</mml:mn>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p><xref ref-type="fig" rid="fig11-0037549712470733">Figure 11(a)</xref> shows the actual run-time of the simulation at each time step. When there is no <italic>observer</italic>, the simulation slows down as it proceeds, as simulating the interactions among the increasing number of agents requires more computations. When the <italic>observers</italic> are present in the simulation logging interaction data (<inline-formula id="inline-formula138-0037549712470733">
+<mml:math display="inline" id="math144-0037549712470733">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>&lt;</mml:mo>
+<mml:mn>350</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>), they add a little overhead to the run-time of the whole simulation. At <inline-formula id="inline-formula139-0037549712470733">
+<mml:math display="inline" id="math145-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>350</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> when the learning happens, there is a peak in the run-time. However, once successfully deployed, the <italic>observers</italic> reduce the run-time drastically by executing group behaviours instead of individual behaviours. The validation cycle is triggered every <inline-formula id="inline-formula140-0037549712470733">
+<mml:math display="inline" id="math146-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>interval</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>70</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> time steps, therefore there is a fairly high peak at this interval. It continues for <inline-formula id="inline-formula141-0037549712470733">
+<mml:math display="inline" id="math147-0037549712470733">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>length</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>10</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> time steps before the learned pattern is evaluated. After this time, the simulation runs fast again until the next validation cycle.</p>
+<fig id="fig11-0037549712470733" position="float">
+<label>Figure 11.</label>
+<caption>
+<p>Blood coagulation simulation: run-time with and without <italic>observers</italic> : (a) run-time per simulation time step; (b) cumulative run-time.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig11.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig11-0037549712470733">Figure 11(b)</xref> depicts the cumulative run-time of the simulation comparing a normal run against a run with <italic>observers</italic> . The overhead of having <italic>observers</italic> clearly pays off at <inline-formula id="inline-formula142-0037549712470733">
+<mml:math display="inline" id="math148-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>390</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, when the cumulative run-time of a normal run exceeds that of a run with <italic>observers</italic> . On average, a normal run takes 107 seconds to complete 1000 simulation time steps, almost twice as long as the run with the <italic>observers</italic>, which takes 56 seconds.</p>
+<p><xref ref-type="fig" rid="fig12-0037549712470733">Figure 12</xref> shows the change of confidence for one of the learned patterns. Since there is no learned pattern before <inline-formula id="inline-formula143-0037549712470733">
+<mml:math display="inline" id="math149-0037549712470733">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>350</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the confidence value is also <inline-formula id="inline-formula144-0037549712470733">
+<mml:math display="inline" id="math150-0037549712470733">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. However, after the <italic>observer</italic> abstracts an individual behaviour, the confidence value is initially set to <inline-formula id="inline-formula145-0037549712470733">
+<mml:math display="inline" id="math151-0037549712470733">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. As all the abstractions work correctly, the confidence values continuously increase over time.</p>
+<fig id="fig12-0037549712470733" position="float">
+<label>Figure 12.</label>
+<caption>
+<p>The confidence value over time shown for an exemplarily learned pattern.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712470733-fig12.tif"/>
+</fig>
+</sec>
+</sec>
+</sec>
+<sec id="section20-0037549712470733" sec-type="conclusions">
+<title>5. Conclusion and future work</title>
+<p>We introduced a concept for the reduction of computational complexity in agent-based models by means of learning behavioural patterns over the course of a simulation. The abstractions would be expressed as meta-agents that subsume lower-level agents and be seamlessly integrated into the agent models.</p>
+<p>We presented and evaluated three implementations. (1) The first utilized ANNs to learn collective processes in the flux of concentrations of the MAPK signalling pathway. Here, the learned abstractions were constantly updated to consider a growing number of agents. As a result, the abstractions lost their validity at some point, they were removed from the simulation and relearned. (2) In the second implementation, which relied on GP for learning collective behaviours, the abstractions were not completely revoked when becoming invalid, but they were restored to their previous states. (3) In the third implementation, <italic>observer</italic> agents detected group behaviours and managed the resulting abstractions. We demonstrated the effectiveness of this implementation in the context of a blood coagulation model. We proposed two algorithms to monitor the validity of abstractions by comparing the expected group interactions to the interactions of the actual individuals at regular intervals.</p>
+<p>In order to further our approach, we suggest the automatic proliferation of a diverse set of <italic>observer agents</italic> based on their workload. An evolution of agents that are primed to identify frequently occurring patterns could be implemented, yielding a self-organized learning system that adapts to specific model domains and even to niches inside of simulation spaces.</p>
+<p>The relation between group behaviours and emergent phenomena is another promising area to be investigated in the given context. The possibility to incorporate predefined high-level patterns should be considered. If patterns are described at different scales, multi-scale modelling can be restated as finding transitions from low-level to higher-level patterns.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>This work has been partially supported by the Natural Sciences and Engineering Research Council of Canada.</p>
+</ack>
+<bio>
+<title>Author biographies</title>
+<p><bold>Abbas Sarraf Shirazi</bold> received his MSc in Artificial Intelligence from Amirkabir University of Technology, Iran, where he studied evolutionary algorithms, statistical pattern recognition techniques, and artificial neural networks to detect patterns in noisy environments. In September 2009, he started his PhD studies in the Evolutionary and Swarm Design research group in the Department of Computer Science at the University of Calgary. His research includes learning and abstraction in complex agent-based simulations. As a researcher in the LINDSAY - Virtual Human, his abstraction mechanisms both speed up the simulation time and also provide a big picture understanding of biological simulations.</p>
+<p><bold>Sebastian von Mammen</bold> graduated from the University of Erlangen-Nuremberg, Germany, with a Diploma Degree in Computer Science (Diplom Informatik Univ.) and a Minor in Education in Fine Arts in 2005. From 2006 to 2009, he pursued his PhD studies at the University of Calgary, Canada, developing and formalizing Swarm Grammars, a swarm-inspired, multi-agent representation for modelling complex, self-organizing, spatial interaction networks and developmental processes. Until 2012, as a postdoctoral fellow and the project manager of the LINDSAY - Virtual Human, his research focused on application-oriented modelling and simulation of self-organized systems. He continues to pursue these interests as a consultant of the Lindsay Virtual Human project and as a research fellow at the University of Augsburg, Germany.</p>
+<p><bold>Christian Jacob</bold> received his PhD in Computer Science from the University of Erlangen-Nuremberg, Germany. In July 1999, he joined the Department of Computer Science (Faculty of Science) at the University of Calgary. Since August 2003, he also holds a joint appointment with the Department of Biochemistry and Molecular Biology (Faculty of Medicine), where he is the Director of Bioinformatics in the Bachelor of Health Sciences Program. He leads the Evolutionary and Swarm Design research group of the Artificial Intelligence Laboratory in the Department of Computer Science. He is also the lead investigator in the LINDSAY - Virtual Human project, a collaboration with Undergraduate Medical Education (UME) in the Faculty of Medicine. LINDSAY is an interactive, three-dimensional computer model of male and female anatomy and physiology (<ext-link ext-link-type="uri" xlink:href="http://lindsayvirtualhuman.org">http://lindsayvirtualhuman.org</ext-link>).</p>
+</bio>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0037549712470733">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Dessalles</surname><given-names>JL</given-names></name>
+<name><surname>Phan</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Emergence in multi-agent systems: cognitive hierarchy, detection, and complexity reduction part I: methodological issues</article-title>. <source>Artificial Econ</source> <year>2006</year>; <volume>564</volume>: <fpage>147</fpage>–<lpage>159</lpage>.</citation>
+</ref>
+<ref id="bibr2-0037549712470733">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jacob</surname><given-names>C</given-names></name>
+<name><surname>Burleigh</surname><given-names>I</given-names></name>
+</person-group>. <article-title>Biomolecular swarms: an agent-based model of the lactose operon</article-title>. <source>Natural Comput</source> <year>2004</year>; <volume>3</volume>: <fpage>361</fpage>–<lpage>376</lpage>.</citation>
+</ref>
+<ref id="bibr3-0037549712470733">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>CC</given-names></name>
+<name><surname>Nagl</surname><given-names>SB</given-names></name>
+<name><surname>Clack</surname><given-names>CD</given-names></name>
+</person-group>. <article-title>Identifying multi-level emergent behaviors in agent-directed simulations using complex event type specifications</article-title>. <source>Simulation</source> <year>2010</year>; <volume>86</volume>: <fpage>41</fpage>–<lpage>51</lpage>.</citation>
+</ref>
+<ref id="bibr4-0037549712470733">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Corning</surname><given-names>PA</given-names></name>
+</person-group>. <article-title>The re-emergence of “emergence”: A venerable concept in search of a theory</article-title>. <source>Complexity</source> <year>2002</year>; <volume>7</volume>(<issue>6</issue>): <fpage>18</fpage>–<lpage>30</lpage>.</citation>
+</ref>
+<ref id="bibr5-0037549712470733">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bonabeau</surname><given-names>E</given-names></name>
+</person-group>. <article-title>Agent-based modeling: methods and techniques for simulating human systems</article-title>. <source>Proc Natl Acad Sci USA</source> <year>2002</year>; <volume>99</volume>(<supplement>Suppl. 3</supplement>): <fpage>7280</fpage>–<lpage>7287</lpage>.</citation>
+</ref>
+<ref id="bibr6-0037549712470733">
+<label>6.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Shirazi</surname><given-names>AS</given-names></name>
+<name><surname>von Mammen</surname><given-names>S</given-names></name>
+<name><surname>Yazdanbod</surname><given-names>I</given-names></name>
+<name><surname>Jacob</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Self-organized learning of collective behaviours in agent-based simulations</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Sayama</surname><given-names>H</given-names></name>
+<name><surname>Minai</surname><given-names>AA</given-names></name>
+<name><surname>Braha</surname><given-names>D</given-names></name>
+<name><surname>Bar-Yam</surname><given-names>Y</given-names></name>
+</person-group> (eds), <conf-name>ICCS 2011 - 8th International Conference on Complex Systems</conf-name>. <conf-loc>Boston, MA: NECSI Knowledge Press</conf-loc>, <conf-date>2011</conf-date>.</citation>
+</ref>
+<ref id="bibr7-0037549712470733">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zhang</surname><given-names>L</given-names></name>
+<name><surname>Wang</surname><given-names>Z</given-names></name>
+<name><surname>Sagotsky</surname><given-names>JA</given-names></name>
+<name><surname>Deisboeck</surname><given-names>TS</given-names></name>
+</person-group>. <article-title>Multiscale agent-based cancer modeling</article-title>. <source>J Math Biol</source> <year>2009</year>; <volume>58</volume>: <fpage>545</fpage>–<lpage>559</lpage>.</citation>
+</ref>
+<ref id="bibr8-0037549712470733">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Desmeulles</surname><given-names>G</given-names></name>
+<name><surname>Querrec</surname><given-names>G</given-names></name>
+<name><surname>Redou</surname><given-names>P</given-names></name>
+<name><surname>Kerdelo</surname><given-names>S</given-names></name>
+<name><surname>Misery</surname><given-names>L</given-names></name>
+<name><surname>Rodin</surname><given-names>V</given-names></name><etal/>
+</person-group>. <article-title>The virtual reality applied to biology understanding: The in virtuo experimentation</article-title>. <source>Expert Syst Applications</source> <year>2006</year>; <volume>30</volume>: <fpage>82</fpage>–<lpage>92</lpage>.</citation>
+</ref>
+<ref id="bibr9-0037549712470733">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bandini</surname><given-names>S</given-names></name>
+<name><surname>Manzoni</surname><given-names>S</given-names></name>
+<name><surname>Vizzari</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Multi-agent modeling of the immune system: The situated cellular agents approach</article-title>. <source>Multiagent Grid Syst</source> <year>2007</year>; <volume>3</volume>: <fpage>173</fpage>–<lpage>182</lpage>.</citation>
+</ref>
+<ref id="bibr10-0037549712470733">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Vicsek</surname><given-names>T</given-names></name>
+<name><surname>Zafiris</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Collective motion</article-title>. <source>Phys Rep</source> <year>2012</year>; <volume>517</volume>: <fpage>71</fpage>–<lpage>140</lpage>.</citation>
+</ref>
+<ref id="bibr11-0037549712470733">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Salazar-Ciudad</surname><given-names>I</given-names></name>
+</person-group>. <article-title>Tooth morphogenesis in vivo, in vitro, and in silico</article-title>. <source>Curr Top Dev Biol</source> <year>2008</year>; <volume>81</volume>: <fpage>342</fpage>.</citation>
+</ref>
+<ref id="bibr12-0037549712470733">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zucker</surname><given-names>JD</given-names></name>
+</person-group>. <article-title>A grounded theory of abstraction in artificial intelligence</article-title>. <source>Phil Trans R Soc Lond Ser B Biol Sci</source> <year>2003</year>; <volume>358</volume>: <fpage>1293</fpage>–<lpage>1309</lpage>.</citation>
+</ref>
+<ref id="bibr13-0037549712470733">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Goldstone</surname><given-names>RL</given-names></name>
+<name><surname>Barsalou</surname><given-names>LW</given-names></name>
+</person-group>. <article-title>Reuniting perception and conception</article-title>. <source>Cognition</source> <year>1998</year>; <volume>65</volume>: <fpage>231</fpage>–<lpage>262</lpage>.</citation>
+</ref>
+<ref id="bibr14-0037549712470733">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Banzhaf</surname><given-names>W</given-names></name>
+</person-group>. <article-title>Artificial chemistries - towards constructive dynamical systems</article-title>. <source>Solid State Phenomena</source> <year>2004</year>; <volume>97–98</volume>: <fpage>43</fpage>–<lpage>50</lpage>.</citation>
+</ref>
+<ref id="bibr15-0037549712470733">
+<label>15.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Prusinkiewicz</surname><given-names>P</given-names></name>
+<name><surname>Lindenmayer</surname><given-names>A</given-names></name>
+</person-group>. <source>The Algorithmic Beauty of Plants</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer-Verlag</publisher-name>, <year>1996</year>.</citation>
+</ref>
+<ref id="bibr16-0037549712470733">
+<label>16.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kniemeyer</surname><given-names>O</given-names></name>
+<name><surname>Barczik</surname><given-names>G</given-names></name>
+<name><surname>Hemmerling</surname><given-names>R</given-names></name>
+<name><surname>Kurth</surname><given-names>W</given-names></name>
+</person-group>. <article-title>Relational growth grammars—a parallel graph transformation approach with applications in biology and architecture</article-title>. In: <conf-name>Applications of Graph Transformations with Industrial Relevance: Third International Symposium, AGTIVE 2007</conf-name>, <conf-loc>Kassel, Germany</conf-loc>, <conf-date>10–12 October 2007</conf-date>, Revised Selected and Invited Papers. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer-Verlag</publisher-name>, <year>2008</year>; pp. <fpage>152</fpage>–<lpage>167</lpage>.</citation>
+</ref>
+<ref id="bibr17-0037549712470733">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>von Mammen</surname><given-names>S</given-names></name>
+<name><surname>Jacob</surname><given-names>C</given-names></name>
+</person-group>. <article-title>The evolution of swarm grammars: growing trees, crafting art and bottom-up design</article-title>. <source>IEEE Computat Intell Mag</source> <year>2009</year>; <volume>4</volume>(<issue>3</issue>): <fpage>10</fpage>–<lpage>19</lpage>.</citation>
+</ref>
+<ref id="bibr18-0037549712470733">
+<label>18.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Kauffman</surname><given-names>S</given-names></name>
+</person-group>. <source>At Home in the Universe: The Search for the Laws of Self-Organization and Complexity</source>. <publisher-loc>Oxford</publisher-loc>: <publisher-name>Oxford University Press</publisher-name>, <year>1995</year>.</citation>
+</ref>
+<ref id="bibr19-0037549712470733">
+<label>19.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Eigen</surname><given-names>M</given-names></name>
+<name><surname>Schuster</surname><given-names>P</given-names></name>
+</person-group>. <article-title>The hypercycle</article-title>. <source>Naturwissen schaften</source> <year>1978</year>; <volume>65</volume>: <fpage>7</fpage>–<lpage>41</lpage>.</citation>
+</ref>
+<ref id="bibr20-0037549712470733">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Schuster</surname><given-names>P</given-names></name>
+</person-group>. <article-title>How does complexity arise in evolution</article-title>. <source>Complex</source> <year>1996</year>; <volume>2</volume>: <fpage>22</fpage>–<lpage>30</lpage>.</citation>
+</ref>
+<ref id="bibr21-0037549712470733">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Rasmussen</surname><given-names>S</given-names></name>
+<name><surname>Baas</surname><given-names>NA</given-names></name>
+<name><surname>Mayer</surname><given-names>B</given-names></name>
+<name><surname>Nilsson</surname><given-names>M</given-names></name>
+<name><surname>Olesen</surname><given-names>MW</given-names></name>
+</person-group>. <article-title>Ansatz for dynamical hierarchies</article-title>. <source>Artificial Life</source> <year>2002</year>; <volume>7</volume>: <fpage>329</fpage>–<lpage>353</lpage>.</citation>
+</ref>
+<ref id="bibr22-0037549712470733">
+<label>22.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Dorin</surname><given-names>A</given-names></name>
+<name><surname>McCormack</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Self-assembling dynamical hierarchies</article-title>. <source>Artificial Life</source> <year>2003</year>; <volume>8</volume>: <fpage>423</fpage>.</citation>
+</ref>
+<ref id="bibr23-0037549712470733">
+<label>23.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Bosse</surname><given-names>T</given-names></name>
+<name><surname>Hoogendoorn</surname><given-names>M</given-names></name>
+<name><surname>Klein</surname><given-names>MCA</given-names></name>
+<name><surname>Treur</surname><given-names>J</given-names></name>
+</person-group>. <article-title>A three-dimensional abstraction framework to compare multi-agent system models</article-title>. In: <conf-name>Proceedings of the Second International Conference on Computational Collective Intelligence: Technologies and Applications</conf-name>. <conf-loc>Heidelberg: Springer-Verlag</conf-loc>, <conf-date>2010</conf-date>, pp. <fpage>306</fpage>–<lpage>319</lpage>.</citation>
+</ref>
+<ref id="bibr24-0037549712470733">
+<label>24.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Ralambondrainy</surname><given-names>T</given-names></name>
+<name><surname>Courdier</surname><given-names>R</given-names></name>
+<name><surname>Payet</surname><given-names>D</given-names></name>
+</person-group>. <article-title>An ontology for observation of multiagent based simulation</article-title>. In: <conf-name>IAT Workshops</conf-name>. <conf-loc>Los Alamitos, CA: IEEE Computer Society</conf-loc>, <conf-date>2006</conf-date>, pp. <fpage>351</fpage>–<lpage>354</lpage>. Available at: <ext-link ext-link-type="uri" xlink:href="http://dblp.uni-trier.de/db/conf/iat/iatw2006.html#RalambondrainyCP06">http://dblp.uni-trier.de/db/conf/iat/iatw2006.html#RalambondrainyCP06</ext-link>.</citation>
+</ref>
+<ref id="bibr25-0037549712470733">
+<label>25.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Servat</surname><given-names>D</given-names></name>
+<name><surname>Perrier</surname><given-names>E</given-names></name>
+<name><surname>Treuil</surname><given-names>JP</given-names></name>
+<name><surname>Drogoul</surname><given-names>A</given-names></name>
+</person-group>. <article-title>When agents emerge from agents: introducing multi-scale viewpoints in multi-agent simulations</article-title>. In: <conf-name>Proceedings of the First International Workshop on Multi-Agent Systems and Agent-Based Simulation</conf-name>. <publisher-loc>London</publisher-loc>: <publisher-name>Springer-Verlag</publisher-name>, <conf-date>1998</conf-date>, pp. <fpage>183</fpage>–<lpage>198</lpage>.</citation>
+</ref>
+<ref id="bibr26-0037549712470733">
+<label>26.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>CC</given-names></name>
+<name><surname>Nagl</surname><given-names>SB</given-names></name>
+<name><surname>Clack</surname><given-names>CD</given-names></name>
+</person-group>. <article-title>Multi-level behaviours in agent-based simulation: colonic crypt cell populations</article-title>. In: <conf-name>Proceedings of the Seventh International Conference on Complex Systems</conf-name>, <conf-date>2008</conf-date>; available at: <ext-link ext-link-type="uri" xlink:href="http://necsi.org/events/iccs7/papers/74bfc021da489126748d7ed5185e.pdf">http://necsi.org/events/iccs7/papers/74bfc021da489126748d7ed5185e.pdf</ext-link>.</citation>
+</ref>
+<ref id="bibr27-0037549712470733">
+<label>27.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Denzinger</surname><given-names>J</given-names></name>
+<name><surname>Hamdan</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Improving observation-based modeling of other agents using tentative stereotyping and compactification through kd-tree structuring</article-title>. <source>Web Intell Agent Syst</source> <year>2006</year>; <volume>4</volume>: <fpage>255</fpage>–<lpage>270</lpage>.</citation>
+</ref>
+<ref id="bibr28-0037549712470733">
+<label>28.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lavelle</surname><given-names>C</given-names></name>
+<name><surname>Berry</surname><given-names>H</given-names></name>
+<name><surname>Beslon</surname><given-names>G</given-names></name>
+<name><surname>Ginelli</surname><given-names>F</given-names></name>
+<name><surname>Giavitto</surname><given-names>JLJL</given-names></name>
+<name><surname>Kapoula</surname><given-names>Z</given-names></name><etal/>
+</person-group>. <article-title>From Molecules to organisms: towards multiscale integrated models of biological systems</article-title>. <source>Theor Biol Insights</source> <year>2008</year>; <volume>1</volume>: <fpage>13</fpage>–<lpage>22</lpage>.</citation>
+</ref>
+<ref id="bibr29-0037549712470733">
+<label>29.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Cardon</surname><given-names>A</given-names></name>
+</person-group>. <source>Design and Behavior of a Massive Organization of Agents (Design of Intelligent Multi-Agent Systems</source>, <volume>vol. 162</volume>). <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2004</year>, pp. <fpage>133</fpage>–<lpage>190</lpage>.</citation>
+</ref>
+<ref id="bibr30-0037549712470733">
+<label>30.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>von Mammen</surname><given-names>S</given-names></name>
+<name><surname>Steghöfer</surname><given-names>JP</given-names></name>
+<name><surname>Denzinger</surname><given-names>J</given-names></name>
+<name><surname>Jacob</surname><given-names>C</given-names></name>
+<name><surname>Stehöfer</surname><given-names>JP</given-names></name>
+</person-group>. <article-title>Self-organized middle-out abstraction</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Bettstetter</surname><given-names>C</given-names></name>
+<name><surname>Gershenson</surname><given-names>C</given-names></name>
+</person-group> (eds), <conf-name>IWSOS 2011: 5th International Workshop on Self-Organizing Systems</conf-name>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <conf-date>2011</conf-date>, pp. <fpage>26</fpage>–<lpage>31</lpage>.</citation>
+</ref>
+<ref id="bibr31-0037549712470733">
+<label>31.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Sarraf Shirazi</surname><given-names>A</given-names></name>
+<name><surname>von Mammen</surname><given-names>S</given-names></name>
+<name><surname>Jacob</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Adaptive modularization of the MAPK signaling pathway using the multiagent paradigm</article-title>. In: <conf-name>PPSN’10: Proceedings of the 11th International Conference on Parallel Problem Solving from Nature: Part II (Lecture Notes in Computer Science</conf-name>, <volume>vol. 6239</volume>). <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <conf-date>2010</conf-date>, pp. <fpage>401</fpage>–<lpage>410</lpage>.</citation>
+</ref>
+<ref id="bibr32-0037549712470733">
+<label>32.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Sarraf Shirazi</surname><given-names>A</given-names></name>
+<name><surname>von Mammen</surname><given-names>S</given-names></name>
+<name><surname>Jacob</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Hierarchical self-organized learning in agent-based modeling of the MAPK signaling pathway</article-title>. In: <conf-name>2011 IEEE Congress on Evolutionary Computation (CEC)</conf-name>, <conf-date>2011</conf-date>, pp. <fpage>2245</fpage>–<lpage>2251</lpage>.</citation>
+</ref>
+<ref id="bibr33-0037549712470733">
+<label>33.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>J</given-names></name>
+<name><surname>Kwauk</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Exploring complex systems in chemical engineering - the multi-scale methodology</article-title>. <source>Chem Eng Sci</source> <year>2003</year>; <volume>58</volume>: <fpage>521</fpage>–<lpage>535</lpage>.</citation>
+</ref>
+<ref id="bibr34-0037549712470733">
+<label>34.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Eissing</surname><given-names>T</given-names></name>
+<name><surname>Kuepfer</surname><given-names>L</given-names></name>
+<name><surname>Becker</surname><given-names>C</given-names></name>
+<name><surname>Block</surname><given-names>M</given-names></name>
+<name><surname>Coboeken</surname><given-names>K</given-names></name>
+<name><surname>Gaub</surname><given-names>T</given-names></name><etal/>
+</person-group>. <article-title>A computational systems biology software platform for multiscale modeling and simulation: integrating whole-body physiology, disease biology, and molecular reaction networks</article-title>. <source>Front Physiol</source> <year>2011</year>; <volume>2</volume>: <fpage>1</fpage>–<lpage>10</lpage>.</citation>
+</ref>
+<ref id="bibr35-0037549712470733">
+<label>35.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Martins</surname><given-names>ML</given-names></name>
+<name><surname>Ferreira</surname><given-names>SC</given-names><suffix>Jr</suffix></name>
+<name><surname>Vilela</surname><given-names>MJ</given-names></name>
+</person-group>. <article-title>Multiscale models for biological systems</article-title>. <source>Curr Opin Colloid Interface Sci</source> <year>2010</year>; <volume>15</volume>: <fpage>18</fpage>–<lpage>23</lpage>.</citation>
+</ref>
+<ref id="bibr36-0037549712470733">
+<label>36.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Erson</surname><given-names>EZ</given-names></name>
+<name><surname>Cavusoglu</surname><given-names>MC</given-names></name>
+</person-group>. <article-title>A software framework for multiscale and multilevel physiological model integration and simulation</article-title>. In: <conf-name>2008 30th Annual International Conference of the IEEE Engineering in Medicine and Biology Society (2008 EMBS)</conf-name>, <conf-date>2008</conf-date>, pp. <fpage>5449</fpage>–<lpage>5453</lpage>.</citation>
+</ref>
+<ref id="bibr37-0037549712470733">
+<label>37.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Merks</surname><given-names>RMH</given-names></name>
+<name><surname>Glazier</surname><given-names>JA</given-names></name>
+</person-group>. <article-title>A cell-centered approach to developmental biology</article-title>. <source>Physica A</source> <year>2005</year>; <volume>352</volume>: <fpage>113</fpage>–<lpage>130</lpage>.</citation>
+</ref>
+<ref id="bibr38-0037549712470733">
+<label>38.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Haken</surname><given-names>H</given-names></name>
+</person-group>. <source>Synergetics: An Introduction. Nonequilibrium Phase Transitions and Self-organization in Physics, Chemistry and Biology</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer-Verlag</publisher-name>, <year>1977</year>.</citation>
+</ref>
+<ref id="bibr39-0037549712470733">
+<label>39.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Walker</surname><given-names>DC</given-names></name>
+<name><surname>Southgate</surname><given-names>J</given-names></name>
+</person-group>. <article-title>The virtual cell - a candidate co-ordinator for ‘middle-out’ modelling of biological systems</article-title>. <source>Brief Bioinform</source> <year>2009</year>; <volume>10</volume>: <fpage>450</fpage>–<lpage>461</lpage>.</citation>
+</ref>
+<ref id="bibr40-0037549712470733">
+<label>40.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bassingthwaighte</surname><given-names>JB</given-names></name>
+<name><surname>Chizeck</surname><given-names>HJ</given-names></name>
+<name><surname>Atlas</surname><given-names>LE</given-names></name>
+</person-group>. <article-title>Strategies and tactics in multiscale modeling of cell-to-organ systems</article-title>. <source>Proc IEEE</source> <year>2006</year>; <volume>94</volume>: <fpage>819</fpage>–<lpage>831</lpage>.</citation>
+</ref>
+<ref id="bibr41-0037549712470733">
+<label>41.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Amigoni</surname><given-names>F</given-names></name>
+<name><surname>Schiaffonati</surname><given-names>V</given-names></name>
+</person-group>. <article-title>Multiagent-based simulation in biology: a critical analysis</article-title>. <source>Model-Based Reasoning Sci Technol Med</source> <year>2007</year>; <volume>64</volume>: <fpage>179</fpage>–<lpage>191</lpage>.</citation>
+</ref>
+<ref id="bibr42-0037549712470733">
+<label>42.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Huang</surname><given-names>CY</given-names></name>
+<name><surname>Ferrell</surname><given-names>JE</given-names></name>
+</person-group>. <article-title>Ultrasensitivity in the mitogen-activated protein kinase cascade</article-title>. <source>Proc Natl Acad Sci USA</source> <year>1996</year>; <volume>93</volume>: <fpage>10078</fpage>–<lpage>10083</lpage>.</citation>
+</ref>
+<ref id="bibr43-0037549712470733">
+<label>43.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kholodenko</surname><given-names>BN</given-names></name>
+</person-group>. <article-title>Negative feedback and ultrasensitivity can bring about oscillations in the mitogen-activated protein kinase cascades</article-title>. <source>Eur J Biochem</source> <year>2000</year>; <volume>267</volume>: <fpage>1583</fpage>–<lpage>1588</lpage>.</citation>
+</ref>
+<ref id="bibr44-0037549712470733">
+<label>44.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Nii</surname><given-names>HP</given-names></name>
+</person-group>. <source>Blackboard Systems</source>. Techincal Report, <publisher-name>Department of Computer Science, Stanford University</publisher-name>, <year>1986</year>.</citation>
+</ref>
+<ref id="bibr45-0037549712470733">
+<label>45.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>González</surname><given-names>PP</given-names></name>
+<name><surname>Cárdenas</surname><given-names>M</given-names></name>
+<name><surname>Camacho</surname><given-names>D</given-names></name>
+<name><surname>Franyuti</surname><given-names>A</given-names></name>
+<name><surname>Rosas</surname><given-names>O</given-names></name>
+<name><surname>Lagúnez-Otero</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Cellulat: an agent-based intracellular signalling model</article-title>. <source>Biosystems</source> <year>2003</year>; <volume>68</volume>: <fpage>171</fpage>–<lpage>185</lpage>.</citation>
+</ref>
+<ref id="bibr46-0037549712470733">
+<label>46.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Khan</surname><given-names>S</given-names></name>
+<name><surname>Makkena</surname><given-names>R</given-names></name>
+<name><surname>McGeary</surname><given-names>F</given-names></name>
+<name><surname>Decker</surname><given-names>K</given-names></name>
+<name><surname>Gillis</surname><given-names>W</given-names></name>
+<name><surname>Schmidt</surname><given-names>C</given-names></name>
+</person-group>. <article-title>A multi-agent system for the quantitative simulation of biological networks</article-title>. In: <conf-name>AAMAS ’03: Proceedings of the Second International Joint Conference on Autonomous Agents and Multiagent Systems</conf-name>. <conf-loc>New York: ACM Press</conf-loc>, <conf-date>2003</conf-date>, pp. <fpage>385</fpage>–<lpage>392</lpage>.</citation>
+</ref>
+<ref id="bibr47-0037549712470733">
+<label>47.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Haykin</surname><given-names>S</given-names></name>
+</person-group>. <source>Neural Networks: A Comprehensive Foundation</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>Macmillan</publisher-name>, <year>1994</year>.</citation>
+</ref>
+<ref id="bibr48-0037549712470733">
+<label>48.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Denzinger</surname><given-names>J</given-names></name>
+<name><surname>Kordt</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Evolutionary on-line learning of cooperative behavior with situation–action pairs</article-title>. In: <conf-name>Proceedings of the Fourth International Conference on MultiAgent Systems (ICMAS-2000)</conf-name>. <publisher-loc>Washington, DC</publisher-loc>: <publisher-name>IEEE Computer Society</publisher-name>, <conf-date>2000</conf-date>, pp. <fpage>103</fpage>–<lpage>110</lpage>.</citation>
+</ref>
+<ref id="bibr49-0037549712470733">
+<label>49.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>MacQueen</surname><given-names>JB</given-names></name>
+</person-group>. <article-title>Some methods for classification and analysis of multivariate observations</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Cam</surname><given-names>LML</given-names></name>
+<name><surname>Neyman</surname><given-names>J</given-names></name>
+</person-group> (eds), <conf-name>Proceedings of the Fifth Berkeley Symposium on Mathematical Statistics and Probability</conf-name>, <volume>vol. 1</volume>. <conf-loc>University of California Press</conf-loc>, <conf-date>1967</conf-date>, pp. <fpage>281</fpage>–<lpage>297</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

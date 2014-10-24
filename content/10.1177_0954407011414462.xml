@@ -1,0 +1,2536 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PID</journal-id>
+<journal-id journal-id-type="hwp">sppid</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part D: Journal of Automobile Engineering</journal-title>
+<issn pub-type="ppub">0954-4070</issn>
+<issn pub-type="epub">2041-2991</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0954407011414462</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0954407011414462</article-id>
+<title-group>
+<article-title>Radar-based target identification and tracking on a curved road</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Zhang</surname><given-names>D</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Li</surname><given-names>K</given-names></name>
+<xref ref-type="corresp" rid="corresp1-0954407011414462">*</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Wang</surname><given-names>J</given-names></name>
+</contrib>
+<aff id="aff1-0954407011414462">State Key Laboratory of Automotive Safety and Energy, Tsinghua University, Beijing, People’s Republic of China</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0954407011414462"><label>*</label>State Key Laboratory of Automotive Safety and Energy, Tsinghua University, Beijing 100084, People’s Republic of China. email: <email>likq@tsinghua.edu.cn</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>1</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>1</issue>
+<fpage>39</fpage>
+<lpage>47</lpage>
+<history>
+<date date-type="received">
+<day>22</day>
+<month>12</month>
+<year>2010</year>
+</date>
+<date date-type="accepted">
+<day>1</day>
+<month>6</month>
+<year>2011</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>Existing target determination methods for radar only work properly on straight roads, so the application of radar in driver assistance systems, such as adaptive cruise control (ACC), is limited to detecting target vehicles directly in front of the host vehicle. Preceding vehicles around a curve cannot be detected by current radar systems. This paper describes a new algorithm for radar-based target vehicle identification and tracking on curved roads for ACC applications. The key problems are the distinction between target curve entry/exit and lane change and the identification of the host-lane preceding vehicle from the adjacent-lane vehicle while driving through a curve. In order to make a more accurate distinction between curve entry/exit and lane change of the target vehicle, the goodness of fit (GOF) corresponding to these two scenarios is found from the correlation coefficient and by introducing additional distinct criteria that have clear physical meanings. Furthermore, the deviation of the measured lateral distance from a theoretical value is used to estimate whether the preceding vehicle is in the host or adjacent lane. Tests show that this method can identify the position of the target vehicle on a curved road with high reliability.</p>
+</abstract>
+<kwd-group>
+<kwd>adaptive cruise control</kwd>
+<kwd>target identification</kwd>
+<kwd>radar</kwd>
+<kwd>curved road</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0954407011414462" sec-type="intro">
+<title>1 Introduction</title>
+<p>Target identification and tracking is an important prerequisite for an adaptive cruise control (ACC) system. Generally, ACC judges whether a preceding vehicle is a target or not using radar. However, existing target determination methods for radar only work properly on straight lanes [<xref ref-type="bibr" rid="bibr1-0954407011414462">1</xref>, <xref ref-type="bibr" rid="bibr2-0954407011414462">2</xref>], so the application of radar in ACC is limited to detect target vehicles directly in front of the host vehicle. Preceding vehicles around a curve cannot be detected by current radar systems [<xref ref-type="bibr" rid="bibr3-0954407011414462">3</xref>]. On a curved road, the vehicle in the adjacent lane can be mistaken as the target, resulting in an incorrect reaction of the ACC [<xref ref-type="bibr" rid="bibr4-0954407011414462">4</xref>], potentially causing an accident. To solve this drawback, a fusion system can be implemented. Some fusion systems use vision or other sensors to detect the lane markers and estimate the curvature of the road, then track the target with radar or lidar [<xref ref-type="bibr" rid="bibr5-0954407011414462">5</xref>–<xref ref-type="bibr" rid="bibr7-0954407011414462">7</xref>]. There are also some fusion systems using both cameras and radar to detect the target vehicles, fusing radar observations and vision contours to estimate the location and motion of the targets [<xref ref-type="bibr" rid="bibr8-0954407011414462">8</xref>, <xref ref-type="bibr" rid="bibr9-0954407011414462">9</xref>]. A fusion system can improve the robustness and accuracy of vehicle detection; however, the vision system is still subjected to certain conditions such as bad weather and illumination. Another existing approach is to estimate the curvature with a digital road map [<xref ref-type="bibr" rid="bibr10-0954407011414462">10</xref>]. However, the method is not often appropriate for real-time safety applications due to the lack of robustness against map data errors (in China, owing to some restrictions on global positioning systems for civil use, the positioning error of navigation systems is always more than 15 m) and the increase in cost for cars without navigation systems. Some roadside passive reflectors are set to improve radar reliability on curves and at intersections [<xref ref-type="bibr" rid="bibr3-0954407011414462">3</xref>]. The reflectors can indirectly increase the beam-width angle of the radar by redirecting the radar beams in a chosen direction; however, it is hard to install the reflectors on every curve of the highway. In addition, the path prediction purely using radar was proposed, but it was insufficient for non-uniform roads and transient manoeuvres [<xref ref-type="bibr" rid="bibr11-0954407011414462">11</xref>]. A new method based on the phase chart between the relative velocity and the azimuth angle [<xref ref-type="bibr" rid="bibr12-0954407011414462">12</xref>, <xref ref-type="bibr" rid="bibr13-0954407011414462">13</xref>] distinguished the target vehicle lane change and curve entry/exit. Its distinction criterion was decided empirically and did not work properly in some conditions.</p>
+<p>A method for radar-based target identification and tracking in curves is proposed in the current paper. In order to make a more accurate distinction between preceding vehicle curve entry/exit and lane change, the goodness of fit (GOF) corresponding to the two conditions is checked through their correlation coefficients and additional distinguishing criteria that have clear physical meanings. If the preceding car has been identified as changing lanes, the radar will release it as a target, and the ACC vehicle will not follow it. If it has done a curve entry/exit, the preceding vehicle will continue to be identified as a target vehicle. Furthermore, the relative lateral distance between the ACC vehicle and the preceding vehicle is estimated based on a single-clothoid road model. The host-lane and the adjacent-lane preceding vehicles in a curve are distinguished by a <italic>t</italic>-test algorithm. Then, if it is driving in the host lane, the preceding car will be identified as a target vehicle. Tests show that the target vehicle in a curve can be identified and tracked exactly by this method.</p>
+</sec>
+<sec id="section2-0954407011414462">
+<title>2 Difficulty of Radar-Based Target Tracking</title>
+<p>There are two difficult problems when using radar to realize target tracking on a curved road. First, it is difficult for the radar to distinguish the preceding vehicle’s curve entry/exit from a lane change. This has been discussed in detail in references [<xref ref-type="bibr" rid="bibr12-0954407011414462">12</xref>] and [<xref ref-type="bibr" rid="bibr13-0954407011414462">13</xref>]. Second, a preceding vehicle in the adjacent lane will cause the radar to make a wrong judgement, as shown in <xref ref-type="fig" rid="fig1-0954407011414462">Fig. 1</xref>. It will cause the ACC vehicle to follow the wrong target. Here, the host lane means the lane in which the ACC vehicle is driving. The adjacent lane means the lane that is next to the host lane.</p>
+<fig id="fig1-0954407011414462" position="float">
+<label>Fig. 1</label>
+<caption>
+<p>The disturbance of an adjacent-lane vehicle</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig1.tif"/>
+</fig>
+</sec>
+<sec id="section3-0954407011414462">
+<title>3 Distinction between Curve Entry/Exit and Lane Change</title>
+<sec id="section4-0954407011414462">
+<title>3.1 Determination of target vehicle lane changes</title>
+<p>It has been shown in reference [<xref ref-type="bibr" rid="bibr13-0954407011414462">13</xref>] that the relation between the azimuth angle and the lateral component of the relative velocity in a lane change can be expressed by an elliptic equation</p>
+<p>
+<disp-formula id="disp-formula1-0954407011414462">
+<label>(1)</label>
+<mml:math display="block" id="math1-0954407011414462">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo>+</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>Y</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0954407011414462" xlink:href="10.1177_0954407011414462-eq1.tif"/>
+</disp-formula>
+</p>
+<p>where</p>
+<p>
+<disp-formula id="disp-formula2-0954407011414462">
+<label>(2)</label>
+<mml:math display="block" id="math2-0954407011414462">
+<mml:mrow>
+<mml:mi>X</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>θ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.50em"/>
+<mml:mi>Y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>lat</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0954407011414462" xlink:href="10.1177_0954407011414462-eq2.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula3-0954407011414462">
+<label>(3)</label>
+<mml:math display="block" id="math3-0954407011414462">
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>W</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>d</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>b</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>π</mml:mi>
+<mml:mi>W</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>D</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>c</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0954407011414462" xlink:href="10.1177_0954407011414462-eq3.tif"/>
+</disp-formula>
+</p>
+<p>and <italic>θ</italic>, <italic>V</italic><sub>lat</sub>, <italic>V</italic><sub>H</sub>, <italic>d</italic>, <italic>R</italic><sub>T</sub>, and <italic>W</italic> are the azimuth angle of the preceding vehicle against the bore-sight of the host, the lateral component of the relative velocity, the velocity of the host, the distance between the host and the preceding vehicle, the radius of the curve on which the preceding vehicle is driving, and the width of the lane, respectively. <italic>D</italic> is the distance necessary for a lane change. Assuming that the host and the preceding vehicle have the same velocity in the following mode, <italic>D</italic> = <italic>V</italic><sub>H</sub><italic>t</italic><sub>D</sub>, where <italic>t</italic><sub>D</sub> is the time needed for a lane change, <italic>t</italic><sub>D</sub> = 4–8 s.</p>
+<p>The elliptic <xref ref-type="disp-formula" rid="disp-formula1-0954407011414462">equation (1)</xref> can be converted into a quadratic equation</p>
+<p>
+<disp-formula id="disp-formula4-0954407011414462">
+<label>(4)</label>
+<mml:math display="block" id="math4-0954407011414462">
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>Y</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>X</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0954407011414462" xlink:href="10.1177_0954407011414462-eq4.tif"/>
+</disp-formula>
+</p>
+<p>The radar outputs with a sequence of (<italic>θ</italic>[<italic>i</italic>], <italic>V</italic><sub>r</sub>[<italic>i</italic>]). <italic>V</italic><sub>r</sub> is the relative velocity between the host and preceding cars. Then, <italic>V</italic><sub>lat</sub> can be found as <italic>V</italic><sub>lat</sub> = <italic>V</italic><sub>r</sub>sin<italic>θ</italic>≈<italic>V</italic><sub>r</sub><italic>θ.</italic> Then, (<italic>θ</italic>[<italic>i</italic>], <italic>V</italic><sub>lat</sub>[<italic>i</italic>]) is applied to <xref ref-type="disp-formula" rid="disp-formula4-0954407011414462">equation (4)</xref> using a least squares regression. If the GOF of the regression is high, the manoeuvre can be judged as a lane change. Some criteria were addressed in reference [<xref ref-type="bibr" rid="bibr13-0954407011414462">13</xref>] to judge whether the GOF of the regression is high or not; however, these criteria were decided empirically and will not work properly in some conditions. There must be some judgement criteria that have clear physical meanings and are suitable for most driving conditions. Hence, a correlation coefficient method [<xref ref-type="bibr" rid="bibr14-0954407011414462">14</xref>] is applied here to test the GOF of the regression, and the lane width relative error is also used as an additional distinguishing criterion.</p>
+<p>The factors of <xref ref-type="disp-formula" rid="disp-formula4-0954407011414462">equation (4)</xref> can be calculated by inserting <xref ref-type="disp-formula" rid="disp-formula2-0954407011414462">equations (2)</xref> and <xref ref-type="disp-formula" rid="disp-formula3-0954407011414462">(3)</xref> into <xref ref-type="disp-formula" rid="disp-formula1-0954407011414462">equation (1)</xref></p>
+<p>
+<disp-formula id="disp-formula5-0954407011414462">
+<label>(5)</label>
+<mml:math display="block" id="math5-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+<mml:msup>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0954407011414462" xlink:href="10.1177_0954407011414462-eq5.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula6-0954407011414462">
+<label>(6)</label>
+<mml:math display="block" id="math6-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msup>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0954407011414462" xlink:href="10.1177_0954407011414462-eq6.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula7-0954407011414462">
+<label>(7)</label>
+<mml:math display="block" id="math7-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>π</mml:mi>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">) </mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0954407011414462" xlink:href="10.1177_0954407011414462-eq7.tif"/>
+</disp-formula>
+</p>
+<p>It is assumed that the factors of the regression equation are <italic>a</italic><sub>0</sub><italic>*</italic>, <italic>a</italic><sub>1</sub><italic>*</italic>, and <italic>a</italic><sub>2</sub>* (* indicates that the factors are obtained by regression and are estimated values). Then, the regression equation can be expressed as</p>
+<p>
+<disp-formula id="disp-formula8-0954407011414462">
+<label>(8)</label>
+<mml:math display="block" id="math8-0954407011414462">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mi>X</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0954407011414462" xlink:href="10.1177_0954407011414462-eq8.tif"/>
+</disp-formula>
+</p>
+<p>The total correlation coefficient (TCC) is calculated using</p>
+<p>
+<disp-formula id="disp-formula9-0954407011414462">
+<label>(9)</label>
+<mml:math display="block" id="math9-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0954407011414462" xlink:href="10.1177_0954407011414462-eq9.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>Z<sub>i</sub></italic>*, <italic>Z<sub>i</sub></italic>, <inline-formula id="inline-formula1-0954407011414462">
+<mml:math display="inline" id="math10-0954407011414462">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math></inline-formula>, <italic>k</italic>, and <italic>n</italic> are the estimated value from <xref ref-type="disp-formula" rid="disp-formula8-0954407011414462">equation (8)</xref>, the actual value, the average of the actual values, the current point of time, and the number of data for regression, respectively. The TCC is in the range <inline-formula id="inline-formula2-0954407011414462">
+<mml:math display="inline" id="math11-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. The closer <inline-formula id="inline-formula3-0954407011414462">
+<mml:math display="inline" id="math12-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is to 1, the higher the correlation is; <italic>n</italic> is set to be 20 here. The probability that the radar output sequence satisfies <xref ref-type="disp-formula" rid="disp-formula8-0954407011414462">equation (8)</xref> is higher than 95 per cent if <xref ref-type="disp-formula" rid="disp-formula10-0954407011414462">equation (10)</xref> is satisfied (e.g. see reference [<xref ref-type="bibr" rid="bibr14-0954407011414462">14</xref>])</p>
+<p>
+<disp-formula id="disp-formula10-0954407011414462">
+<label>(10)</label>
+<mml:math display="block" id="math13-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>456</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0954407011414462" xlink:href="10.1177_0954407011414462-eq10.tif"/>
+</disp-formula>
+</p>
+<p>By applying <xref ref-type="disp-formula" rid="disp-formula5-0954407011414462">equations (5</xref>–<xref ref-type="disp-formula" rid="disp-formula8-0954407011414462">8)</xref>, the lane width can be estimated using <xref ref-type="disp-formula" rid="disp-formula11-0954407011414462">equation (11)</xref>. The actual lane width is assumed to always be constant. The relative error between the estimated lane width and the actual, shown as <xref ref-type="disp-formula" rid="disp-formula12-0954407011414462">equation (12)</xref>, is introduced as an additional criterion to judge whether the regression has high GOF</p>
+<p>
+<disp-formula id="disp-formula11-0954407011414462">
+<label>(11)</label>
+<mml:math display="block" id="math14-0954407011414462">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0954407011414462" xlink:href="10.1177_0954407011414462-eq11.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula12-0954407011414462">
+<label>(12)</label>
+<mml:math display="block" id="math15-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>lane</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mi>W</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>W</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0954407011414462" xlink:href="10.1177_0954407011414462-eq12.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>W</italic>* is the estimated lane width and <italic>C</italic><sub>lane</sub> is the relative error.</p>
+<p>If <xref ref-type="disp-formula" rid="disp-formula10-0954407011414462">equations (10)</xref> and <xref ref-type="disp-formula" rid="disp-formula13-0954407011414462">(13)</xref> are both satisfied, the preceding vehicle can be judged as completing a lane change</p>
+<p>
+<disp-formula id="disp-formula13-0954407011414462">
+<label>(13)</label>
+<mml:math display="block" id="math16-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>lane</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>lane</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0954407011414462" xlink:href="10.1177_0954407011414462-eq13.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>c</italic><sub>lane</sub> is the criterion <italic>c</italic><sub>lane</sub> = 0.4.</p>
+</sec>
+<sec id="section5-0954407011414462">
+<title>3.2 Determination of target vehicle curve entry/exit</title>
+<p>According to [<xref ref-type="bibr" rid="bibr13-0954407011414462">13</xref>], when the preceding vehicle is entering a curve and the host is still on the straight line, or if the preceding vehicle exits from the curve and the host is still in the curve, the relation between the azimuth angle and the lateral component of the relative velocity can be expressed by a parabolic equation</p>
+<p>
+<disp-formula id="disp-formula14-0954407011414462">
+<label>(14)</label>
+<mml:math display="block" id="math17-0954407011414462">
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>lat</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>lat</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0954407011414462" xlink:href="10.1177_0954407011414462-eq14.tif"/>
+</disp-formula>
+</p>
+<p>The factors of <xref ref-type="disp-formula" rid="disp-formula14-0954407011414462">equation (14)</xref> can be calculated using</p>
+<p>
+<disp-formula id="disp-formula15-0954407011414462">
+<label>(15)</label>
+<mml:math display="block" id="math18-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0954407011414462" xlink:href="10.1177_0954407011414462-eq15.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula16-0954407011414462">
+<label>(16)</label>
+<mml:math display="block" id="math19-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula16-0954407011414462" xlink:href="10.1177_0954407011414462-eq16.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula17-0954407011414462">
+<label>(17)</label>
+<mml:math display="block" id="math20-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula17-0954407011414462" xlink:href="10.1177_0954407011414462-eq17.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>R</italic><sub>H</sub> is the radius of the curve on which the host vehicle is driving.</p>
+<p>Applying the sequence (<italic>θ</italic>[<italic>i</italic>], <italic>V</italic><sub>lat</sub>[<italic>i</italic>]) to <xref ref-type="disp-formula" rid="disp-formula14-0954407011414462">equation (14)</xref> using least squares regression, the factors of the regression equation are <italic>b</italic><sub>0</sub>*, <italic>b</italic><sub>1</sub>*, and <italic>b</italic><sub>2</sub>*. Then, the regression equation can be expressed as</p>
+<p>
+<disp-formula id="disp-formula18-0954407011414462">
+<label>(18)</label>
+<mml:math display="block" id="math21-0954407011414462">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>lat</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:msup>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>lat</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula18-0954407011414462" xlink:href="10.1177_0954407011414462-eq18.tif"/>
+</disp-formula>
+</p>
+<p>The TCC is calculated using</p>
+<p>
+<disp-formula id="disp-formula19-0954407011414462">
+<label>(19)</label>
+<mml:math display="block" id="math22-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula19-0954407011414462" xlink:href="10.1177_0954407011414462-eq19.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>θ<sub>i</sub></italic>*, <italic>θ<sub>i</sub></italic>, and <inline-formula id="inline-formula4-0954407011414462">
+<mml:math display="inline" id="math23-0954407011414462">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math></inline-formula> are the estimated azimuth angle using <xref ref-type="disp-formula" rid="disp-formula18-0954407011414462">equation (18)</xref>, the actual azimuth angle and the average of the actual values.</p>
+<p>The probability that the radar output sequence satisfies <xref ref-type="disp-formula" rid="disp-formula18-0954407011414462">equation (18)</xref> is higher than 95 per cent if <xref ref-type="disp-formula" rid="disp-formula20-0954407011414462">equation (20)</xref> is satisfied</p>
+<p>
+<disp-formula id="disp-formula20-0954407011414462">
+<label>(20)</label>
+<mml:math display="block" id="math24-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>456</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula20-0954407011414462" xlink:href="10.1177_0954407011414462-eq20.tif"/>
+</disp-formula>
+</p>
+<p>In addition, the velocity of the host vehicle can be estimated by <xref ref-type="disp-formula" rid="disp-formula15-0954407011414462">equations (15)</xref> to <xref ref-type="disp-formula" rid="disp-formula17-0954407011414462">(17)</xref></p>
+<p>
+<disp-formula id="disp-formula21-0954407011414462">
+<label>(21)</label>
+<mml:math display="block" id="math25-0954407011414462">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:mn>4</mml:mn>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula21-0954407011414462" xlink:href="10.1177_0954407011414462-eq21.tif"/>
+</disp-formula>
+</p>
+<p>The relative error between the estimated host vehicle velocity and the actual value is introduced as an additional criterion to judge whether the regression has high GOF</p>
+<p>
+<disp-formula id="disp-formula22-0954407011414462">
+<label>(22)</label>
+<mml:math display="block" id="math26-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula22-0954407011414462" xlink:href="10.1177_0954407011414462-eq22.tif"/>
+</disp-formula>
+</p>
+<p>If <xref ref-type="disp-formula" rid="disp-formula20-0954407011414462">equations (20)</xref> and <xref ref-type="disp-formula" rid="disp-formula23-0954407011414462">(23)</xref> are both satisfied, the preceding vehicle can be judged as completing a curve entry/exit</p>
+<p>
+<disp-formula id="disp-formula23-0954407011414462">
+<label>(23)</label>
+<mml:math display="block" id="math27-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula23-0954407011414462" xlink:href="10.1177_0954407011414462-eq23.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>c<sub>v</sub></italic> is the criterion <italic>c<sub>v</sub></italic>=0.4.</p>
+</sec>
+</sec>
+<sec id="section6-0954407011414462">
+<title>4 Distinction between Host and Adjacent Lanes</title>
+<p>Tests show that there are obvious deviations between the lateral distance of the host-lane preceding vehicle and the adjacent-lane preceding vehicle relative to the host vehicle in curves. Hence, the relative lateral distance can be another criterion for distinction. First, the theoretical lateral distance of the host-lane preceding vehicle relative to the host vehicle is calculated. Then, the deviations between the theoretical values and the measured values can distinguish the host-lane vehicle from the adjacent-lane vehicle.</p>
+<p>When the preceding vehicle is judged as completing a curve entry/exit, the regression factor <italic>b</italic><sub>2</sub>* equals <italic>b</italic><sub>2</sub> in ideal conditions. Inserting <italic>c</italic><sub>T</sub>=1/<italic>R</italic><sub>T</sub> and <italic>c</italic><sub>H</sub>=1/<italic>R</italic><sub>H</sub> into <xref ref-type="disp-formula" rid="disp-formula17-0954407011414462">equation (17)</xref> gives the instantaneous curvature of the preceding vehicle</p>
+<p>
+<disp-formula id="disp-formula24-0954407011414462">
+<label>(24)</label>
+<mml:math display="block" id="math28-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula24-0954407011414462" xlink:href="10.1177_0954407011414462-eq24.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>c</italic><sub>T</sub> and <italic>c</italic><sub>H</sub> are the instantaneous curvatures of the preceding and the host vehicles. <italic>c</italic><sub>H</sub> is estimated by the yaw rate of the host vehicle</p>
+<p>
+<disp-formula id="disp-formula25-0954407011414462">
+<label>(25)</label>
+<mml:math display="block" id="math29-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula25-0954407011414462" xlink:href="10.1177_0954407011414462-eq25.tif"/>
+</disp-formula>
+</p>
+<p><xref ref-type="disp-formula" rid="disp-formula25-0954407011414462">Equation (25)</xref> only reflects the true curvature when the vehicle in steady state is turning. However, in real driving situations, the driver always adjusts the steering angle and speed. So, when applying <italic>c</italic><sub>H</sub> to calculate the theoretical lateral distance, it will result in an instantaneous error. A sequence of data can be evaluated using the <italic>t</italic>-test method to weaken the influence of errors caused by <xref ref-type="disp-formula" rid="disp-formula25-0954407011414462">equation (25)</xref>, which will be discussed below.</p>
+<p>A road segment ahead of the host having curvature <italic>c</italic>(<italic>d<sub>x</sub></italic>) is modelled by a single-clothoid road model [<xref ref-type="bibr" rid="bibr15-0954407011414462">15</xref>, <xref ref-type="bibr" rid="bibr16-0954407011414462">16</xref>], as described by</p>
+<p>
+<disp-formula id="disp-formula26-0954407011414462">
+<label>(26)</label>
+<mml:math display="block" id="math30-0954407011414462">
+<mml:mrow>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula26-0954407011414462" xlink:href="10.1177_0954407011414462-eq26.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>c</italic><sub>0</sub> is the instantaneous curvature of the host, <italic>c</italic><sub>1</sub> is the coefficient of linear variation of curvature with distance, and <italic>d<sub>x</sub></italic> is the longitudinal distance from the host, shown in <xref ref-type="fig" rid="fig2-0954407011414462">Fig. 2</xref>. It is further assumed here that the curvature is not large, that <italic>d<sub>x</sub></italic>≈<italic>d</italic> and that the relative lateral distance at <italic>d<sub>x</sub></italic> can be calculated from</p>
+<fig id="fig2-0954407011414462" position="float">
+<label>Fig. 2</label>
+<caption>
+<p>Road-aligned coordinate system</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig2.tif"/>
+</fig>
+<p>
+<disp-formula id="disp-formula27-0954407011414462">
+<label>(27)</label>
+<mml:math display="block" id="math31-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>6</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula27-0954407011414462" xlink:href="10.1177_0954407011414462-eq27.tif"/>
+</disp-formula>
+</p>
+<p>Comparing <xref ref-type="disp-formula" rid="disp-formula24-0954407011414462">equations (24)</xref> and <xref ref-type="disp-formula" rid="disp-formula26-0954407011414462">(26)</xref>, <italic>c</italic><sub>0</sub> and <italic>c</italic><sub>1</sub> can be calculated using</p>
+<p>
+<disp-formula id="disp-formula28-0954407011414462">
+<label>(28)</label>
+<mml:math display="block" id="math32-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula28-0954407011414462" xlink:href="10.1177_0954407011414462-eq28.tif"/>
+</disp-formula>
+</p>
+<p>Inserting <xref ref-type="disp-formula" rid="disp-formula28-0954407011414462">equation (28)</xref> into <xref ref-type="disp-formula" rid="disp-formula27-0954407011414462">equation (27)</xref> and assuming that the host-lane preceding vehicle is running along the mid-line of the lane, the theoretical value of the lateral distance between the host-lane preceding vehicle and the host can be calculated using</p>
+<p>
+<disp-formula id="disp-formula29-0954407011414462">
+<label>(29)</label>
+<mml:math display="block" id="math33-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>12</mml:mn>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>H</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula29-0954407011414462" xlink:href="10.1177_0954407011414462-eq29.tif"/>
+</disp-formula>
+</p>
+<p>Because of measurement errors and other disturbances, such as <italic>c</italic><sub>H</sub> estimated by <xref ref-type="disp-formula" rid="disp-formula25-0954407011414462">equation (25)</xref>, the measured value does not always equal the theoretical one. Hence, a <italic>t</italic>-test method is introduced here to test the degree of divergence between the host-lane vehicle and the adjacent-lane vehicle.</p>
+<p>The degree of divergence is expressed by</p>
+<p>
+<disp-formula id="disp-formula30-0954407011414462">
+<label>(30)</label>
+<mml:math display="block" id="math34-0954407011414462">
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>dd</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mtext>err</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mtext>err</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mtext>err</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mtext>err</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mtext>err</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mtext>err</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mtext>act</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula30-0954407011414462" xlink:href="10.1177_0954407011414462-eq30.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>d<sub>y_</sub></italic><sub>act</sub>[<italic>i</italic>] is the measured lateral distance value, <italic>d<sub>y</sub></italic>[<italic>i</italic>] is the theoretical value calculated using <xref ref-type="disp-formula" rid="disp-formula29-0954407011414462">equation (29)</xref>, <italic>d<sub>y_</sub></italic><sub>err</sub>[<italic>i</italic>] is the error, and <inline-formula id="inline-formula5-0954407011414462">
+<mml:math display="inline" id="math35-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mtext>err</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is the average of <italic>d<sub>y_</sub></italic><sub>err</sub>[<italic>i</italic>], <italic>i</italic>=<italic>k –</italic> (<italic>n</italic>+1), <italic>k –</italic> (<italic>n</italic>+2), …, <italic>k</italic>.</p>
+<p>If <xref ref-type="disp-formula" rid="disp-formula31-0954407011414462">equation (31)</xref> is satisfied, the probability that the measured values equal the theoretical ones is higher than 95 per cent [<xref ref-type="bibr" rid="bibr14-0954407011414462">14</xref>], i.e. the preceding vehicle is assumed to be in the host lane if</p>
+<p>
+<disp-formula id="disp-formula31-0954407011414462">
+<label>(31)</label>
+<mml:math display="block" id="math36-0954407011414462">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>dd</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&lt;</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>17</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula31-0954407011414462" xlink:href="10.1177_0954407011414462-eq31.tif"/>
+</disp-formula>
+</p>
+</sec>
+<sec id="section7-0954407011414462">
+<title>5 Evaluation by Simulation and Field Tests</title>
+<sec id="section8-0954407011414462">
+<title>5.1 Simulation</title>
+<sec id="section9-0954407011414462">
+<title>5.1.1 Curve entry/exit and lane changes</title>
+<p>This simulation is completed using Matlab. The path comprises a straight, curved, then straight road as shown in <xref ref-type="fig" rid="fig3-0954407011414462">Fig. 3</xref>. The radius of the curve is 500 m. It is assumed that the host and the preceding vehicles have the same velocity, 108 km/h. The initial longitudinal distance is 60 m. The preceding vehicle leaves the host vehicle’s lane at <italic>t</italic> = 3 s, returns to it at <italic>t</italic>=11 s, enters the curve at <italic>t</italic>=25 s, and exits it at <italic>t</italic>=51.3 s. The width of the lane <italic>W</italic>=3.75 m.</p>
+<fig id="fig3-0954407011414462" position="float">
+<label>Fig. 3</label>
+<caption>
+<p>Path for the curve entry/exit and lane-change simulation</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig3.tif"/>
+</fig>
+<p>The simulation results are shown in <xref ref-type="fig" rid="fig4-0954407011414462">Figs 4</xref> and <xref ref-type="fig" rid="fig5-0954407011414462">5</xref>. The method works precisely in both conditions. In <xref ref-type="fig" rid="fig4-0954407011414462">Fig. 4</xref>, <italic>γ</italic><sub>Z</sub> is the TCC from <xref ref-type="disp-formula" rid="disp-formula9-0954407011414462">equation (9)</xref> corresponding to the lane-change regression equation. It can be seen that when the preceding vehicle changes lanes, <italic>γ</italic><sub>Z</sub> increases to 1. However, when the preceding vehicle enters or exits the curve, <italic>γ</italic><sub>Z</sub> also increases. So <italic>γ</italic><sub>Z</sub> itself cannot distinguish between lane change and curve entry/exit. In order to get the correct results, it is necessary to set <italic>C</italic><sub>lane</sub> as an additional criterion. Only when satisfying both conditions, <italic>γ</italic><sub>Z</sub> is more than 0.456 and <italic>C</italic><sub>lane</sub> is less than 0.4, can the preceding car be judged as completing a lane change.</p>
+<fig id="fig4-0954407011414462" position="float">
+<label>Fig. 4</label>
+<caption>
+<p>Lane-change simulation results</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig4.tif"/>
+</fig>
+<fig id="fig5-0954407011414462" position="float">
+<label>Fig. 5</label>
+<caption>
+<p>Curve entry/exit simulation results</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig5.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig5-0954407011414462">Figure 5</xref> shows a similar situation. <italic>γ<sub>θ</sub></italic> is the TCC from <xref ref-type="disp-formula" rid="disp-formula19-0954407011414462">equation (19)</xref> corresponding to the curve entry/exit regression equation. It can be seen that when the preceding vehicle enters or exits a curve, <italic>γ<sub>θ</sub></italic> will increase to 1. However, when the preceding vehicle changes lanes, <italic>γ<sub>θ</sub></italic> also increases. So it is not enough for <italic>γ<sub>θ</sub></italic> alone to distinguish between lane change and curve entry/exit. In order to obtain the correct results, it is necessary to set <italic>C<sub>v</sub></italic> as an additional criterion. Only when satisfying both conditions, <italic>γ<sub>θ</sub></italic> is more than 0.456 and <italic>C<sub>v</sub></italic> is less than 0.4, can the preceding car be judged as entering or exiting a curve.</p>
+<p>The results for the same scenario as in <xref ref-type="fig" rid="fig3-0954407011414462">Fig. 3</xref> using the lane and curve methods of [<xref ref-type="bibr" rid="bibr13-0954407011414462">13</xref>] are shown in <xref ref-type="fig" rid="fig6-0954407011414462">Fig. 6</xref>. The lane method is used for detecting the lane change, similar to the method introduced in section 3.1 of this paper. The result shows that when the car changes lanes, the lane method can make a correct decision. However, when the car enters or exits a curve, the lane method also takes it as a lane change. The curve method is used for detecting the curve entry/exit, similar to the method introduced in section 3.2 of this paper. The result shows that when the car enters or exits a curve, the curve method can also make the correct decision. However, when the car changes lanes, the curve method also takes it as a curve entry/exit.</p>
+<fig id="fig6-0954407011414462" position="float">
+<label>Fig. 6</label>
+<caption>
+<p>Results using the lane method and the curve method</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig6.tif"/>
+</fig>
+</sec>
+<sec id="section10-0954407011414462">
+<title>5.1.2 Host-lane and adjacent-lane preceding vehicles in curves</title>
+<p>This simulation is completed using Matlab. The path comprises curve road, as shown in <xref ref-type="fig" rid="fig7-0954407011414462">Fig. 7</xref>. The radius of the curve is 800 m. It is assumed that the host and the preceding vehicles have the same velocity, 108 km/h. The initial longitudinal distance is 60 m. The width of the lane is <italic>W</italic>=3.75 m.</p>
+<fig id="fig7-0954407011414462" position="float">
+<label>Fig. 7</label>
+<caption>
+<p>Path for host-lane and adjacent-lane simulations</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig7.tif"/>
+</fig>
+<p>In the simulation, the actual lateral distance is calculated using the geometrical relationship shown in <xref ref-type="fig" rid="fig7-0954407011414462">Fig. 7</xref>. Moreover, taking the radar characteristics into account, a random number, which ranges between −1 and 1 and has a mean of 0, is added to the actual lateral distance. The theoretical value is calculated using <xref ref-type="disp-formula" rid="disp-formula29-0954407011414462">equation (29)</xref>. All of the actual and theoretical values are shown in <xref ref-type="fig" rid="fig8-0954407011414462">Fig. 8</xref>.</p>
+<fig id="fig8-0954407011414462" position="float">
+<label>Fig. 8</label>
+<caption>
+<p>Actual lateral distances and theoretical values</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig8.tif"/>
+</fig>
+<p>It can be seen that the actual and theoretical values of the host-lane preceding vehicles are basically the same, but the adjacent-lane values are not.</p>
+<p>The <italic>t</italic>-test method is used to test the degree of divergence of the two groups of data shown in <xref ref-type="fig" rid="fig8-0954407011414462">Fig. 8</xref>. The results are shown in <xref ref-type="fig" rid="fig9-0954407011414462">Fig. 9</xref>. This method identifies the target exactly. Namely, it distinguishes the host-lane preceding vehicle and the adjacent-lane preceding vehicle well. The judgement is delayed since the accumulation of data is necessary for regression.</p>
+<fig id="fig9-0954407011414462" position="float">
+<label>Fig. 9</label>
+<caption>
+<p>Simulation results of host-lane and adjacent-lane distinctions</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig9.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section11-0954407011414462">
+<title>5.2 Field tests</title>
+<p>A 77 GHz Denso millimetre wave radar has been installed on the grill of our test vehicle. In order to record the test process, a camera has also been installed in front of the rear view mirror, as shown in <xref ref-type="fig" rid="fig10-0954407011414462">Fig. 10</xref>.</p>
+<fig id="fig10-0954407011414462" position="float">
+<label>Fig. 10</label>
+<caption>
+<p>Test vehicle</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig10.tif"/>
+</fig>
+<p>The vehicle tests were completed on the fourth ring highway in Beijing, as shown in <xref ref-type="fig" rid="fig11-0954407011414462">Fig. 11</xref>. The longitudinal and lateral distances, relative velocity, and azimuth data were collected, together with the velocity and the yaw rate data of the vehicle. These data were then applied to the developed methods.</p>
+<fig id="fig11-0954407011414462" position="float">
+<label>Fig. 11</label>
+<caption>
+<p>Field-test scenario</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig11.tif"/>
+</fig>
+<p>The results for lane change detection are shown in <xref ref-type="fig" rid="fig12-0954407011414462">Fig. 12</xref>. The preceding vehicle left the host lane at <italic>t</italic>=12.5 s and started to return at <italic>t</italic>=20 s. The estimator detected the lane departure at <italic>t</italic>=13.5 s and the return at <italic>t</italic>=21.5 s. The method worked ideally.</p>
+<fig id="fig12-0954407011414462" position="float">
+<label>Fig. 12</label>
+<caption>
+<p>Lane change detection results</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig12.tif"/>
+</fig>
+<p>The results for curve entry detection are shown in <xref ref-type="fig" rid="fig13-0954407011414462">Fig. 13</xref>. The preceding vehicle entered the curve at <italic>t</italic>=4 s, and the estimator detected the curve entry at <italic>t</italic>=6.5 s. This also worked effectively.</p>
+<fig id="fig13-0954407011414462" position="float">
+<label>Fig. 13</label>
+<caption>
+<p>Curve entry detection results</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig13.tif"/>
+</fig>
+<p>The results for distinction between host-lane and adjacent-lane preceding vehicles is shown in <xref ref-type="fig" rid="fig14-0954407011414462">Fig. 14</xref>. At <italic>t</italic>=4 s, both host-lane and adjacent-lane preceding vehicles entered a curve. The estimation method distinguished the host-lane vehicle from the adjacent-lane vehicle.</p>
+<fig id="fig14-0954407011414462" position="float">
+<label>Fig. 14</label>
+<caption>
+<p>Host-lane and adjacent-lane distinction results</p>
+</caption>
+<graphic xlink:href="10.1177_0954407011414462-fig14.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section12-0954407011414462" sec-type="discussion">
+<title>6 Discussion</title>
+<p>A single-clothoid road model is suitable when the curvature is not too small. It is applicable for a highway that often has large radius curves.</p>
+<p><xref ref-type="disp-formula" rid="disp-formula1-0954407011414462">Equations (1)</xref> and <xref ref-type="disp-formula" rid="disp-formula14-0954407011414462">(14)</xref> hold true if the velocities of the host and preceding cars are almost the same [<xref ref-type="bibr" rid="bibr12-0954407011414462">12</xref>]. This assumption seems to be acceptable for ACC during a stable car-following condition on the highway. However, if the velocities differ too much, this method should be modified. This is one example of our future research.</p>
+</sec>
+<sec id="section13-0954407011414462" sec-type="conclusions">
+<title>7 Conclusions</title>
+<p>A principle of radar-based target identification and tracking methods on curved roads for ACC systems has been proposed. In the simulation and field tests, the validity of the methods is demonstrated. A series of experiments confirm the following:</p>
+<list id="list1-0954407011414462" list-type="alpha-lower">
+<list-item><p>a correlation coefficient method with additional distinction criteria can modify the identification effect of curve entry/exit and lane changes;</p></list-item>
+<list-item><p>the deviation of the measured lateral distance from the theoretical value can identify whether the preceding vehicle is in the host lane or in the adjacent lane;</p></list-item>
+<list-item><p>the developed methods can achieve target identification and tracking in curves.</p></list-item>
+</list>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<p>This work was supported by the Chinese National Programs for High Technology Research and Development [grant no. 2009AA11Z216]. The authors would like to acknowledge the financial support of the Program for New Century talents in University [grant no. NCET-08-0324].</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0954407011414462">
+<label>1</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Lee</surname><given-names>C. Y.</given-names></name>
+<name><surname>Lee</surname><given-names>J. J.</given-names></name>
+</person-group> <article-title>Object recognition algorithm for adaptive cruise control of vehicle using laser scanning sensor</article-title>. In <conf-name>Proceedings of the Intelligent transportation systems conference</conf-name>, <conf-loc>Dearborn, USA</conf-loc>, <conf-date>1–3 October 2000</conf-date>, pp. <fpage>305</fpage>–<lpage>310</lpage> (<comment>IEEE</comment>).</citation>
+</ref>
+<ref id="bibr2-0954407011414462">
+<label>2</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Liu</surname><given-names>Z.</given-names></name>
+<name><surname>Wang</surname><given-names>J.</given-names></name>
+<name><surname>Li</surname><given-names>K.</given-names></name>
+</person-group> <article-title>Robust vehicular radar target determination</article-title>. <source>J. Tsinghua Univ. (Sci. &amp; Tech.)</source>, <year>2008</year>, <volume>48</volume>(<issue>5</issue>), <fpage>875</fpage>–<lpage>878</lpage>.</citation>
+</ref>
+<ref id="bibr3-0954407011414462">
+<label>3</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Vijayarahavan</surname><given-names>K.</given-names></name>
+<name><surname>Kossett</surname><given-names>A.</given-names></name>
+<name><surname>Rajamani</surname><given-names>R.</given-names></name>
+</person-group> <article-title>A study of roadside passive reflectors for improvement in the radar reliability on curves and at intersections</article-title>. <source>Proc. IMechE, Part D: J. Automobile Engineering</source>, <year>2008</year>, <volume>222</volume>, <fpage>1573</fpage>–<lpage>1586</lpage>.</citation>
+</ref>
+<ref id="bibr4-0954407011414462">
+<label>4</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Shi</surname><given-names>W.</given-names></name>
+<name><surname>Zhao</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Application of information fuse technique in assistant-driving system</article-title>. <source>Mod. Electron. Technique</source>, <year>2003</year>, <volume>17</volume>, <fpage>84</fpage>–<lpage>86</lpage>.</citation>
+</ref>
+<ref id="bibr5-0954407011414462">
+<label>5</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>Y.</given-names></name>
+<name><surname>Han</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Vehicle tracking method based on multi-signal fusion</article-title>. <source>J. Xi’an Jiaotong Univ.</source>, <year>2004</year>, <volume>38</volume>(<issue>10</issue>), <fpage>1035</fpage>–<lpage>1039</lpage>.</citation>
+</ref>
+<ref id="bibr6-0954407011414462">
+<label>6</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Shimomura</surname><given-names>N.</given-names></name>
+<name><surname>Fujimoto</surname><given-names>K.</given-names></name>
+<name><surname>Oki</surname><given-names>T.</given-names></name>
+</person-group> <article-title>An algorithm for distinguishing the types of objects on the road using laser radar and vision</article-title>. <source>IEEE Trans. Intell. Transport. Syst.</source>, <year>2002</year>, <volume>3</volume>(<issue>3</issue>), <fpage>189</fpage>–<lpage>195</lpage>.</citation>
+</ref>
+<ref id="bibr7-0954407011414462">
+<label>7</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Weigel</surname><given-names>H.</given-names></name>
+<name><surname>Lindner</surname><given-names>P.</given-names></name>
+<name><surname>Wanielik</surname><given-names>G.</given-names></name>
+</person-group> <article-title>Vehicle tracking with lane assignment by camera and lidar sensor fusion</article-title>. In <conf-name>Proceedings of the Intelligent vehicles symposium</conf-name>, <conf-loc>Xi’an, China</conf-loc>, <conf-date>3–5 June 2009</conf-date>, pp. <fpage>513</fpage>–<lpage>520</lpage> (<comment>IEEE</comment>).</citation>
+</ref>
+<ref id="bibr8-0954407011414462">
+<label>8</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Nashashibi</surname><given-names>F.</given-names></name>
+</person-group> <article-title>Vehicle tracking using a generic multi-sensor fusion approach</article-title>. <source>Int. J. Veh. Info. Communic. Syst.</source>, <year>2009</year>, <volume>2</volume>(<issue>1–2</issue>), <fpage>99</fpage>–<lpage>121</lpage>.</citation>
+</ref>
+<ref id="bibr9-0954407011414462">
+<label>9</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wu</surname><given-names>S.</given-names></name>
+<name><surname>Decker</surname><given-names>S.</given-names></name>
+<name><surname>Chang</surname><given-names>P.</given-names></name>
+<name><surname>Camus</surname><given-names>T.</given-names></name>
+<name><surname>Eledath</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Collision sensing by stereo vision and radar sensor fusion</article-title>. <source>IEEE Trans. Intell. Transport. Syst.</source>, <year>2009</year>, <volume>10</volume>(<issue>4</issue>), <fpage>606</fpage>–<lpage>614</lpage>.</citation>
+</ref>
+<ref id="bibr10-0954407011414462">
+<label>10</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wang</surname><given-names>C.</given-names></name>
+<name><surname>Hu</surname><given-names>Z.</given-names></name>
+<name><surname>Uchimura</surname><given-names>K.</given-names></name>
+</person-group> <article-title>Precise curvature estimation by cooperating with digital road map</article-title>. In <conf-name>Proceedings of the Intelligent vehicles symposium</conf-name>, <conf-loc>Eindhoven, Netherlands</conf-loc>, <conf-date>4–6 June 2008</conf-date>, pp. <fpage>859</fpage>–<lpage>864</lpage> (<comment>IEEE</comment>).</citation>
+</ref>
+<ref id="bibr11-0954407011414462">
+<label>11</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Uhler</surname><given-names>W.</given-names></name>
+<name><surname>Scherl</surname><given-names>M.</given-names></name>
+<name><surname>Lichtenberg</surname><given-names>B.</given-names></name>
+</person-group> <article-title>Driving course prediction using distance sensor data</article-title>. <comment>SAE paper 1999-01-1234</comment>, <year>1999</year>.</citation>
+</ref>
+<ref id="bibr12-0954407011414462">
+<label>12</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Miyahara</surname><given-names>S.</given-names></name>
+</person-group> <article-title>A method for radar-based target tracking in non-uniform road condition</article-title>. <comment>SAE paper 2003-01-0013</comment>, <year>2003</year>.</citation>
+</ref>
+<ref id="bibr13-0954407011414462">
+<label>13</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Miyahara</surname><given-names>S.</given-names></name>
+<name><surname>Sielagoski</surname><given-names>J.</given-names></name>
+<name><surname>Ibrahim</surname><given-names>F.</given-names></name>
+</person-group> <article-title>Radar-based target tracking method: application to real road</article-title>. <comment>SAE paper 2005-01-1478</comment>, <year>2005</year>.</citation>
+</ref>
+<ref id="bibr14-0954407011414462">
+<label>14</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Deng</surname><given-names>B.</given-names></name>
+</person-group> <source>Processing method for statistical analysis of test</source>, <year>1995</year> (<publisher-name>Tsinghua University Press</publisher-name>, <publisher-loc>Beijing, China</publisher-loc>).</citation>
+</ref>
+<ref id="bibr15-0954407011414462">
+<label>15</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Eidehall</surname><given-names>A.</given-names></name>
+<name><surname>Pohl</surname><given-names>J.</given-names></name>
+<name><surname>Gustafeeon</surname><given-names>F.</given-names></name>
+</person-group> <article-title>Joint road geometry estimation and vehicle tracking</article-title>. <source>Contr. Eng. Pract.</source>, <year>2007</year>, <volume>15</volume>, <fpage>1484</fpage>–<lpage>1494</lpage>.</citation>
+</ref>
+<ref id="bibr16-0954407011414462">
+<label>16</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Schiffmann</surname><given-names>J. K.</given-names></name>
+<name><surname>Widmann</surname><given-names>G. R.</given-names></name>
+</person-group> <article-title>Model-based scene tracking using radar sensors for intelligent automotive vehicle systems</article-title>. In <conf-name>Proceedings of the Conference on Intelligent transportation system</conf-name>, <year>1997</year>, pp. <fpage>421</fpage>–<lpage>426</lpage> (<comment>IEEE</comment>).</citation>
+</ref>
+</ref-list>
+</back>
+</article>

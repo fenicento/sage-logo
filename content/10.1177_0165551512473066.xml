@@ -1,0 +1,2781 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JIS</journal-id>
+<journal-id journal-id-type="hwp">spjis</journal-id>
+<journal-title>Journal of Information Science</journal-title>
+<issn pub-type="ppub">0165-5515</issn>
+<issn pub-type="epub">1741-6485</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0165551512473066</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0165551512473066</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>LDA-based online topic detection using tensor factorization</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Guo</surname><given-names>Xin</given-names></name>
+<aff id="aff1-0165551512473066">Department of Computer Science and Technology and The Key Laboratory of Embedded System and Services Computing, Ministry of Education, Tongji University, China</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Xiang</surname><given-names>Yang</given-names></name>
+<aff id="aff2-0165551512473066">Department of Computer Science and Technology and The Key Laboratory of Embedded System and Services Computing, Ministry of Education, Tongji University, China</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Chen</surname><given-names>Qian</given-names></name>
+<aff id="aff3-0165551512473066">Key Laboratory of Computational Intelligence and Chinese Information Processing of Ministry of Education, School of Computer and Information Technology, Shanxi University, Taiyuan, China</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Huang</surname><given-names>Zhenhua</given-names></name>
+<aff id="aff4-0165551512473066">Department of Computer Science and Technology and The Key Laboratory of Embedded System and Services Computing, Ministry of Education, Tongji University, China</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Hao</surname><given-names>Yongtao</given-names></name>
+<aff id="aff5-0165551512473066">Department of Computer Science and Technology and The Key Laboratory of Embedded System and Services Computing, Ministry of Education, Tongji University, China</aff>
+</contrib>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0165551512473066">Xin Guo, Department of Computer Science and Technology, Tongji University, No. 4800, Caoan Rd, Shanghai 201804, China. Email: <email>guoxinjsj@163.com</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>8</month>
+<year>2013</year>
+</pub-date>
+<volume>39</volume>
+<issue>4</issue>
+<fpage>459</fpage>
+<lpage>469</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2013</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="sage">Chartered Institute of Library and Information Professionals</copyright-holder>
+</permissions>
+<abstract>
+<p>In the information retrieval field, effective and efficient extraction of topics from large-scale online text streams is challenging because it is a fully unsupervised learning task without prior knowledge. Most previous studies have focused on how to analyse text corpus to extract topics, rarely considering time dimensions. In the present study, we approached topic detection as a temporal optimization problem. Here, we propose a novel approach to incremental topic detection, called online topic detection using tensor factorization (OTD-TF), which is based on latent Dirichlet allocation (LDA). First, topics are obtained from the corpus in current time slices using LDA. Second, a topic tensor with a time dimension is constructed to identify the correlations between pairs of topics. Then, approximate topics are merged using TF. Finally, documents are reallocated to corresponding topic bins. By executing these steps continuously and incrementally, temporal topic detection can be achieved. In theoretical analyses and simulation experiments, OTD-TF outperformed other systems in terms of space and time complexity and achieved a high precision ratio. Our experimental evaluations also revealed interesting temporal patterns in topic emergence, development, extinction, burst and transience.</p>
+</abstract>
+<kwd-group>
+<kwd>LDA</kwd>
+<kwd>tensor factorization</kwd>
+<kwd>topic detection</kwd>
+<kwd>topic tensor</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0165551512473066">
+<title>1. Introduction</title>
+<p>With the rapid development of computer science and technology, an increasing amount of information is created by separate authors at different points in time, where subsequent authors build on the material of original authors. Such data bear timestamps, and because the information changes continuously over time, there are ‘evolutionary patterns’ hidden in the data. Indeed, the rise and rapid expansion of online forums such as email, news sites, blogs and so forth have made temporal text mining a hot topic in recent years. Currently, such text stream data are ubiquitous but unstructured [<xref ref-type="bibr" rid="bibr1-0165551512473066">1</xref>]. Hence, it is difficult to extract and mine potential topics from such sources and explore their temporal patterns [<xref ref-type="bibr" rid="bibr2-0165551512473066">2</xref>].</p>
+<p>Topic detection and topic correlation analyses are basic tasks in the field of topic detection and tracking. A range of approaches have been investigated, most of which have viewed topic detection as a clustering issue [<xref ref-type="bibr" rid="bibr3-0165551512473066">3</xref>]. Some have used timelines to represent temporal documents, transforming the issue into a topic visualization problem that can be solved by assessing the birth and death of topics [<xref ref-type="bibr" rid="bibr4-0165551512473066">4</xref>, <xref ref-type="bibr" rid="bibr5-0165551512473066">5</xref>], while others have adopted probabilistic topic models (pTM) to detect topics and trends [<xref ref-type="bibr" rid="bibr6-0165551512473066">6</xref>]. Most pTMs are based on latent Dirichlet allocation (LDA) [<xref ref-type="bibr" rid="bibr7-0165551512473066">7</xref>], a three-layer Bayesian network model widely used for topic modelling in the fields of image tagging, topic detection and social network analysis. This model assumes that words in a document and documents in a text corpus are exchangeable, that is, the order of words can be neglected, each topic can be considered a multinomial distribution of selected words, and each document can be considered a multinomial distribution of topics [<xref ref-type="bibr" rid="bibr8-0165551512473066">8</xref>]. However, previous studies using pTMs have been limited by, for example, employing a fixed number of topics in a document that needs to be specified beforehand, disregarding timestamps, and running algorithms requiring large amounts of memory. Such systems cannot be used for online topic detection.</p>
+<p>Various dimension-reduction methods have been used to detect topics. Among them, latent semantic analysis (LSA) using singular value decomposition based on vector space modelling (VSM) [<xref ref-type="bibr" rid="bibr9-0165551512473066">9</xref>] can compress a highly dimensional term–document matrix into a <italic>k</italic>-dimension subspace, greatly reducing text vector dimensions. Although this approach has overcome some shortcomings of VSM, there are still three main limitations. First, calculating large sparse matrices in LSA is very time consuming. Second, the results for the feature space dimension are difficult to explain semantically because each dimension is a linear combination of the original term space. Finally, the approach ignores the order of words in sentences and thus has the same problems associated with the bag-of-words model. While some work has focused on hot-topic detection [<xref ref-type="bibr" rid="bibr10-0165551512473066">10</xref>], burst-topic detection [<xref ref-type="bibr" rid="bibr11-0165551512473066">11</xref>], spatial analysis of topic detection [<xref ref-type="bibr" rid="bibr12-0165551512473066">12</xref>] and topic tracking, we have mainly focused on temporal topic detection of news stories with standard formats of grammar and semantics.</p>
+<p>Almost all types of data in web 2.0 applications bear timestamps. Relatively few algorithms have been designed for online text stream topic detection, where data must be processed in a small number of passes with limited storage space. In the present study, we performed incremental topic detection over time using LDA and tensor decomposition. We focused mainly on topic detection and correlation analysis to identify latent semantic structures and temporal patterns of each topic. The main contributions of this work to the field are as follows:</p>
+<list id="list1-0165551512473066" list-type="bullet">
+<list-item><p>We present a topic-detection method based on tensor factorization (TF) in the third dimension (i.e. time) that automatically categorizes similar online topics into groups over time.</p></list-item>
+<list-item><p>We show that TF can transform a topic-detection task into an optimization problem, propose an efficient algorithm based on Gibbs-sampling LDA and canonical polyadic decomposition (CPD), and demonstrate that the approach outperforms existing systems using a theoretical analysis.</p></list-item>
+<list-item><p>We present empirical results showing that the proposed algorithm can efficiently and effectively identify interesting patterns in temporal topics.</p></list-item>
+</list>
+<p>The remainder of this paper is organized as follows. Section 2 presents the problem, Section 3 formally defines our topic-detection tensor model and Section 4 describes experiments used to test the system and provides their empirical results. Conclusions and recommendations for future work are discussed in Section 5.</p>
+</sec>
+<sec id="section2-0165551512473066">
+<title>2. Problem statement</title>
+<p>Blogs including microblogs, such as Twitter, some websites (e.g., Wikipedia), and other online sources that generate text temporally (i.e. text streams) are a rapidly growing part of the Internet. We formally define a text stream as follows.</p>
+<disp-quote>
+<p><bold>Definition 2.1.</bold> A text stream is made up of textual data that are published continuously over time.</p>
+</disp-quote>
+<p>This can be formulated as follows:</p>
+<p>
+<disp-formula id="disp-formula1-0165551512473066">
+<mml:math display="block" id="math1-0165551512473066">
+<mml:mrow>
+<mml:mi>Streams</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>and</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0165551512473066" xlink:href="10.1177_0165551512473066-eq1.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula1-0165551512473066"><mml:math display="block" id="math2-0165551512473066"><mml:mrow><mml:msub><mml:mrow><mml:mi>D</mml:mi></mml:mrow><mml:mrow><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mo stretchy="false">{</mml:mo><mml:mi>docID</mml:mi><mml:mo>,</mml:mo><mml:mspace width="0.25em"/><mml:mi>docTitle</mml:mi><mml:mo>,</mml:mo><mml:mspace width="0.25em"/><mml:mi>content</mml:mi><mml:mo>,</mml:mo><mml:mspace width="0.25em"/><mml:mi>timeStamp</mml:mi><mml:mo>,</mml:mo><mml:mspace width="0.25em"/><mml:mi>source</mml:mi><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula>.</p>
+<disp-quote>
+<p><bold>Definition 2.2.</bold> a topic is an abstract set of series of events.</p>
+</disp-quote>
+<p>We consider each topic a mixture of terms in a given vocabulary, and we denote a single topic as <italic>T</italic> = {<italic>E, P, N</italic>}, where <italic>E</italic> is a collection of events, each of which is an instance of topic <italic>T; P</italic> is a collection of properties, each of which represent a particular feature of topic <italic>T</italic>; and <italic>N</italic> is the mathematical representation of that topic. <italic>N</italic> is formulated as follows:</p>
+<p>
+<disp-formula id="disp-formula2-0165551512473066">
+<label>(1)</label>
+<mml:math display="block" id="math3-0165551512473066">
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0165551512473066" xlink:href="10.1177_0165551512473066-eq2.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>π</italic><sub>v</sub> is the mixture proportion of terms in a given vocabulary, <italic>w</italic><sub>v</sub> is the index of that term, and <italic>V</italic> is the size of that vocabulary. Thus, we can treat <italic>N</italic> as a distribution over vocabulary.</p>
+<disp-quote>
+<p><bold>Definition 2.3.</bold> Topic correlation is a measure evaluating the correlation cost between two individual topics.</p>
+</disp-quote>
+<p>Here, we can denote every pair of topics using the following formulation:</p>
+<p>
+<disp-formula id="disp-formula3-0165551512473066">
+<label>(2)</label>
+<mml:math display="block" id="math4-0165551512473066">
+<mml:mrow>
+<mml:mi>TCs</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mi>cos</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>countD</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mtext>while</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>≠</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0165551512473066" xlink:href="10.1177_0165551512473066-eq3.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>countD</italic>(<italic>T<sub>i</sub>,T<sub>j</sub></italic>) is the number of times that <italic>T<sub>i</sub></italic> and <italic>T<sub>j</sub></italic> occur in the same document.</p>
+<disp-quote>
+<p><bold>Definition 2.4</bold>. Online topic detection (OTD) is a method for identifying topics of online text streams.</p>
+</disp-quote>
+<p>OTD assesses and detects topics of news stories in current time slices before the next news stories arrive. The process can be illustrated as follows.</p>
+<p>
+<disp-formula id="disp-formula4-0165551512473066">
+<label>(2)</label>
+<mml:math display="block" id="math5-0165551512473066">
+<mml:mrow>
+<mml:mtext>Input</mml:mtext>
+<mml:mo>:</mml:mo>
+<mml:mtext>Streams</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mtext>where</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>is</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>the</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>corpus</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>in</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>current</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>period</mml:mtext>
+<mml:mi>i</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mtext>and</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo>.</mml:mo>
+<mml:mtext>Current</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>topic</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>vector</mml:mtext>
+<mml:mo>:</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mtext>in</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>time</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>period</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>n</mml:mi>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0165551512473066" xlink:href="10.1177_0165551512473066-eq4.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula5-0165551512473066">
+<label>(3)</label>
+<mml:math display="block" id="math6-0165551512473066">
+<mml:mrow>
+<mml:mtext>Output</mml:mtext>
+<mml:mo>:</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>new</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>topic</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>detected</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0165551512473066" xlink:href="10.1177_0165551512473066-eq5.tif"/>
+</disp-formula>
+</p>
+<p>The process of mining and analysing temporal pattern of online text streams is called temporal text mining. A time slice can be denoted by a matrix of size <italic>K</italic>×<italic>K</italic> in a specified period <italic>t</italic>. See <xref ref-type="table" rid="table1-0165551512473066">Table 1</xref> for the symbols used in this paper.</p>
+<table-wrap id="table1-0165551512473066" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Notations of symbols and their corresponding descriptions</p>
+</caption>
+<graphic alternate-form-of="table1-0165551512473066" xlink:href="10.1177_0165551512473066-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Token</th>
+<th align="left">Description</th>
+<th align="left">Token</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<inline-formula id="inline-formula2-0165551512473066">
+<mml:math display="block" id="math7-0165551512473066">
+<mml:mrow>
+<mml:mo>∘</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>Outer product</td>
+<td>
+<inline-formula id="inline-formula3-0165551512473066">
+<mml:math display="block" id="math8-0165551512473066">
+<mml:mrow>
+<mml:mo>⊙</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>Khatri–Rao product</td>
+</tr>
+<tr>
+<td>
+<inline-formula id="inline-formula4-0165551512473066">
+<mml:math display="block" id="math9-0165551512473066">
+<mml:mrow>
+<mml:mo>⊗</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>Kronecker product</td>
+<td>
+<italic>a</italic>
+</td>
+<td>Scale variable</td>
+</tr>
+<tr>
+<td>
+<inline-formula id="inline-formula5-0165551512473066">
+<mml:math display="block" id="math10-0165551512473066">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>Vector variable</td>
+<td>
+<italic>a<sub>i</sub></italic>
+</td>
+<td>The <italic>i</italic>th element of vector <inline-formula id="inline-formula6-0165551512473066"><mml:math display="block" id="math11-0165551512473066"><mml:mrow><mml:mover><mml:mrow><mml:mi>a</mml:mi></mml:mrow><mml:mo>→</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula></td>
+</tr>
+<tr>
+<td>
+<italic>A</italic>
+</td>
+<td>Matrix variable</td>
+<td>
+<italic>a<sub>ij</sub></italic>
+</td>
+<td>The <italic>ij</italic>th element of matrix <italic>A</italic></td>
+</tr>
+<tr>
+<td>
+<bold>
+<italic>A</italic>
+</bold>
+</td>
+<td>Three-way array(tensor)</td>
+<td>
+<bold>
+<italic>A</italic>
+</bold>(<italic>i, j, k</italic>)/<italic>a<sub>ijk</sub></italic></td>
+<td>The <italic>ijk</italic>th element of tensor <italic>A</italic></td>
+</tr>
+<tr>
+<td>
+<bold>
+<italic>A</italic>
+</bold>(:, <italic>j, k</italic>)/<italic>a</italic><sub>:<italic>jk</italic></sub></td>
+<td>The <italic>jk</italic>th column vector</td>
+<td>
+<bold>
+<italic>A</italic>
+</bold>(<italic>i</italic>, :, :)/<italic>a<sub>i</sub></italic><sub>::</sub></td>
+<td>The <italic>i</italic>th horizontal slice</td>
+</tr>
+<tr>
+<td>
+<bold>
+<italic>A</italic>
+</bold>(<italic>i, :, k</italic>)/<italic>a<sub>i</sub></italic><sub>:<italic>k</italic></sub></td>
+<td>The <italic>ik</italic>th row vector</td>
+<td>
+<bold>
+<italic>A</italic>
+</bold>(:, <italic>j</italic>, :)/<italic>a</italic><sub>:<italic>j</italic>:</sub></td>
+<td>The <italic>j</italic>th lateral slice</td>
+</tr>
+<tr>
+<td>
+<bold>
+<italic>A</italic>
+</bold>(<italic>i, j</italic>, :)/<italic>a<sub>ij</sub></italic><sub>:</sub></td>
+<td>The <italic>ij</italic>th tube vector</td>
+<td>
+<bold>
+<italic>A</italic>
+</bold>(:, :, <italic>k</italic>)/<italic>a</italic><sub>::<italic>k</italic></sub></td>
+<td>The <italic>k</italic>th frontal slice</td>
+</tr>
+<tr>
+<td>||<italic>A</italic>||<sub>F</sub> / ||<bold><italic>A</italic></bold>||<sub>F</sub></td>
+<td>The Frobenius norm of <italic>A or</italic><bold><italic>A</italic></bold></td>
+<td>
+<inline-formula id="inline-formula7-0165551512473066">
+<mml:math display="block" id="math12-0165551512473066">
+<mml:mrow>
+<mml:msub>
+<mml:mo>×</mml:mo>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<italic>n</italic>-Mode product of a tensor and a matrix</td>
+</tr>
+<tr>
+<td>
+<bold>
+<italic>A</italic>
+</bold>
+<sub>(<italic>n</italic>)</sub>
+</td>
+<td>
+<italic>n</italic>-mode metricized version of tensor <italic>A</italic></td>
+<td>
+<inline-formula id="inline-formula8-0165551512473066">
+<mml:math display="block" id="math13-0165551512473066">
+<mml:mrow>
+<mml:msub>
+<mml:mover>
+<mml:mrow>
+<mml:mo>×</mml:mo>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>Contracted <italic>n</italic>-mode product of a tensor and a vector</td>
+</tr>
+<tr>
+<td>
+<inline-formula id="inline-formula9-0165551512473066">
+<mml:math display="block" id="math14-0165551512473066">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>†</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>The pseudo inverse of tensor <italic>A</italic></td>
+<td>
+<inline-formula id="inline-formula10-0165551512473066">
+<mml:math display="block" id="math15-0165551512473066">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>Dirichlet delta function</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section3-0165551512473066">
+<title>3. Topic detection using TF</title>
+<p>We propose a novel online topic detection approach called online topic detection using tensor factorization (OTD-TF). Given documents in a current period, a topic adjacency matrix is constructed for each iteration. It involves two main steps: constructing a third-order tensor based on a modified LDA model and then detecting topics using tensor decomposition. This makes online topic detection an optimization problem. The pseudo-code of this algorithm is described below.</p>
+<fig id="fig3-0165551512473066" position="float">
+<graphic xlink:href="10.1177_0165551512473066-fig3.tif"/>
+</fig>
+<p>Parameter <italic>K</italic> is the number of topics, <italic>V</italic> denotes the size of the vocabulary, and <italic>M</italic> is the number of documents in the current period. There are three main functions in the algorithm, including topic extraction using LDA, incremental tensor construction, and three-way TF. First, the document–topic matrix is produced using LDA, and then the tensor is incrementally constructed and factorized. This results in an updated topic vector that includes the index of each topic in a corresponding text document. The topic adjacency matrix gives the implied correlations between all pairs of topics.</p>
+<sec id="section4-0165551512473066">
+<title>3.1. Topic extraction using LDA</title>
+<p>First, we construct a corpus tensor where the first dimension represents documents, the second represents vocabulary terms and the third refers to a timeline. The salient feature in this construction process is that it is incremental. To identify the evolution of a topic over time and to determine the correlations between all pairs of topics, we use a modified LDA model to extract topics as shown in <xref ref-type="fig" rid="fig1-0165551512473066">Figure 1</xref>.</p>
+<fig id="fig1-0165551512473066" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Graphic representation of topic extraction using a modified LDA.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512473066-fig1.tif"/>
+</fig>
+<p>The modified version of LDA shown in <xref ref-type="fig" rid="fig1-0165551512473066">Figure 1</xref> is also presented in <xref ref-type="fig" rid="fig4-0165551512473066">Algorithm 2</xref> as follows. Topic extraction is performed by Gibbs sampling.</p>
+<fig id="fig4-0165551512473066" position="float">
+<graphic xlink:href="10.1177_0165551512473066-fig4.tif"/>
+</fig>
+<p>where <italic>φ<sub>k</sub></italic> and <italic>ϑ<sub>d</sub></italic> are both Dirichlet distributed, and the conjugacy property between a multinomial distribution and a Dirichlet distribution can largely simplify the process of inference on parameters. The Dirichlet distribution can be written as follows:</p>
+<p>
+<disp-formula id="disp-formula6-0165551512473066">
+<label>(4)</label>
+<mml:math display="block" id="math16-0165551512473066">
+<mml:mrow>
+<mml:mi>Dir</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0165551512473066" xlink:href="10.1177_0165551512473066-eq6.tif"/>
+</disp-formula>
+</p>
+<p>where Δ(<inline-formula id="inline-formula11-0165551512473066"><mml:math display="block" id="math17-0165551512473066"><mml:mrow><mml:mover><mml:mrow><mml:mi>α</mml:mi></mml:mrow><mml:mo>→</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula>) is a Dirichlet function.</p>
+<p>
+<disp-formula id="disp-formula7-0165551512473066">
+<label>(5)</label>
+<mml:math display="block" id="math18-0165551512473066">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:munderover>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mtext>d</mml:mtext>
+<mml:mover>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>Γ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0165551512473066" xlink:href="10.1177_0165551512473066-eq7.tif"/>
+</disp-formula>
+</p>
+<p>Then, the joint distribution of all parameters then can be derived from <xref ref-type="fig" rid="fig1-0165551512473066">Figure 1</xref>, as follows:</p>
+<p>
+<disp-formula id="disp-formula8-0165551512473066">
+<label>(6)</label>
+<mml:math display="block" id="math19-0165551512473066">
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Θ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Ψ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:munderover>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:munderover>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>p</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0165551512473066" xlink:href="10.1177_0165551512473066-eq8.tif"/>
+</disp-formula>
+</p>
+<p>We integrate out <italic>z</italic> and regard vectors <italic>α</italic> and <italic>β</italic> as hyperparameters. Because it is difficult to estimate all parameters exactly, we adopt collapsed Gibbs sampling [<xref ref-type="bibr" rid="bibr13-0165551512473066">13</xref>] for estimation. The target distribution of <italic>z</italic> is conditioned on observed values <italic>w</italic>.Thus, we have</p>
+<p>
+<disp-formula id="disp-formula9-0165551512473066">
+<label>(7)</label>
+<mml:math display="block" id="math20-0165551512473066">
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>p</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0165551512473066" xlink:href="10.1177_0165551512473066-eq9.tif"/>
+</disp-formula>
+</p>
+<p>where</p>
+<p>
+<disp-formula id="disp-formula10-0165551512473066">
+<label>(7)</label>
+<mml:math display="block" id="math21-0165551512473066">
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mover accent="true">
+<mml:mi>w</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>|</mml:mo>
+<mml:mover accent="true">
+<mml:mi>z</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:mover accent="true">
+<mml:mi>β</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:mrow>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mover accent="true">
+<mml:mi>w</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>|</mml:mo>
+<mml:mover accent="true">
+<mml:mi>z</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:mover accent="true">
+<mml:mi>φ</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mover accent="true">
+<mml:mi>φ</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+<mml:mo>|</mml:mo>
+<mml:mover accent="true">
+<mml:mi>β</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+<mml:mi>d</mml:mi>
+<mml:mover accent="true">
+<mml:mi>φ</mml:mi>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0165551512473066" xlink:href="10.1177_0165551512473066-eq10.tif"/></disp-formula>
+</p>
+<p>Using the collapsed LDA Gibbs sampling algorithms [<xref ref-type="bibr" rid="bibr14-0165551512473066">14</xref>], we get</p>
+<p>
+<disp-formula id="disp-formula11-0165551512473066">
+<label>(8)</label>
+<mml:math display="block" id="math22-0165551512473066">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0165551512473066" xlink:href="10.1177_0165551512473066-eq11.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula12-0165551512473066"><mml:math display="block" id="math23-0165551512473066"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mi>t</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> denotes the number of times that term <italic>t</italic> is observed with topic <italic>k</italic>, <inline-formula id="inline-formula13-0165551512473066"><mml:math display="block" id="math24-0165551512473066"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>n</mml:mi></mml:mrow><mml:mrow><mml:mi>m</mml:mi></mml:mrow><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mi>k</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> refers to the number of times that topic <italic>k</italic> is observed with a word of document <italic>m</italic>, and <italic>β<sub>t</sub></italic> and <italic>α<sub>k</sub></italic> denote the <italic>t</italic>th and <italic>k</italic>th elements in vector <italic>β</italic> and <italic>α</italic> respectively.</p>
+<p>We ultimately get matrix <italic>Φ</italic> of size <italic>K</italic>×<italic>V</italic> and matrix <italic>Θ</italic> of size <italic>M</italic>×<italic>K. Θ</italic> is a document–topic matrix. We transform it into a topic–topic adjacency matrix using a cosine measure, which reflects the probability of two topics existing in the same document, that is, the correlation between each pair of topics.</p>
+<p>
+<disp-formula id="disp-formula12-0165551512473066">
+<label>(9)</label>
+<mml:math display="block" id="math25-0165551512473066">
+<mml:mrow>
+<mml:mi>ad</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ij</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>ad</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ji</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo>;</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msubsup>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:msub>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mi</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mj</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msqrt>
+<mml:mrow>
+<mml:msubsup>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mi</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:msqrt>
+<mml:msqrt>
+<mml:mrow>
+<mml:msubsup>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>mj</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="left">
+<mml:mtext>otherwise</mml:mtext>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0165551512473066" xlink:href="10.1177_0165551512473066-eq12.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>adj<sub>ij</sub></italic> is the <italic>ij</italic>th element of the topic–topic adjacency matrix. This equation allows us to incrementally construct our topic tensor with a third dimension of time.</p>
+</sec>
+<sec id="section5-0165551512473066">
+<title>3.2. Incremental construction of topic tensor</title>
+<p>We incrementally construct a topic tensor during each iteration process, that is, we adopt the slide-window technique for each period. Here, we select month as the time span. If the topic matrix is <italic>A</italic><sub>(<italic>t</italic>−1)</sub> of size <italic>k</italic><sub>(<italic>t</italic>−1)</sub>×<italic>k</italic><sub>(<italic>t</italic>−1)</sub> after time period <italic>t</italic>−1, and the number of topics at period <italic>t</italic> is <italic>K</italic>, then topic tensor <italic>Γ<sub>t</sub></italic> at period <italic>t</italic> can be constructed by extending each frontal slice to <italic>k</italic><sub>(<italic>t</italic>−1)</sub>+<italic>K</italic>, including the adjacency matrix at period <italic>t</italic>. For each frontal slice of <italic>Γ<sub>t</sub></italic>,</p>
+<p>
+<disp-formula id="disp-formula13-0165551512473066">
+<label>(10)</label>
+<mml:math display="block" id="math26-0165551512473066">
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo>;</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo>;</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ij</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>and</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>j</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>and</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>j</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0165551512473066" xlink:href="10.1177_0165551512473066-eq13.tif"/>
+</disp-formula>
+</p>
+<p>and</p>
+<p>
+<disp-formula id="disp-formula14-0165551512473066">
+<label>(11)</label>
+<mml:math display="block" id="math27-0165551512473066">
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo>;</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo>;</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ij</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>and</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>j</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>and</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>j</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0165551512473066" xlink:href="10.1177_0165551512473066-eq14.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>adj<sub>ij</sub></italic> is the <italic>ij</italic>th element of <italic>Adj</italic> of size <italic>K</italic>×<italic>K</italic>.</p>
+</sec>
+<sec id="section6-0165551512473066">
+<title>3.3. Three-way tensor decomposition</title>
+<p>Next, we perform topic detection using TF. A tensor, which can be seen as an <italic>N</italic>-way array, is the tensor product of <italic>N</italic> vector spaces. Here, we adopt a third-order tensor (<italic>N</italic> = 3), where there are three indices, and the third index refers to the timeline. We treat each point of the third index as a time slot within which the tensor can be referred to as a time slice, during which a certain number of documents instantly arrives.</p>
+<p>Standard matrix factorization approaches and their variants are powerful for two-way-representation feature selection and dimensionality reduction. However, because they are limited when processing multi-way arrays such as third-order tensors, we adopt the CPD approach, the core of which is the alternating least squares (ALS) method [<xref ref-type="bibr" rid="bibr15-0165551512473066">15</xref>,<xref ref-type="bibr" rid="bibr16-0165551512473066">16</xref>]. TFs first appeared in the psychometrics literature [<xref ref-type="bibr" rid="bibr17-0165551512473066">17</xref>].</p>
+<p>Given a third-order topic tensor Γ of size <italic>K</italic>×<italic>K</italic>×<italic>T</italic>, the goal is to compute a CPD with <italic>R</italic> components that best approximates <italic>Γ</italic>. This can be seen as an optimization problem, as described below.</p>
+<p>
+<disp-formula id="disp-formula15-0165551512473066">
+<label>(12)</label>
+<mml:math display="block" id="math28-0165551512473066">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mtext>arg</mml:mtext>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mi>Γ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∘</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∘</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mo>→</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">‖</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>F</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0165551512473066" xlink:href="10.1177_0165551512473066-eq15.tif"/>
+</disp-formula>
+</p>
+<p>where ||.||<sub>F</sub> is the Frobenius norm of a tensor. We first fix <italic>B</italic> and <italic>C</italic> to solve for <italic>A</italic> and then permute for <italic>B</italic> and <italic>C</italic>, respectively, and iteratively repeat the whole procedure until a certain convergence criterion is satisfied. After having fixed all matrices but one, the problem can be reduced to a linear least squares problem. Formally, assuming that <italic>A</italic> and <italic>B</italic> are fixed, we can rewrite the above optimization problem as follows:</p>
+<p>
+<disp-formula id="disp-formula16-0165551512473066">
+<label>(13)</label>
+<mml:math display="block" id="math29-0165551512473066">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mi>arg</mml:mi>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:munder>
+<mml:mo>∥</mml:mo>
+<mml:mi>Γ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo>⊙</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+<mml:mo>∥</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>F</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula16-0165551512473066" xlink:href="10.1177_0165551512473066-eq16.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula14-0165551512473066"><mml:math display="block" id="math30-0165551512473066"><mml:mrow><mml:mo>⊙</mml:mo></mml:mrow></mml:math></inline-formula> is a Khatri–Rao product of two matrices.</p>
+<p>
+<disp-formula id="disp-formula17-0165551512473066">
+<label>(14)</label>
+<mml:math display="block" id="math31-0165551512473066">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi mathvariant="bold">Γ</mml:mi></mml:mrow><mml:mrow><mml:mo>(</mml:mo><mml:mn>1</mml:mn><mml:mo>)</mml:mo></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mo stretchy="false">[</mml:mo><mml:msup><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mi>C</mml:mi><mml:mo>⊙</mml:mo><mml:mi>B</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:mo stretchy="false">]</mml:mo></mml:mrow><mml:mrow><mml:mi>†</mml:mi></mml:mrow></mml:msup><mml:mo>=</mml:mo><mml:msub><mml:mi mathvariant="bold">Γ</mml:mi><mml:mrow><mml:mo>(</mml:mo><mml:mn>1</mml:mn><mml:mo>)</mml:mo></mml:mrow></mml:msub><mml:mo stretchy="false">[</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>C</mml:mi><mml:mo>⊙</mml:mo><mml:mi>B</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msup><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:msup><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:mo>*</mml:mo><mml:msup><mml:mrow><mml:mi>B</mml:mi></mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup><mml:mi>B</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mrow><mml:mo stretchy="false">]</mml:mo></mml:mrow><mml:mrow>
+<mml:mi>†</mml:mi>
+</mml:mrow></mml:msup></mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula17-0165551512473066" xlink:href="10.1177_0165551512473066-eq17.tif"/>
+</disp-formula>
+</p>
+<p>and <inline-formula id="inline-formula15-0165551512473066"><mml:math display="block" id="math32-0165551512473066"><mml:mrow><mml:mover><mml:mrow><mml:mi>A</mml:mi></mml:mrow><mml:mo>^</mml:mo></mml:mover><mml:mo>=</mml:mo><mml:mi>A</mml:mi><mml:mo>·</mml:mo><mml:mtext>diag</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mover><mml:mrow><mml:mi>λ</mml:mi></mml:mrow><mml:mo>→</mml:mo></mml:mover><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula>, so the only step remaining is to compute the pseudo-inverse of matrix (<italic>C<inline-formula id="inline-formula16-0165551512473066"><mml:math display="block" id="math33-0165551512473066"><mml:mrow><mml:mspace width="0.25em"/><mml:mo>⊙</mml:mo><mml:mspace width="0.25em"/></mml:mrow></mml:math></inline-formula>B</italic>). The result of this decomposition is three low-rank matrices.</p>
+<p>Based on the above formulations, our proposed OTD-TF algorithm can be reformulated as shown in <xref ref-type="fig" rid="fig5-0165551512473066">Algorithm 3</xref>.</p>
+<fig id="fig5-0165551512473066" position="float">
+<graphic xlink:href="10.1177_0165551512473066-fig5.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig5-0165551512473066">Algorithm 3</xref> performs dimension reduction, providing an array, <italic>Arr</italic>. As for <italic>A</italic> of size <italic>K</italic>×<italic>R</italic>, where <italic>R</italic>≪<italic>K</italic>, we have compressed the size of <italic>K</italic> to that of <italic>R</italic>, which can be seen as topic clustering.</p>
+</sec>
+<sec id="section7-0165551512473066">
+<title>3.4. Time and space complexity</title>
+<p>OTD requires less time and less memory storage than classic topic detection task. For time complexity, we suppose that the size of the corpus in time slice <italic>k</italic> is <italic>m<sub>k</sub></italic>, so the time complexity of executing LDA in each time slice is O(<italic>a</italic>). Hence, the complexity when using a traditional method is O[(0.5<italic>n</italic><sup>2</sup>+0.5<italic>n</italic>)<italic>a</italic>] as time increases, whereas that of our method is O(<italic>na</italic>) because we run each iteration in an incremental way. For space complexity, when topics are detected after LDA, we only need to construct the topic tensor using compressed topics, so the number of topics in a tensor is much less than usual. As time goes by, the space used for topic detection and storage becomes much smaller than that of traditional methods. Indeed, as shown in Section 4, OTD-TF reduces the time and space requirements by almost half compared with traditional methods.</p>
+</sec>
+</sec>
+<sec id="section8-0165551512473066">
+<title>4. Experiment and result analysis</title>
+<p>We built a data set of five popular topics taken from the website of China Daily (<ext-link ext-link-type="uri" xlink:href="http://www.chinadaily.com.cn">http://www.chinadaily.com.cn</ext-link>). To obtain the text corpus, we employed the Web crawler tool Heritrix 4.2 to crawl files on the website. We extracted 1369 news stories from the period 14 February to 29 June 2011. Our experiment was performed on an Intel<sup>®</sup> Core 2.27 GHz CPU with 3.00 GB RAM, a 160 GB hard disk, and a Microsoft Windows 7 Professional operating system. The data were pre-processed before being used in the experiment. We removed HTML tags, punctuation and other non-informative text. Experiments were run using Java 1.6.</p>
+<p>In this experimental, we focus mainly on topic detection and topic correlation analysis rather than on text categorization. A common standard measure for model quality is the <italic>F</italic>-score [<xref ref-type="bibr" rid="bibr18-0165551512473066">18</xref>]. Therefore, we compared our approach to Online LDA (OLDA) in terms of precision, recall and <italic>F</italic>-score. Unless specifically stated, we initialized some parameters in our algorithms with the following values: the number of topics in every document <italic>k</italic> = <italic>N</italic><sup>1/2</sup>, where <italic>N</italic> is the number of documents in each period; the hyperparameters <italic>α</italic> = 0.01 and <italic>β</italic> = 0.5; and the number of iteration in the sampling stage <italic>n</italic> = 1000.</p>
+<p>The corpus was labelled beforehand according to the source URL and the name of the website. Moreover, we used the label as a baseline. The topics in the corpus are listed in <xref ref-type="table" rid="table2-0165551512473066">Table 2</xref>.</p>
+<table-wrap id="table2-0165551512473066" position="float">
+<label>Table 2.</label>
+<caption>
+<p>The training datasets for topic detection</p>
+</caption>
+<graphic alternate-form-of="table2-0165551512473066" xlink:href="10.1177_0165551512473066-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Topic id</th>
+<th align="left">Topic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01</td>
+<td>The Royal Wedding</td>
+</tr>
+<tr>
+<td>02</td>
+<td>Earthquake Hits Japan</td>
+</tr>
+<tr>
+<td>03</td>
+<td>South Sudan New Nation</td>
+</tr>
+<tr>
+<td>04</td>
+<td>Wen’s Japan Tour</td>
+</tr>
+<tr>
+<td>05</td>
+<td>French Lagarde named IMF chief</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<sec id="section9-0165551512473066">
+<title>4.1. Comparison with OLDA</title>
+<p>We extracted topics at each period individually using OTD-TF; the results are shown in <xref ref-type="table" rid="table3-0165551512473066">Table 3</xref>. We represent each topic using a discrete distribution of vocabulary; only the top 10 words are shown in this table for simplicity.</p>
+<table-wrap id="table3-0165551512473066" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Online topic detection results</p>
+</caption>
+<graphic alternate-form-of="table3-0165551512473066" xlink:href="10.1177_0165551512473066-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Period</th>
+<th align="left">Topic no.: Top 10 words of each topic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>February</td>
+<td>T2-1: Prince William Kate Middleton couple royal wedding love romance Harry</td>
+</tr>
+<tr>
+<td>March</td>
+<td>T3-1: Japan tsunami earthquake disaster hit March Friday damage magnitude catastrophe</td>
+</tr>
+<tr>
+<td/>
+<td>T3-2: nuclear plant power radiation reactor Japan Fukushima leak crisis evacuation</td>
+</tr>
+<tr>
+<td>April</td>
+<td>T4-1: music procession fanfare anthem piece Peter Edward organ Hastings hymn</td>
+</tr>
+<tr>
+<td/>
+<td>T4-2: Chinese China student product stone carve tea study zhu Beijing</td>
+</tr>
+<tr>
+<td/>
+<td>T4-3: wedding royal William Prince London Kate Middleton Westminster Abbey Britain</td>
+</tr>
+<tr>
+<td/>
+<td>T4-4: Japan nuclear plant tsunami radiation Fukushima power earthquake Tepco disaster</td>
+</tr>
+<tr>
+<td/>
+<td>T4-5: Sudan south Abyei government march Juba benjamin khartoum Dinka war</td>
+</tr>
+<tr>
+<td>May</td>
+<td>T5-1: Sudan southern Wau Chinese peacekeeper CNPC refinery hospital Khartoum medical</td>
+</tr>
+<tr>
+<td/>
+<td>T5-2: wedding prince royal sale William warm Obama Zealand rise pound</td>
+</tr>
+<tr>
+<td/>
+<td>T5-3: plant nuclear Japan reactor power Tokyo tsunami March government Tepco</td>
+</tr>
+<tr>
+<td/>
+<td>T5-4: IMF Europe strauss Kahn Minister country finance Lagarde candidate bank</td>
+</tr>
+<tr>
+<td/>
+<td>T5-5: Japan China Wen Jiabao south premier minister disaster cooperate visit</td>
+</tr>
+<tr>
+<td>June</td>
+<td>T6-1: IMF Lagarde country Minister Europe support finance candidate fund French</td>
+</tr>
+<tr>
+<td/>
+<td>T6-2: plant Japan nuclear worker reactor water Fukushima tsunami power radiation</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>
+<xref ref-type="table" rid="table4-0165551512473066">Table 4</xref> shows the initial topic list, the list after extension used as the topic tensor, and the topic extraction results after TF at each iteration stage. Note that, once we get the index value that corresponds to the maximum value of each topic vector, subtopics are allocated to existing topics according to that index value.</p>
+<table-wrap id="table4-0165551512473066" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Online topic detection results using OTD-TF</p>
+</caption>
+<graphic alternate-form-of="table4-0165551512473066" xlink:href="10.1177_0165551512473066-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Iteration</th>
+<th align="left">Items</th>
+<th align="left">Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Iteration 1</td>
+<td>Topics</td>
+<td>T2-1</td>
+</tr>
+<tr>
+<td/>
+<td>Result</td>
+<td>T1(T2-1)</td>
+</tr>
+<tr>
+<td>Iteration 2</td>
+<td>Topics</td>
+<td>T3-1, T3-2</td>
+</tr>
+<tr>
+<td/>
+<td>Extension</td>
+<td>T1, T3-1, T3-2</td>
+</tr>
+<tr>
+<td/>
+<td>Factorization</td>
+<td>T1(T2-1), T2(T3-1, T3-2)</td>
+</tr>
+<tr>
+<td>Iteration 3</td>
+<td>Topics</td>
+<td>T4-1, T4-2, T4-3, T4-4, T4-5</td>
+</tr>
+<tr>
+<td/>
+<td>Extension</td>
+<td>T1, T2, T4-1, T4-2, T4-3, T4-4, T4-5</td>
+</tr>
+<tr>
+<td/>
+<td>Factorization</td>
+<td>T1(T2-1, T4-2, T4-3), T2(T3-1, T3-2, T4-4), T3(T4-1), T4(T4-5)</td>
+</tr>
+<tr>
+<td>Iteration 4</td>
+<td>Topics</td>
+<td>T5-1, T5-2, T5-3, T5-4, T5-5</td>
+</tr>
+<tr>
+<td/>
+<td>Extension</td>
+<td>T1, T2, T3, T4, T5-1, T5-2, T5-3, T5-4, T5-5</td>
+</tr>
+<tr>
+<td/>
+<td>Factorization</td>
+<td>T1(T2-1, T4-2, T4-3, T5-2), T2(T3-1, T3-2, T4-4, T5-3), T3(T4-1), T4(T4-5, T5-1), T5(T5-4), T6(T5-5)</td>
+</tr>
+<tr>
+<td>Iteration 5</td>
+<td>Topics</td>
+<td>T6-1, T6-2</td>
+</tr>
+<tr>
+<td/>
+<td>Extension</td>
+<td>T1, T2, T3, T4, T5, T6, T6-1, T6-2,</td>
+</tr>
+<tr>
+<td/>
+<td>Factorization</td>
+<td>T1(T2-1, T4-2, T4-3, T5-2), T2(T3-1, T3-2, T4-4, T5-3, T6-2), T3(T4-1), T4(T4-5, T5-1), T5(T5-4, T6-1), T6(T5-5)</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>From <xref ref-type="table" rid="table4-0165551512473066">Table 4</xref>, we can see that a total of six topics were detected in the text stream corpus: the royal wedding, earthquake hits Japan, music procession and hymn, South Sudan new nation, French Lagarde named IMF chief, and Wen’s Japan tour. We compared OTD-TF with OLDA in terms of <italic>F-</italic>score based on these baseline data.</p>
+<p>We use <italic>F-</italic>score as our performance evaluation measure, as follows:</p>
+<p>
+<disp-formula id="disp-formula18-0165551512473066">
+<label>(15)</label>
+<mml:math display="block" id="math42-0165551512473066">
+<mml:mrow>
+<mml:mi>F</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mtext>score</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext>precision</mml:mtext>
+<mml:mo>×</mml:mo>
+<mml:mtext>recall</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mtext>precision</mml:mtext>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>recall</mml:mtext>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula18-0165551512473066" xlink:href="10.1177_0165551512473066-eq18.tif"/>
+</disp-formula>
+</p>
+<p>where</p>
+<p>
+<disp-formula id="disp-formula19-0165551512473066">
+<label>(16)</label>
+<mml:math display="block" id="math43-0165551512473066">
+<mml:mrow>
+<mml:mtext>precision</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>cr</mml:mi>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo>∩</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>rc</mml:mi>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>rc</mml:mi>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>recall</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>cr</mml:mi>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo>∩</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>rc</mml:mi>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>cr</mml:mi>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula19-0165551512473066" xlink:href="10.1177_0165551512473066-eq19.tif"/>
+</disp-formula>
+</p>
+<p>and {<italic>cr</italic>} is a collection of documents on a topic that were detected by our prototype system, {<italic>rc</italic>} is a baseline collection of documents on that topic, and |.| denotes the size of a collection. Here, we set <italic>λ</italic> to 0.5. <xref ref-type="table" rid="table5-0165551512473066">Table 5</xref> compares the performances of our system and the OLDA method.</p>
+<table-wrap id="table5-0165551512473066" position="float">
+<label>Table 5.</label>
+<caption>
+<p>The comparison of <italic>F-</italic>score, precision and recall between OLDA and OTD-TF</p>
+</caption>
+<graphic alternate-form-of="table5-0165551512473066" xlink:href="10.1177_0165551512473066-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">T1</th>
+<th align="left">T2</th>
+<th align="left">T4</th>
+<th align="left">T5</th>
+<th align="left">T6</th>
+<th align="left">Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>p(OLDA)</td>
+<td>0.8857</td>
+<td>0.8814</td>
+<td>0.8889</td>
+<td>1.0000</td>
+<td>1.0000</td>
+<td>0.9106</td>
+</tr>
+<tr>
+<td>r(OLDA)</td>
+<td>0.9841</td>
+<td>1.0000</td>
+<td>1.0000</td>
+<td>1.0000</td>
+<td>0.9600</td>
+<td>0.9941</td>
+</tr>
+<tr>
+<td>F(OLDA)</td>
+<td>0.9323</td>
+<td>0.9369</td>
+<td>0.9412</td>
+<td>1.0000</td>
+<td>0.9796</td>
+<td>0.9505</td>
+</tr>
+<tr>
+<td>p(OTD-TF)</td>
+<td>0.9286</td>
+<td>0.9915</td>
+<td>0.8889</td>
+<td>1.0000</td>
+<td>1.0000</td>
+<td>0.9892</td>
+</tr>
+<tr>
+<td>r(OTD-TF)</td>
+<td>0.9701</td>
+<td>1.0000</td>
+<td>1.0000</td>
+<td>1.0000</td>
+<td>0.9600</td>
+<td>0.9918</td>
+</tr>
+<tr>
+<td>F(OTD-TF)</td>
+<td>0.9489</td>
+<td>0.9957</td>
+<td>0.9412</td>
+<td>1.0000</td>
+<td>0.9796</td>
+<td>0.9905</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>As depicted in the table, our method outperformed OLDA in terms of both precision and <italic>F-</italic>score, although both systems had similar recall.</p>
+</sec>
+<sec id="section10-0165551512473066">
+<title>4.2. Topics over time</title>
+<p>We demonstrate the topics’ strength curves in <xref ref-type="fig" rid="fig2-0165551512473066">Figure 2</xref>, where we briefly represent the number of documents as the topic strength. For simplicity, we only demonstrate the topic strength computed monthly.</p>
+<fig id="fig2-0165551512473066" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Strengths of topics over time.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512473066-fig2.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig2-0165551512473066">Figure 2</xref> illustrates each topic’s strength curve, where topic strength reflects the number of documents of that topic. For simplicity, we present it by month. As shown in <xref ref-type="fig" rid="fig2-0165551512473066">Figure 2</xref>, the topic <italic>the royal wedding</italic> began in February and peaked in April when the wedding was held. The topic <italic>earthquake hits Japan</italic>, which was a burst topic, almost reaching its peak when it emerged in March 11. Thus, it had a great impact and lasted for a long time. The topic <italic>music procession and hymn</italic> was detected by mistake, as it is a document under <italic>the royal wedding</italic> topic. <italic>South Sudan new nation</italic> and <italic>French Lagarde named IMF chief</italic> were both in the initial stage of coverage, and their curves extended in a relatively stable manner. In fact, in early February, each party leader in South Sudan agreed to found a new nation and formally declare independence. Finally <italic>Wen’s Japan tour</italic> was a transient topic that emerged in May.</p>
+</sec>
+</sec>
+<sec id="section11-0165551512473066">
+<title>5. Conclusions and future work</title>
+<p>Our novel approach to online topic detection, OTD-TF, can identify topic trends over time as well as the correlations among them. It shows good time and space complexity and outperforms other approaches such as OLDA in terms of time cost and <italic>F-</italic>score.</p>
+<p>As for future work, there are many potential directions. It would be interesting to design a detection algorithm for a distributed environment or based on various types of text stream corpus. It would be also valuable to extend the current approach to other fields such as image/video retrieval and social network analysis.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>This work was partially supported by the NSFC under grant no. 71171148, 61103069 and 51075306 and by the National Technology Plan Project under grant no. 2012BAD35B01. The work was also funded by the National High-Tech Research and Development Plan of China under grant no. 2012AA062203 and by the Project of special funds for the Informatization Development of Shanghai Municipality under grant no. 200901015, as well as the Innovation Action Program of Shanghai Science and Technology Commission under grant no. 11dz1501703 and 11dz1210600.</p>
+</ack>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0165551512473066">
+<label>[1]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Kleinberg</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Temporal dynamics of on-line information streams</article-title>. In: <person-group person-group-type="editor"><name><surname>Garofalakis</surname><given-names>M</given-names></name><name><surname>Gehrke</surname><given-names>J</given-names></name><name><surname>Rastogi</surname><given-names>R</given-names></name></person-group> (eds) <source>Data stream management: Processing high-speed data streams</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2008</year>.</citation>
+</ref>
+<ref id="bibr2-0165551512473066">
+<label>[2]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kleinberg</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Bursty and hierarchical structure in streams</article-title>. <conf-name>Proceedings of the 8th ACM SIGKDD international conference on knowledge discovery and data mining</conf-name>, <year>2002</year>, pp. <fpage>1</fpage>–<lpage>25</lpage>.</citation>
+</ref>
+<ref id="bibr3-0165551512473066">
+<label>[3]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zhang</surname><given-names>J</given-names></name>
+<name><surname>Ghahramani</surname><given-names>Z</given-names></name>
+<name><surname>Yang</surname><given-names>Y</given-names></name>
+</person-group>. <article-title>A probabilistic model for online document clustering with application to novelty detection</article-title>. <conf-name>Nineteenth annual conference on neural information processing systems, NIPS</conf-name>, <year>2005</year>, pp. <fpage>1</fpage>–<lpage>8</lpage>.</citation>
+</ref>
+<ref id="bibr4-0165551512473066">
+<label>[4]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Ahmed</surname><given-names>A</given-names></name>
+<name><surname>Xing</surname><given-names>EP</given-names></name>
+</person-group>. <article-title>Timeline: A dynamic hierarchical dirichlet process model for recovering birth/death and evolution of topics in text stream</article-title>. <conf-name>Proceedings of the 26th international conference on uncertainty in artificial intelligence</conf-name>, <year>2010</year>, pp. <fpage>1</fpage>–<lpage>10</lpage>.</citation>
+</ref>
+<ref id="bibr5-0165551512473066">
+<label>[5]</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Ahmed</surname><given-names>A</given-names></name>
+<name><surname>Xing</surname><given-names>EP</given-names></name>
+</person-group>. <article-title>Timelines: Recovering birth and evolution of topics in scientific literature using dynamic non-parametric Bayesian models</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.umiacs.umd.edu/~jbg/nips_tm_workshop/19.pdf">http://www.umiacs.umd.edu/~jbg/nips_tm_workshop/19.pdf</ext-link></citation>
+</ref>
+<ref id="bibr6-0165551512473066">
+<label>[6]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>AlSumait</surname><given-names>L</given-names></name>
+<name><surname>Barbará</surname><given-names>D</given-names></name>
+<name><surname>Domeniconi</surname><given-names>C</given-names></name>
+</person-group>. <article-title>On-line LDA: Adaptive topic models for mining text streams with applications to topic detection and tracking</article-title>. <conf-name>2008 eighth IEEE international conference on data mining</conf-name>, <year>2008</year>, pp. <fpage>3</fpage>–<lpage>12</lpage>.</citation>
+</ref>
+<ref id="bibr7-0165551512473066">
+<label>[7]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Anthes</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Topic models vs. unstructured data</article-title>. <source>Communications of the ACM</source><year>2010</year>; <volume>53</volume>: <fpage>16</fpage>–<lpage>18</lpage>.</citation>
+</ref>
+<ref id="bibr8-0165551512473066">
+<label>[8]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Blei</surname><given-names>DM</given-names></name>
+<name><surname>Ng</surname><given-names>AY</given-names></name>
+<name><surname>Jordan</surname><given-names>MI</given-names></name>
+</person-group>. <article-title>Latent Dirichlet allocation</article-title>. <source>Journal of Machine Learning Research</source><year>2003</year>; <volume>3</volume>: <fpage>993</fpage>–<lpage>1022</lpage>.</citation>
+</ref>
+<ref id="bibr9-0165551512473066">
+<label>[9]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Deerwester</surname><given-names>S</given-names></name>
+<name><surname>Dumais</surname><given-names>ST</given-names></name>
+<name><surname>Furnas</surname><given-names>GW</given-names></name>
+<name><surname>Landauer</surname><given-names>TK</given-names></name>
+<name><surname>Harshman</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Indexing by latent semantic analysis</article-title>. <source>Journal of the American Society for Information Science</source><year>1990</year>; <volume>41</volume>: <fpage>391</fpage>–<lpage>407</lpage>.</citation>
+</ref>
+<ref id="bibr10-0165551512473066">
+<label>[10]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zhang</surname><given-names>C</given-names></name>
+<name><surname>Fan</surname><given-names>X</given-names></name>
+<name><surname>Chen</surname><given-names>X</given-names></name>
+</person-group>. <article-title>Hot topic detection on Chinese short text</article-title>. <source>Communications in Computer and Information Science</source><year>2011</year>; <volume>176</volume>: <fpage>207</fpage>–<lpage>212</lpage>.</citation>
+</ref>
+<ref id="bibr11-0165551512473066">
+<label>[11]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ma</surname><given-names>HF</given-names></name>
+<name><surname>Ma</surname><given-names>HL</given-names></name>
+</person-group>. <article-title>Combining burst detection for hot topic extraction</article-title>. <source>Advanced Materials Research</source><year>2011</year>; <volume>268–270</volume>: <fpage>1283</fpage>–<lpage>1288</lpage>.</citation>
+</ref>
+<ref id="bibr12-0165551512473066">
+<label>[12]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pan</surname><given-names>CC</given-names></name>
+<name><surname>Mitra</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Event detection with spatial latent Dirichlet allocation</article-title>. <conf-name>Proceedings of the 11th annual international ACM/IEEE joint conference on digital libraries</conf-name>, <year>2011</year>.</citation>
+</ref>
+<ref id="bibr13-0165551512473066">
+<label>[13]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Griffiths</surname><given-names>TL</given-names></name>
+<name><surname>Steyvers</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Finding scientific topics</article-title>. <source>Proceedings of the National Academy of Sciences</source><year>2004</year>; <volume>101</volume>(<supplement>suppl.</supplement>): <fpage>5228</fpage>–<lpage>5235</lpage>.</citation>
+</ref>
+<ref id="bibr14-0165551512473066">
+<label>[14]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Heinrich</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Parameter estimation for text analysis</article-title>. <source>Technical Report</source>, <year>2005</year>.</citation>
+</ref>
+<ref id="bibr15-0165551512473066">
+<label>[15]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Stegeman</surname><given-names>A</given-names></name>
+<name><surname>Tenberge</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Kruskal’s condition for uniqueness in Candecomp/Parafac when ranks and k-ranks coincide</article-title>. <source>Computational Statistics and Data Analysis</source><year>2006</year>; <volume>50</volume>: <fpage>210</fpage>–<lpage>220</lpage>.</citation>
+</ref>
+<ref id="bibr16-0165551512473066">
+<label>[16]</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Harshman</surname><given-names>RA</given-names></name>
+</person-group>. <article-title>Foundations of the PARAFAC procedure: Models and conditions for an ‘explanatory’ multimodal factor analysis</article-title>. <source>UCLA Working Papers in Phonetics</source><year>1970</year>; <volume>16</volume>: <fpage>1</fpage>–<lpage>84</lpage>.</citation>
+</ref>
+<ref id="bibr17-0165551512473066">
+<label>[17]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Cichocki</surname><given-names>A</given-names></name>
+<name><surname>Zdunek</surname><given-names>R</given-names></name>
+<name><surname>Phan</surname><given-names>AH</given-names></name>
+<name><surname>Amari</surname><given-names>SI</given-names></name>
+</person-group>. <source>Nonnegative matrix and tensor factorizations – Applications to exploratory multi-way data analysis and blind source separation</source>. <publisher-loc>Chichester</publisher-loc>: <publisher-name>John Wiley &amp; Sons</publisher-name>, <year>2009</year>.</citation>
+</ref>
+<ref id="bibr18-0165551512473066">
+<label>[18]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Azzopardi</surname><given-names>L</given-names></name>
+<name><surname>Girolami</surname><given-names>M</given-names></name>
+<name><surname>van Risjbergen</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Investigating the relationship between language model perplexity and IR precision-recall measures</article-title>. <conf-name>Proceedings of the 26th annual international ACM SIGIR conference on Research and development in information retrieval</conf-name>, <year>2003</year>, pp. <fpage>369</fpage>–<lpage>370</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

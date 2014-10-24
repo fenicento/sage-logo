@@ -1,0 +1,3186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JIS</journal-id>
+<journal-id journal-id-type="hwp">spjis</journal-id>
+<journal-title>Journal of Information Science</journal-title>
+<issn pub-type="ppub">0165-5515</issn>
+<issn pub-type="epub">1741-6485</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0165551511423149</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0165551511423149</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Algorithm for recommending answer providers in community-based question answering</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Zheng</surname><given-names>Xiaolin</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Hu</surname><given-names>Zhongkai</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Xu</surname><given-names>Aiwu</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Chen</surname><given-names>DeRen</given-names></name>
+</contrib>
+<aff id="aff1-0165551511423149">Zhejiang University, China</aff>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Liu</surname><given-names>Kuang</given-names></name>
+</contrib>
+<aff id="aff2-0165551511423149">University of Southern California, USA</aff>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Li</surname><given-names>Bo</given-names></name>
+</contrib>
+<aff id="aff3-0165551511423149">Hanyang University, Korea</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0165551511423149">Xiaolin Zheng, College of Computer Science and Technology, Zhejiang University, Hangzhou, 310027, China. Email: <email>xlzheng@zju.edu.cn</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>2</month>
+<year>2012</year>
+</pub-date>
+<volume>38</volume>
+<issue>1</issue>
+<fpage>3</fpage>
+<lpage>14</lpage>
+<permissions>
+<copyright-statement>© Chartered Institute of Library and Information Professionals 2011</copyright-statement>
+<copyright-year>2011</copyright-year>
+<copyright-holder content-type="sage">Chartered Institute of Library and Information Professionals</copyright-holder>
+</permissions>
+<abstract>
+<p>Obtaining answers from community-based question answering (CQA) services is typically a lengthy process. In this light, the authors propose an algorithm that recommends answer providers. A two-step framework is developed, in which a query likelihood language model is constructed that enables the determination of the interests of answer providers. The model is then used to identify answer providers who are interested in answering questions related to the identified topics. At the same time, a maximum entropy model is designed to estimate answer quality. Finally, an answer-quality-based algorithm is developed to model the expertise of answer providers for the purpose of differentiating answer providers of various capacities. The proposed scheme leverages answer provider interest and expertise, allowing for more effective differentiation. Experiments on real-world data from Baidu Knows, a renowned Chinese CQA service similar to Yahoo! Answers, reveal significant improvements over the baseline methods, and test results demonstrate the effective of the novel approach.</p>
+</abstract>
+<kwd-group>
+<kwd>community-based question answering</kwd>
+<kwd>maximum entropy model</kwd>
+<kwd>query likelihood language model</kwd>
+<kwd>recommending answer providers</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0165551511423149" sec-type="intro">
+<title>1. Introduction</title>
+<p>Recent years have seen the rapid development of Q&amp;A systems because of the disadvantages of conventional search engines and rising user demand for fast information access. In contrast to existing document retrieval systems, a Q&amp;A system can answer users’ questions in accurate, simple, and natural language. Early Q&amp;A systems based on the auto-answering framework rely primarily on natural language processing, knowledge representation and reasoning, and machine learning. Thus far, however, no ideal open-domain question answering system has been developed.</p>
+<p>With the development of Web 2.0 and social networking services, community-based question answering (CQA) services have become popular. An increasing number of users rely on CQA to resolve daily problems. Baidu Knows, a renowned Chinese CQA service similar to Yahoo! Answers, has currently accumulated more than 200 million questions, with an increase of more than 100,000 new questions daily. However, problems arise along with CQA development and the increase in the volume of system data. Given the rise in the quantity of questions submitted in CQA systems, users spend a considerable amount of time waiting for other users to answer the inquiries. In many cases, some of the questions remain unanswered. Meanwhile, users who are willing to answer questions encounter difficulties in finding topics that they are interested in. To prove this point, the authors randomly selected 1000 newly raised questions from Baidu Knows, and checked them again after two days. The result reveals that 68.2% of the questions were responded to with users’ answers, but only 13.2% of them were resolved. Therefore, research on recommending answer providers is essential to CQA service development. An effective system is characterized by the immediate forwarding of newly raised questions to potential answer providers; this allows for the efficient resolution of questions, thereby reducing waiting time and enhancing user experience.</p>
+<p>In this article, the authors propose an algorithm that recommends answer providers, with comprehensive consideration for factors related to the interests and expertise of the answer providers. This consideration is based on an extensive analysis of research on answer provider recommendation. First, a query likelihood language model was constructed to analyse answer provider interest for the purpose of identifying groups of suitable answer providers. Because the quality of the answers to questions varies, individuals who address a large number of questions may be not suitable as answer providers. For example, a user may provide a lot of answers, while few of them are effective, so this user must not be a reliable answer provider. Thus, a maximum entropy model is designed to determine answer quality. On the basis of the quality of answers provided, an answer provider expertise model is established to distinguish amongst the capacities of different answer providers and reveal individual characteristics.</p>
+</sec>
+<sec id="section2-0165551511423149">
+<title>2. Related work</title>
+<p>Extensive research has been devoted to CQA services in an effort to reduce user waiting time and improve the efficiency of question-answering systems. Before inquiries are submitted, searching for similar questions can provide high-quality answers that may already be available in the system. This feature not only reduces waiting time, but also conserves system resources. In view of this mechanism, Jeon et al. [<xref ref-type="bibr" rid="bibr1-0165551511423149">1</xref>] presented an algorithm intended to search for semantically similar questions in a question-answering system. This algorithm calculates question similarities through a language translation model, and considers answers for the corresponding question. Wang et al. [<xref ref-type="bibr" rid="bibr2-0165551511423149">2</xref>] proposed a syntax tree structure-based, rather than training-based, query framework to search for similar questions.</p>
+<p>The sources of knowledge or information in CQA systems are the question–answer pairs. The number of question–answer pairs generated by a system is relatively limited, whereas more knowledge or information is available in user-generated internet forums. Therefore, these question–answer pairs can be extracted from internet forums as a supplement to Q&amp;A systems. Cong et al. [<xref ref-type="bibr" rid="bibr3-0165551511423149">3</xref>] studied the extraction of question–answer pairs from forums and proposed a classification-based sequential pattern algorithm that enables searching for question posts. A transfer-based graph theory was then used to detect answer information in question candidates. Wang et al. [<xref ref-type="bibr" rid="bibr4-0165551511423149">4</xref>] examined answer ranking issues by building models of the relationship between questions and answers in Q&amp;A systems. On the assumption that several different types of direct associations exist between questions and answers, the authors used a statistical regression model to calculate such associations and proposed an approach based on analogy to identify the most matched answers.</p>
+<p>Some studies are focused on recommending answer providers for newly raised questions in the community. Li et al. [<xref ref-type="bibr" rid="bibr5-0165551511423149">5</xref>] used the source codes released by users to build a ‘concept network’, accomplished through the analysis of the class inheritance and class call relationships. A user network is set up by examining the interdependence of posts in the forums. Then, ‘expert’ recommendations are provided in accordance with the concept of question posts and conceptual similarity of answer providers. Zhou et al. [<xref ref-type="bibr" rid="bibr6-0165551511423149">6</xref>] used a statistical language model to represent answer provider information, and recommended answer providers in accordance with the dependence amongst posts as well as post topics. Nevertheless, building a ‘reply relationship’ between users/answer providers for most answering systems is difficult, making this method impractical. In the literature [<xref ref-type="bibr" rid="bibr7-0165551511423149">7</xref>–<xref ref-type="bibr" rid="bibr9-0165551511423149">9</xref>], the probabilistic latent semantic analysis (PLSA) model [<xref ref-type="bibr" rid="bibr8-0165551511423149">8</xref>] was implemented to resolve issues related to recommendations on answer providers. PLSA was used to analyse the questions addressed by answer providers and build a model that depicts the interests of the answer providers. The similarity between answer provider interests and questions for recommendation was then calculated. Finally, a recommended list of answer providers was drawn. Given that answer quality varies, recommending answer providers solely on the basis of an interest model is not a sufficiently accurate approach. Moreover, question description in question-answering systems is usually shorter than ordinary document information. Because of limited data availability, constructing a precise answer provider interest model using latent semantic analysis techniques is difficult. In the present work therefore, different methods to model answer provider interest are used, whilst comprehensively considering answer quality. To further improve the accuracy of the recommendations, an expertise model is proposed.</p>
+</sec>
+<sec id="section3-0165551511423149">
+<title>3. Recommendation algorithm</title>
+<sec id="section4-0165551511423149">
+<title>3.1. Formal definition</title>
+<p>First, a formal definition and description of the problem are presented.</p>
+<p><bold>Definition 1:</bold> Answer provider recommendation</p>
+<p>An answer provider can be defined as follows. It pertains to a given set of users <inline-formula id="inline-formula1-0165551511423149">
+<mml:math display="inline" id="math1-0165551511423149">
+<mml:mrow>
+<mml:mtext>U</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi><mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>n</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> with a newly raised question <inline-formula id="inline-formula2-0165551511423149">
+<mml:math display="inline" id="math2-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, for which the system recommends appropriate answer providers <inline-formula id="inline-formula3-0165551511423149">
+<mml:math display="inline" id="math3-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>rk</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> who satisfy certain specific conditions as they answer newly raised questions. Recommended answer providers have to satisfy</p>
+<p>
+<disp-formula id="disp-formula1-0165551511423149">
+<label>(1)</label>
+<mml:math display="block" id="math4-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mtext>TOPN</mml:mtext>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>UR</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext>C</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0165551511423149" xlink:href="10.1177_0165551511423149-eq1.tif"/></disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula4-0165551511423149">
+<mml:math display="inline" id="math5-0165551511423149">
+<mml:mrow>
+<mml:mtext>TOPN</mml:mtext>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mtext>UR</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> denotes the top N answer providers, and <inline-formula id="inline-formula5-0165551511423149">
+<mml:math display="inline" id="math6-0165551511423149">
+<mml:mrow>
+<mml:mtext>UR</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext>C</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> represents the degree of satisfaction of answer provider <inline-formula id="inline-formula6-0165551511423149">
+<mml:math display="inline" id="math7-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> with the answer to question <inline-formula id="inline-formula7-0165551511423149">
+<mml:math display="inline" id="math8-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> under condition C. The larger the <inline-formula id="inline-formula8-0165551511423149">
+<mml:math display="inline" id="math9-0165551511423149">
+<mml:mrow>
+<mml:mtext>UR</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext>C</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> the more capable is the answer provider in addressing question <inline-formula id="inline-formula9-0165551511423149">
+<mml:math display="inline" id="math10-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>The conditions that the recommended answer provider should satisfy can be analysed from two perspectives: (a) the recommended answer provider should show considerable interest in the question (topic). Constructing an interest model for evaluating the degree of answer provider interest in the question is therefore necessary; (b) the recommended answer provider should have the capacity (expertise) to answer the questions. Thus, constructing an expertise model is also necessary to determine whether the expertise matches the corresponding topic.</p>
+</sec>
+<sec id="section5-0165551511423149">
+<title>3.2. Modelling answer provider interest</title>
+<p>Answering a question is usually an indication that the answer provider is interested in the topic. Therefore, to identify the appropriate answer to a newly raised question, the authors set up an answer provider interest model and then recommend a suitable answer on the basis of the matching degree between answer provider interest and question.</p>
+<p>To evaluate interest, other questions previously addressed by the answer provider are explored. The information from these answered questions may reflect interest to a certain extent.</p>
+<p>In the Q&amp;A community, the interests of answer providers reflect stability over long periods, and an answer provider is usually interested only in questions that fall within specific topics. Meanwhile, the terms combined within a topic are easily distinguished, indicating that topics may differ significantly in terms of vocabulary. All questions in Baidu Knows are divided into many categories, such as sports, business/financial, computer/network, and so on. Before a new question is submitted, the question asker should choose a category for their question. By analysing words included in questions and answers of Baidu Knows, the authors find that questions in the sports category include a few keywords with high probability, such as ‘football’, ‘basketball’, ‘NBA’, and other specific terms. Conversely, questions in the business/financial category are more likely to contain keywords such as ‘stock’, ‘transaction’, and ‘shop’, amongst others. Frequently occurring words in the set of questions addressed by answer providers (questions raised by users and answers given by answer providers) characterize answer provider interest, as shown in <xref ref-type="table" rid="table1-0165551511423149">Table 1</xref>.</p>
+<table-wrap id="table1-0165551511423149" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Distribution of answer provider vocabulary</p>
+</caption>
+<graphic alternate-form-of="table1-0165551511423149" xlink:href="10.1177_0165551511423149-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="left"/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Answer provider 1 vocabulary</th>
+<th align="left">Distribution probability, %</th>
+<th align="left">Answer provider 2 vocabulary</th>
+<th align="left">Distribution probability, %</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Patch</td>
+<td>6.41</td>
+<td>Enterprise</td>
+<td>1.64</td>
+</tr>
+<tr>
+<td>Update</td>
+<td>2.45</td>
+<td>Audit</td>
+<td>1.58</td>
+</tr>
+<tr>
+<td>Polo shirt</td>
+<td>1.98</td>
+<td>Borrow</td>
+<td>0.90</td>
+</tr>
+<tr>
+<td>Team</td>
+<td>1.93</td>
+<td>Loan</td>
+<td>0.87</td>
+</tr>
+<tr>
+<td>EPL</td>
+<td>1.52</td>
+<td>Finance</td>
+<td>0.81</td>
+</tr>
+<tr>
+<td>Bundesliga</td>
+<td>1.32</td>
+<td>Expense</td>
+<td>0.72</td>
+</tr>
+<tr>
+<td>Modification</td>
+<td>1.24</td>
+<td>Risk</td>
+<td>0.72</td>
+</tr>
+<tr>
+<td>Football</td>
+<td>1.23</td>
+<td>Management</td>
+<td>0.69</td>
+</tr>
+<tr>
+<td>Real Madrid</td>
+<td>1.21</td>
+<td>Accountancy</td>
+<td>0.63</td>
+</tr>
+<tr>
+<td>mb</td>
+<td>1.14</td>
+<td>Property</td>
+<td>0.62</td>
+</tr>
+<tr>
+<td rowspan="3">…</td>
+<td rowspan="3">…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr>
+<td>Job</td>
+<td>0.51</td>
+</tr>
+<tr>
+<td>Company</td>
+<td>0.49</td>
+</tr>
+<tr>
+<td>Company</td>
+<td>0.001</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr>
+<td>Employment</td>
+<td>0.001</td>
+<td>Modification</td>
+<td>0.03</td>
+</tr>
+<tr>
+<td rowspan="2">…</td>
+<td rowspan="2">…</td>
+<td>Update</td>
+<td>0.01</td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>If the keywords of a newly raised question can be derived from a set of questions previously addressed by an answer provider, then it may be inferred that the answer provider may have considerable interest in the question. Thus, the query likelihood language model [<xref ref-type="bibr" rid="bibr9-0165551511423149">9</xref>] is implemented to measure the degree of interest in the question. The measurement is accomplished by calculating the probability that the newly raised question will be generated from previously answered questions.</p>
+<p><bold>Definition 2:</bold> Degree of answer provider interest in the question</p>
+<p>From the perspective of the language model, the degree of interest of answer provider <inline-formula id="inline-formula10-0165551511423149">
+<mml:math display="inline" id="math11-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> in question <inline-formula id="inline-formula11-0165551511423149">
+<mml:math display="inline" id="math12-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is defined as the likelihood of generating question <inline-formula id="inline-formula12-0165551511423149">
+<mml:math display="inline" id="math13-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> from a set of questions already addressed by <inline-formula id="inline-formula13-0165551511423149">
+<mml:math display="inline" id="math14-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. It is expressed as follows:</p>
+<p>
+<disp-formula id="disp-formula2-0165551511423149">
+<label>(2)</label>
+<mml:math display="block" id="math15-0165551511423149">
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mtext>P</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0165551511423149" xlink:href="10.1177_0165551511423149-eq2.tif"/></disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula14-0165551511423149">
+<mml:math display="inline" id="math16-0165551511423149">
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> is the degree of answer provider <inline-formula id="inline-formula15-0165551511423149">
+<mml:math display="inline" id="math17-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>'s interest in newly raised question <inline-formula id="inline-formula16-0165551511423149">
+<mml:math display="inline" id="math18-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and <inline-formula id="inline-formula17-0165551511423149">
+<mml:math display="inline" id="math19-0165551511423149">
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the query likelihood of <inline-formula id="inline-formula18-0165551511423149">
+<mml:math display="inline" id="math20-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> under language model <inline-formula id="inline-formula19-0165551511423149">
+<mml:math display="inline" id="math21-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> of the set of questions <inline-formula id="inline-formula20-0165551511423149">
+<mml:math display="inline" id="math22-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> addressed by <inline-formula id="inline-formula21-0165551511423149">
+<mml:math display="inline" id="math23-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. The latter indicates the matching degree between the set of questions <inline-formula id="inline-formula22-0165551511423149">
+<mml:math display="inline" id="math24-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> and question <inline-formula id="inline-formula23-0165551511423149">
+<mml:math display="inline" id="math25-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> as the degree of interest of <inline-formula id="inline-formula24-0165551511423149">
+<mml:math display="inline" id="math26-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> in <inline-formula id="inline-formula25-0165551511423149">
+<mml:math display="inline" id="math27-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>
+<xref ref-type="fig" rid="fig1-0165551511423149">Figure 1</xref> illustrates the method that indicates the degree of answer provider interest on the basis of the query likelihood model. In all the sets of questions addressed by the answer provider (<xref ref-type="fig" rid="fig1-0165551511423149">Figure 1</xref>), corresponding language model <inline-formula id="inline-formula26-0165551511423149">
+<mml:math display="inline" id="math28-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is estimated first, and then probability <inline-formula id="inline-formula27-0165551511423149">
+<mml:math display="inline" id="math29-0165551511423149">
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> of generating question <inline-formula id="inline-formula28-0165551511423149">
+<mml:math display="inline" id="math30-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is calculated under this language model. All answer providers are ranked by the probability values, and appropriate answer providers are recommended. Given a language model, the probabilities of generating two different questions should differ [e.g. <inline-formula id="inline-formula29-0165551511423149">
+<mml:math display="inline" id="math31-0165551511423149">
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≠</mml:mo>
+<mml:mtext>P</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>]. The probability of generating a question that contains more frequently occurring keywords under the given language model should be higher because frequent words can be an indication of the language model topics.</p>
+<fig id="fig1-0165551511423149" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Diagram of the query likelihood language model.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551511423149-fig1.tif"/>
+</fig>
+<p>In this method, the problem of determining the degree of interest is transformed into a calculation process for generating the probability (or query likelihood) that a question will be raised under a given language model. To calculate the query likelihood of question <inline-formula id="inline-formula30-0165551511423149">
+<mml:math display="inline" id="math32-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, language model <inline-formula id="inline-formula31-0165551511423149">
+<mml:math display="inline" id="math33-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is defined for question set <inline-formula id="inline-formula32-0165551511423149">
+<mml:math display="inline" id="math34-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> and then estimated on the basis of the question set. Two basic forms of language models exist: the multi-Bernoulli model and the multinomial distribution model (also known as the unitary model). Compared with the multivariate model, the unitary model is relatively simple and can substantially reduce system complexity and computational overhead. Moreover, according to the existing literature [<xref ref-type="bibr" rid="bibr10-0165551511423149">10</xref>], the unitary model is more effective than other more complex language models (such as the bigram and tri-gram language models), which cannot significantly improve performance. Therefore, the multinomial distribution model is adopted to construct a language model for the set of questions addressed by answer providers; that is, queries are treated as result sequences of a multinomial random experiment, in which each term w in the language model corresponds to a multinomial random variable. The query likelihood in the multinomial model is a polynomial distribution; that is, for <inline-formula id="inline-formula33-0165551511423149">
+<mml:math display="inline" id="math35-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub><mml:mo>…</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>m</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula></p>
+<p>
+<disp-formula id="disp-formula3-0165551511423149">
+<label>(3)</label>
+<mml:math display="block" id="math36-0165551511423149">
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>q</mml:mtext>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>Q</mml:mtext>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>u</mml:mtext>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∏</mml:mo>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mtext>m</mml:mtext>
+</mml:munderover>
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>W</mml:mtext>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>Q</mml:mtext>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>u</mml:mtext>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munder>
+<mml:mo>∏</mml:mo>
+<mml:mrow>
+<mml:mtext>W</mml:mtext>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mtext>q</mml:mtext>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>W|</mml:mtext>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>Q</mml:mtext>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>u</mml:mtext>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>w,q</mml:mtext>
+</mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0165551511423149" xlink:href="10.1177_0165551511423149-eq3.tif"/></disp-formula>
+</p>
+<p>In the formula, <inline-formula id="inline-formula34-0165551511423149">
+<mml:math display="inline" id="math37-0165551511423149">
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the appearance time of <inline-formula id="inline-formula35-0165551511423149">
+<mml:math display="inline" id="math38-0165551511423149">
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+</mml:mrow>
+</mml:math></inline-formula> in question <inline-formula id="inline-formula36-0165551511423149">
+<mml:math display="inline" id="math39-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. For the estimation of language model, <inline-formula id="inline-formula37-0165551511423149">
+<mml:math display="inline" id="math40-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> that is <inline-formula id="inline-formula38-0165551511423149">
+<mml:math display="inline" id="math41-0165551511423149">
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> the maximum likelihood method is used to estimate the model parameters. The maximum likelihood of the language model is calculated as follows:</p>
+<p>
+<disp-formula id="disp-formula4-0165551511423149">
+<label>(4)</label>
+<mml:math display="block" id="math42-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>P</mml:mtext>
+<mml:mrow>
+<mml:mtext>ml</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>θ</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>Q</mml:mtext>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>u</mml:mtext>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>w,Q</mml:mtext>
+</mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>u</mml:mtext>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo> <mml:mrow>
+<mml:msub>
+<mml:mtext>Q</mml:mtext>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>u</mml:mtext>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow> <mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0165551511423149" xlink:href="10.1177_0165551511423149-eq4.tif"/></disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula39-0165551511423149">
+<mml:math display="inline" id="math43-0165551511423149">
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the appearance time of <inline-formula id="inline-formula40-0165551511423149">
+<mml:math display="inline" id="math44-0165551511423149">
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+</mml:mrow>
+</mml:math></inline-formula> in question set <inline-formula id="inline-formula41-0165551511423149">
+<mml:math display="inline" id="math45-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula>, and <inline-formula id="inline-formula42-0165551511423149">
+<mml:math display="inline" id="math46-0165551511423149">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the length of the question set (the total number of keywords in a question set). However, a problem arises if only the maximum likelihood is used. That is, for a term not included in the set of questions addressed by the answer provider, probability <inline-formula id="inline-formula43-0165551511423149">
+<mml:math display="inline" id="math47-0165551511423149">
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>θ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> is clearly unreasonable. Because of this phenomenon, the zero probability problem caused by the lack of data is eliminated using the data smoothing technique. In the current work, the Jelinek–Mercer smoothing method [<xref ref-type="bibr" rid="bibr11-0165551511423149">11</xref>] is used, incorporating the language model to the question set and conducting linear interpolation. Thus, the estimation of the language model is:</p>
+<p>
+<disp-formula id="disp-formula5-0165551511423149">
+<label>(5)</label>
+<mml:math display="block" id="math48-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>P</mml:mtext>
+<mml:mi>λ</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>θ</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>Q</mml:mtext>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>u</mml:mtext>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mtext>P</mml:mtext>
+<mml:mrow>
+<mml:mtext>ml</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>θ</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>Q</mml:mtext>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mtext>u</mml:mtext>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mtext>P</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+<mml:mo>|</mml:mo>
+<mml:mtext>col</mml:mtext>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0165551511423149" xlink:href="10.1177_0165551511423149-eq5.tif"/></disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula44-0165551511423149">
+<mml:math display="inline" id="math49-0165551511423149">
+<mml:mrow>
+<mml:mtext>λ</mml:mtext>
+</mml:mrow>
+</mml:math></inline-formula> is a smoothing parameter, <inline-formula id="inline-formula45-0165551511423149">
+<mml:math display="inline" id="math50-0165551511423149">
+<mml:mrow>
+<mml:mtext>λ</mml:mtext>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>; <inline-formula id="inline-formula46-0165551511423149">
+<mml:math display="inline" id="math51-0165551511423149">
+<mml:mrow>
+<mml:mtext>λ</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> is a pure maximum likelihood estimation; <inline-formula id="inline-formula47-0165551511423149">
+<mml:math display="inline" id="math52-0165551511423149">
+<mml:mrow>
+<mml:mtext>λ</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> denotes that the language model for different sets of question addressed by the answer provider is transformed into the same language model, and <inline-formula id="inline-formula48-0165551511423149">
+<mml:math display="inline" id="math53-0165551511423149">
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mtext>Col</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the language model for the data set.</p>
+<p>Thus, the formula for calculating answer provider interest is:</p>
+<p>
+<disp-formula id="disp-formula6-0165551511423149">
+<label>(6)</label>
+<mml:math display="block" id="math54-0165551511423149">
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mtext>P</mml:mtext>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mo>Π</mml:mo>
+<mml:mrow>
+<mml:mtext>w</mml:mtext>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>u</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mtext>Col</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mtext>Col</mml:mtext>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>c</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mtext>w</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>q</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0165551511423149" xlink:href="10.1177_0165551511423149-eq6.tif"/>
+</disp-formula>
+</p>
+</sec>
+<sec id="section6-0165551511423149">
+<title>3.3. Answer provider expertise model</title>
+<p>Determining recommended answer providers by analysing interest only on the basis of historical information in the questions addressed by answer providers is an insufficiently accurate approach because of the prevalence of spam and the varying quality of answers given by answer providers. The answer providers to be recommended should not only be interested in the question, but also be an expert in the topic; these characteristics guarantee high-quality answers. Thus, to derive a more effective recommendation algorithm, answer quality is also taken into consideration by constructing an answer provider expertise model, which is based on the answer provider interest model.</p>
+<p>Assuming that the responses of the answer provider for a given topic exhibit a greater probability of being high-quality answers (such as the Baidu Knows community answers that exhibit high adoption rates), it can be inferred that the answer provider possesses sufficient expertise in a particular field. Thus, the quality of answers already given by answer providers is used to determine answer provider expertise. To determine who should be recommended, his/her expertise is matched with the topic.</p>
+<p>Because a newly raised question has not been addressed by a potential answer provider, the quality of the answer to be provided necessitates prediction. The weighted average of the answers already given by the answer provider is used to estimate the quality of the answer to the newly raised question:</p>
+<p>
+<disp-formula id="disp-formula7-0165551511423149">
+<label>(7)</label>
+<mml:math display="block" id="math55-0165551511423149">
+<mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>q</mml:mi>
+<mml:mi>r</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mstyle displaystyle="true">
+<mml:msub>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mi>Q</mml:mi>
+<mml:mi>r</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>×</mml:mo>
+<mml:mtext>sim</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>q</mml:mi>
+<mml:mi>r</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+<mml:mrow>
+<mml:mstyle displaystyle="true">
+<mml:msub>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mi>Q</mml:mi>
+<mml:mi>r</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mtext>sim</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>q</mml:mi>
+<mml:mi>r</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0165551511423149" xlink:href="10.1177_0165551511423149-eq7.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula49-0165551511423149">
+<mml:math display="inline" id="math56-0165551511423149">
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is one of the questions already addressed by answer provider <inline-formula id="inline-formula50-0165551511423149">
+<mml:math display="inline" id="math57-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> in question set <inline-formula id="inline-formula51-0165551511423149">
+<mml:math display="inline" id="math58-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula52-0165551511423149">
+<mml:math display="inline" id="math59-0165551511423149">
+<mml:mrow>
+<mml:mtext>sim</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the cosine similarity between the two questions. The lexical vector of a question represents the question itself, and word feature weights can be calculated using the TF-IDF method.</p>
+<p>In the answering community, a user (the individual submitting an inquiry) can select the answer with which he is most satisfied as the best answer. Apart from this criterion, no other standard for the quality of answers is used in the answering community. More than one correct answer may exist amongst those given by different answer providers, but the user can only choose one best answer. The quality of answers to the question should therefore be estimated using a specific method.</p>
+<p>The quality of answers can be measured in terms of different aspects, such as accuracy, completeness, timeliness, reliability, verifiability, etc. [<xref ref-type="bibr" rid="bibr12-0165551511423149">12</xref>]. Zhu et al. [<xref ref-type="bibr" rid="bibr13-0165551511423149">13</xref>] proposed an evaluation framework for estimating answer quality. However, the indicators they used were mostly descriptive and could not be obtained and calculated automatically. The current study uses this evaluation to label experiment training data. In addition, the maximum entropy model is trained by extracting some question–answer characteristics that can be calculated directly and obtained to derive the method for automatically calculating answer quality. The general framework of the maximum entropy model is shown in <xref ref-type="fig" rid="fig2-0165551511423149">Figure 2</xref> [<xref ref-type="bibr" rid="bibr14-0165551511423149">14</xref>].</p>
+<fig id="fig2-0165551511423149" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Frame diagram of the maximum entropy model.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551511423149-fig2.tif"/>
+</fig>
+<p>Answer quality is evaluated as either good or bad. Estimating answer quality means determining the probability of occurrence for an event <inline-formula id="inline-formula53-0165551511423149">
+<mml:math display="inline" id="math60-0165551511423149">
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> (the quality of the answer is good or bad) in a given context <inline-formula id="inline-formula54-0165551511423149">
+<mml:math display="inline" id="math61-0165551511423149">
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> (feature of questions and answers). The characteristic function is used to represent the context that is dependent on the model. The estimated probability of event occurrence based on the maximum entropy model is:</p>
+<p>
+<disp-formula id="disp-formula8-0165551511423149">
+<label>(8)</label>
+<mml:math display="block" id="math62-0165551511423149">
+<mml:mrow>
+<mml:msup>
+<mml:mi>p</mml:mi>
+<mml:mo>☆</mml:mo>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mtext>exp</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mstyle displaystyle="true">
+<mml:msub>
+<mml:mo>∑</mml:mo>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:msub>
+<mml:mi>λ</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:msub>
+<mml:mi>f</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0165551511423149" xlink:href="10.1177_0165551511423149-eq8.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula55-0165551511423149">
+<mml:math display="inline" id="math63-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mi>y</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> is the characteristic function, <inline-formula id="inline-formula56-0165551511423149"><mml:math display="inline" id="math64-0165551511423149">
+<mml:mrow>
+<mml:mi>Z</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:msub>
+<mml:mo>∑</mml:mo>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:mi>exp</mml:mi>
+</mml:mrow>
+</mml:mstyle>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mstyle displaystyle="true">
+<mml:msub>
+<mml:mo>∑</mml:mo>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:msub>
+<mml:mi>λ</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:msub>
+<mml:mi>f</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> is the normalization factor, and <inline-formula id="inline-formula57-0165551511423149">
+<mml:math display="inline" id="math65-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is the weight of corresponding characteristic <inline-formula id="inline-formula58-0165551511423149">
+<mml:math display="inline" id="math66-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>On the basis of the parameter form of the maximum entropy model, the probability distribution function can be generated, after which the maximum entropy model is fully constructed, provided that parameter values <inline-formula id="inline-formula59-0165551511423149">
+<mml:math display="inline" id="math67-0165551511423149">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>Λ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>☆</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>λ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>λ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>λ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>n</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> are present. Generalized iterative scaling (GIS) or improved iterative scaling (IIS) is typically adopted to estimate the parameters of the maximum entropy model. In this article, the authors use the statistical language model kits<sup><xref ref-type="fn" rid="fn1-0165551511423149">1</xref></sup> provided by Carnegie Mellon University to estimate the model parameters.</p>
+<p>According to the discussion above, characteristic selection is a key factor in the maximum entropy model. For the features of questions and answers in this article, selection mainly focuses on text and non-text characteristics. Text characteristics pertain to answer content, whose characteristics include answer length, ratio of answer lengths, number of different words in an answer, and number of words both in the question and answer. Non-text characteristics refer to the features of an answer provider; these include the features of answers [answer provider’s credit (answer provider’s empirical value], answer provider’s authority (adoption rate of answers, number of praise acquired), number of answers, ratio of questions to answers, number of answers to the question, etc.</p>
+<p>The values of text characteristics can be calculated by extracting the corresponding question content. Before calculating answer length and number of words, text content is pre-processed by removing stop words, such as ‘the’. Given the unique quality of the Chinese language, Chinese words are first segmented for text. With regard to non-text characteristics, the corresponding information is directly extracted by analysing the structure of web pages. In addition, the probability of characteristics in the maximum entropy model monotonically increases, that is, the larger the characteristic value, the higher the event occurrence probability. Adoption rate is defined as the rate of user acceptance of the answer. A high adoption rate for the responses given by the answer provider indicates a high probability that the answer provider can respond well to the question. However, a longer answer cannot always be regarded as a better answer. For this reason, conversion is essential for characteristic values. The method given in [<xref ref-type="bibr" rid="bibr15-0165551511423149">15</xref>] is adopted for converting the calculation for such non-monotonic characteristic values.</p>
+<p>The model that predicts answer quality is established for newly raised questions given by recommended answer providers (that is, the answer provider expertise model). First, the maximum entropy model is constructed by model training. In model training, the characteristics of the answers already addressed by answer providers are first extracted and calculated. The quality of answers is marked by artificial marking and the training samples are generated. The learning parameters of the maximum entropy model are then proposed using the GIS algorithm, and the weights of all the characteristics in the model are calculated. This step completes the construction of the maximum entropy model for answer-quality measurement. After this, the quality of answers <inline-formula id="inline-formula60-0165551511423149">
+<mml:math display="inline" id="math68-0165551511423149">
+<mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> already addressed by the answer provider is calculated according to the model above. Finally, on the basis of the quality of the answers given by the answer provider, as well as the similarity between newly raised and already-answered questions, the quality <inline-formula id="inline-formula61-0165551511423149">
+<mml:math display="inline" id="math69-0165551511423149">
+<mml:mrow>
+<mml:mi>Q</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math></inline-formula> of the answer provider response for a newly raised question is predicted using Equation (7).</p>
+</sec>
+<sec id="section7-0165551511423149">
+<title>3.4. Recommendation algorithm</title>
+<p>An algorithm that recommends answer providers is developed in this article, with comprehensive consideration for the degree of answer provider interest in questions, as well as matching the degree of answer provider expertise and topic. This process is expressed as follows:</p>
+<p>
+<disp-formula id="disp-formula9-0165551511423149">
+<label>(9)</label>
+<mml:math display="block" id="math70-0165551511423149">
+<mml:mrow>
+<mml:mtext>UR</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mtext>α</mml:mtext>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>I</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mi>α</mml:mi>
+<mml:mi>Q</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0165551511423149" xlink:href="10.1177_0165551511423149-eq9.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula62-0165551511423149">
+<mml:math display="inline" id="math71-0165551511423149">
+<mml:mrow>
+<mml:mtext>α</mml:mtext>
+<mml:mo>∈</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is the weight coefficient. As the value of <inline-formula id="inline-formula63-0165551511423149">
+<mml:math display="inline" id="math72-0165551511423149">
+<mml:mrow>
+<mml:mtext>α</mml:mtext>
+</mml:mrow>
+</mml:math></inline-formula> increases, the weight of the answer provider’s expertise in recommendation grading increases; and as the value of <inline-formula id="inline-formula64-0165551511423149">
+<mml:math display="inline" id="math73-0165551511423149">
+<mml:mrow>
+<mml:mtext>α</mml:mtext>
+</mml:mrow>
+</mml:math></inline-formula> decreases, the weight of the answer provider’s interest increases.</p>
+</sec>
+</sec>
+<sec id="section8-0165551511423149">
+<title>4. Experimental results and analysis</title>
+<sec id="section9-0165551511423149">
+<title>4.1. Experimental data</title>
+<p>The experimental data were automatically extracted by our programs from Baidu Knows. The Q&amp;A data from Baidu Knows was crawled for a half-month period (1–15 January 2010). A total of 1,017,461 valid data items (only questions with answers) were used. Statistical data information is shown in <xref ref-type="table" rid="table2-0165551511423149">Table 2</xref> and <xref ref-type="fig" rid="fig3-0165551511423149">Figures 3</xref> and <xref ref-type="fig" rid="fig4-0165551511423149">4</xref>.</p>
+<fig id="fig3-0165551511423149" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Distribution of number of answers given by per answer provider.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551511423149-fig3.tif"/>
+</fig>
+<fig id="fig4-0165551511423149" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Comparison diagram of number of answers given by per answer provider and total number of answers in special region.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551511423149-fig4.tif"/>
+</fig>
+<table-wrap id="table2-0165551511423149" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Statistical information on the crawled data set</p>
+</caption>
+<graphic alternate-form-of="table2-0165551511423149" xlink:href="10.1177_0165551511423149-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Total number of users who asked or answered questions</th>
+<th align="left">Number of questions</th>
+<th align="left">Number of answers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1,160,723 (number of users who asked questions is 704,595, number of users who answered questions is 604,615)</td>
+<td>1,017,461</td>
+<td>2,992,870</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>
+<xref ref-type="fig" rid="fig3-0165551511423149">Figures 3</xref> and <xref ref-type="fig" rid="fig4-0165551511423149">4</xref> show that, in a Q&amp;A community, most users rarely answer questions. In the statistical data, there are more than 270,000 users (more than 45% of users who have answered questions) who only answer questions once, and the number of their answers is only 9.10% of all answers provided by all users. On the contrary, the number of users who answer questions more than 20 times is 3.66% of users who have answered questions, but they produce 40.62% of all answers.</p>
+<p>Because most answer providers in the data set addressed very few questions (more than 45% answered only once), this aspect cannot be used to learn answer provider interest and construct the expertise model. Answer providers recommended by the system should be the more active ones with reasonable response records. Therefore, the data set is filtered to answer providers who have addressed more than 20 questions. Experimental data were collected from these Q&amp;A data sets in accordance with the responses given by the answer providers. Data set information obtained after screening is shown in <xref ref-type="table" rid="table3-0165551511423149">Table 3</xref>.</p>
+<table-wrap id="table3-0165551511423149" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Statistical information on the experimental Q&amp;A data set</p>
+</caption>
+<graphic alternate-form-of="table3-0165551511423149" xlink:href="10.1177_0165551511423149-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Number of answer providers</th>
+<th align="left">Number of questions</th>
+<th align="left">Number of answers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>21,140</td>
+<td>525,627</td>
+<td>1,215,831</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The experimental data covering 1–10 January 2010 were chosen as training data for the construction of the answer provider model; data on the answer providers for the last five days were chosen as test data for the evaluation of the proposed recommendation algorithm.</p>
+</sec>
+<sec id="section10-0165551511423149">
+<title>4.2. Evaluation method</title>
+<p>Two basic assessment parameters (precision and recall) were used to evaluate the proposed algorithm. Precision indicates the proportion of highly relevant answer providers out of all answer providers to be recommended, and is expressed as:</p>
+<p>
+<disp-formula id="disp-formula10-0165551511423149">
+<label>(10)</label>
+<mml:math display="block" id="math74-0165551511423149">
+<mml:mrow>
+<mml:mtext>precision</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo> <mml:mrow>
+<mml:mi>X</mml:mi>
+<mml:mo>∩</mml:mo>
+<mml:mi>Y</mml:mi>
+</mml:mrow> <mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0165551511423149" xlink:href="10.1177_0165551511423149-eq10.tif"/></disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula65-0165551511423149">
+<mml:math display="inline" id="math75-0165551511423149">
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is the recommendation result and <inline-formula id="inline-formula66-0165551511423149">
+<mml:math display="inline" id="math76-0165551511423149">
+<mml:mrow>
+<mml:mi>Y</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is the set of highly relevant answer providers.</p>
+<p>Recall indicates the proportion of recommended relevant answer providers in all highly relevant answers:</p>
+<p>
+<disp-formula id="disp-formula11-0165551511423149">
+<label>(11)</label>
+<mml:math display="block" id="math77-0165551511423149">
+<mml:mrow>
+<mml:mtext>recall</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>X</mml:mi>
+<mml:mo>∩</mml:mo>
+<mml:mi>Y</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>Y</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0165551511423149" xlink:href="10.1177_0165551511423149-eq11.tif"/>
+</disp-formula>
+</p>
+<p>Recall is denoted by the proportion of highly relevant answers contained in the first N results as R–P@N.</p>
+<p>However, because precision does not consider result rank, it cannot satisfy our goal of evaluating the overall recommended results. Thus, average precision is calculated instead:</p>
+<p>
+<disp-formula id="disp-formula12-0165551511423149">
+<label>(12)</label>
+<mml:math display="block" id="math78-0165551511423149">
+<mml:mrow>
+<mml:mtext>avgprec</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0165551511423149" xlink:href="10.1177_0165551511423149-eq12.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula68-0165551511423149">
+<mml:math display="inline" id="math79-0165551511423149">
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is the number of recommendation results, and <inline-formula id="inline-formula69-0165551511423149">
+<mml:math display="inline" id="math80-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is the rank of the <inline-formula id="inline-formula70-0165551511423149">
+<mml:math display="inline" id="math81-0165551511423149">
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>th result. If the result is irrelevant, <inline-formula id="inline-formula71-0165551511423149">
+<mml:math display="inline" id="math82-0165551511423149">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is infinite.</p>
+<p>Given that more than one test data item is used in the experiment, the mean average precision (MAP) is taken as the indicator of precision evaluation for the recommendation algorithm. In addition, the mean of reciprocal rank (MRR) of the first ‘correct result’ from the recommendation results is also used. This indicator can be used to measure how many answer providers should be recommended before the first highly relevant answer provider is recommended.</p>
+</sec>
+<sec id="section11-0165551511423149">
+<title>4.3. Experimental results</title>
+<p>In the experiment, the historical information was first segmented on the answers already given by answer providers using ICTCLAS1.0<sup><xref ref-type="fn" rid="fn2-0165551511423149">2</xref></sup> and Lucene<sup><xref ref-type="fn" rid="fn3-0165551511423149">3</xref></sup> The models for answer provider interest and answer provider expertise were then constructed. Different methods were tested and compared. These methods are as follows:</p>
+<list id="list1-0165551511423149" list-type="order">
+<list-item>
+<p>the baseline model (BM), which is the recommendation algorithm for constructing the answer provider interest model based on PLSA;</p>
+</list-item>
+<list-item>
+<p>the interest-based model (IM), which is the recommendation algorithm for constructing the answer provider interest model based on language model; and</p>
+</list-item>
+<list-item>
+<p>the IM + expertise, which is the recommendation algorithm that comprehensively considers answer provider expertise.</p>
+</list-item>
+</list>
+<p>With regard to IM, Equation (6) was used to calculate the answer provider rating, selecting recommended answer providers. The experimental result for IM is shown in <xref ref-type="fig" rid="fig5-0165551511423149">Figure 5</xref>, which shows traversal from <inline-formula id="inline-formula72-0165551511423149">
+<mml:math display="inline" id="math83-0165551511423149">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> at a step of 0.1.</p>
+<fig id="fig5-0165551511423149" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Recommendation results of the IM algorithm.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551511423149-fig5.tif"/>
+</fig>
+<p>
+<xref ref-type="fig" rid="fig3-0165551511423149">Figure 3</xref> shows that, when <inline-formula id="inline-formula73-0165551511423149">
+<mml:math display="inline" id="math84-0165551511423149">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> data smoothing is incorporated, the effect of the model can be improved, so that when <inline-formula id="inline-formula74-0165551511423149">
+<mml:math display="inline" id="math85-0165551511423149">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> increases from 0 to 0.1 the recommendation effect visibly increases. However, after <inline-formula id="inline-formula75-0165551511423149">
+<mml:math display="inline" id="math86-0165551511423149">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> increases beyond a certain threshold, the recommendation effect does not improve as the weight of background data increases, and inversely, the model effect decreases. If <inline-formula id="inline-formula76-0165551511423149">
+<mml:math display="inline" id="math87-0165551511423149">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>, that is, when answer provider individuality is ignored, the recommendation effect is poor. These results suggest that data smoothing on background data can eliminate the problems caused by data scarcity and improve the model results. However, with increasing background weight, the information on answer provider individuality is gradually overshadowed, worsening the system effect. This result is consistent with actual experience and expectation because the most important feature of a recommendation system is ‘individuation’. When the weight of background data increases, the difference between answer providers is eliminated. Thus, the effect of recommendation based on this difference becomes poor. <xref ref-type="fig" rid="fig3-0165551511423149">Figure 3</xref> shows that when <inline-formula id="inline-formula77-0165551511423149">
+<mml:math display="inline" id="math88-0165551511423149">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> the IM algorithm works at its best.</p>
+<p>The results of the recommendation algorithm using PLSA to construct the answer provider interest model are shown in <xref ref-type="table" rid="table4-0165551511423149">Table 4</xref>. The table shows that the IM algorithm improves in terms of precision and recall compared with the BM algorithm, primarily because the latter adopts the proportion of the word frequency sum of answer provider responses instead of the overall responses. The scarcity of the answer data and the prevalence of spam cause inaccuracy in answer provider interest learning, resulting in the low validity of the recommendation results.</p>
+<table-wrap id="table4-0165551511423149" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Recommendation results of the BM and IM algorithms</p>
+</caption>
+<graphic alternate-form-of="table4-0165551511423149" xlink:href="10.1177_0165551511423149-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="left">MAP</th>
+<th align="left">MRR</th>
+<th align="left">R–P@5</th>
+<th align="left">R–P@10</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BM</td>
+<td>1.55%</td>
+<td>2.89%</td>
+<td>1.61%</td>
+<td>2.33%</td>
+</tr>
+<tr>
+<td>IM (<inline-formula id="inline-formula80-0165551511423149">
+<mml:math display="inline" id="math89-0165551511423149">
+<mml:mrow>
+<mml:mtext>λ</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>)</td>
+<td>1.55%</td>
+<td>3.04%</td>
+<td>1.68%</td>
+<td>2.25%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>To understand the effect of answer provider expertise on the recommendation results, answer provider expertise was taken into consideration in conjunction with the answer provider interest in the question, resulting in the recommendation algorithm [IM-expertise algorithm, Equation (9)]. The experimental result is shown in <xref ref-type="fig" rid="fig6-0165551511423149">Figure 6</xref>.</p>
+<fig id="fig6-0165551511423149" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Recommendation results of IM-expertise.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551511423149-fig6.tif"/>
+</fig>
+<p>After the incorporation of the answer provider expertise factor, the accuracy of the recommendation result further improves. When <inline-formula id="inline-formula81-0165551511423149">
+<mml:math display="inline" id="math90-0165551511423149">
+<mml:mrow>
+<mml:mtext>α</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>4</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> the algorithm achieves the best result, and at this point, its MAP and MRR improve by 20.1% and 29.7%, respectively, compared with IM. However, the recall is somewhat lower. This result may be attributed to the fact that, after incorporating the answer provider expertise factor, the algorithm tends to recommend answer providers who possess expertise in a given topic. Thus, the answer provider who provides a high quality answer obtains a higher rank (for example, the rank of answer providers who actually addressed the question with high answer adoption rates increases in the experiment), which leads to the increase in the MAP and MRR values of the algorithm. However, because numerous actual answers are available, and the probability that these answer providers all have high adoption rates is very low, previous actual answers that are recommended based on the answer provider interest model are no longer recommended once our algorithm considers the quality factor. The algorithm tends to recommend answer providers with expertise in the relevant topics. This is why a decline in recall value is observed. The analysis above shows that the answer provider expertise factor plays a positive role in improving algorithm effectiveness. When recommending answer providers, answer quality should be considered and expertise in relevant topics should be recommended to improve question-solving efficiency and reduce the number of invalid answers in the system.</p>
+<p>Upon a comprehensive view (<xref ref-type="table" rid="table5-0165551511423149">Table 5</xref>), the IM-expertise algorithm improves MAP and MRR by 20.1% and 29.7%, respectively, compared with the IM model at the expense of the decline in recall (R–P@5, R–P@10 reduced by an average of 6%). This indicates that a comprehensive recommendation algorithm achieves better results in recommending answer providers.</p>
+<table-wrap id="table5-0165551511423149" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Recommendation effect of IM and IM-Expertise</p>
+</caption>
+<graphic alternate-form-of="table5-0165551511423149" xlink:href="10.1177_0165551511423149-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="left">MAP</th>
+<th align="left">MRR</th>
+<th align="left">R–P@5</th>
+<th align="left">R–P@10</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IM (<inline-formula id="inline-formula86-0165551511423149">
+<mml:math display="inline" id="math91-0165551511423149">
+<mml:mrow>
+<mml:mtext>λ</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>)</td>
+<td>1.55%</td>
+<td>3.04%</td>
+<td>1.68%</td>
+<td>2.25%</td>
+</tr>
+<tr>
+<td>IM-Expertise (<inline-formula id="inline-formula87-0165551511423149">
+<mml:math display="inline" id="math92-0165551511423149">
+<mml:mrow>
+<mml:mtext>α</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>)</td>
+<td>1.86%</td>
+<td>3.95%</td>
+<td>1.63%</td>
+<td>2.04%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+</sec>
+<sec id="section12-0165551511423149" sec-type="conclusions">
+<title>5. Conclusion</title>
+<p>This article presented an algorithm that recommends answer providers, with comprehensive consideration for number of factors such as answer provider interest and expertise. The algorithm is aimed at reducing waiting time and helping answer providers in the Q&amp;A community address questions that they are interested in. The experimental results for the Baidu Knows Q&amp;A community shows that significant enhancement in the accuracy of the recommendation algorithm can be achieved when the answer provider expertise factor is taken into consideration.</p>
+<p>Further research work will involve the incorporation of answer provider availability and answer provider load balance into the current algorithm because users/answer providers can be highly active for a certain period, but may gradually rarely participate in asking/answering questions. By analysing answer provider availability, the probability that answer providers will address recommended questions can be estimated within a certain period, thereby preventing the system from recommending inactive answer providers. In addition, answer provider recommendation can be balanced to reduce the workload of some active answer providers, possibly further improving the efficiency with which questions are addressed.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>This work is supported by the National Key Technology R&amp;D Program (no. 2008BAH24B03) and the National Natural Science Foundation of China (no. 61003254) and Zhejiang Provincial Natural Science Fund of China (no. Y1080130) and the Fundamental Research Funds for the Central Universities.</p>
+</ack>
+<notes>
+<fn-group>
+<fn fn-type="other" id="fn1-0165551511423149">
+<label>1.</label>
+<p><ext-link ext-link-type="uri" xlink:href="http://svr-www.eng.cam.ac.uk/~prc14/toolkit.html">http://svr-www.eng.cam.ac.uk/~prc14/toolkit.html</ext-link></p>
+</fn>
+<fn fn-type="other" id="fn2-0165551511423149">
+<label>2.</label>
+<p><ext-link ext-link-type="uri" xlink:href="http://www.ictclas.org/">http://www.ictclas.org/</ext-link></p>
+</fn>
+<fn fn-type="other" id="fn3-0165551511423149">
+<label>3.</label>
+<p><ext-link ext-link-type="uri" xlink:href="http://lucene.apache.org/">http://lucene.apache.org/</ext-link></p>
+</fn>
+</fn-group>
+</notes>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0165551511423149">
+<label>1</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Jeon</surname><given-names>J</given-names></name>
+<name><surname>Croft</surname><given-names>WB</given-names></name>
+<name><surname>Lee</surname><given-names>JH</given-names></name>
+</person-group>. <article-title>Finding similar questions in large question and answer archives</article-title>. In: <conf-name>Proceedings of the 14th ACM international conference on information and knowledge management</conf-name>. <conf-loc>Bremen, Germany</conf-loc>: <publisher-name>ACM</publisher-name>, <conf-date>2005</conf-date>, pp. <fpage>84</fpage>–<lpage>90</lpage>.</citation>
+</ref>
+<ref id="bibr2-0165551511423149">
+<label>2</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wang</surname><given-names>K</given-names></name>
+<name><surname>Ming</surname><given-names>Z</given-names></name>
+<name><surname>Chua</surname><given-names>T</given-names></name>
+</person-group>. <article-title>A syntactic tree matching approach to finding similar questions in community-based qa services</article-title>. In: <conf-name>Proceedings of the 32nd international ACM SIGIR conference on research and development in information retrieval</conf-name>. <conf-loc>Boston, MA</conf-loc>: <publisher-name>ACM</publisher-name>, <conf-date>2009</conf-date>, pp. <fpage>187</fpage>–<lpage>194</lpage>.</citation>
+</ref>
+<ref id="bibr3-0165551511423149">
+<label>3</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Cong</surname><given-names>G</given-names></name>
+<name><surname>Wang</surname><given-names>L</given-names></name>
+<name><surname>Lin</surname><given-names>C</given-names></name>
+<name><surname>Song</surname><given-names>YI</given-names></name>
+<name><surname>Sun</surname><given-names>Y</given-names></name>
+</person-group>. <article-title>Finding question–answer pairs from online forums</article-title>. In: <conf-name>Proceedings of the 31st annual international ACM SIGIR conference on research and development in information retrieval</conf-name>. <conf-loc>Singapore</conf-loc>: <publisher-name>ACM</publisher-name>, <conf-date>2008</conf-date>, pp. <fpage>467</fpage>–<lpage>474</lpage>.</citation>
+</ref>
+<ref id="bibr4-0165551511423149">
+<label>4</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wang</surname><given-names>X</given-names></name>
+<name><surname>Tu</surname><given-names>X</given-names></name>
+<name><surname>Feng</surname><given-names>D</given-names></name>
+<name><surname>Zhang</surname><given-names>L</given-names></name>
+</person-group>. <article-title>Ranking community answers by modeling question-answer relationships via analogical reasoning</article-title>. In: <conf-name>Proceedings of the 32nd international ACM SIGIR conference on research and development in information retrieval</conf-name>. <conf-loc>Boston, MA</conf-loc>: <publisher-name>ACM</publisher-name>, <conf-date>2009</conf-date>, pp. <fpage>179</fpage>–<lpage>186</lpage>.</citation>
+</ref>
+<ref id="bibr5-0165551511423149">
+<label>5</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>W</given-names></name>
+<name><surname>Zhang</surname><given-names>C</given-names></name>
+<name><surname>Hu</surname><given-names>S</given-names></name>
+</person-group>. <article-title>G-Finder: routing programming questions closer to the experts</article-title>. In: <conf-name>Proceedings of the ACM international conference on object oriented programming systems languages and applications</conf-name>. <conf-loc>Reno/Tahoe, NV</conf-loc>: <publisher-name>ACM</publisher-name>, <conf-date>2010</conf-date>, pp. <fpage>62</fpage>–<lpage>73</lpage>.</citation>
+</ref>
+<ref id="bibr6-0165551511423149">
+<label>6</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zhou</surname><given-names>Y</given-names></name>
+<name><surname>Cong</surname><given-names>G</given-names></name>
+<name><surname>Cui</surname><given-names>B</given-names></name>
+<name><surname>Jensen</surname><given-names>CS</given-names></name>
+<name><surname>Yao</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Routing questions to the right users in online communities</article-title>. In: <conf-name>Proceedings of the 2009 IEEE international conference on data engineering</conf-name>. <conf-loc>IEEE Computer Society</conf-loc>, <conf-date>2009</conf-date>, pp. <fpage>700</fpage>–<lpage>711</lpage>.</citation>
+</ref>
+<ref id="bibr7-0165551511423149">
+<label>7</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Guo</surname><given-names>J</given-names></name>
+<name><surname>Xu</surname><given-names>S</given-names></name>
+<name><surname>Bao</surname><given-names>S</given-names></name>
+<name><surname>Yu</surname><given-names>Y</given-names></name>
+</person-group>. <article-title>Tapping on the potential of Q&amp;A community by recommending answer providers</article-title>. In: <conf-name>Proceedings of the 17th ACM conference on information and knowledge management</conf-name>. <conf-loc>Napa Valley, CA</conf-loc>: <publisher-name>ACM</publisher-name>, <conf-date>2008</conf-date>, pp. <fpage>921</fpage>–<lpage>930</lpage>.</citation>
+</ref>
+<ref id="bibr8-0165551511423149">
+<label>8</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Hofmann</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Probabilistic latent semantic indexing</article-title>. In: <conf-name>Proceedings of the 22nd annual international ACM SIGIR conference on research and development in information retrieval</conf-name>. <conf-loc>Berkeley, CA</conf-loc>: <publisher-name>ACM</publisher-name>, <conf-date>1999</conf-date>, pp. <fpage>50</fpage>–<lpage>57</lpage>.</citation>
+</ref>
+<ref id="bibr9-0165551511423149">
+<label>9</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Ponte</surname><given-names>JM</given-names></name>
+<name><surname>Croft</surname><given-names>WB</given-names></name>
+</person-group>. <article-title>A language modeling approach to information retrieval</article-title>. In: <conf-name>Proceedings of the 21st annual international ACM SIGIR conference on research and development in information retrieval</conf-name>. <conf-loc>Melbourne, Australia</conf-loc>: <publisher-name>ACM</publisher-name>, <conf-date>1998</conf-date>, pp. <fpage>275</fpage>–<lpage>281</lpage>.</citation>
+</ref>
+<ref id="bibr10-0165551511423149">
+<label>10</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>SF</given-names></name>
+<name><surname>Goodman</surname><given-names>J</given-names></name>
+</person-group>. <article-title>An empirical study of smoothing techniques for language modeling</article-title>. In: <source>Proceedings of the 34th annual meeting of Association for Computational Linguistics</source>. <publisher-loc>Santa Cruz, CA</publisher-loc>: <publisher-name>Association for Computational Linguistics</publisher-name>, <year>1996</year>, pp. <fpage>310</fpage>–<lpage>318</lpage>.</citation>
+</ref>
+<ref id="bibr11-0165551511423149">
+<label>11</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Jelinek</surname><given-names>F</given-names></name>
+<name><surname>Mercer</surname><given-names>RL</given-names></name>
+</person-group>. <article-title>Interpolated estimation of Markov source parameters from sparse data</article-title>. In: <source>Proceedings of the workshop on pattern recognition in practice</source>. <publisher-loc>Amsterdam, the Netherlands</publisher-loc>, <year>1980</year>, pp. <fpage>381</fpage>–<lpage>397</lpage>.</citation>
+</ref>
+<ref id="bibr12-0165551511423149">
+<label>12</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>John</surname><given-names>BM</given-names></name>
+<name><surname>Chua</surname><given-names>AY</given-names></name>
+<name><surname>Goh</surname><given-names>DH</given-names></name>
+</person-group>. <article-title>What makes a high-quality user-generated answer?</article-title><source>IEEE Internet Computing</source><year>2011</year>; <volume>15</volume><issue>1</issue>: <fpage>66</fpage>–<lpage>71</lpage>.</citation>
+</ref>
+<ref id="bibr13-0165551511423149">
+<label>13</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Zhu</surname><given-names>Z</given-names></name>
+<name><surname>Bernhard</surname><given-names>D</given-names></name>
+<name><surname>Gurevych</surname><given-names>I</given-names></name>
+</person-group>. <article-title>A multi-dimensional model for assessing the quality of answers in social Q&amp;A sites</article-title>. <source>Technical report TUD-CS-2009-0158</source>, <publisher-name>UKP Lab, Technische Universität Darmstadt</publisher-name>, <year>2009</year>.</citation>
+</ref>
+<ref id="bibr14-0165551511423149">
+<label>14</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Yaqian</surname><given-names>Z</given-names></name>
+</person-group>. <source>Maximum entropy method and its applications in natural language processing</source> [<comment>Phd thesis</comment>]. <year>2004</year>: <publisher-loc>Shanghai</publisher-loc>: <publisher-name>Fudan University</publisher-name>.</citation>
+</ref>
+<ref id="bibr15-0165551511423149">
+<label>15</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Jeon</surname><given-names>J</given-names></name>
+<etal/>
+</person-group>. <article-title>A framework to predict the quality of answers with non-textual features</article-title>. In: <conf-name>Proceedings of the 29th annual international ACM SIGIR conference on research and development in information retrieval</conf-name>. <conf-loc>Seattle, WA</conf-loc>: <publisher-name>ACM</publisher-name>, <conf-date>2006</conf-date>, pp. <fpage>228</fpage>–<lpage>235</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

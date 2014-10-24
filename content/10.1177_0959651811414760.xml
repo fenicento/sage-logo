@@ -1,0 +1,6188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PII</journal-id>
+<journal-id journal-id-type="hwp">sppii</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part I: Journal of Systems and Control Engineering</journal-title>
+<issn pub-type="ppub">0959-6518</issn>
+<issn pub-type="epub">2041-3041</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0959651811414760</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0959651811414760</article-id>
+<title-group>
+<article-title>Development of a real-time clutch transition strategy for a parallel hybrid electric vehicle</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Minh</surname><given-names>V T</given-names></name>
+<xref ref-type="corresp" rid="corresp1-0959651811414760">*</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Mohd Hashim</surname><given-names>F B</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Awang</surname><given-names>M</given-names></name>
+</contrib>
+<aff id="aff1-0959651811414760">Mechanical Engineering Department, Universiti Teknologi Petronas, Tronoh, Malaysia</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0959651811414760"><label>*</label>Mechanical Engineering Department, Universiti Teknologi Petronas, Bandar Seri Iskandar, 31750 Tronoh, Perak Darul Ridzuan, Malaysia. email: <email>vutrieuminh@petronas.com.my</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>2</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>2</issue>
+<fpage>188</fpage>
+<lpage>203</lpage>
+<history>
+<date date-type="received">
+<day>24</day>
+<month>2</month>
+<year>2011</year>
+</date>
+<date date-type="accepted">
+<day>3</day>
+<month>6</month>
+<year>2011</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>The present paper develops a real-time clutch transition strategy for a parallel hybrid electric vehicle (HEV) in order to achieve quick and smooth clutch transition engagements between pure electrical driving and hybrid driving. Model predictive control (MPC) has been used for this model and tested with different control horizons and weighting factors to verify the ability of MPC to control the vehicle speeds for the clutch engagement. Some modified MPC algorithms with softened constraints and with output regions have been also studied to improve the robustness and the ability of this controller. Comprehensive simulations for the HEV have been conducted in MATLAB and Simulink. Results show that the system can provide real-time optimal control actions subject to input and output constraints for real-time clutch transition engagement with high driving comfort. The system can be implemented in electronic control units and applied for real HEVs.</p>
+</abstract>
+<kwd-group>
+<kwd>real-time clutch transition strategy</kwd>
+<kwd>hybrid electric vehicle</kwd>
+<kwd>model predictive control</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0959651811414760" sec-type="intro">
+<title>1 Introduction</title>
+<p>Hybrid electric vehicles (HEVs) are a type of hybrid and electric vehicle which combine the best features of internal combustion engines (ICEs) and electric motors (EMs). The reason for combining both ICEs and EMs lies in their advantages and disadvantages: EMs use no energy while idle (they turn off) and less energy than gas/diesel ICEs at low speed (less than 50–60 km/h), while gas/diesel ICEs can run better at higher speeds (above 60 km/h) since they can deliver an excellent power-to-weight ratio. The combination of ICE and EM means that during the rush hour in stop-and-go driving on busy roads, the EM works more, but at high speed, the gas/diesel ICE works. The ICE can start automatically to proceed charging when the batteries for the EM gets low.</p>
+<p>HEVs are divided into two main groups: serial and parallel hybrids. In a serial hybrid, the primary power source (ICE) is not mechanically linked to the powertrain, but used to provide electrical power to a battery. The secondary power source (EM) can then draw the energy from the battery to run the vehicle. In a parallel hybrid, both power sources are independently installed so that they can both individually or jointly propel the vehicle. Most commonly the ICE and EM and gearboxes are coupled by automatically controlled clutches or via planetary gears. For electric driving at low speed, the clutch between the ICE and the EM is open and only the EM propels the vehicle. At high speed, the clutch is closed; the ICE is activated and runs the vehicle while the EM is turned off. At very high speeds or very heavy loads, the EM also can be automatically turned on to join with the ICE to propel the vehicle. More information about parallel hybrids is available in the literature [<xref ref-type="bibr" rid="bibr1-0959651811414760">1</xref>, <xref ref-type="bibr" rid="bibr2-0959651811414760">2</xref>].</p>
+<p>The initial approaches to control the transition between EM and ICE strategies were based on heuristic knowledge of the characteristics of ICEs and EMs, where fuzzy logic schemes [<xref ref-type="bibr" rid="bibr3-0959651811414760">3</xref>] were typical. These control strategies were developed in early hybrid implementations. However they did not fully exploit the potential fuel optimization. The dynamic clutch engagements between the ICE and EM must be controlled at the right time and be as smooth as possible. For comfort and safety reasons, several control approaches for smoothing the engagement of clutches have been developed including backstepping control [<xref ref-type="bibr" rid="bibr4-0959651811414760">4</xref>], optimal control [<xref ref-type="bibr" rid="bibr5-0959651811414760">5</xref>], and model predictive control (MPC) [<xref ref-type="bibr" rid="bibr6-0959651811414760">6</xref>]. In the present research, new real-time predictive schemes to control the speeds of ICEs and EMs are developed and applied to the engagement of the clutches, which can help to enhance driving comfort and reduce jerk for parallel HEVs.</p>
+<p>The motivation behind using the MPC method in the present work is the ability of MPC to solve real-time optimization problems with both linear and non-linear systems. One of the superiorities of MPC is its ability to deal with constraints within open-loop optimal control problems. In order to ensure stability within a finite prediction horizon, most MPC schemes use a terminal region constraint at the end of the prediction horizon. However, the system then has both input and output constraints and difficulty arises from the failure to satisfy the output constraints due to the input constraints. Therefore, a new MPC scheme without a terminal region constraint was developed in reference [<xref ref-type="bibr" rid="bibr7-0959651811414760">7</xref>] using softened output constraints. The robust model predictive control (RMPC) that guarantees stability in the presence of model uncertainty using linear matrix inequalities (LMIs) subject to input and output saturated constraints was presented in reference [<xref ref-type="bibr" rid="bibr8-0959651811414760">8</xref>]. In this novel RMPC, the controller softens the output constraints as penalty terms and adds them into the objective function. These terms maintain the output violation at low values until a constrained solution is returned.</p>
+<p>The present paper is organized as follows. In section 2, a typical parallel HEV is formulated; in section 3, MPC schemes are constructed to control the speeds of the ICE and EM for each part of the vehicle. In section 4, comprehensive simulations are given to illustrate the performances of this HEV model. Finally, conclusions are drawn in section 5.</p>
+</sec>
+<sec id="section2-0959651811414760">
+<title>2 HEV Modelling</title>
+<p><xref ref-type="fig" rid="fig1-0959651811414760">Figure 1</xref> shows the configuration of a very common parallel HEV system developed by Daimler Chrysler that appeared at the Detroit Motor Show in 2004. It consists of a conventional ICE and two EMs – EM1 and EM2. An automatically controllable clutch separates the drivetrain into two parts: part 1 comprising ICE with EM1 and part 2 comprising EM2 and the rest of the transmission. EM1 serves as a starter and generator. This rear-wheel drive vehicle is equipped with a standard automated gearbox without torque converter.</p>
+<fig id="fig1-0959651811414760" position="float">
+<label>Fig. 1</label>
+<caption>
+<p>Configuration of the parallel hybrid powertrain</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig1.tif"/>
+</fig>
+<p>During pure electrical driving at low speed (less than 50 km/h), the clutch is opened and a series hybrid configuration is achieved. In this operating range, the second d.c. motor, EM2, propels the vehicle. The transmission from series mode to parallel mode takes place at high speed (more than 50 km/h) by closing the clutch. The first d.c. motor, EM1, activates the ICE to run the vehicle while EM2 turns off. EM1 becomes a generator to charge the battery. In critical times on the demand of the driver under very heavy loads or in emergency cases where needed, both EM1 and EM2 can be automatically turned on to join with the ICE to propel the vehicle.</p>
+<p>A simplified mechanical model for this hybrid drivetrain is shown in <xref ref-type="fig" rid="fig2-0959651811414760">Fig. 2</xref>. The first part of the powertrain can be approximated by a lumped inertia <italic>J</italic><sub>1</sub> where the shaft holding the ICE, EM1, and one clutch plate is modelled as a rigid body, which is a valid estimation since they have high stiffness and small inertias of the rotating parts. As proposed in reference [<xref ref-type="bibr" rid="bibr9-0959651811414760">9</xref>], the second part of the powertrain is modelled by two inertias <italic>J</italic><sub>2</sub> and <italic>J</italic><sub>3</sub>, connected by a mechanical spring and a resistance model combining all losses within the drivetrain and the driving resistances. The gearbox and the differential are modelled as a simple gain transforming the torques and the rotational speeds by a variable factor <italic>i</italic> depending on the selected gear.</p>
+<fig id="fig2-0959651811414760" position="float">
+<label>Fig. 2</label>
+<caption>
+<p>Simplified drivetrain structure</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig2.tif"/>
+</fig>
+<p>The powertrain can be considered as a connection of a spring with torsional rigidity <italic>k</italic><sub>θ</sub>, velocity damping coefficient <italic>k</italic><sub>β</sub>, and acceleration damping coefficient <italic>k</italic><sub>α</sub>. The torques <italic>M</italic><sub>ICE</sub>, <italic>M</italic><sub>EM1</sub>, and <italic>M</italic><sub>EM2</sub> are from ICE, EM1, and EM2, respectively. Rotating angles θ<sub>1</sub>, θ<sub>2</sub>, θ<sub>3</sub> and angular velocities ω<sub>1</sub>, ω<sub>2</sub>, ω<sub>3</sub> are from shaft 1, 2, and 3, respectively; and <italic>r</italic> is the vehicle’s dynamic wheel radius.</p>
+<p>The three separate contributions to the vehicle resistance model, including the air drag, the rolling resistance, and the combined mechanical losses in the gearbox, the differential, and the shaft bearings due to friction, can be approximated into the vehicle velocity resistance torque <italic>M</italic><sub>v</sub> as</p>
+<p>
+<disp-formula id="disp-formula1-0959651811414760">
+<label>(1)</label>
+<mml:math display="block" id="math1-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mi>ρ</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mfrac>
+<mml:msub>
+<mml:mi>c</mml:mi>
+<mml:mtext>w</mml:mtext>
+</mml:msub>
+<mml:mi>A</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>r</mml:mi>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>f</mml:mi>
+<mml:mtext>r</mml:mtext>
+</mml:msub>
+<mml:mi>m</mml:mi>
+<mml:mi mathvariant="bold-italic">g</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>a</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>a</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>a</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msubsup>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0959651811414760" xlink:href="10.1177_0959651811414760-eq1.tif"/>
+</disp-formula>
+</p>
+<p>where ρ is the density of air; <italic>c</italic><sub>w</sub> is the drag coefficient; <italic>A</italic> is the vehicle frontal area; <italic>f</italic><sub>r</sub> is the resistance coefficient; <italic>m</italic> is the vehicle mass; <bold><italic>g</italic></bold> is acceleration due to gravity; and <italic>a<sub>i</sub></italic> are polynomial coefficients (<inline-formula id="inline-formula1-0959651811414760">
+<mml:math display="inline" id="math2-0959651811414760">
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>).</p>
+<p>The influence of the road inclination and the road dynamics can be considered as disturbances to the system. These disturbances can lead to some additional accelerating or decelerating torques and some changes in the rolling resistances due to the change in normal force as well as the change of vehicle mass during running, but they are not considered in this paper.</p>
+<p>Since this powertrain model is built for clutch engagement at low vehicle speeds (less than 50 km/h), where the contribution of the exponential term <inline-formula id="inline-formula2-0959651811414760">
+<mml:math display="inline" id="math3-0959651811414760">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula> to <italic>M</italic><sub>v</sub> is small, the linearization of the resistance torque <italic>M</italic><sub>v</sub> in <xref ref-type="disp-formula" rid="disp-formula1-0959651811414760">equation (1)</xref> can be considered as</p>
+<p>
+<disp-formula id="disp-formula2-0959651811414760">
+<label>(2)</label>
+<mml:math display="block" id="math4-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0959651811414760" xlink:href="10.1177_0959651811414760-eq2.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>M</italic><sub>v0</sub> is the initial constant for air drag torque and <italic>k</italic><sub>v</sub> is the linear air drag coefficient. Due to the difference in gear ratios, the coefficients <italic>M</italic><sub>v0</sub> and <italic>k</italic><sub>v</sub> vary for each gear.</p>
+<p>The following torque equations are applied for part 1 comprising ICE with EM1</p>
+<p>
+<disp-formula id="disp-formula3-0959651811414760">
+<label>(3)</label>
+<mml:math display="block" id="math5-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mtext>o</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0959651811414760" xlink:href="10.1177_0959651811414760-eq3.tif"/>
+</disp-formula>
+</p>
+<p>The driving torque is calculated as</p>
+<p>
+<disp-formula id="disp-formula4-0959651811414760">
+<label>(4)</label>
+<mml:math display="block" id="math6-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mtext>o</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>ICE</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>EM</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0959651811414760" xlink:href="10.1177_0959651811414760-eq4.tif"/>
+</disp-formula>
+</p>
+<p>The friction torque <italic>M</italic><sub>C</sub> transmitted by the clutch is calculated as follows. First, in the clutch locked mode when the friction torque <italic>M</italic><sub>C</sub> exceeds the static friction capacity <inline-formula id="inline-formula3-0959651811414760">
+<mml:math display="inline" id="math7-0959651811414760">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>fmax</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>Static</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</p>
+<p>
+<disp-formula id="disp-formula5-0959651811414760">
+<label>(5a)</label>
+<mml:math display="block" id="math8-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mn>2</mml:mn>
+<mml:mn>3</mml:mn>
+</mml:mfrac>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi>F</mml:mi>
+<mml:mrow>
+<mml:mtext>NC</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>μ</mml:mi>
+<mml:mtext>S</mml:mtext>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext> </mml:mtext>
+<mml:mtext>for</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:msubsup>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>fmax</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>Static</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0959651811414760" xlink:href="10.1177_0959651811414760-eq5.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>F</italic><sub>NC</sub> is the normal force exerted on the clutch, <italic>r</italic><sub>C</sub> is the clutch corresponding radius, and μ<sub>S</sub> is the clutch static friction coefficient.</p>
+<p>Second, in the clutch slipping mode</p>
+<p>
+<disp-formula id="disp-formula6-0959651811414760">
+<label>(5b)</label>
+<mml:math display="block" id="math9-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi>F</mml:mi>
+<mml:mrow>
+<mml:mtext>NC</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mtext>sgn</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mi>μ</mml:mi>
+<mml:mtext>K</mml:mtext>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext> </mml:mtext>
+<mml:mtext>for</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+<mml:mo>&lt;</mml:mo>
+<mml:msubsup>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>fmax</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>Static</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0959651811414760" xlink:href="10.1177_0959651811414760-eq6.tif"/>
+</disp-formula>
+</p>
+<p>where μ<sub>K</sub> is the clutch slipping kinetic friction coefficient.</p>
+<p>The following torque equations are applied for the second part</p>
+<p>
+<disp-formula id="disp-formula7-0959651811414760">
+<label>(6a)</label>
+<mml:math display="block" id="math10-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mtext>o</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>θ</mml:mi>
+</mml:msub>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>θ</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mfrac>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0959651811414760" xlink:href="10.1177_0959651811414760-eq7.tif"/>
+</disp-formula>
+</p>
+<p>or</p>
+<p>
+<disp-formula id="disp-formula8-0959651811414760">
+<label>(6b)</label>
+<mml:math display="block" id="math11-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mtext>o</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0959651811414760" xlink:href="10.1177_0959651811414760-eq8.tif"/>
+</disp-formula>
+</p>
+<p>and</p>
+<p>
+<disp-formula id="disp-formula9-0959651811414760">
+<label>(7)</label>
+<mml:math display="block" id="math12-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>M</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mtext>o</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>¨</mml:mo>
+</mml:mover>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>β</mml:mi>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0959651811414760" xlink:href="10.1177_0959651811414760-eq9.tif"/>
+</disp-formula>
+</p>
+<p>The torque <italic>M</italic><sub>2o</sub> is given by</p>
+<p>
+<disp-formula id="disp-formula10-0959651811414760">
+<label>(8)</label>
+<mml:math display="block" id="math13-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mtext>o</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>EM</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>η</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0959651811414760" xlink:href="10.1177_0959651811414760-eq10.tif"/>
+</disp-formula>
+</p>
+<p>where η is the efficiency of the gearbox and differential.</p>
+<p>The above torque equations can be transformed into the following vehicle dynamics</p>
+<p>
+<disp-formula id="disp-formula11-0959651811414760">
+<label>(9)</label>
+<mml:math display="block" id="math14-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>θ</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0959651811414760" xlink:href="10.1177_0959651811414760-eq11.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula12-0959651811414760">
+<label>(10)</label>
+<mml:math display="block" id="math15-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>ICE</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>EM</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0959651811414760" xlink:href="10.1177_0959651811414760-eq12.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>k<sub>β</sub></italic><sub>1</sub> is friction coefficient in shaft 1</p>
+<p>
+<disp-formula id="disp-formula13-0959651811414760">
+<label>(11)</label>
+<mml:math display="block" id="math16-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>θ</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0959651811414760" xlink:href="10.1177_0959651811414760-eq13.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula14-0959651811414760">
+<label>(12)</label>
+<mml:math display="block" id="math17-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>η</mml:mi>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>EM</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>η</mml:mi>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0959651811414760" xlink:href="10.1177_0959651811414760-eq14.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>k</italic><sub>β2</sub> is the friction coefficient in shaft 2</p>
+<p>
+<disp-formula id="disp-formula15-0959651811414760">
+<label>(13)</label>
+<mml:math display="block" id="math18-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>θ</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0959651811414760" xlink:href="10.1177_0959651811414760-eq15.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula16-0959651811414760">
+<label>(14)</label>
+<mml:math display="block" id="math19-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula16-0959651811414760" xlink:href="10.1177_0959651811414760-eq16.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>k</italic><sub>β3</sub> is the friction coefficient in shaft 3 and</p>
+<p>
+<disp-formula id="disp-formula17-0959651811414760">
+<label>(15)</label>
+<mml:math display="block" id="math20-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>¨</mml:mo>
+</mml:mover>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+<mml:mi>η</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>EM</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula17-0959651811414760" xlink:href="10.1177_0959651811414760-eq17.tif"/>
+</disp-formula>
+</p>
+<p>The torque generated by a d.c. motor can be represented as</p>
+<p>
+<disp-formula id="disp-formula18-0959651811414760">
+<label>(16)</label>
+<mml:math display="block" id="math21-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>dc</mml:mtext>
+<mml:mo>_</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>T</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mtext>I</mml:mtext>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>V</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>E</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>T</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mtext>I</mml:mtext>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula18-0959651811414760" xlink:href="10.1177_0959651811414760-eq18.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>k</italic><sub>T</sub> is the motor torque constant, <inline-formula id="inline-formula4-0959651811414760">
+<mml:math display="inline" id="math22-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>T</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>Torque</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mi>I</mml:mi>
+<mml:mrow>
+<mml:mtext>Current</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (Nm/A), <italic>k</italic><sub>E</sub> is the motor electromotive force (EMF) constant, <inline-formula id="inline-formula5-0959651811414760">
+<mml:math display="inline" id="math23-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>E</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>T</mml:mtext>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (Vs/rad), <italic>R</italic><sub>I</sub> is the terminal resistance (Ω), <italic>V</italic> is the power supply (V), and ω is the angular velocity (r/min).</p>
+<p>If the state variables are <inline-formula id="inline-formula6-0959651811414760">
+<mml:math display="inline" id="math24-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> for the positions, angular velocities, and acceleration on vehicle shafts 1, 2, and 3, respectively, and the input variables are <inline-formula id="inline-formula7-0959651811414760">
+<mml:math display="inline" id="math25-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>ICE</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mrow>
+</mml:math></inline-formula> for torque of ICE, voltage of EM1, voltage of EM2, torque on the clutch, and the input air-drag torque load on the vehicle, a space state form of the vehicle dynamics is set up</p>
+<p>
+<disp-formula id="disp-formula19-0959651811414760">
+<label>(17)</label>
+<mml:math display="block" id="math26-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>x</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>E</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>E</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>E</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>η</mml:mi>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mi>η</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+<mml:mi>η</mml:mi>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+<mml:mi>η</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>α</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula19-0959651811414760" xlink:href="10.1177_0959651811414760-eq19.tif"/>
+</disp-formula>
+</p>
+<p>When the vehicle travels below 50 km/h, only EM2 activates. Then, the inputs <inline-formula id="inline-formula8-0959651811414760">
+<mml:math display="inline" id="math27-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>ICE</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula9-0959651811414760">
+<mml:math display="inline" id="math28-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula10-0959651811414760">
+<mml:math display="inline" id="math29-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mtext>C</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and the states <inline-formula id="inline-formula11-0959651811414760">
+<mml:math display="inline" id="math30-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula12-0959651811414760">
+<mml:math display="inline" id="math31-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and the system becomes</p>
+<p>
+<disp-formula id="disp-formula20-0959651811414760">
+<mml:math display="block" id="math32-0959651811414760">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>A</mml:mi>
+</mml:mstyle>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>B</mml:mi>
+</mml:mstyle>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>C</mml:mi>
+</mml:mstyle>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>D</mml:mi>
+</mml:mstyle>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula20-0959651811414760" xlink:href="10.1177_0959651811414760-eq20.tif"/>
+</disp-formula>
+</p>
+<p>with</p>
+<p>
+<disp-formula id="disp-formula21-0959651811414760">
+<label>(18)</label>
+<mml:math display="block" id="math33-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>A</mml:mi>
+</mml:mstyle>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>E</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mtext>v</mml:mtext>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>B</mml:mi>
+</mml:mstyle>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>C</mml:mi>
+</mml:mstyle>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>θ</mml:mi>
+</mml:msub>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>θ</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>D</mml:mi>
+</mml:mstyle>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula21-0959651811414760" xlink:href="10.1177_0959651811414760-eq21.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula13-0959651811414760">
+<mml:math display="inline" id="math34-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula14-0959651811414760">
+<mml:math display="inline" id="math35-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>v</mml:mtext>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and the outputs <inline-formula id="inline-formula15-0959651811414760">
+<mml:math display="inline" id="math36-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mtext>Torque</mml:mtext>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> are the vehicle velocity ω<sub>3</sub> (measured) and the torque <italic>T</italic><sub>Torque3</sub> generated on shaft 3 (unmeasured). In this case, the torsional rigidity (torque/angle) is given by</p>
+<p>
+<disp-formula id="disp-formula22-0959651811414760">
+<mml:math display="block" id="math37-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mi>θ</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>Torque</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mi>φ</mml:mi>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula22-0959651811414760" xlink:href="10.1177_0959651811414760-eq22.tif"/>
+</disp-formula>
+</p>
+<p>where φ is the angle of twist, <inline-formula id="inline-formula16-0959651811414760">
+<mml:math display="inline" id="math38-0959651811414760">
+<mml:mrow>
+<mml:mi>φ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo>/</mml:mo>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> (rad), <italic>G</italic> is the shear modulus or modulus of rigidity of mild carbon steel, <italic>G</italic> = 81 500 × 10<sup>6</sup> MPa (or N/mm<sup>2</sup>), <italic>l</italic> is the length of the shaft where the torque is being applied, in this case <italic>l</italic> = 1.5 m for the vehicle drivetrain length, and <italic>J</italic> is the moment of inertia, <inline-formula id="inline-formula17-0959651811414760">
+<mml:math display="inline" id="math39-0959651811414760">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (kgm<sup>2</sup>).</p>
+<p>At high speeds (more than 50 km/h), EM1 starts while the clutch is still open and the dynamic equations in the first part become</p>
+<p>
+<disp-formula id="disp-formula23-0959651811414760">
+<label>(19)</label>
+<mml:math display="block" id="math40-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>θ</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula23-0959651811414760" xlink:href="10.1177_0959651811414760-eq23.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula24-0959651811414760">
+<label>(20)</label>
+<mml:math display="block" id="math41-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>ω</mml:mi>
+<mml:mo>˙</mml:mo>
+</mml:mover>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>E</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>ς</mml:mi>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>ICE</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula24-0959651811414760" xlink:href="10.1177_0959651811414760-eq24.tif"/>
+</disp-formula>
+</p>
+<p>where ς is a new coefficient added to EM1 as a compensated load to the starting period.</p>
+<p>Then the system becomes</p>
+<p>
+<disp-formula id="disp-formula25-0959651811414760">
+<mml:math display="block" id="math42-0959651811414760">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>A</mml:mi>
+</mml:mstyle>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>B</mml:mi>
+</mml:mstyle>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>C</mml:mi>
+</mml:mstyle>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>D</mml:mi>
+</mml:mstyle>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula25-0959651811414760" xlink:href="10.1177_0959651811414760-eq25.tif"/>
+</disp-formula>
+</p>
+<p>with</p>
+<p>
+<disp-formula id="disp-formula26-0959651811414760">
+<label>(21)</label>
+<mml:math display="block" id="math43-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>A</mml:mi>
+</mml:mstyle>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>B</mml:mi>
+</mml:mstyle>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>ς</mml:mi>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>C</mml:mi>
+</mml:mstyle>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>E</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mi>k</mml:mi>
+<mml:mrow>
+<mml:mtext>T</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>D</mml:mi>
+</mml:mstyle>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula26-0959651811414760" xlink:href="10.1177_0959651811414760-eq26.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula18-0959651811414760">
+<mml:math display="inline" id="math44-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula19-0959651811414760">
+<mml:math display="inline" id="math45-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>M</mml:mi>
+<mml:mrow>
+<mml:mtext>ICE</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula20-0959651811414760">
+<mml:math display="inline" id="math46-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mtext>e</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mtext>Torque</mml:mtext>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> where <italic>T</italic><sub>Torque1</sub> is the output torque generated on shaft 1 (unmeasured).</p>
+<p>From the comprehensive HEV model in <xref ref-type="disp-formula" rid="disp-formula19-0959651811414760">equation (17)</xref>, the separate HEV part 2 model in <xref ref-type="disp-formula" rid="disp-formula21-0959651811414760">equation (18)</xref> when the vehicle runs with EM2 at low speed, and the separate HEV part 1 model in <xref ref-type="disp-formula" rid="disp-formula26-0959651811414760">equation (21)</xref> when vehicle begins to start EM1 and ICE for high speed (the clutch is still open), the design of an MPC controller for the system is developed in the following section.</p>
+</sec>
+<sec id="section3-0959651811414760">
+<title>3 Model Predictive Controller Design</title>
+<p>In this paper, the tasks of MPC are to control the output torques among the components and the speeds of each shaft in order to have smooth clutch engagements for driving comfort. The RMPC algorithms for uncertain systems subject to input and output saturated constraints are reported in reference [<xref ref-type="bibr" rid="bibr8-0959651811414760">8</xref>]. Conditions for MPC stability using softened output constraints are given in reference [<xref ref-type="bibr" rid="bibr7-0959651811414760">7</xref>]. Some fault detection and control systems with MPC are referred to in reference [<xref ref-type="bibr" rid="bibr10-0959651811414760">10</xref>], where the MPC controller can be reconfigured automatically online upon detecting a fault to maintain the offset error free at all times. The latest control of HEVs and MPC developments are presented in references [<xref ref-type="bibr" rid="bibr11-0959651811414760">11</xref>] to [<xref ref-type="bibr" rid="bibr13-0959651811414760">13</xref>]. The hybrid MPC switched systems for online determination of the optimal control actions and reconfiguring the controller accordingly are given in reference [<xref ref-type="bibr" rid="bibr8-0959651811414760">8</xref>]. Moreover, conditions for the stability of linear switched systems with polytopic uncertainties via their closed-loop linear quadratic state feedback regulator are found in reference [<xref ref-type="bibr" rid="bibr14-0959651811414760">14</xref>].</p>
+<p>The system in <xref ref-type="disp-formula" rid="disp-formula19-0959651811414760">equation (17)</xref> is discretized into the following form</p>
+<p>
+<disp-formula id="disp-formula27-0959651811414760">
+<label>(22)</label>
+<mml:math display="block" id="math47-0959651811414760">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>A</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>B</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>C</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>D</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula27-0959651811414760" xlink:href="10.1177_0959651811414760-eq27.tif"/>
+</disp-formula>
+</p>
+<p>where <bold><italic>x</italic></bold><sub><italic>t</italic></sub>, <bold><italic>u</italic></bold><sub><italic>t</italic></sub>, and <bold><italic>y</italic></bold><sub><italic>t</italic></sub> are states, inputs, and outputs, respectively and <bold>A</bold>, <bold>B</bold>, <bold>C</bold>, and <bold>D</bold> are fixed matrices</p>
+<p>subject to the input and output constraints</p>
+<p>
+<disp-formula id="disp-formula28-0959651811414760">
+<label>(23)</label>
+<mml:math display="block" id="math48-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi mathvariant="script">U</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.75em"/>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mi mathvariant="script">U</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.75em"/>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi mathvariant="script">Y</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula28-0959651811414760" xlink:href="10.1177_0959651811414760-eq28.tif"/>
+</disp-formula>
+</p>
+<p>Then, the optimization problem of the MPC controller for target tracking set points</p>
+<p>
+<disp-formula id="disp-formula29-0959651811414760">
+<mml:math display="block" id="math49-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:munder>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>≜</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:munder>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi mathvariant="bold-italic">r</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi mathvariant="bold-italic">r</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula29-0959651811414760" xlink:href="10.1177_0959651811414760-eq29.tif"/>
+</disp-formula>
+</p>
+<p>subject to</p>
+<p>
+<disp-formula id="disp-formula30-0959651811414760">
+<label>(24)</label>
+<mml:math display="block" id="math50-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mtext>and</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mtext>for</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>for</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>for</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>k</mml:mi>
+<mml:mo>≥</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>A</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>B</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>C</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>D</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula30-0959651811414760" xlink:href="10.1177_0959651811414760-eq30.tif"/>
+</disp-formula>
+</p>
+<p>is solved at each time <italic>t</italic>, where <inline-formula id="inline-formula21-0959651811414760">
+<mml:math display="inline" id="math51-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mtext>|</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> denotes the predicted state vector at time <italic>t</italic> + <italic>k</italic>, obtained by applying the input increment sequence <inline-formula id="inline-formula22-0959651811414760">
+<mml:math display="inline" id="math52-0959651811414760">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>≜</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula> and the new inputs <inline-formula id="inline-formula23-0959651811414760">
+<mml:math display="inline" id="math53-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mtext>|</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mtext>|</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mtext>|</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> to the model <xref ref-type="disp-formula" rid="disp-formula27-0959651811414760">equation (22)</xref> starting from the state <bold><italic>x</italic></bold>(<italic>t</italic>). <inline-formula id="inline-formula24-0959651811414760">
+<mml:math display="inline" id="math54-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mtext>|</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <bold><italic>r</italic></bold> are the predicted outputs and output set points, respectively. The output set points can be changed dynamically depending upon the desired speed by the driver or <inline-formula id="inline-formula25-0959651811414760">
+<mml:math display="inline" id="math55-0959651811414760">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">r</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi mathvariant="bold-italic">r</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> (a function of time). <inline-formula id="inline-formula26-0959651811414760">
+<mml:math display="inline" id="math56-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:msup>
+<mml:mi>Q</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mstyle>
+<mml:mo>≥</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula27-0959651811414760">
+<mml:math display="inline" id="math57-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:msup>
+<mml:mi>R</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mstyle>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> are the weighting matrices for predicted outputs and input increments, respectively.</p>
+<p>In the target tracking MPC regulator, the steady-state values of the plant will be equal to the target set points if there is no constraint and disturbance. The formulation in <xref ref-type="disp-formula" rid="disp-formula30-0959651811414760">equation (24)</xref> is the one considered for the remainder of this paper to verify the robustness of MPC to control the speed of the HEV.</p>
+<p>For the limit of the present research, the prediction horizon is set to be equal to the control horizon, i.e. <inline-formula id="inline-formula28-0959651811414760">
+<mml:math display="inline" id="math58-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (the predictive lengths). The quadratic objective junction <inline-formula id="inline-formula29-0959651811414760">
+<mml:math display="inline" id="math59-0959651811414760">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> in <xref ref-type="disp-formula" rid="disp-formula30-0959651811414760">equation (24)</xref> is minimized over a vector <bold><italic>N</italic></bold><sub>p</sub> future prediction inputs starting from the state <bold><italic>x</italic></bold>(<italic>t</italic>).</p>
+<p>For the MPC with hard constraints, by substituting</p>
+<p>
+<disp-formula id="disp-formula31-0959651811414760">
+<mml:math display="block" id="math60-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mstyle mathvariant="bold">
+<mml:mi>A</mml:mi>
+</mml:mstyle>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mrow>
+<mml:msup>
+<mml:mstyle mathvariant="bold">
+<mml:mi>A</mml:mi>
+</mml:mstyle>
+<mml:mi>k</mml:mi>
+</mml:msup>
+<mml:mstyle mathvariant="bold">
+<mml:mi>B</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula31-0959651811414760" xlink:href="10.1177_0959651811414760-eq31.tif"/>
+</disp-formula>
+</p>
+<p><xref ref-type="disp-formula" rid="disp-formula30-0959651811414760">equation (24)</xref> can be rewritten as a function of the current state <bold><italic>x</italic></bold>(<italic>t</italic>) and the current set points <bold><italic>r</italic></bold>(<italic>t</italic>) as</p>
+<p>
+<disp-formula id="disp-formula32-0959651811414760">
+<label>(25)</label>
+<mml:math display="block" id="math61-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mi>Ψ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi mathvariant="bold-italic">r</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:mfrac>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Y</mml:mi>
+</mml:mstyle>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>+</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+</mml:munder>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:mfrac>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:mstyle mathvariant="bold">
+<mml:mi>H</mml:mi>
+</mml:mstyle>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi mathvariant="bold-italic">r</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>F</mml:mi>
+</mml:mstyle>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula32-0959651811414760" xlink:href="10.1177_0959651811414760-eq32.tif"/>
+</disp-formula>
+</p>
+<p>subject to the hard combined constraints of <inline-formula id="inline-formula30-0959651811414760">
+<mml:math display="inline" id="math62-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>G</mml:mi>
+</mml:mstyle>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>W</mml:mi>
+</mml:mstyle>
+<mml:mo>+</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>E</mml:mi>
+</mml:mstyle>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where the column vector <inline-formula id="inline-formula31-0959651811414760">
+<mml:math display="inline" id="math63-0959651811414760">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>≜</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:mo>∈</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mi mathvariant="script">U</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the prediction optimization vector; <inline-formula id="inline-formula32-0959651811414760">
+<mml:math display="inline" id="math64-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>H</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:msup>
+<mml:mi>H</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+</mml:mstyle>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and <bold>H</bold>, <bold>F</bold>, <bold>Y</bold>, <bold>G</bold>, <bold>W</bold>, and <bold>E</bold> are matrices obtained from <bold>Q</bold>, <bold>R</bold>, and in <xref ref-type="disp-formula" rid="disp-formula27-0959651811414760">equation (22)</xref>. As only the optimizer <bold><italic>U</italic></bold> is needed, the term involving <bold>Y</bold> is usually removed from <xref ref-type="disp-formula" rid="disp-formula32-0959651811414760">equation (25)</xref>. Then, the optimization problem in <xref ref-type="disp-formula" rid="disp-formula32-0959651811414760">equation (25)</xref> is a quadratic program and depends on the current state <bold><italic>x</italic></bold>(<italic>t</italic>) and the current set points <bold><italic>r</italic></bold>(<italic>t</italic>). The implementation of MPC requires the online solution of a quadratic program at each time step.</p>
+<p>In reality, the system might have both input and output constraints and difficulty will arise because of the inability to satisfy the output constraints due to the input constraints. Since MPC is designed for online implementation, any infeasible solution of the optimization problems cannot be allowed. Normally the input constraints are based on the physical limits of the system and can be considered as hard constraints. The output constraints are the speeds and torques, which are not strictly imposed and can be violated somewhat during the evolution of the system. To guarantee system stability when one of the outputs violates the constraints, the optimization of the MPC in <xref ref-type="disp-formula" rid="disp-formula32-0959651811414760">equation (25)</xref> can be modified with softened constraints as</p>
+<p>
+<disp-formula id="disp-formula33-0959651811414760">
+<mml:math display="block" id="math65-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mi>Ψ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi mathvariant="bold-italic">r</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:mfrac>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Y</mml:mi>
+</mml:mstyle>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>+</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+</mml:munder>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:mfrac>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:mstyle mathvariant="bold">
+<mml:mi>H</mml:mi>
+</mml:mstyle>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi mathvariant="bold-italic">r</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>F</mml:mi>
+</mml:mstyle>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:mfrac>
+<mml:msup>
+<mml:mi>ε</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+</mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>Λ</mml:mi>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula33-0959651811414760" xlink:href="10.1177_0959651811414760-eq33.tif"/>
+</disp-formula>
+</p>
+<p>subject to</p>
+<p>
+<disp-formula id="disp-formula34-0959651811414760">
+<label>(26)</label>
+<mml:math display="block" id="math66-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>;</mml:mo>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi>u</mml:mi>
+<mml:mrow>
+<mml:mi>max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula34-0959651811414760" xlink:href="10.1177_0959651811414760-eq34.tif"/>
+</disp-formula>
+</p>
+<p>where the new items added into the softened objective function include <inline-formula id="inline-formula33-0959651811414760">
+<mml:math display="inline" id="math67-0959651811414760">
+<mml:mrow>
+<mml:mi>Λ</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> (usually a small value), which is a new weighting factor, and <inline-formula id="inline-formula34-0959651811414760">
+<mml:math display="inline" id="math68-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> representing the violation penalty terms (<inline-formula id="inline-formula35-0959651811414760">
+<mml:math display="inline" id="math69-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>ε</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≥</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>) added to the MPC objective function. These terms keep the output violations at low values until the constrained solution is returned.</p>
+<p>To guarantee the system solution in some critical time, one can also delete some output set points because if some output set points are deleted, the system becomes looser and the probability that MPC can find a solution will increase. The deletion of some output set points can be done by choosing some zeros in weighting matrix <bold>Q</bold> in <xref ref-type="disp-formula" rid="disp-formula30-0959651811414760">equation (24)</xref>. The robustness of MPC can also increase if one can relax some set points into regions rather than keeping some specific values. When the system has output regions, the MPC formulation needs to be changed slightly because the set points <bold><italic>r</italic></bold>(<italic>t</italic>) in <xref ref-type="disp-formula" rid="disp-formula34-0959651811414760">equation (26)</xref> now become regions. An output region is defined by the minimum and maximum values of a desired range. The minimum value is the lower limit, and the maximum value is the upper limit, or <inline-formula id="inline-formula36-0959651811414760">
+<mml:math display="inline" id="math70-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>w</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mtext>|</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>upper</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Then a modified objective function for MPC with output regions is</p>
+<p>
+<disp-formula id="disp-formula35-0959651811414760">
+<mml:math display="block" id="math71-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:munder>
+<mml:mrow>
+<mml:mi>min</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>≜</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:munder>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">z</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">z</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula35-0959651811414760" xlink:href="10.1177_0959651811414760-eq35.tif"/>
+</disp-formula>
+</p>
+<p>where</p>
+<p>
+<disp-formula id="disp-formula36-0959651811414760">
+<label>(27)</label>
+<mml:math display="block" id="math72-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">z</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≥</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">z</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>upper</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>for</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>upper</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">z</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>lower</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>for</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>lower</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">z</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>for</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>lower</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mrow>
+<mml:mtext>upper</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula36-0959651811414760" xlink:href="10.1177_0959651811414760-eq36.tif"/>
+</disp-formula>
+</p>
+<p>As long as the outputs still lie inside the desired regions, no control actions are taken because none of the control objectives have been violated (<inline-formula id="inline-formula37-0959651811414760">
+<mml:math display="inline" id="math73-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">z</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mtext>|</mml:mtext>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>). However, when the outputs violate the desired regions, the control objective in the MPC regulator will activate and push them back into the desired regions. The robustness improvements of the modified MPC controller are illustrated with the following simulations.</p>
+<sec id="section4-0959651811414760">
+<title>3.1 MPC Simulation for EM2</title>
+<p>EM2 propels the HEV at speeds below 50 km/h. At that time the clutch is open and both ICE and EM1 stop. The system equation is indicated in <xref ref-type="disp-formula" rid="disp-formula21-0959651811414760">equation (18)</xref>. The MPC regulator is applied for this system as in <xref ref-type="disp-formula" rid="disp-formula30-0959651811414760">equations (24)</xref>, <xref ref-type="disp-formula" rid="disp-formula34-0959651811414760">(26)</xref>, and <xref ref-type="disp-formula" rid="disp-formula36-0959651811414760">(27)</xref>. The discrete time of all simulations is set at 0.01 s.</p>
+<p>Parameters used in EM2 are: torsional rigidity, <italic>k</italic><sub>θ</sub> = 1158 Nm/rad; motor constants, <italic>k</italic><sub>E2</sub> = <italic>k</italic><sub>T2</sub> = 10 Nm/A; motor inertia, <italic>J</italic><sub>2</sub> = 1 kgm<sup>2</sup>; load inertia, <italic>J</italic><sub>3</sub> = 2 kgm<sup>2</sup>; gear ratio, <italic>i</italic> = 2.34; motor damping, <italic>k<sub>β</sub></italic><sub>2</sub> = 0.5 Nms/rad; load damping, <italic>k</italic><sub><italic>v</italic></sub> = 0.5 and <italic>k</italic><sub>β</sub><sub>3</sub> = 12 Nms/rad; armature resistance, <italic>R</italic><sub>I2</sub> = 5 Ω.</p>
+<p>Control constraints are set as follows: input constraint for the d.c. voltage applied for the vehicle is <inline-formula id="inline-formula38-0959651811414760">
+<mml:math display="inline" id="math74-0959651811414760">
+<mml:mrow>
+<mml:mtext>|</mml:mtext>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mtext>|</mml:mtext>
+<mml:mo>≤</mml:mo>
+<mml:mn>300</mml:mn>
+<mml:mtext>V</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula39-0959651811414760">
+<mml:math display="inline" id="math75-0959651811414760">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≤</mml:mo>
+<mml:mi>inf</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, or the limit constraint on Δ<bold><italic>u</italic></bold>(<italic>t</italic>) is not set. The output constraints imposed on the motor shaft are: finite shear strength (carbon steel) of τ = 25 MPa or N/mm<sup>2</sup>; output limit of torque on shaft 2 of <inline-formula id="inline-formula40-0959651811414760">
+<mml:math display="inline" id="math76-0959651811414760">
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mi>π</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mi>d</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo>/</mml:mo>
+<mml:mn>16</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where <italic>d</italic> = 0.05 m is the output motor shaft diameter; then the torque constraint is <inline-formula id="inline-formula41-0959651811414760">
+<mml:math display="inline" id="math77-0959651811414760">
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>|</mml:mo>
+<mml:mo>≤</mml:mo>
+<mml:mn>455</mml:mn>
+<mml:mtext>Nm</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p>For the MPC parameters, a horizon prediction <inline-formula id="inline-formula42-0959651811414760">
+<mml:math display="inline" id="math78-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and the weighting matrices</p>
+<p>
+<disp-formula id="disp-formula37-0959651811414760">
+<mml:math display="block" id="math79-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>10</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>10</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mtext> </mml:mtext>
+<mml:mtext> </mml:mtext>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula37-0959651811414760" xlink:href="10.1177_0959651811414760-eq37.tif"/>
+</disp-formula>
+</p>
+<p>are selected. <xref ref-type="fig" rid="fig3-0959651811414760">Figure 3</xref> shows the MPC performance with the input voltage, output speed, and torque.</p>
+<fig id="fig3-0959651811414760" position="float">
+<label>Fig. 3</label>
+<caption>
+<p>MPC performance with <italic>N</italic><sub>p</sub> = 5 and <bold>Q</bold> = 10<bold>R</bold>
+</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig3.tif"/>
+</fig>
+<p>The MPC performance is highly dependent on the choice of weighting matrices <bold>Q</bold> and <bold>R</bold>. If <bold>Q</bold> is much greater than <bold>R</bold> (<inline-formula id="inline-formula43-0959651811414760">
+<mml:math display="inline" id="math80-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo>≫</mml:mo>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+</mml:mrow>
+</mml:math>
+</inline-formula>) or the input increment Δ<bold><italic>u</italic></bold>(<italic>t</italic>) is much greater than the output penalty value of <inline-formula id="inline-formula44-0959651811414760">
+<mml:math display="inline" id="math81-0959651811414760">
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi mathvariant="bold-italic">r</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> as indicated in the objective function <xref ref-type="disp-formula" rid="disp-formula30-0959651811414760">equation (24)</xref>, the MPC will track the set points very quickly but of course in this case one must pay with faster and greater energy input. This is shown in <xref ref-type="fig" rid="fig4-0959651811414760">Fig. 4</xref>, which was obtained with a horizon prediction <inline-formula id="inline-formula45-0959651811414760">
+<mml:math display="inline" id="math82-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and the weighting matrices</p>
+<p>
+<disp-formula id="disp-formula38-0959651811414760">
+<mml:math display="block" id="math83-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>100</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>100</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mtext> </mml:mtext>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula38-0959651811414760" xlink:href="10.1177_0959651811414760-eq38.tif"/>
+</disp-formula>
+</p>
+<fig id="fig4-0959651811414760" position="float">
+<label>Fig. 4</label>
+<caption>
+<p>MPC performance with <italic>N</italic><sub>p</sub> = 5 and <bold>Q</bold> = 100<bold>R</bold>
+</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig4.tif"/>
+</fig>
+<p>The horizon prediction in the MPC controller also greatly affects its performance. The MPC controller will become looser when one selects a longer prediction horizon and the system will have better performance since it becomes more flexible and easier to find a better solution. However with longer prediction, the calculation burden for the computer increases exponentially and the online optimization is limited by the very fast discretized intervals. In the next simulation, running the MPC with a shorter horizon length of <inline-formula id="inline-formula46-0959651811414760">
+<mml:math display="inline" id="math84-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and the medium values</p>
+<p>
+<disp-formula id="disp-formula39-0959651811414760">
+<mml:math display="block" id="math85-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>50</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>50</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="1.25em"/>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula39-0959651811414760" xlink:href="10.1177_0959651811414760-eq39.tif"/>
+</disp-formula>
+</p>
+<p>gives the results shown in <xref ref-type="fig" rid="fig5-0959651811414760">Fig. 5</xref>. From <xref ref-type="fig" rid="fig5-0959651811414760">Fig. 5</xref> it can be seen that with a shorter horizon calculation, <italic>N</italic><sub>p</sub> = 2, the MPC performance is getting worse since the system cannot track the output speed set points; and, of course, in the next simulation with a longer horizon, one sees much better performance of the MPC controller.</p>
+<fig id="fig5-0959651811414760" position="float">
+<label>Fig. 5</label>
+<caption>
+<p>MPC performance with <italic>N</italic><sub>p</sub>  = 2 and <bold>Q</bold> = 50<bold>R</bold>
+</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig5.tif"/>
+</fig>
+<p>With the MPC horizon length now selected as <inline-formula id="inline-formula47-0959651811414760">
+<mml:math display="inline" id="math86-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>10</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and with the same values of</p>
+<p>
+<disp-formula id="disp-formula40-0959651811414760">
+<mml:math display="block" id="math87-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>50</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>50</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="1.25em"/>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula40-0959651811414760" xlink:href="10.1177_0959651811414760-eq40.tif"/>
+</disp-formula>
+</p>
+<p>the MPC performance is shown in <xref ref-type="fig" rid="fig6-0959651811414760">Fig. 6</xref>. The MPC controller with longer prediction horizon in <xref ref-type="fig" rid="fig6-0959651811414760">Fig. 6</xref> shows better performance compared with <xref ref-type="fig" rid="fig5-0959651811414760">Fig. 5</xref>. However one can see the greater energy from the input voltages.</p>
+<fig id="fig6-0959651811414760" position="float">
+<label>Fig. 6</label>
+<caption>
+<p>MPC performance with <italic>N</italic><sub>p</sub> = 10 and <bold>Q</bold> = 50<bold>R</bold>
+</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig6.tif"/>
+</fig>
+<p>It is not realistic to set the input constraint for <inline-formula id="inline-formula48-0959651811414760">
+<mml:math display="inline" id="math88-0959651811414760">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:mn>300</mml:mn>
+<mml:mtext>V</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula> since the d.c. motor normally runs with only positive voltage <inline-formula id="inline-formula49-0959651811414760">
+<mml:math display="inline" id="math89-0959651811414760">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:mn>300</mml:mn>
+<mml:mtext>V</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula> and the brake and recharge system is activated when one wants to reduce the vehicle speed. In the next simulation, the input voltage is set for only positive way or <inline-formula id="inline-formula50-0959651811414760">
+<mml:math display="inline" id="math90-0959651811414760">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:mn>300</mml:mn>
+<mml:mtext>V</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula>. This simulation opens up the possibility for regenerative braking when the brake is used to reduce the speed of the HEV, as shown in <xref ref-type="fig" rid="fig7-0959651811414760">Fig. 7</xref> for <inline-formula id="inline-formula51-0959651811414760">
+<mml:math display="inline" id="math91-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and very high value of <bold>Q</bold> and small value of <bold>R</bold>
+</p>
+<p>
+<disp-formula id="disp-formula41-0959651811414760">
+<mml:math display="block" id="math92-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>1000</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>1000</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="1.25em"/>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula41-0959651811414760" xlink:href="10.1177_0959651811414760-eq41.tif"/>
+</disp-formula>
+</p>
+<fig id="fig7-0959651811414760" position="float">
+<label>Fig. 7</label>
+<caption>
+<p>MPC performance with <inline-formula id="inline-formula52-0959651811414760">
+<mml:math display="inline" id="math93-0959651811414760">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:mn>300</mml:mn>
+<mml:mtext>V</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <italic>N</italic><sub>p</sub> = 5, and <bold>Q</bold> = 1000<bold>R</bold>
+</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig7.tif"/>
+</fig>
+<p>The MPC performance for EM2 was done by changing parameters in the weighting matrices, horizon length, and the input constraint. In the following section, MPC simulations for ICE and EM1 are considered for tracking the desired speed set points at high speeds (above 50 km/h) and for synchronizing the speeds of the two parts via the controllable clutch engagement.</p>
+</sec>
+<sec id="section5-0959651811414760">
+<title>3.2 MPC Simulation for ICE and EM1</title>
+<p>When the vehicle speed exceeds 50 km/h, EM1 activates the ICE to run the vehicle. Depending on the speed and torque requirements, the parallel hybrid vehicle can activate only the ICE or the ICE, EM1, and EM2. At that moment, the clutch is still open and the dynamic equations in the ICE and EM1 part are as shown in <xref ref-type="disp-formula" rid="disp-formula26-0959651811414760">equation (21)</xref>.</p>
+<p>Parameters used in EM1 are: motor constants, <italic>k</italic><sub>E2</sub> = <italic>k</italic><sub>T2</sub> = 15 Nm/A; motor inertia, <italic>J</italic><sub>1</sub> = 1 kgm<sup>2</sup>; motor damping, <italic>k<sub>β</sub></italic><sub>1</sub> = 0.5 Nms/rad; armature resistance, <italic>R</italic><sub>I1</sub> = 7 Ω; compensation factor, ς = 0.5. The system is discretized at an interval of 0.01 s. The air drag resistance torque at ω<sub>3</sub> = 2000 r/min is <italic>M</italic><sub>v0</sub> = 30 Nm.</p>
+<p>Control constraints are set as: input constraint for the d.c. voltage applied to the vehicle is <inline-formula id="inline-formula53-0959651811414760">
+<mml:math display="inline" id="math94-0959651811414760">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>V</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:mn>48</mml:mn>
+<mml:mtext>V</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula>; <inline-formula id="inline-formula54-0959651811414760">
+<mml:math display="inline" id="math95-0959651811414760">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≤</mml:mo>
+<mml:mn>180</mml:mn>
+<mml:mtext>V/s</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The output torque constraint for EM1 is set at <inline-formula id="inline-formula55-0959651811414760">
+<mml:math display="inline" id="math96-0959651811414760">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mrow>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+</mml:mrow>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:mn>628</mml:mn>
+<mml:mtext>Nm</mml:mtext>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p>For the MPC parameters, a horizon prediction <inline-formula id="inline-formula56-0959651811414760">
+<mml:math display="inline" id="math97-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>u</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mtext>p</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and the weighting matrices</p>
+<p>
+<disp-formula id="disp-formula42-0959651811414760">
+<mml:math display="block" id="math98-0959651811414760">
+<mml:mrow>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mn>10</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd>
+<mml:mn>10</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="1.25em"/>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula42-0959651811414760" xlink:href="10.1177_0959651811414760-eq42.tif"/>
+</disp-formula>
+</p>
+<p>are selected. <xref ref-type="fig" rid="fig8-0959651811414760">Figure 8</xref> shows the MPC performance at the starting point with the input voltage for EM1 and the input power for ICE, the output speed, and the output torque. In <xref ref-type="fig" rid="fig8-0959651811414760">Fig. 8</xref>, after 1 s the ICE ignites and after 2.4 s the engine reaches the set point of 2000 r/min and runs stably at 6 kW with the output torque of 30 Nm (the clutch is still open).</p>
+<fig id="fig8-0959651811414760" position="float">
+<label>Fig. 8</label>
+<caption>
+<p>MPC at starting point</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig8.tif"/>
+</fig>
+<p>Next, the simulations are run with EM1 and ICE for tracking set points and with the clutch engaged. It is assumed that when EM2 is running in excess of 1500 r/min, EM1 will start the ICE to engage with the system. For driving comfort and jerk reduction, the engagement will take place only when <inline-formula id="inline-formula57-0959651811414760">
+<mml:math display="inline" id="math99-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> or <inline-formula id="inline-formula58-0959651811414760">
+<mml:math display="inline" id="math100-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>05</mml:mn>
+<mml:mo>×</mml:mo>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, or EM1 and ICE must always track EM2 with 5 per cent positive offset. The MPC objective function in <xref ref-type="disp-formula" rid="disp-formula30-0959651811414760">equation (24)</xref> is now changed from set points <bold><italic>r</italic></bold>(<italic>t</italic>) to track ω<sub>2</sub>(<italic>t</italic>) with 5 per cent positive offset or</p>
+<p>
+<disp-formula id="disp-formula43-0959651811414760">
+<mml:math display="block" id="math101-0959651811414760">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mi>J</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi mathvariant="bold-italic">U</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mi>y</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>05</mml:mn>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:mstyle mathvariant="bold">
+<mml:mi>Q</mml:mi>
+</mml:mstyle>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>|</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>05</mml:mn>
+<mml:msub>
+<mml:mi>ω</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:msup>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mstyle mathvariant="bold">
+<mml:mi>R</mml:mi>
+</mml:mstyle>
+<mml:mi>Δ</mml:mi>
+<mml:msub>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mstyle>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula43-0959651811414760" xlink:href="10.1177_0959651811414760-eq43.tif"/>
+</disp-formula>
+</p>
+<p>Results of the simulation are shown in <xref ref-type="fig" rid="fig9-0959651811414760">Fig. 9</xref>. The system reaches the set point and is ready for clutch engagement after 2.5 s.</p>
+<fig id="fig9-0959651811414760" position="float">
+<label>Fig. 9</label>
+<caption>
+<p>MPC controller for tracking set points with both EM1 and ICE</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig9.tif"/>
+</fig>
+<p>In the simulation shown in <xref ref-type="fig" rid="fig9-0959651811414760">Fig. 9</xref>, both EM1 and ICE were run to track EM2 and it can be seen that the speed of the left-hand side clutch exceeded the speed of the right-hand side clutch by 5 per cent and was ready for engagement after 2 s. However, EM1 only functions in order to start the ICE and once the ICE is ignited, EM1 is switched to a generator to charge the battery. In the next simulation, EM1 is turned off and just the ICE is allowed to track EM2. The MPC objective function is similar to the one used in <xref ref-type="fig" rid="fig9-0959651811414760">Fig. 9</xref> with the change from set points <bold><italic>r</italic></bold>(<italic>t</italic>) to track ω<sub>2</sub>(<italic>t</italic>) with 5 per cent positive offset. Results of the simulation are shown in <xref ref-type="fig" rid="fig10-0959651811414760">Fig. 10</xref>. The system reaches the set point and is ready for clutch engagement after 4.4 s.</p>
+<fig id="fig10-0959651811414760" position="float">
+<label>Fig. 10</label>
+<caption>
+<p>MPC controller for tracking set points with only ICE</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig10.tif"/>
+</fig>
+<p>The MPC controller for HEV clutch engagement, i.e. how to control ω<sub>1</sub> rapidly upon reaching ω<sub>2</sub> + 5 per cent, is still a big challenge. Now a new MPC controller for HEVs is tested using the softened output constraints, considering the output tracking set points as in <xref ref-type="disp-formula" rid="disp-formula34-0959651811414760">equation (26)</xref> with some additional penalty terms to the MPC objective function as</p>
+<p>
+<disp-formula id="disp-formula44-0959651811414760">
+<mml:math display="block" id="math102-0959651811414760">
+<mml:mrow>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mrow>
+<mml:mtext>Softened</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>J</mml:mi>
+<mml:mrow>
+<mml:mtext>Hard</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>Λ</mml:mi>
+<mml:msubsup>
+<mml:mi>ε</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula44-0959651811414760" xlink:href="10.1177_0959651811414760-eq44.tif"/>
+</disp-formula>
+</p>
+<p>Results of the simulation are shown in <xref ref-type="fig" rid="fig11-0959651811414760">Fig. 11</xref>. In <xref ref-type="fig" rid="fig11-0959651811414760">Fig. 11</xref>, the penalty terms ϵ<italic><sub>i</sub></italic> and the new weighting factor Λ can be changed independently with <bold>Q</bold> and <bold>R</bold> to have good performance of the softened constraints MPC. The system becomes looser, more flexible with softened constraints and more regulated parameters. The new system reaches the set point faster and is ready for clutch engagement after only 3.4 s.</p>
+<fig id="fig11-0959651811414760" position="float">
+<label>Fig. 11</label>
+<caption>
+<p>Softened constraints MPC controller for tracking set points with only ICE</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig11.tif"/>
+</fig>
+<p>A softened constraints MPC has been successfully built for controlling speeds for HEVs. In the next section, the simulation for a comprehensive HEV is developed.</p>
+</sec>
+</sec>
+<sec id="section6-0959651811414760" sec-type="results">
+<title>4 HEV Simulation Results</title>
+<p>A comprehensive HEV has been built in the latest versions of MATLAB and Simulink R2009a including ICE, EM1, EM2, battery, controllable friction clutch, fuzzy logic controller, and vehicle dynamic parts. A system control centre is developed to synchronize the activities of all components as shown in <xref ref-type="fig" rid="fig12-0959651811414760">Fig. 12</xref>.</p>
+<fig id="fig12-0959651811414760" position="float">
+<label>Fig. 12</label>
+<caption>
+<p>Comprehensive simulation of an HEV</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig12.tif"/>
+</fig>
+<p>The ICE and EM1 are synchronized with the drivetrain via a controllable friction clutch regulated by a fuzzy logic and slipping controller. EM2 is connected to an automatic transmission gearbox (Simpson, four speeds) with the following ratios: gear 1, 2.393; gear 2, 1.450; gear 3, 1.000; and gear 4, 0.677. EM1 and EM2 are connected to a battery via a d.c. to d.c converter to 300 V. The performance of the HEV is simulated with a velocity from 0 to 100 km/h. During the first haft period (speed below 50 km/h), only EM2 propels the vehicle and in the second haft period (speed above 50 km/h), EM1 starts the ICE. Then, the clutch engages and the ICE alone propels the vehicle. EM2 stops and EM1 is switched on as a generator to charge the battery. Simulation results are as follows.</p>
+<p><xref ref-type="fig" rid="fig13-0959651811414760">Figure 13</xref> shows the vehicle speed and the ICE throttle valve. After 5 s when the vehicle speed reaches 50 km/h, the ICE starts and the control centre regulates the throttle valve for the ICE to track EM2. Then the clutch engages and the ICE alone propels the vehicle at high speed.</p>
+<fig id="fig13-0959651811414760" position="float">
+<label>Fig. 13</label>
+<caption>
+<p>Vehicle speed and ICE throttle demand</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig13.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig14-0959651811414760">Figure 14</xref> shows the vehicle torques generated by EM1, EM2, and ICE, and the angular speeds ω<sub>1</sub> and ω<sub>2</sub>. The ICE is ignited by EM1 and rapidly replaces EM2 to run the vehicle.</p>
+<fig id="fig14-0959651811414760" position="float">
+<label>Fig. 14</label>
+<caption>
+<p>Vehicle torques and angular velocities</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig14.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig15-0959651811414760">Figure 15</xref> shows the clutch pressure and clutch slip. Automatic control of the friction clutch is really a challenge and will be presented in the next part of the research. In this simulation, fuzzy logic algorithms are used to control the clutch slip and the clutch engagement. In this simulation, the clutch automatically engages, the slip reduces, and the clutch normal force is stable at 230 N.</p>
+<fig id="fig15-0959651811414760" position="float">
+<label>Fig. 15</label>
+<caption>
+<p>Clutch pressure and clutch slip</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig15.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig16-0959651811414760">Figure 16</xref> shows the demand input voltages for EM1 and EM2 and the battery power demand. EM2 speed is controlled depending upon the speed demand by the driver and stops when the ICE is ignited. EM1 starts the ICE and turns as a generator to charge the battery. The battery power demand rises up to 30 kW for the use of both EM1 and EM2 and falls down to negative (charging at a rate of −0.5 kW) when EM2 stops and EM1 becomes a generator.</p>
+<fig id="fig16-0959651811414760" position="float">
+<label>Fig. 16</label>
+<caption>
+<p>EM1 and EM2 input voltages and battery power demand</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig16.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig17-0959651811414760">Figure 17</xref> shows the acceleration and jerk. Referring to the standards for acceleration and jerk of passenger vehicles of the American Society of Civil Engineers (ASCE 21-98), the maximum longitudinal acceleration is ±3.5<bold><italic>g</italic></bold> or ±3/5 m/s<sup>2</sup>. In the present simulation, the acceleration is 1.5 m/s<sup>2</sup>. Similarly, the maximum jerk standard is ±0.25<bold><italic>g</italic></bold> s<sup>–1</sup> or ±2.5 m/s<sup>3</sup> and in the present simulation, the vehicle jerk is 1.1 m/s<sup>3</sup>.</p>
+<fig id="fig17-0959651811414760" position="float">
+<label>Fig. 17</label>
+<caption>
+<p>Acceleration and jerk in the vehicle</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811414760-fig17.tif"/>
+</fig>
+<p>The comprehensive simulation results have proved satisfactory performance of the MPC controller for HEVs. All power components, ICE, EM1, and EM2, have worked perfectly within their designed capability. The greatest challenges in this design, of how to control and synchronize speeds for the two parts of the HEV and how to manage automatically the clutch slip and engagement with high driving comfort, have been solved.</p>
+</sec>
+<sec id="section7-0959651811414760" sec-type="conclusions">
+<title>5 Conclusions</title>
+<p>In this paper, a real-time clutch transition strategy for a typical parallel HEV and the design of a MPC controller to control the set-point tracking speeds during the transitional period have been developed. Simulations show that the MPC controller can control the speeds of the system well depending upon the desired speeds, for quick clutch engagement with low jerk and high driving comfort. The system performance can also be improved considerably if one modifies and selects appropriate prediction horizon lengths and values of weighting parameters. MPC modified algorithms can help to increase the robustness of the system if some output constraints are softened or turned to the constrained regions. The research has offered theoretical contributions to HEV control algorithms using MPC. The control algorithms can be implemented in electronic control units for real HEVs.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<p>This work was supported by Universiti Teknologi Petronas (UTP) and funded by Project FRGS 2/2010/TK/UTP/02/28 from the Ministry of Higher Education, Malaysia (MOHE).</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0959651811414760">
+<label>1</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Langari</surname><given-names>R.</given-names></name>
+<name><surname>Won</surname><given-names>J. S.</given-names></name>
+</person-group> <article-title>A driving situation awareness-based energy management strategy for parallel hybrid vehicles</article-title>. In <conf-name>Proceedings of the Future transportation technology conference</conf-name>, <conf-loc>Costa Mesa, California</conf-loc>, <conf-date>June 2003</conf-date>, <volume>vol. 1</volume>, pp. <fpage>95</fpage>–<lpage>102</lpage>.</citation>
+</ref>
+<ref id="bibr2-0959651811414760">
+<label>2</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lukic</surname><given-names>S.M.</given-names></name>
+<name><surname>Emadi</surname><given-names>A.</given-names></name>
+</person-group> <article-title>Effects of drivetrain hybridization on fuel economy and dynamic performance of parallel hybrid electric vehicles</article-title>. <source>IEEE Trans. Veh. Technol.</source>, <year>2004</year>, <volume>53</volume>(<issue>2</issue>), <fpage>385</fpage>–<lpage>389</lpage>.</citation>
+</ref>
+<ref id="bibr3-0959651811414760">
+<label>3</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Schouten</surname><given-names>N. J.</given-names></name>
+<name><surname>Salman</surname><given-names>M. A.</given-names></name>
+<name><surname>Kheir</surname><given-names>N. A.</given-names></name>
+</person-group> <article-title>Fuzzy logic control for parallel hybrid vehicles</article-title>. <source>IEEE Trans. Contr. Syst. Technol.</source>, <year>2002</year>, <volume>10</volume>(<issue>3</issue>), <fpage>460</fpage>–<lpage>468</lpage>.</citation>
+</ref>
+<ref id="bibr4-0959651811414760">
+<label>4</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kim</surname><given-names>T. S.</given-names></name>
+<name><surname>Manzie</surname><given-names>C.</given-names></name>
+<name><surname>Sharma</surname><given-names>R.</given-names></name>
+</person-group> <article-title>Model predictive control of velocity and torque split in a parallel hybrid vehicle</article-title>. In <conf-name>Proceedings of the IEEE International conference on Systems, man, and cybernetics</conf-name>, <conf-loc>San Antonio, Texas</conf-loc>, <conf-date>October 2009</conf-date>, <volume>vol. 13</volume>(<issue>2</issue>), pp. <fpage>2014</fpage>–<lpage>2019</lpage>.</citation>
+</ref>
+<ref id="bibr5-0959651811414760">
+<label>5</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Paganelli</surname><given-names>G.</given-names></name>
+<name><surname>Delprat</surname><given-names>S.</given-names></name>
+<name><surname>Guerra</surname><given-names>T. M.</given-names></name>
+<name><surname>Rimaux</surname><given-names>J.</given-names></name>
+<name><surname>Santin</surname><given-names>J. J.</given-names></name>
+</person-group> <article-title>Equivalent consumption minimization strategy for parallel hybrid powertrains</article-title>. In <conf-name>Proceedings of the IEEE Vehicular technology conference</conf-name>, <conf-loc>Taipei, Taiwan, May</conf-loc> <conf-date>2002</conf-date>, <volume>vol. 4</volume>, pp. <fpage>2076</fpage>–<lpage>2081</lpage>.</citation>
+</ref>
+<ref id="bibr6-0959651811414760">
+<label>6</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sciarretta</surname><given-names>A.</given-names></name>
+<name><surname>Back</surname><given-names>M.</given-names></name>
+<name><surname>Guzzella</surname><given-names>L.</given-names></name>
+</person-group> <article-title>Optimal control of parallel hybrid electric vehicles</article-title>. <source>IEEE Trans. Contr. Syst. Technol.</source>, <year>2004</year>, <volume>12</volume>(<issue>3</issue>), <fpage>352</fpage>–<lpage>363</lpage>.</citation>
+</ref>
+<ref id="bibr7-0959651811414760">
+<label>7</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Minh</surname><given-names>V. T.</given-names></name>
+<name><surname>Afzulpurkar</surname><given-names>N.</given-names></name>
+</person-group> <article-title>A comparative study on computational schemes for nonlinear model predictive control</article-title>. <source>Asian J. Contr.</source>, <year>2006</year>, <volume>8</volume>(<issue>4</issue>), <fpage>324</fpage>–<lpage>331</lpage>.</citation>
+</ref>
+<ref id="bibr8-0959651811414760">
+<label>8</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Minh</surname><given-names>V. T.</given-names></name>
+<name><surname>Afzulpurkar</surname><given-names>N.</given-names></name>
+</person-group> <article-title>Robust model predictive control for input saturated and soften state constraints</article-title>. <source>Asian J. Contr.</source>, <year>2005</year>, <volume>7</volume>(<issue>3</issue>), <fpage>323</fpage>–<lpage>329</lpage>.</citation>
+</ref>
+<ref id="bibr9-0959651811414760">
+<label>9</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Karden</surname><given-names>E.</given-names></name>
+<name><surname>Ploumen</surname><given-names>S.</given-names></name>
+<name><surname>Fricke</surname><given-names>B.</given-names></name>
+<name><surname>Miller</surname><given-names>T.</given-names></name>
+<name><surname>Snyder</surname><given-names>K.</given-names></name>
+</person-group> <article-title>Energy storage devices for future hybrid electric vehicles</article-title>. <source>J. Power Sources</source>, <year>2007</year>, <volume>168</volume>, <fpage>2</fpage>–<lpage>11</lpage>.</citation>
+</ref>
+<ref id="bibr10-0959651811414760">
+<label>10</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Minh</surname><given-names>V. T.</given-names></name>
+<name><surname>Afzulpurkar</surname><given-names>N.</given-names></name>
+<name><surname>Muhamad</surname><given-names>W.</given-names></name>
+</person-group> <article-title>Fault detection and control of process systems</article-title>. <source>Math. Probl. Engng</source>, <year>2007</year>, <year>2007</year>, <comment>article ID 80321</comment>.</citation>
+</ref>
+<ref id="bibr11-0959651811414760">
+<label>11</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sciaretta</surname><given-names>A.</given-names></name>
+<name><surname>Guzzella</surname><given-names>L.</given-names></name>
+</person-group> <article-title>Control of hybrid electric vehicles</article-title>. <source>IEEE Contr. Syst. Mag.</source>, <year>2007</year>, <volume>27</volume>(<issue>2</issue>), <fpage>60</fpage>–<lpage>70</lpage>.</citation>
+</ref>
+<ref id="bibr12-0959651811414760">
+<label>12</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Ripaccioli</surname><given-names>G.</given-names></name>
+<name><surname>Bernardini</surname><given-names>D.</given-names></name>
+<name><surname>Di Cairano</surname><given-names>S.</given-names></name>
+<name><surname>Bemporad</surname><given-names>A.</given-names></name>
+<name><surname>Kolmanovsky</surname><given-names>V.</given-names></name>
+</person-group> <article-title>A stochastic model predictive control approach for series hybrid electric vehicle power management</article-title>. In <conf-name>Proceedings of the American control conference</conf-name>, <conf-loc>Baltimore, Maryland</conf-loc>, <conf-date>2010</conf-date>, <volume>vol. 1</volume>, <fpage>5844</fpage>–<lpage>5849</lpage>.</citation>
+</ref>
+<ref id="bibr13-0959651811414760">
+<label>13</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Desai</surname><given-names>C.</given-names></name>
+<name><surname>Williamson</surname><given-names>S.</given-names></name>
+</person-group> <article-title>Comparative study of hybrid electric vehicle control strategies for improved drivetrain efficiency analysis</article-title>. In <conf-name>Proceedings of the Electrical power &amp; energy conference</conf-name>, <conf-loc>Montreal, Quebec</conf-loc>, <conf-date>2009</conf-date>, <volume>vol. 1</volume>, <fpage>1</fpage>–<lpage>6</lpage>.</citation>
+</ref>
+<ref id="bibr14-0959651811414760">
+<label>14</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Minh</surname><given-names>V. T.</given-names></name>
+<name><surname>Awang</surname><given-names>M.</given-names></name>
+<name><surname>Parman</surname><given-names>S.</given-names></name>
+</person-group> <article-title>Conditions for stabilizability of linear switched systems</article-title> <source>Int. J. Contr. Autom. Syst.</source>, <year>2011</year>, <volume>9</volume>(<issue>1</issue>), <fpage>139</fpage>–<lpage>144</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

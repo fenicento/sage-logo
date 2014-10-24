@@ -1,0 +1,2759 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PIO</journal-id>
+<journal-id journal-id-type="hwp">sppio</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part O: Journal of Risk and Reliability</journal-title>
+<issn pub-type="ppub">1748-006X</issn>
+<issn pub-type="epub">1748-0078</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1748006X11422624</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1748006X11422624</article-id>
+<title-group>
+<article-title>Effects of the transition rate uncertainty on the steady state probabilities of Markov models using interval arithmetic</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Rocco S</surname><given-names>C M</given-names></name>
+</contrib>
+<aff id="aff1-1748006X11422624">Facultad de Ingeniería, Universidad, Central de Venezuela, Apartado Postal 47937, Los Chaguaramos, Caracas 1041A, Venezuela. email: <email>crocco@reacciun.ve</email>; <email>croccoucv@gmail.com</email></aff>
+</contrib-group>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>2</issue>
+<fpage>234</fpage>
+<lpage>245</lpage>
+<history>
+<date date-type="received">
+<day>14</day>
+<month>4</month>
+<year>2011</year>
+</date>
+<date date-type="accepted">
+<day>16</day>
+<month>8</month>
+<year>2011</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© Authors 2011</copyright-statement>
+<copyright-year>2011</copyright-year>
+<copyright-holder content-type="sage">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>Markov models are often used to assess the reliability or availability of a system. Such assessment generally involves calculations of the steady state probability for each possible state in the system by solving a linear system of simultaneous equations based on the transition rates between states or using <italic>ad hoc</italic> algorithms such as the state reduction algorithm. Transition rates are usually subject to uncertainty. This paper proposes the use of interval arithmetic as an alternative approach for dealing with uncertainties in the transition rates that are modelled through lower and upper bounds. Interval arithmetic takes into account the uncertainty of all the parameters and is able to provide strict bounds with only one evaluation. The interval version of the state reduction algorithm, with additional procedures to enhance its precision, is proposed as an alternative method to evaluate uncertainty propagation. Several examples illustrate the proposed approach. Results are compared with other classical approaches, such as Monte Carlo simulation or solving a linear system of simultaneous equations.</p>
+</abstract>
+<kwd-group>
+<kwd>interval arithmetic</kwd>
+<kwd>Markov process</kwd>
+<kwd>Monte Carlo simulation</kwd>
+<kwd>parameter uncertainty</kwd>
+<kwd>uncertainty propagation</kwd>
+<kwd>state reduction method</kwd>
+<kwd>steady state probability</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1748006X11422624" sec-type="intro">
+<title>1 Introduction</title>
+<p>Markov chains have been used to compute measures such as reliability and availability in a system [<xref ref-type="bibr" rid="bibr1-1748006X11422624">1</xref>–<xref ref-type="bibr" rid="bibr4-1748006X11422624">4</xref>]. The assessment of such performance functions is based on building the transition rate (TR) matrix, representing the possible transition between states, and solving a set of simultaneous equations to quantify the probability of each state π<italic><sub>i</sub></italic>. In general, these probabilities are evaluated for steady state conditions, solving a linear system (LS) of equations using classical methods from numerical analysis, such as classical decomposition methods or the Gauss–Seidel iterative method [<xref ref-type="bibr" rid="bibr5-1748006X11422624">5</xref>].</p>
+<p>It must be noted that TRs are, in general, estimated from measurements, and hence they are subject to uncertainty. A decision maker could be interested in knowing how uncertainty in the TRs (e.g. failure or repair rate uncertainties) affects steady state probabilities the most. This analysis is termed uncertainty propagation; they are methods for calculating the uncertainty in the model outputs induced by the uncertainties in its inputs [<xref ref-type="bibr" rid="bibr6-1748006X11422624">6</xref>].</p>
+<p>Several approaches based on different techniques have been considered to assess the effects of uncertainties in Markov models. Hartfiel [<xref ref-type="bibr" rid="bibr7-1748006X11422624">7</xref>] used the theory of Markov set chains; Kozine and Utkin [<xref ref-type="bibr" rid="bibr8-1748006X11422624">8</xref>] presented an approach based on linear programming; De Cooman <italic>et al.</italic> [<xref ref-type="bibr" rid="bibr9-1748006X11422624">9</xref>] considered imprecise theory and proposed several linear programming models; Škulj [<xref ref-type="bibr" rid="bibr10-1748006X11422624">10</xref>] and Crossman and Škulj [<xref ref-type="bibr" rid="bibr11-1748006X11422624">11</xref>] applied ‘general imprecise probabilistic models, known under the name interval probabilities’.</p>
+<p>There are other approaches [<xref ref-type="bibr" rid="bibr12-1748006X11422624">12</xref>, <xref ref-type="bibr" rid="bibr13-1748006X11422624">13</xref>], such as numerical possibility theory, evidence theory, belief function, and fuzzy random variables, that could be used in a situation of limited knowledge. However, to the present author’s best knowledge, such approaches have not been applied to analyse the effects of uncertainties in Markov models.</p>
+<p>Recently, for assessing the importance of TRs in dynamic systems ‘including inter-components and functional dependencies’, Do Van et al. [<xref ref-type="bibr" rid="bibr14-1748006X11422624">14</xref>, <xref ref-type="bibr" rid="bibr15-1748006X11422624">15</xref>] have proposed the use of sensitivity measures based on partial derivatives and represented as Markov models. Even if these measures tends to be computationally efficient [<xref ref-type="bibr" rid="bibr14-1748006X11422624">14</xref>, <xref ref-type="bibr" rid="bibr16-1748006X11422624">16</xref>, <xref ref-type="bibr" rid="bibr17-1748006X11422624">17</xref>], they correctly describe only the local behaviour of the model. The effects of uncertainties could be evaluated using Taylor-series expansion [<xref ref-type="bibr" rid="bibr18-1748006X11422624">18</xref>] but such procedures are ‘difficult or very costly to obtain’ [<xref ref-type="bibr" rid="bibr2-1748006X11422624">2</xref>].</p>
+<p>Modelling TR uncertainties in Markov models could also be analysed on the basis of two general approaches. The first is a probabilistic approach where the probability density functions (PDFs) for some or all uncertainties are assumed and their effects are propagated under a Monte Carlo (MC) simulation.</p>
+<p>The second approach to modelling TR uncertainties in Markov models is referred to as ‘unknown but bounded’ where the upper and lower limits on the uncertainties are assumed without a probability or possibility structure [<xref ref-type="bibr" rid="bibr19-1748006X11422624">19</xref>, <xref ref-type="bibr" rid="bibr20-1748006X11422624">20</xref>]. Characterizing the uncertainty in parameter values with intervals is referred to as ‘incertitude’ and is used in the absence of evidence about the likelihoods of unknown quantities [<xref ref-type="bibr" rid="bibr21-1748006X11422624">21</xref>]. This approach is based on interval arithmetic (IA), a technique that takes into consideration the uncertainty of all the parameters, treating them as ‘interval numbers’ whose ranges contain the uncertainties in those parameters.</p>
+<p>Clearly the use of interval values produces less information than the results of a complete MC method when distributions are known. MC uncertainty analysis provides a global view as it considers many possible combinations of the parameter values rather than an exhaustive search of extreme values [<xref ref-type="bibr" rid="bibr22-1748006X11422624">22</xref>]. However, ‘a large amount of computations is required to get a <italic>good solution</italic> in the presence of large parameters’ uncertainty’ [<xref ref-type="bibr" rid="bibr23-1748006X11422624">23</xref>].</p>
+<p>The interval method is convenient to use in situations where underlying distributions for parameters are unknown, but the ranges are known or can otherwise be estimated. Ferson and Ginzburg [<xref ref-type="bibr" rid="bibr24-1748006X11422624">24</xref>] suggested that there is no need to assume ‘particular shapes for input distributions in probabilistic risk assessments’ and that it is ‘possible to make the needed calculations using inputs specified only as bounds on probability distributions’.</p>
+<p>As mentioned by Huber [<xref ref-type="bibr" rid="bibr25-1748006X11422624">25</xref>], the MC method does not outweigh the potential for making incorrect decisions based on ‘forcing’ probability distributions when knowledge of those distributions does not exist. The interval approach is convenient when decision makers are interested, for example, in worst-case results only. MC approaches can better address descriptive sample statistics (e.g. mean, variance, and higher-order moments), while the interval approach obtains the strict bounds on outputs, thereby enabling calculation of the worst-case results.</p>
+<p>Rocco [<xref ref-type="bibr" rid="bibr26-1748006X11422624">26</xref>] presented a preliminary idea to cope with the assessment of uncertainty propagation in Markov models. TR uncertainties were modelled as intervals and the approach was based on an algorithm whose operations were performed using basic IA concepts.</p>
+<p>Ferson and Tucker [<xref ref-type="bibr" rid="bibr27-1748006X11422624">27</xref>] described an approach called ‘probability bounds analysis’, where the uncertainty about a probability distribution is modelled ‘by the set of cumulative distribution functions lying entirely within a pair of bounding distribution functions called a “probability box” or a “p-box”’. Then a p-box could be considered as ‘a hybrid of an interval and a probability distribution’ [<xref ref-type="bibr" rid="bibr28-1748006X11422624">28</xref>].</p>
+<p>Basically there are two differences between IA and a p-box. The first is related to the type of uncertainty to be modelled. As suggested by Enszer <italic>et al.</italic> [<xref ref-type="bibr" rid="bibr28-1748006X11422624">28</xref>]: ‘If there are only upper and lower bounds on the uncertainties but no known probability distribution, then this can be represented by an interval. If there is some knowledge of the probability distribution, but it is uncertain, then this can be represented by a probability box (p-box).’ A uniform distribution could be used when only the lower and upper bounds are known. In this case, the bounds from a p-box and an interval will be the same.</p>
+<p>The second difference is related to computational efforts. The p-box approach is based on p-box arithmetic, a set of convolution operations implemented through a discretization algorithm. The precision of such convolutions depends on the discretization step [<xref ref-type="bibr" rid="bibr28-1748006X11422624">28</xref>]. On the other hand, IA is based on a set of operations that do not require any discretization.</p>
+<p>In this paper, TR uncertainties are modelled as intervals. A set of <italic>ad hoc</italic> procedures together with IA operations are proposed in order to define an enhanced approach that is able to produce better steady state probability bounds. To the present author’s best knowledge, comparisons of several classical and IA-based techniques for uncertainty propagation analysis in Markov models have not been presented elsewhere.</p>
+<p>The remainder of this paper is organized as follows. Section 2 defines the Markov model to be considered. Section 3 reviews some concepts of IA techniques while section 4 provides results of experimentation. Section 5 presents conclusions and future work.</p>
+<p>The assumptions used in this work are as follows:</p>
+<list id="list1-1748006X11422624" list-type="order">
+<list-item>
+<p>The system is in a steady state.</p>
+</list-item>
+<list-item>
+<p>The time between two successive failures and the service time each follow an exponential distribution, and so the failure rate and the repair rate are constant; the process is stationary.</p>
+</list-item>
+<list-item>
+<p>The number of states in the Markov models is finite.</p>
+</list-item>
+<list-item>
+<p>The Markov chain is aperiodic and irreducible.</p>
+</list-item>
+</list>
+</sec>
+<sec id="section2-1748006X11422624">
+<title>2 Markov Models</title>
+<p>A finite state continuous-time Markov chain <bold><italic>Z</italic></bold> = {<italic>z</italic>(<italic>t</italic>), <italic>t</italic><inline-formula id="inline-formula1-1748006X11422624"><mml:math display="inline" id="math1-1748006X11422624"><mml:mrow><mml:mo>≥</mml:mo></mml:mrow></mml:math></inline-formula> 0}, with state space <bold><italic>E</italic></bold> = {1, 2, …, <italic>n</italic>} is used to model the transition of a system through different states that represent different operational components. For each <italic>i</italic>, <italic>j</italic>∈<bold><italic>E</italic></bold>, let λ<italic><sub>ij</sub></italic> be the TR from state <italic>i</italic> to state <italic>j</italic>. Let <bold>Q</bold> be the <italic>n</italic> <italic>×</italic> <italic>n</italic> TR matrix and <italic>P<sub>i</sub></italic>(<italic>t</italic>) be the probability that the system is in state <italic>i</italic> at time <italic>t</italic>. The <italic>P<sub>i</sub></italic>(<italic>t</italic>) values are obtained by solving the matrix differential equation</p>
+<p>
+<disp-formula id="disp-formula1-1748006X11422624">
+<mml:math display="block" id="math2-1748006X11422624">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi mathvariant="bold">P</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi mathvariant="bold">P</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi mathvariant="bold">Q</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq1.tif"/>
+</disp-formula>
+</p>
+<p>Let <italic><bold>π</bold></italic><bold> = </bold>(π<sub>1</sub>, π<sub>2</sub>, …, π<italic><sub>n</sub></italic>)<sup>T</sup> be the steady state vector of <italic>Z</italic>. <italic><bold>π</bold></italic> can be found by solving the LS</p>
+<p>
+<disp-formula id="disp-formula2-1748006X11422624">
+<label>(1)</label>
+<mml:math display="block" id="math3-1748006X11422624">
+<mml:mrow>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mi mathvariant="bold">π</mml:mi>
+<mml:mi mathvariant="bold">Q</mml:mi>
+<mml:mo mathvariant="bold">=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq2.tif"/>
+</disp-formula>
+</p>
+<p>The set of linear <xref ref-type="disp-formula" rid="disp-formula2-1748006X11422624">equations (1)</xref> is usually solved by classical decomposition methods (e.g. the lower diagonal upper decomposition technique) or by the Gauss–Seidel iterative method [<xref ref-type="bibr" rid="bibr5-1748006X11422624">5</xref>].</p>
+<p>Since the numerical values of <italic><bold>π</bold></italic> depend on the values of the elements of <bold>Q</bold>, it is clear that their variations, which are due to uncertainties, will affect the value of probability π<italic><sub>i</sub></italic>.</p>
+<p><xref ref-type="fig" rid="fig1-1748006X11422624">Figure 1</xref> shows the state space diagram for two identical repairable components [<xref ref-type="bibr" rid="bibr1-1748006X11422624">1</xref>].</p>
+<fig id="fig1-1748006X11422624" position="float">
+<label>Fig. 1</label>
+<caption>
+<p>State space diagram for two identical repairable components</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig1.tif"/>
+</fig>
+<p>The TR matrix is</p>
+<p>
+<disp-formula id="disp-formula3-1748006X11422624">
+<label>(2)</label>
+<mml:math display="block" id="math4-1748006X11422624">
+<mml:mrow>
+<mml:mi mathvariant="bold">Q</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq3.tif"/>
+</disp-formula>
+</p>
+<p>From <xref ref-type="disp-formula" rid="disp-formula2-1748006X11422624">equations (1)</xref> and <xref ref-type="disp-formula" rid="disp-formula3-1748006X11422624">(2)</xref> the steady state probabilities π<italic><sub>i</sub></italic> can be obtained by solving the LS</p>
+<p>
+<disp-formula id="disp-formula4-1748006X11422624">
+<label>(3)</label>
+<mml:math display="block" id="math5-1748006X11422624">
+<mml:mrow>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>λ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>λ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>μ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq4.tif"/>
+</disp-formula>
+</p>
+<p>If the λ and/or µ values are uncertain, with the bounds (λ<sub>min</sub>, λ<sub>max</sub>) and (µ<sub>min</sub>, µ<sub>max</sub>) respectively, their effects on the steady state probabilities could be studied by repeated solutions of <xref ref-type="disp-formula" rid="disp-formula4-1748006X11422624">equation (3)</xref>. In this example, 2<sup>2</sup> LSs must be solved.</p>
+<p>Theoretically the <bold>Q</bold> matrix is defined by <italic>n</italic><sup>2</sup> – <italic>n</italic> TRs, and so the number of uncertain factors is high, even for moderate values of <italic>n</italic>. This value assumes that there are TRs between all the states. In general, the number of different TRs is smaller because of some modelling assumptions, such as the existence of equal components or no-common cause transitions. For example, in the model in <xref ref-type="fig" rid="fig1-1748006X11422624">Fig. 1</xref>, there are only two different TRs, even if the three-state model could have six possible TRs. In this paper the number of different TRs is defined as <italic>k</italic>.</p>
+<p>As previously mentioned, the set of linear <xref ref-type="disp-formula" rid="disp-formula2-1748006X11422624">equations (1)</xref> could be solved by classical numerical methods. However, in this paper the state reduction (SR) approach, proposed by Kumar and Billinton [<xref ref-type="bibr" rid="bibr29-1748006X11422624">29</xref>] is used. Their approach consists of an iterative procedure that reduces a state in each iteration ‘until the Markov system reduces to a 2-state model’. The procedure takes into account such reductions by modifying the TRs between states and state probabilities. The algorithm does not use any subtraction. As mentioned by Kumar and Billinton, the algorithm was developed to minimize the rounding and cancellation errors (e.g. during subtraction operations).</p>
+<p>The SR algorithm is based on four steps:</p>
+<list id="list2-1748006X11422624" list-type="alpha-lower">
+<list-item>
+<p>initialization;</p>
+</list-item>
+<list-item>
+<p>calculation of the TRs of new Markov processes;</p>
+</list-item>
+<list-item>
+<p>obtaining π<italic><sub>i</sub></italic> (<italic>i</italic> = 2, …, <italic>n</italic>) in terms of π<sub>1</sub>;</p>
+</list-item>
+<list-item>
+<p>normalization of π<italic><sub>i</sub></italic> (<italic>i</italic> = 1, …, <italic>n</italic>): <inline-formula id="inline-formula2-1748006X11422624"><mml:math display="inline" id="math6-1748006X11422624"><mml:mrow><mml:msub><mml:mrow><mml:mi>π</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo>←</mml:mo><mml:msub><mml:mrow><mml:mi>π</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mrow><mml:mo>/</mml:mo><mml:msub><mml:mrow><mml:mi>π</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:munderover><mml:mo>∑</mml:mo><mml:mrow><mml:mi>j</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mi>n</mml:mi></mml:mrow></mml:munderover><mml:msub><mml:mrow><mml:mi>π</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:munderover><mml:mo>∑</mml:mo><mml:mrow><mml:mi>j</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mi>n</mml:mi></mml:mrow></mml:munderover><mml:msub><mml:mrow><mml:mi>π</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula>.</p>
+</list-item>
+</list>
+</sec>
+<sec id="section3-1748006X11422624">
+<title>3 Interval Arithmetic</title>
+<p>IA originates from the recognition that frequently there is uncertainty associated with the parameters used in a computation. This form of mathematics ‘uses interval numbers’, which are actually an ordered pair of real numbers representing the lower and upper bounds of the parameter range [<xref ref-type="bibr" rid="bibr30-1748006X11422624">30</xref>]. For example, if it is known that the failure rate λ is between 36 h<sup>−1</sup> and 44 h<sup>−1</sup>, the corresponding interval number would be written as follows: λ = [36, 44] h<sup>−1</sup>.</p>
+<p>IA is built upon a basic set of axioms. Given two interval numbers <italic>X</italic> = [<italic>a</italic>, <italic>b</italic>] and <italic>Y</italic> = [<italic>c</italic>, <italic>d</italic>] with <italic>a</italic><inline-formula id="inline-formula3-1748006X11422624"><mml:math display="inline" id="math7-1748006X11422624"><mml:mrow><mml:mo>≤</mml:mo></mml:mrow></mml:math></inline-formula><italic>b</italic> and <italic>c</italic><inline-formula id="inline-formula4-1748006X11422624"><mml:math display="inline" id="math8-1748006X11422624"><mml:mrow><mml:mo>≤</mml:mo></mml:mrow></mml:math></inline-formula><italic>d</italic>, then the natural operations are defined as [<xref ref-type="bibr" rid="bibr30-1748006X11422624">30</xref>]</p>
+<p>
+<disp-formula id="disp-formula5-1748006X11422624">
+<mml:math display="block" id="math9-1748006X11422624">
+<mml:mrow>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mi>X</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>Y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mi>X</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>Y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mi>Y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mo>min</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>ac</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>ad</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>bc</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>bd</mml:mi>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo>max</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>ac</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>ad</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>bc</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>bd</mml:mi>
+<mml:mo stretchy="false">}</mml:mo>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mn>0</mml:mn>
+<mml:mo>∉</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Y</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>b</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mn>0</mml:mn>
+<mml:mo>∉</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mi>kX</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mtext>is</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>a</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>real</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>constant</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mo>&gt;</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq5.tif"/>
+</disp-formula>
+</p>
+<p>Only some of the algebraic laws valid for real numbers remain valid for intervals. It is easy to show that interval addition and multiplication are associative as well as commutative. However, the distributive law does not always hold for IA [<xref ref-type="bibr" rid="bibr31-1748006X11422624">31</xref>]. As an example, if <italic>X</italic> = [0, 1], then <italic>X</italic>*(1 – 1) = [0, 1]*(1 – 1) = 0, while <italic>X</italic>–<italic>X</italic> = [0, 1] – [0, 1] = [–1, 1].</p>
+<p>An important property, referred to as subdistributivity, holds. It is given mathematically by the set inclusion relationship <italic>X</italic>(<italic>Y</italic> + <italic>Z</italic>) ⊆<italic>XY</italic> + <italic>XZ</italic>. The failure of the distributive law often causes overestimation; the interval width of the resulting operation is greater than the exact interval width. In the previous example the width of [0, 1](1 – 1) is zero while [0, 1] – [0, 1] = [–1, 1] has a width of 2.</p>
+<p>In general, when a given variable appears more than once in an interval computation, it is treated as a different variable in each occurrence. Thus <italic>X</italic> – <italic>X</italic> is the same as <italic>X</italic> – <italic>Y</italic> with <italic>Y</italic> equal to but independent of <italic>X</italic> and causes the widening of the computed interval. This effect is called the ‘dependency problem’ [<xref ref-type="bibr" rid="bibr31-1748006X11422624">31</xref>]. However, there are expressions where dependence does not lead to overestimation, such as <italic>X</italic> + <italic>X</italic> [<xref ref-type="bibr" rid="bibr32-1748006X11422624">32</xref>].</p>
+<p>One useful tactic to avoid dependence is to rewrite a given expression so that variables appear no more than once. For example, consider a two-state component with failure rate λ and repair rate <italic>μ</italic>. The steady state availability is given as [<xref ref-type="bibr" rid="bibr1-1748006X11422624">1</xref>]</p>
+<p>
+<disp-formula id="disp-formula6-1748006X11422624">
+<label>(4)</label>
+<mml:math display="block" id="math10-1748006X11422624">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>μ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq6.tif"/>
+</disp-formula>
+</p>
+<p>If the failure rate and the repair rate are represented as the intervals <italic>λ</italic> = [1, 2] h<sup>−1</sup> and μ = [3, 6] h<sup>−1</sup>, then</p>
+<p>
+<disp-formula id="disp-formula7-1748006X11422624">
+<mml:math display="block" id="math11-1748006X11422624">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>3</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>6</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>3</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>6</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>3</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>6</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>4</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>8</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>6</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>375</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>5</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq7.tif"/>
+</disp-formula>
+</p>
+<p>with an interval width of 1.5 – 0.375 = 1.125.</p>
+<p>However, <xref ref-type="disp-formula" rid="disp-formula6-1748006X11422624">equation (4)</xref> could be written as</p>
+<p>
+<disp-formula id="disp-formula8-1748006X11422624">
+<mml:math display="block" id="math12-1748006X11422624">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq8.tif"/>
+</disp-formula>
+</p>
+<p>Now <italic>μ</italic> appears once and the exact range of variation for availability is evaluated as</p>
+<p>
+<disp-formula id="disp-formula9-1748006X11422624">
+<mml:math display="block" id="math13-1748006X11422624">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>3</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>6</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>6</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>7</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>6</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>6</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>7</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>60</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>86</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq9.tif"/>
+</disp-formula>
+</p>
+<p>with an interval width of 0.86 – 0.60 = 0.26.</p>
+<p>Comparing the two results, it is clear that the interval width of the last interval is less than the interval width obtained using <xref ref-type="disp-formula" rid="disp-formula6-1748006X11422624">equation (4)</xref>. This example shows that the first expression produces an overestimation. However, note that [0.60, 0.86] ⊆ [0.375, 1.5].</p>
+<p>This overestimation could pose a problem to a decision maker trying to assess the behaviour of a system. For example the results using <xref ref-type="disp-formula" rid="disp-formula6-1748006X11422624">equation (4)</xref> suggest that the uncertainty in the failure and repair rates produces a lower bound for the availability of 0.375, while the exact lower bound is 0.60. That means that the lower bound from <xref ref-type="disp-formula" rid="disp-formula6-1748006X11422624">equation (4)</xref> is 62.5 per cent lower.</p>
+<p>An interval vector is a vector whose components are intervals. An interval matrix is a matrix whose elements are intervals. For example, the two-dimensional interval vector <bold><italic>Z</italic></bold> = [<italic>X</italic>, <italic>Y</italic>], is represented geometrically by a rectangle (box). If the TRs are considered as interval numbers, then <xref ref-type="disp-formula" rid="disp-formula4-1748006X11422624">equation (3)</xref> transforms into an interval LS of equations.</p>
+<p>Let <bold>A</bold> be a real matrix with elements <italic>a<sub>ij</sub></italic>, and let <bold>A</bold><sup>I</sup> be an interval matrix with elements <italic>A<sub>ij</sub></italic>. It is said that ‘<bold>A</bold> is contained in <bold>A</bold><sup>I</sup>(<bold>A</bold>⊆<bold>A</bold><sup>I</sup> )’ if and only if <italic>a<sub>ij</sub></italic>⊆<italic>A<sub>ij</sub></italic>.</p>
+<p>Consider the real LS of equations</p>
+<p>
+<disp-formula id="disp-formula10-1748006X11422624">
+<label>(5)</label>
+<mml:math display="block" id="math14-1748006X11422624">
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+<mml:mi mathvariant="bold-italic">z</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi mathvariant="bold-italic">b</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq10.tif"/>
+</disp-formula>
+</p>
+<p>If <bold>A</bold><sup>I</sup> is an interval matrix bounding <bold>A</bold>, and <bold><italic>b</italic></bold><sup>I</sup> is an interval vector bounding <bold><italic>b</italic></bold>, then <xref ref-type="disp-formula" rid="disp-formula10-1748006X11422624">equation (5)</xref> could be replaced by</p>
+<p>
+<disp-formula id="disp-formula11-1748006X11422624">
+<label>(6)</label>
+<mml:math display="block" id="math15-1748006X11422624">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+</mml:mrow>
+</mml:msup>
+<mml:mi mathvariant="bold-italic">Z</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq11.tif"/>
+</disp-formula>
+</p>
+<p>The interval solution to <xref ref-type="disp-formula" rid="disp-formula11-1748006X11422624">equation (6)</xref> will contain the solution to <xref ref-type="disp-formula" rid="disp-formula10-1748006X11422624">equation (5)</xref>. However, the solution of interval linear equations is a very different proposition from the solution of ordinary linear equations. The solution set is not generally an interval vector. <xref ref-type="fig" rid="fig2-1748006X11422624">Figure 2</xref> illustrates the solutions set for the system [<xref ref-type="bibr" rid="bibr31-1748006X11422624">31</xref>]</p>
+<fig id="fig2-1748006X11422624" position="float">
+<label>Fig. 2</label>
+<caption>
+<p>The solution set for <xref ref-type="disp-formula" rid="disp-formula12-1748006X11422624">equation (7)</xref> (adapted from reference [<xref ref-type="bibr" rid="bibr31-1748006X11422624">31</xref>])</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig2.tif"/>
+</fig>
+<p>
+<disp-formula id="disp-formula12-1748006X11422624">
+<label>(7)</label>
+<mml:math display="block" id="math16-1748006X11422624">
+<mml:mrow>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>3</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>120</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mi>x</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>3</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>60</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>240</mml:mn>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq12.tif"/>
+</disp-formula>
+</p>
+<p>The inner region is the exact solution set. As the solution set is generally so complicated in shape, it is usually impractical to try to use it. Instead, it is common practice to seek an interval vector <bold><italic>X</italic></bold> containing the solution set known as the hull of the solution set [<xref ref-type="bibr" rid="bibr31-1748006X11422624">31</xref>].</p>
+<p>The hull of the solution set associated with <xref ref-type="disp-formula" rid="disp-formula12-1748006X11422624">equation (7)</xref> is the interval vector <bold><italic>X</italic></bold> = [[–120, 90], [–60, 240]]<sup>T</sup>. This means that <italic>x</italic> varies in [–120, 90] while <italic>y</italic>∈ [–60, 240]. Note that the hull contains, in addition to the entire solution set, many non-solutions.</p>
+<p>Solving interval linear equations means obtaining the hull of the solution set. By analogy with the real cases, <xref ref-type="disp-formula" rid="disp-formula11-1748006X11422624">equation (6)</xref> could be solved by decomposition methods or by the Gauss–Seidel iterative method; every operation is performed by interval operations, using for example object-oriented techniques [<xref ref-type="bibr" rid="bibr33-1748006X11422624">33</xref>] or calling special interval routines [<xref ref-type="bibr" rid="bibr34-1748006X11422624">34</xref>].</p>
+<p>However, ordinary forward and back substitutions result in considerable overestimation of the solution, owing to the dependency problem and failure of the distributive law. The best solution to the problem of excessive conservatism in linear equation solving is to use the Gauss–Seidel iterative method [<xref ref-type="bibr" rid="bibr31-1748006X11422624">31</xref>, <xref ref-type="bibr" rid="bibr35-1748006X11422624">35</xref>]. In order to converge to a solution, this method requires that the matrix be an <bold>M</bold> matrix (interval version of a diagonal dominant system). <bold>M</bold> matrices are defined as follows: a matrix <bold>A</bold> is an <bold>M</bold> matrix if <italic>A<sub>ij</sub></italic><inline-formula id="inline-formula5-1748006X11422624"><mml:math display="inline" id="math17-1748006X11422624"><mml:mrow><mml:mo>≤</mml:mo></mml:mrow></mml:math></inline-formula> 0 for all <italic>i</italic><inline-formula id="inline-formula6-1748006X11422624"><mml:math display="inline" id="math18-1748006X11422624"><mml:mrow><mml:mo>≤</mml:mo></mml:mrow></mml:math></inline-formula><italic>j</italic> and <bold>A<italic>u</italic></bold> &gt; <bold>0</bold> for some positive vector <bold><italic>u</italic></bold>∈<bold><italic>I</italic>(R</bold><italic><sup>n</sup></italic><bold>)</bold> [<xref ref-type="bibr" rid="bibr31-1748006X11422624">31</xref>, <xref ref-type="bibr" rid="bibr35-1748006X11422624">35</xref>].</p>
+<p>If the matrix is an <bold>M</bold> matrix, the hull of the solution set can be guaranteed by the Gauss–Seidel method. Unfortunately, the matrix associated with the LS (1) is not an <bold>M</bold> matrix. For matrices which are not <bold>M</bold> matrices, other general techniques may be used (e.g. preconditioning [<xref ref-type="bibr" rid="bibr35-1748006X11422624">35</xref>, <xref ref-type="bibr" rid="bibr36-1748006X11422624">36</xref>]) but it is not possible to know, <italic>a priori</italic>, the effect of overestimation.</p>
+<p>In this paper instead of solving the LS of <xref ref-type="disp-formula" rid="disp-formula2-1748006X11422624">equations (1)</xref>, a modification of the SR algorithm [<xref ref-type="bibr" rid="bibr29-1748006X11422624">29</xref>] is proposed to obtain the hull of steady state probabilities. As previously mentioned, SR does not involve any subtraction, and so the algorithm could be used to reduce the ‘interval’ dependency problem.</p>
+<p>The SR algorithm together with particular IA procedures to avoid the ‘dependency problem’ allow the implementation of the interval version of the state reduction (ISR) algorithm. The bounds for the steady state probabilities are obtained with only one run of the ISR algorithm.</p>
+<p>In order to reduce the dependency problem, some expressions in the original algorithm were rewritten so that variables appear no more than once.</p>
+<p>For example, step (d) of the algorithm (see section 2) is rewritten as</p>
+<p>
+<disp-formula id="disp-formula13-1748006X11422624">
+<mml:math display="block" id="math19-1748006X11422624">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>←</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mo>⋯</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mo>⋯</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-1748006X11422624" xlink:href="10.1177_1748006X11422624-eq13.tif"/>
+</disp-formula>
+</p>
+<p>Thus, π<italic><sub>i</sub></italic> appears no more than once.</p>
+</sec>
+<sec id="section4-1748006X11422624">
+<title>4 Examples</title>
+<p>Several examples are presented in this section to compare three different approaches for determining the steady state probability bounds under TR uncertainties:</p>
+<list id="list3-1748006X11422624" list-type="alpha-lower">
+<list-item>
+<p>solving 2<italic><sup>k</sup></italic> LSs;</p>
+</list-item>
+<list-item>
+<p>using MC simulation;</p>
+</list-item>
+<list-item>
+<p>using the ISR algorithm.</p>
+</list-item>
+</list>
+<p>TR uncertainties are modelled as interval numbers; their bounds are defined from the base case values ± 10 per cent. For MC simulation it is assumed that the TRs are properly modelled as random variables with a uniform PDF. For each sample, the original SR is used to obtain the steady state probabilities. In all examples, 50 000 samples are evaluated.</p>
+<sec id="section5-1748006X11422624">
+<title>4.1 Example 1: a series compensated power transmission line</title>
+<p>Rocco [<xref ref-type="bibr" rid="bibr26-1748006X11422624">26</xref>] analysed a four-state Markov model, representing a series compensated 400 kV transmission line. The model shown in <xref ref-type="fig" rid="fig3-1748006X11422624">Fig. 3</xref> is used as part of a least-cost evaluation of a transmission planning study for the interconnection between two regional power systems. The base case values for the TRs of transmission equipment are shown in <xref ref-type="table" rid="table1-1748006X11422624">Table 1</xref>. The effects of ±10 per cent variations in the TRs are evaluated.</p>
+<fig id="fig3-1748006X11422624" position="float">
+<label>Fig. 3</label>
+<caption>
+<p>State diagram for a series compensated line</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig3.tif"/>
+</fig>
+<table-wrap id="table1-1748006X11422624" position="float">
+<label>Table 1</label>
+<caption>
+<p>Basic data for example 1</p>
+</caption>
+<graphic alternate-form-of="table1-1748006X11422624" xlink:href="10.1177_1748006X11422624-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Equipment</th>
+<th align="center">λ (year<sup>−1</sup>)</th>
+<th align="center"><italic>r</italic> (h)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400 kV series cap</td>
+<td> 3.5</td>
+<td>48</td>
+</tr>
+<tr>
+<td>400 kV line</td>
+<td>48</td>
+<td> 4</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>Exact bounds for the steady state probabilities were obtained by solving the 2<sup>4</sup> = 16 LSs associated with <xref ref-type="fig" rid="fig3-1748006X11422624">Fig. 3</xref>, taking into account all the combinations of <italic>λ</italic><sub>L</sub>, <italic>λ</italic><sub>C</sub>, μ<sub>L</sub>, and μ<sub>C</sub> bounds. As shown in <xref ref-type="table" rid="table2-1748006X11422624">Table 2</xref>, the steady state probabilities calculated by the ISR algorithm (only one run is required) and MC simulation are very close to those obtained by solving 16 LSs. Note that the bounds from an LS or MC simulation are included in the ISR solutions. <xref ref-type="fig" rid="fig4-1748006X11422624">Figures 4</xref> and <xref ref-type="fig" rid="fig5-1748006X11422624">5</xref> show the bounds derived by the different approaches.</p>
+<table-wrap id="table2-1748006X11422624" position="float">
+<label>Table 2</label>
+<caption>
+<p>Bounds on the steady state probabilities for example 1</p>
+</caption>
+<graphic alternate-form-of="table2-1748006X11422624" xlink:href="10.1177_1748006X11422624-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" rowspan="2">π<sub>i</sub></th>
+<th align="center" colspan="3">Value for the following</th>
+</tr>
+<tr>
+<th align="left">LS approach</th>
+<th align="left">MC simulation</th>
+<th align="left">ISR algorithm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>[0.951 861 3, 0.967 220 3]</td>
+<td>[0.952 505 9, 0.966 843 3]</td>
+<td>[0.951 613 784, 0.967 422 128]</td>
+</tr>
+<tr>
+<td>2</td>
+<td>[0.014 920 0, 0.022 410 7]</td>
+<td>[0.014 996 9, 0.022 381 6]</td>
+<td>[0.014 832 512, 0.022 483 962]</td>
+</tr>
+<tr>
+<td>3</td>
+<td>[0.017 240 6, 0.025 726 8]</td>
+<td>[0.017 269 5, 0.025 665 6]</td>
+<td>[0.017 227 534, 0.025 751 147]</td>
+</tr>
+<tr>
+<td>4</td>
+<td>[0.000 251 0, 0.000 545 2]</td>
+<td>[0.000 256 7, 0.000 531 0]</td>
+<td>[0.000 243 740, 0.000 9445 48]</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig4-1748006X11422624" position="float">
+<label>Fig. 4</label>
+<caption>
+<p>Bounds on the steady state probabilities obtained by different approaches for example 1</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig4.tif"/>
+</fig>
+<fig id="fig5-1748006X11422624" position="float">
+<label>Fig. 5</label>
+<caption>
+<p>Bounds on the steady state probabilities obtained by different approaches for example 1: details for states 2 to 4</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig5.tif"/>
+</fig>
+</sec>
+<sec id="section6-1748006X11422624">
+<title>4.2 Example 2: power system with four units</title>
+<p>The system has been analysed in reference [<xref ref-type="bibr" rid="bibr14-1748006X11422624">14</xref>]. It consists of two generators C<sub>1</sub> and C<sub>2</sub> and two transformer units C<sub>3</sub> and C<sub>4</sub>. <xref ref-type="table" rid="table3-1748006X11422624">Table 3</xref> shows the 15 states defined for this system where O means an operating state, S denotes a standby state, and F corresponds to a failed state.</p>
+<table-wrap id="table3-1748006X11422624" position="float">
+<label>Table 3</label>
+<caption>
+<p>System states for example 2</p>
+</caption>
+<graphic alternate-form-of="table3-1748006X11422624" xlink:href="10.1177_1748006X11422624-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">State</th>
+<th align="left">C<sub>1</sub></th>
+<th align="left">C<sub>2</sub></th>
+<th align="left">C<sub>3</sub></th>
+<th align="left">C<sub>4</sub></th>
+<th align="left">System</th>
+<th align="left">System production capacity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 1</td>
+<td>O</td>
+<td>O</td>
+<td>O</td>
+<td>S</td>
+<td>O</td>
+<td>100</td>
+</tr>
+<tr>
+<td> 2</td>
+<td>F</td>
+<td>O</td>
+<td>O</td>
+<td>S</td>
+<td>O</td>
+<td> 50</td>
+</tr>
+<tr>
+<td> 3</td>
+<td>O</td>
+<td>F</td>
+<td>O</td>
+<td>S</td>
+<td>O</td>
+<td> 60</td>
+</tr>
+<tr>
+<td> 4</td>
+<td>O</td>
+<td>O</td>
+<td>F</td>
+<td>O</td>
+<td>O</td>
+<td>100</td>
+</tr>
+<tr>
+<td> 5</td>
+<td>O</td>
+<td>O</td>
+<td>O</td>
+<td>F</td>
+<td>O</td>
+<td>100</td>
+</tr>
+<tr>
+<td> 6</td>
+<td>F</td>
+<td>F</td>
+<td>O</td>
+<td>S</td>
+<td>F</td>
+<td> 0</td>
+</tr>
+<tr>
+<td> 7</td>
+<td>F</td>
+<td>O</td>
+<td>F</td>
+<td>O</td>
+<td>O</td>
+<td> 50</td>
+</tr>
+<tr>
+<td> 8</td>
+<td>F</td>
+<td>O</td>
+<td>O</td>
+<td>F</td>
+<td>O</td>
+<td> 50</td>
+</tr>
+<tr>
+<td> 9</td>
+<td>O</td>
+<td>F</td>
+<td>F</td>
+<td>O</td>
+<td>O</td>
+<td> 60</td>
+</tr>
+<tr>
+<td>10</td>
+<td>O</td>
+<td>F</td>
+<td>O</td>
+<td>F</td>
+<td>O</td>
+<td> 60</td>
+</tr>
+<tr>
+<td>11</td>
+<td>O</td>
+<td>O</td>
+<td>F</td>
+<td>F</td>
+<td>F</td>
+<td> 0</td>
+</tr>
+<tr>
+<td>12</td>
+<td>F</td>
+<td>F</td>
+<td>F</td>
+<td>O</td>
+<td>F</td>
+<td> 0</td>
+</tr>
+<tr>
+<td>13</td>
+<td>F</td>
+<td>F</td>
+<td>O</td>
+<td>F</td>
+<td>F</td>
+<td> 0</td>
+</tr>
+<tr>
+<td>14</td>
+<td>F</td>
+<td>O</td>
+<td>F</td>
+<td>F</td>
+<td>F</td>
+<td> 0</td>
+</tr>
+<tr>
+<td>15</td>
+<td>O</td>
+<td>F</td>
+<td>F</td>
+<td>F</td>
+<td>F</td>
+<td> 0</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The base-case TRs for the components are defined in <xref ref-type="table" rid="table4-1748006X11422624">Table 4</xref>: <italic>λ</italic><sub>I</sub> is the failure rate, <italic>λ</italic><sub>is</sub> is the failure rate in a shared resource or load, and <sub>I</sub> is the repair rate. In total there are 11 different TRs, and so 2<sup>11 = </sup>2048 LSs are solved. <xref ref-type="table" rid="table5-1748006X11422624">Table 5</xref> shows the steady state probability bounds for the system.</p>
+<table-wrap id="table4-1748006X11422624" position="float">
+<label>Table 4</label>
+<caption>
+<p>TR data for example 2</p>
+</caption>
+<graphic alternate-form-of="table4-1748006X11422624" xlink:href="10.1177_1748006X11422624-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Component</th>
+<th align="left">λ<sub>I</sub></th>
+<th align="left">λ<sub>is</sub></th>
+<th align="left">µ<sub>I</sub></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C<sub>1</sub></td>
+<td>4.5 × 10<sup>−4</sup></td>
+<td>1 × 10<sup>−3</sup></td>
+<td>4 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>C<sub>2</sub></td>
+<td>4.5 × 10<sup>−4</sup></td>
+<td>—</td>
+<td>4 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>C<sub>3</sub></td>
+<td>6.0 × 10<sup>−4</sup></td>
+<td>4 × 10<sup>−4</sup></td>
+<td>2 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>C<sub>4</sub></td>
+<td>6.0 × 10<sup>−4</sup></td>
+<td>4 × 10<sup>−4</sup></td>
+<td>2 × 10<sup>−3</sup></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table5-1748006X11422624" position="float">
+<label>Table 5</label>
+<caption>
+<p>Bounds on the steady state probabilities for example 2</p>
+</caption>
+<graphic alternate-form-of="table5-1748006X11422624" xlink:href="10.1177_1748006X11422624-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" rowspan="2">π<sub>i</sub></th>
+<th align="center" colspan="3">Value for the following</th>
+</tr>
+<tr>
+<th align="left">LS approach</th>
+<th align="left">MC simulation</th>
+<th align="left">ISR algorithm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>[0.048 262 1, 0.092 194 7]</td>
+<td>[0.058 056 7, 0.088 700 9]</td>
+<td>[0.058 068 816, 0.0.0 953 980]</td>
+</tr>
+<tr>
+<td>3</td>
+<td>[0.048 262 1, 0.082 975 2]</td>
+<td>[0.050 366 9, 0.079 646 1]</td>
+<td>[0.034 716 606, 0.110 852 167]</td>
+</tr>
+<tr>
+<td>4</td>
+<td>[0.106 903 4, 0.159 618 5]</td>
+<td>[0.111 663 0, 0.153 704 4]</td>
+<td>[0.097 502 879, 0.185 801 810]</td>
+</tr>
+<tr>
+<td>5</td>
+<td>[0.026 209 9, 0.051 955 0]</td>
+<td>[0.028 438 7, 0.048 539 7]</td>
+<td>[0.012 016 143, 0.077 343 554]</td>
+</tr>
+<tr>
+<td>6</td>
+<td>[0.007 812 4, 0.018 128 8]</td>
+<td>[0.008 591 6, 0.016 819 0]</td>
+<td>[0.005 302 593, 0.020 708 452]</td>
+</tr>
+<tr>
+<td>7</td>
+<td>[0.009 938 1, 0.020 138 5]</td>
+<td>[0.010 697 7, 0.018 862 4]</td>
+<td>[0.005 610 730, 0.032 991 525]</td>
+</tr>
+<tr>
+<td>8</td>
+<td>[0.002 365 8, 0.006 266 2]</td>
+<td>[0.002 724 1, 0.153 704 4]</td>
+<td>[0.000 985 011, 0.014 283 179]</td>
+</tr>
+<tr>
+<td>9</td>
+<td>[0.008 797 9, 0.018 242 9]</td>
+<td>[0.009 559 4, 0.016 640 3]</td>
+<td>[0.005 127 684, 0.028 989 889]</td>
+</tr>
+<tr>
+<td>10</td>
+<td>[0.002 105 5, 0.005 699 4]</td>
+<td>[0.002 427 7, 0.005 003 9]</td>
+<td>[0.000 899 322, 0.012 663 581]</td>
+</tr>
+<tr>
+<td>11</td>
+<td>[0.034 233 7, 0.073 503 8]</td>
+<td>[0.036 776 6, 0.070 354 8]</td>
+<td>[0.019 518 303, 0.124 719 962]</td>
+</tr>
+<tr>
+<td>12</td>
+<td>[0.001 425 3, 0.003 969 7]</td>
+<td>[0.001 606 2, 0.003 451 1]</td>
+<td>[0.000 782 643, 0.006 697 178]</td>
+</tr>
+<tr>
+<td>13</td>
+<td>[0.000 343 3, 0.001 230 2]</td>
+<td>[0.000 403 4, 0.001 028 7]</td>
+<td>[0.000 137 309, 0.002 916 682]</td>
+</tr>
+<tr>
+<td>14</td>
+<td>[0.002 097 6, 0.006 178 1]</td>
+<td>[0.002 358 0, 0.005 732 9]</td>
+<td>[0.001 079 303, 0.011 556 040]</td>
+</tr>
+<tr>
+<td>15</td>
+<td>[0.001 858 7, 0.005 600 2]</td>
+<td>[0.002 078 8, 0.004 895 1]</td>
+<td>[0.000 986 238, 0.010 181 959]</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>As in the previous examples, the steady state probabilities calculated by the ISR algorithm and MC simulation are very close to those obtained by solving 2048 LSs. Note that the bounds from an LS or MC simulation are included in the ISR solutions, and the bounds from MC simulation are included in the LS bounds. <xref ref-type="fig" rid="fig6-1748006X11422624">Figures 6</xref> and <xref ref-type="fig" rid="fig7-1748006X11422624">7</xref> show the bounds obtained by the different approaches.</p>
+<fig id="fig6-1748006X11422624" position="float">
+<label>Fig. 6</label>
+<caption>
+<p>Bounds on the steady state probabilities obtained by different approaches for example 2</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig6.tif"/>
+</fig>
+<fig id="fig7-1748006X11422624" position="float">
+<label>Fig. 7</label>
+<caption>
+<p>Bounds on the steady state probabilities obtained by different approaches for example 2: details for states 2 to 15</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig7.tif"/>
+</fig>
+</sec>
+<sec id="section7-1748006X11422624">
+<title>4.3 Example 3: Caracas Metro System</title>
+<p>This example is related to the design of Línea 2 of the Caracas Metro System in Venezuela [<xref ref-type="bibr" rid="bibr37-1748006X11422624">37</xref>]. <xref ref-type="fig" rid="fig8-1748006X11422624">Figure 8</xref> shows the simplified state system of one train. It consists of the following five states: O, normal operating; D, total failure (distress) (the train is immobilized on the track and cannot move on its own); H, partial failure (light running) (the train is not immobilized and can clear the track on its own without passengers); S, stabling (the train’s attendant is able to repair the train and to restart it); P, provisional (the train is being repaired off the track).</p>
+<fig id="fig8-1748006X11422624" position="float">
+<label>Fig. 8</label>
+<caption>
+<p>Simplified state space for each train</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig8.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig9-1748006X11422624">Figure 9</xref> shows the 26-state diagram of the ‘train system’ which includes 20 operating trains and one standby train. <xref ref-type="table" rid="table6-1748006X11422624">Table 6</xref> shows the details for each state.</p>
+<fig id="fig9-1748006X11422624" position="float">
+<label>Fig. 9</label>
+<caption>
+<p>State space for example 3</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig9.tif"/>
+</fig>
+<table-wrap id="table6-1748006X11422624" position="float">
+<label>Table 6</label>
+<caption>
+<p>Details of each state for example 3</p>
+</caption>
+<graphic alternate-form-of="table6-1748006X11422624" xlink:href="10.1177_1748006X11422624-table6.tif"/>
+<table>
+<colgroup>
+<col align="char" char="."/>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">State</th>
+<th align="left">Type</th>
+<th align="left">Number of operating trains</th>
+<th align="left">Number of standby trains</th>
+<th align="left">Number of in-shop trains</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 1</td>
+<td>O</td>
+<td>20</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td> 2</td>
+<td>O</td>
+<td>20</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td> 3</td>
+<td>O</td>
+<td>19</td>
+<td>0</td>
+<td>2</td>
+</tr>
+<tr>
+<td> 4</td>
+<td>O</td>
+<td>18</td>
+<td>0</td>
+<td>3</td>
+</tr>
+<tr>
+<td> 5</td>
+<td>O</td>
+<td>17</td>
+<td>0</td>
+<td>4</td>
+</tr>
+<tr>
+<td> 6</td>
+<td>O</td>
+<td>16</td>
+<td>0</td>
+<td>5</td>
+</tr>
+<tr>
+<td> 7</td>
+<td>O</td>
+<td>15</td>
+<td>0</td>
+<td>6</td>
+</tr>
+<tr>
+<td> 8</td>
+<td>H</td>
+<td>20</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td> 9</td>
+<td>H</td>
+<td>20</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>10</td>
+<td>H</td>
+<td>19</td>
+<td>0</td>
+<td>2</td>
+</tr>
+<tr>
+<td>11</td>
+<td>H</td>
+<td>18</td>
+<td>0</td>
+<td>3</td>
+</tr>
+<tr>
+<td>12</td>
+<td>H</td>
+<td>17</td>
+<td>0</td>
+<td>4</td>
+</tr>
+<tr>
+<td>13</td>
+<td>H</td>
+<td>15</td>
+<td>0</td>
+<td>5</td>
+</tr>
+<tr>
+<td>14</td>
+<td>D</td>
+<td>20</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>15</td>
+<td>D</td>
+<td>20</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>16</td>
+<td>D</td>
+<td>19</td>
+<td>0</td>
+<td>2</td>
+</tr>
+<tr>
+<td>17</td>
+<td>D</td>
+<td>18</td>
+<td>0</td>
+<td>3</td>
+</tr>
+<tr>
+<td>18</td>
+<td>D</td>
+<td>17</td>
+<td>0</td>
+<td>4</td>
+</tr>
+<tr>
+<td>19</td>
+<td>D</td>
+<td>16</td>
+<td>0</td>
+<td>5</td>
+</tr>
+<tr>
+<td>20</td>
+<td>S</td>
+<td>20</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>21</td>
+<td>S</td>
+<td>20</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>22</td>
+<td>S</td>
+<td>19</td>
+<td>0</td>
+<td>2</td>
+</tr>
+<tr>
+<td>23</td>
+<td>S</td>
+<td>18</td>
+<td>0</td>
+<td>3</td>
+</tr>
+<tr>
+<td>24</td>
+<td>S</td>
+<td>17</td>
+<td>0</td>
+<td>4</td>
+</tr>
+<tr>
+<td>25</td>
+<td>S</td>
+<td>15</td>
+<td>0</td>
+<td>5</td>
+</tr>
+<tr>
+<td>26</td>
+<td>P</td>
+<td>15</td>
+<td>0</td>
+<td>6</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The model considers only the states including more than 15 operating trains. States with 15 operating trains or less are considered as system failure states.</p>
+<p>The following TRs are considered:</p>
+<p><italic>λ</italic><sub>D</sub> = failure rate for the distress failure mode</p>
+<p><italic>λ</italic><sub>H</sub> = failure rate for the light running failure mode</p>
+<p><italic>λ</italic><sub>R</sub> = failure rate for the interchange failure mode</p>
+<p><italic>λ</italic><sub>S</sub> = failure rate for the stabling failure mode</p>
+<p><italic>μ</italic><sub>H</sub> = repair rate corresponding to the clearing of the track after the train, leading to a light running failure distress failure mode</p>
+<p><italic>μ</italic><sub>D</sub> = repair rate corresponding to the clearing of the track after the train, leading to a distress failure mode</p>
+<p><italic>μ</italic><sub>S</sub> = repair rate corresponding to the clearing of the track after the train, leading to a stabling failure mode</p>
+<p><italic>μ</italic><sub>P</sub> = repair rate of a train in the workshop</p>
+<p><xref ref-type="table" rid="table7-1748006X11422624">Table 7</xref> lists the description of the TRs between states. The base-case TRs for the components are defined in <xref ref-type="table" rid="table8-1748006X11422624">Table 8</xref>. In total there are eight different TRs. This means that 2<sup>8</sup> = 256 LSs must be solved under the LS approach.</p>
+<table-wrap id="table7-1748006X11422624" position="float">
+<label>Table 7</label>
+<caption>
+<p>Equivalence between TRs in <xref ref-type="fig" rid="fig5-1748006X11422624">Fig. 5</xref></p>
+</caption>
+<graphic alternate-form-of="table7-1748006X11422624" xlink:href="10.1177_1748006X11422624-table7.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Code</th>
+<th align="left">TR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a</td>
+<td>20<italic>λ</italic><sub>H</sub></td>
+</tr>
+<tr>
+<td>b</td>
+<td>20<italic>λ</italic><sub>H</sub></td>
+</tr>
+<tr>
+<td>c</td>
+<td>19<italic>λ</italic><sub>H</sub></td>
+</tr>
+<tr>
+<td>d</td>
+<td>18<italic>λ</italic><sub>H</sub></td>
+</tr>
+<tr>
+<td>e</td>
+<td>17<italic>λ</italic><sub>H</sub></td>
+</tr>
+<tr>
+<td>f</td>
+<td>16<italic>λ</italic><sub>H</sub></td>
+</tr>
+<tr>
+<td>g</td>
+<td>20<italic>λ</italic><sub>R</sub></td>
+</tr>
+<tr>
+<td>h</td>
+<td>20<italic>λ</italic><sub>R</sub></td>
+</tr>
+<tr>
+<td>i</td>
+<td>19<italic>λ</italic><sub>R</sub></td>
+</tr>
+<tr>
+<td>j</td>
+<td>18<italic>λ</italic><sub>R</sub></td>
+</tr>
+<tr>
+<td>k</td>
+<td>17<italic>λ</italic><sub>R</sub></td>
+</tr>
+<tr>
+<td>l</td>
+<td>16<italic>λ</italic><sub>R</sub></td>
+</tr>
+<tr>
+<td>m</td>
+<td>20<italic>λ</italic><sub>D</sub></td>
+</tr>
+<tr>
+<td>n</td>
+<td>µ<sub>D</sub></td>
+</tr>
+<tr>
+<td>o</td>
+<td>20<italic>λ</italic><sub>D</sub></td>
+</tr>
+<tr>
+<td>p</td>
+<td>19<italic>λ</italic><sub>D</sub></td>
+</tr>
+<tr>
+<td>q</td>
+<td>18<italic>λ</italic><sub>D</sub></td>
+</tr>
+<tr>
+<td>r</td>
+<td>17<italic>λ</italic><sub>D</sub></td>
+</tr>
+<tr>
+<td>s</td>
+<td>16<italic>λ</italic><sub>D</sub></td>
+</tr>
+<tr>
+<td>t</td>
+<td>15(<italic>λ</italic><sub>H</sub>+<italic>λ</italic><sub>D</sub>+<italic>λ</italic><sub>R</sub>+<italic>λ</italic><sub>S</sub>)</td>
+</tr>
+<tr>
+<td>y</td>
+<td>µ<sub>P</sub></td>
+</tr>
+<tr>
+<td>z</td>
+<td>µ<sub>H</sub></td>
+</tr>
+<tr>
+<td>a1</td>
+<td>20<italic>λ</italic><sub>S</sub></td>
+</tr>
+<tr>
+<td>a2</td>
+<td>20<italic>λ</italic><sub>S</sub></td>
+</tr>
+<tr>
+<td>a3</td>
+<td>19<italic>λ</italic><sub>S</sub></td>
+</tr>
+<tr>
+<td>a4</td>
+<td>18<italic>λ</italic><sub>S</sub></td>
+</tr>
+<tr>
+<td>a5</td>
+<td>17<italic>λ</italic><sub>S</sub></td>
+</tr>
+<tr>
+<td>a6</td>
+<td>16<italic>λ</italic><sub>S</sub></td>
+</tr>
+<tr>
+<td>a7</td>
+<td>µ<sub>S</sub></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table8-1748006X11422624" position="float">
+<label>Table 8</label>
+<caption>
+<p>TR data for example 3</p>
+</caption>
+<graphic alternate-form-of="table8-1748006X11422624" xlink:href="10.1177_1748006X11422624-table8.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">TR (h<sup>−1</sup>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><italic>λ</italic><sub>H</sub></td>
+<td>1.864 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td><italic>λ</italic><sub>R</sub></td>
+<td>7.96 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td><italic>λ</italic><sub>D</sub></td>
+<td>0.2732 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td><italic>λ</italic><sub>S</sub></td>
+<td>2.516 × 10<sup>−3</sup></td>
+</tr>
+<tr>
+<td>µ<sub>H</sub></td>
+<td>10.34</td>
+</tr>
+<tr>
+<td>µ<sub>D</sub></td>
+<td> 3.25</td>
+</tr>
+<tr>
+<td>µ<sub>S</sub></td>
+<td> 8.22</td>
+</tr>
+<tr>
+<td>µ<sub>P</sub></td>
+<td> 0.95</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p><xref ref-type="table" rid="table9-1748006X11422624">Table 9</xref> shows the bounds associated with each steady state probability, owing to uncertainty propagation effects. Again, the steady state probabilities calculated by the three different approaches are very close. <xref ref-type="fig" rid="fig10-1748006X11422624">Figures 10</xref> and <xref ref-type="fig" rid="fig11-1748006X11422624">11</xref> show the bounds obtained by the LS approach, MC simulation, and the ISR algorithm.</p>
+<table-wrap id="table9-1748006X11422624" position="float">
+<label>Table 9</label>
+<caption>
+<p>Bounds on the steady state probabilities for example 3</p>
+</caption>
+<graphic alternate-form-of="table9-1748006X11422624" xlink:href="10.1177_1748006X11422624-table9.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" rowspan="2">π<sub>i</sub></th>
+<th align="center" colspan="3">Value for the following</th>
+</tr>
+<tr>
+<th align="left">LS approach</th>
+<th align="left">MC simulation</th>
+<th align="left">ISR algorithm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 2</td>
+<td>[0.139 027 6, 0.202 160 1]</td>
+<td>[0.140 571 1, 0.201 044 7]</td>
+<td>[0.124 591 306, 0.222 765 237]</td>
+</tr>
+<tr>
+<td> 3</td>
+<td>[0.023 562 1, 0.057 615 6]</td>
+<td>[0.024 097 1, 0.056 845 7]</td>
+<td>[0.019 204 825, 0.070 373 595]</td>
+</tr>
+<tr>
+<td> 4</td>
+<td>[0.003 793 6, 0.015 599 4]</td>
+<td>[0.003 924 2, 0.015 281 5]</td>
+<td>[0.002 883 091, 0.020 642 981]</td>
+</tr>
+<tr>
+<td> 5</td>
+<td>[0.000 578 6, 0.004 001 3]</td>
+<td>[0.000 605 4, 0.003 891 8]</td>
+<td>[0.000 417 957, 0.005 617 574]</td>
+</tr>
+<tr>
+<td> 6</td>
+<td>[0.000 578 6, 0.000 969 3]</td>
+<td>[0.000 088 2, 0.000 936 1]</td>
+<td>[0.000 057 646, 0.001 431 496]</td>
+</tr>
+<tr>
+<td> 7</td>
+<td>[0.000 011 3, 0.000 221 0]</td>
+<td>[0.000 012 1, 0.000 211 9]</td>
+<td>[0.000 007 500, 0.000 667 848]</td>
+</tr>
+<tr>
+<td> 8</td>
+<td>[0.002 112 7, 0.003 677 0]</td>
+<td>[0.002 162 4, 0.003 595 9]</td>
+<td>[0.002 042 721, 0.003 743 470]</td>
+</tr>
+<tr>
+<td> 9</td>
+<td>[0.000 409 4, 0.000 912 2]</td>
+<td>[0.000 423 4, 0.000 893 9]</td>
+<td>[0.000 332 346, 0.001 118 696]</td>
+</tr>
+<tr>
+<td>10</td>
+<td>[0.000 065 9, 0.000 247 0]</td>
+<td>[0.000 069 2, 0.000 239 1]</td>
+<td>[0.000 051 373, 0.000 651 031]</td>
+</tr>
+<tr>
+<td>11</td>
+<td>[0.000 010 1, 0.000 063 4]</td>
+<td>[0.000 010 7, 0.000 060 6]</td>
+<td>[0.000 007 525, 0.000 414 992]</td>
+</tr>
+<tr>
+<td>12</td>
+<td>[0.000 001 4, 0.000 015 3]</td>
+<td>[0.000 001 6, 0.000 014 5]</td>
+<td>[0.000 001 041, 0.000 278 040]</td>
+</tr>
+<tr>
+<td>13</td>
+<td>[0.000 000 2, 0.000 003 5]</td>
+<td>[0.000 000 2, 0.000 003 3]</td>
+<td>[0.000 000 136, 0.000 182 018]</td>
+</tr>
+<tr>
+<td>14</td>
+<td>[0.000 866 6, 0.001 699 0]</td>
+<td>[0.000 898 6, 0.001 657 0]</td>
+<td>[0.000 847 865, 0.001 716 021]</td>
+</tr>
+<tr>
+<td>15</td>
+<td>[0.000 170 0, 0.000 418 1]</td>
+<td>[0.000 178 0, 0.000 407 0]</td>
+<td>[0.000 137 972, 0.000 750 663]</td>
+</tr>
+<tr>
+<td>16</td>
+<td>[0.000 027 4, 0.000 113 2]</td>
+<td>[0.000 029 9, 0.000 107 4]</td>
+<td>[0.000 021 332, 0.000 461 021]</td>
+</tr>
+<tr>
+<td>17</td>
+<td>[0.000 004 2, 0.000 029 0]</td>
+<td>[0.000 004 8, 0.000 026 9]</td>
+<td>[0.000 003 125, 0.000 345 637]</td>
+</tr>
+<tr>
+<td>18</td>
+<td>[0.000 000 6, 0.000 007 0]</td>
+<td>[0.000 000 7, 0.000 006 4]</td>
+<td>[0.000 000 432, 0.000 232 496]</td>
+</tr>
+<tr>
+<td>19</td>
+<td>[0.000 000 1, 0.000 001 6]</td>
+<td>[0.000 000 1, 0.000 001 5]</td>
+<td>[0.000 000 056, 0.000 137 383]</td>
+</tr>
+<tr>
+<td>20</td>
+<td>[0.003 444 5, 0.006 298 9]</td>
+<td>[0.003 525 3, 0.006 165 2]</td>
+<td>[0.003 377 322, 0.006 352 257]</td>
+</tr>
+<tr>
+<td>21</td>
+<td>[0.000 677 8, 0.001 546 5]</td>
+<td>[0.000 711 5, 0.001 482 3]</td>
+<td>[0.000 549 251, 0.001 899 259]</td>
+</tr>
+<tr>
+<td>22</td>
+<td>[0.000 109 1, 0.000 418 7]</td>
+<td>[0.000 117 9, 0.000 394 1]</td>
+<td>[0.000 084 878, 0.000 759 936]</td>
+</tr>
+<tr>
+<td>23</td>
+<td>[0.000 016 6, 0.000 107 4]</td>
+<td>[0.000 018 3, 0.000 099 3]</td>
+<td>[0.000 012 431, 0.000 460 170]</td>
+</tr>
+<tr>
+<td>24</td>
+<td>[0.000 002 4, 0.000 026 0]</td>
+<td>[0.000 002 7, 0.000 023 6]</td>
+<td>[0.000 001 720, 0.000 339 107]</td>
+</tr>
+<tr>
+<td>25</td>
+<td>[0.000 000 3, 0.000 005 9]</td>
+<td>[0.000 000 4, 0.000 005 3]</td>
+<td>[0.000 000 224, 0.000 223 783]</td>
+</tr>
+<tr>
+<td>26</td>
+<td>[0.000 001 8, 0.000 058 0]</td>
+<td>[0.000 002 0, 0.000 053 3]</td>
+<td>[0.000 001 178, 0.000 418 550]</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig10-1748006X11422624" position="float">
+<label>Fig. 10</label>
+<caption>
+<p>Bounds on the steady state probabilities obtained by different approaches for example 3</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig10.tif"/>
+</fig>
+<fig id="fig11-1748006X11422624" position="float">
+<label>Fig. 11</label>
+<caption>
+<p>Bounds on the steady state probabilities obtained by different approaches for example 3: details for states 4 to 26</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig11.tif"/>
+</fig>
+</sec>
+<sec id="section8-1748006X11422624">
+<title>4.4 Example 4: 20-state model</title>
+<p>This example is used to assess the behaviour of the ISR algorithm with many TRs. <xref ref-type="fig" rid="fig12-1748006X11422624">Figure 12</xref> shows a 20-state model with 62 independent TRs. All 62 TRs are assumed to be uncertain with the base values defined as <italic>λ<sub>ij</sub></italic> = 0.000 45<italic>t</italic><sup>−1</sup> if <italic>i</italic> &gt; <italic>j</italic>, and <italic>λ<sub>ij</sub></italic> = 0.0040 <italic>t</italic><sup>−1</sup> in other cases. (These TRs correspond to the failure rate and the repair rate for generator C<sub>1</sub> in example 2.)</p>
+<fig id="fig12-1748006X11422624" position="float">
+<label>Fig. 12</label>
+<caption>
+<p>20-state model for example 4</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig12.tif"/>
+</fig>
+<p>The exact bounds of the steady state probabilities require 2<sup>62</sup> = 4.6 × 10<sup>18</sup> LSs to be solved. In this case, only the bounds obtained by the ISR algorithm and MC simulation are presented (<xref ref-type="fig" rid="fig13-1748006X11422624">Fig. 13</xref>).</p>
+<fig id="fig13-1748006X11422624" position="float">
+<label>Fig. 13</label>
+<caption>
+<p>Bounds on the steady state probabilities obtained by different approaches for example 4</p>
+</caption>
+<graphic xlink:href="10.1177_1748006X11422624-fig13.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section9-1748006X11422624" sec-type="conclusions">
+<title>5 Conclusions</title>
+<p>In this paper, the uncertainty propagation for the Markov steady state probabilities is assessed using an IA-based approach: first, uncertainties in the TRs between states are modelled, under the ‘unknown but bounded’ approach, by interval numbers; second, owing to dependency problems, techniques to solve interval LSs are not recommended. Therefore the ISR algorithm is proposed as an alternative method to evaluate uncertainty propagation.</p>
+<p>IA takes into consideration the uncertainty of all the parameters and is able to provide strict bounds with only one evaluation. It is also possible to perform a sensitivity and uncertainty analysis by using IA, assigning bounds to some or all input parameters, and observing the effect on the final interval outcome.</p>
+<p>The examples presented show that the bounds from the ISR algorithm are very similar to those obtained by solving 2<italic><sup>k</sup></italic> LSs or by MC simulation. The first approach is useful if the number of uncertain TRs is small (say, less than 16). MC simulation is able to model uncertainties which are represented as a PDF; a large amount of samples are required to obtain almost exact bounds, but MC simulation does not guarantee that the exact solution is contained in its bounds [<xref ref-type="bibr" rid="bibr27-1748006X11422624">27</xref>, <xref ref-type="bibr" rid="bibr28-1748006X11422624">28</xref>].</p>
+<p>However, even if appropriate tactics were used to reduce the IA dependency problem, the width of the interval probabilities from the ISR algorithm are always greater than the width from the LS approach. The next step in the investigation is the use of alternative methods, such as affine arithmetic (AA) [<xref ref-type="bibr" rid="bibr38-1748006X11422624">38</xref>] to reduce these widths. AA is an extension of IA which is able to track ‘the dependency between variables throughout calculations’ [<xref ref-type="bibr" rid="bibr39-1748006X11422624">39</xref>].</p>
+</sec>
+</body>
+<back>
+<app-group>
+<app id="app1-1748006X11422624">
+<title>Appendix</title>
+<sec id="section10-1748006X11422624">
+<title>Notation</title>
+<p>IA interval arithmetic</p>
+<p>ISR interval version of state reduction</p>
+<p><italic>k</italic> number of different transition rates</p>
+<p>LS linear system</p>
+<p>MC Monte Carlo</p>
+<p><italic>n</italic> number of states</p>
+<p>PDF probability density function</p>
+<p><bold>Q</bold> transition rate matrix</p>
+<p>SR state reduction</p>
+<p>TR transition rate</p>
+<p><italic>λ<sub>ij</sub></italic> transition rate from state <italic>i</italic> to state <italic>j</italic></p>
+<p><italic><bold>π</bold></italic> steady state probability vector = (π<sub>1</sub>, π<sub>2</sub>, …, π<italic><sub>n</sub></italic>)<sup>T</sup></p>
+<p>π<italic><sub>i</sub></italic> steady state probability of state <italic>i</italic></p>
+</sec>
+</app>
+</app-group>
+<ack>
+<p>The author thanks the reviewers for suggestions and comments which improved the paper.</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<p>This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1748006X11422624">
+<label>1</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Billinton</surname><given-names>R.</given-names></name>
+<name><surname>Allan</surname><given-names>R.</given-names></name>
+</person-group> <source>Reliability evaluation of engineering systems</source>, <edition>2nd edition</edition>, <year>1992</year> (<publisher-name>Plenum Press</publisher-name>, <publisher-loc>New York</publisher-loc>).</citation>
+</ref>
+<ref id="bibr2-1748006X11422624">
+<label>2</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Havekort</surname><given-names>B.</given-names></name>
+<name><surname>Meewissen</surname><given-names>A.</given-names></name>
+</person-group> <article-title>Sensitivity and uncertainty analysis of Markov-reward models</article-title>. <source>IEEE Trans. Reliability</source>, <year>1995</year>, <volume>44</volume>(<issue>1</issue>), <fpage>147</fpage>–<lpage>153</lpage>.</citation>
+</ref>
+<ref id="bibr3-1748006X11422624">
+<label>3</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tombuyses</surname><given-names>B.</given-names></name>
+<name><surname>Devooght</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Solving Markovian systems of O.D.E. for availability and reliability calculations</article-title>. <source>Reliability Engng System Safety</source>, <year>1995</year>, <volume>48</volume>, <fpage>47</fpage>–<lpage>55</lpage>.</citation>
+</ref>
+<ref id="bibr4-1748006X11422624">
+<label>4</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Labeau</surname><given-names>P. E.</given-names></name>
+</person-group> <article-title>A Monte Carlo estimation of the marginal distributions in a problem of probabilistic dynamics</article-title>. <source>Reliability Engng System Safety</source>, <year>1996</year>, <volume>52</volume>, <fpage>65</fpage>–<lpage>75</lpage>.</citation>
+</ref>
+<ref id="bibr5-1748006X11422624">
+<label>5</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>De Boor</surname><given-names>C.</given-names></name>
+<name><surname>Conte</surname><given-names>S. D.</given-names></name>
+</person-group> <source>Elementary numerical analysis, an algorithmic approach</source>, <edition>2nd edition</edition> <year>1972</year>, <edition>3rd edition</edition>, <year>1980</year> (<publisher-name>McGraw-Hill</publisher-name>, <publisher-loc>New York</publisher-loc>).</citation>
+</ref>
+<ref id="bibr6-1748006X11422624">
+<label>6</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Morgan</surname><given-names>M. G.</given-names></name>
+<name><surname>Henrion</surname><given-names>M.</given-names></name>
+</person-group> <source>Uncertainty: a guide to dealing with uncertainty in quantitative risk and policy analysis</source>, <year>1990</year> (<publisher-name>Cambridge University Press</publisher-name>, <publisher-loc>Cambridge</publisher-loc>).</citation>
+</ref>
+<ref id="bibr7-1748006X11422624">
+<label>7</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Hartfiel</surname><given-names>D. J.</given-names></name>
+</person-group> <source>Markov set-chains</source>, <year>1998</year> (<publisher-name>Springer</publisher-name>, <publisher-loc>Berlin</publisher-loc>).</citation>
+</ref>
+<ref id="bibr8-1748006X11422624">
+<label>8</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kozine</surname><given-names>I. O.</given-names></name>
+<name><surname>Utkin</surname><given-names>L. V.</given-names></name>
+</person-group> <article-title>Interval-valued finite Markov chains</article-title>. <source>Reliable Comput.</source>, <year>2002</year>, <volume>8</volume>(<issue>2</issue>), <fpage>97</fpage>–<lpage>113</lpage>.</citation>
+</ref>
+<ref id="bibr9-1748006X11422624">
+<label>9</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>De Cooman</surname><given-names>G.</given-names></name>
+<name><surname>Hermans</surname><given-names>F.</given-names></name>
+<name><surname>Quaeghebeur</surname><given-names>E.</given-names></name>
+</person-group> <article-title>Imprecise Markov chains and their limit behaviour</article-title>. <source>Probability Engng Inf. Sci.</source>, <year>2009</year>, <volume>23</volume>, <fpage>597</fpage>–<lpage>635</lpage>.</citation>
+</ref>
+<ref id="bibr10-1748006X11422624">
+<label>10</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Škulj</surname><given-names>D.</given-names></name>
+</person-group> <article-title>Discrete time Markov chains with interval probabilities</article-title>. <source>Int. J. Approximate Reasoning</source>, <year>2009</year>, <volume>50</volume>, <fpage>1314</fpage>–<lpage>1329</lpage>.</citation>
+</ref>
+<ref id="bibr11-1748006X11422624">
+<label>11</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Crossman</surname><given-names>R. J.</given-names></name>
+<name><surname>Škulj</surname><given-names>D.</given-names></name>
+</person-group> <article-title>Imprecise Markov chains with absorption</article-title>. <source>Int. J. Approximate Reasoning</source>, <year>2010</year>, <volume>51</volume>, <fpage>1085</fpage>–<lpage>1099</lpage>.</citation>
+</ref>
+<ref id="bibr12-1748006X11422624">
+<label>12</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Baudrit</surname><given-names>C.</given-names></name>
+<name><surname>Dubois</surname><given-names>D.</given-names></name>
+<name><surname>Perrot</surname><given-names>N.</given-names></name>
+</person-group> <article-title>Representing parametric models tainted with imprecision</article-title>. <source>Fuzzy Sets Systems</source>, <year>2008</year>, <volume>159</volume>, <fpage>1913</fpage>–<lpage>1928</lpage>.</citation>
+</ref>
+<ref id="bibr13-1748006X11422624">
+<label>13</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Limbourg</surname><given-names>P.</given-names></name>
+<name><surname>de Racquigny</surname><given-names>E.</given-names></name>
+</person-group> <article-title>Uncertainty analysis using evidence theory-confronting level-1 and level-2 approaches with data availability and computational constraints</article-title>. <source>Reliability Engng System Safety</source>, <year>2010</year>, <volume>95</volume>, <fpage>550</fpage>–<lpage>564</lpage>.</citation>
+</ref>
+<ref id="bibr14-1748006X11422624">
+<label>14</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Do Van</surname><given-names>P.</given-names></name>
+<name><surname>Barros</surname><given-names>A.</given-names></name>
+<name><surname>Bérenguer</surname><given-names>C.</given-names></name>
+</person-group> <article-title>Reliability importance analysis of Markovian systems at steady state using perturbation analysis</article-title>. <source>Reliability Engng System Safety</source>, <year>2008</year>, <volume>93</volume>(<issue>11</issue>), <fpage>1605</fpage>–<lpage>1615</lpage>.</citation>
+</ref>
+<ref id="bibr15-1748006X11422624">
+<label>15</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Do Van</surname><given-names>P.</given-names></name>
+<name><surname>Barros</surname><given-names>A.</given-names></name>
+<name><surname>Bérenguer</surname><given-names>C.</given-names></name>
+</person-group> <article-title>From differential to difference importance measures for Markov reliability models</article-title>. <source>Eur. J. Opl Res.</source>, <year>2010</year>, <volume>204</volume>, <fpage>513</fpage>–<lpage>521</lpage>.</citation>
+</ref>
+<ref id="bibr16-1748006X11422624">
+<label>16</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Abdallah</surname><given-names>H.</given-names></name>
+<name><surname>Marie</surname><given-names>R.</given-names></name>
+</person-group> <article-title>The uniformized power method for transient solutions of Markov processes</article-title>. <source>Comput. Ops Res.</source>, <year>1993</year>, <volume>20</volume>(<issue>5</issue>), <fpage>515</fpage>–<lpage>526</lpage>.</citation>
+</ref>
+<ref id="bibr17-1748006X11422624">
+<label>17</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Dai</surname><given-names>L.</given-names></name>
+</person-group> <article-title>Rate of convergence for derivative estimation of discrete-time Markov chains via finite-difference approximation with common random numbers</article-title>. <source>SIAM J. Appl. Math.</source>, <year>1997</year>, <volume>57</volume>(<issue>3</issue>), <fpage>731</fpage>–<lpage>751</lpage>.</citation>
+</ref>
+<ref id="bibr18-1748006X11422624">
+<label>18</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Shooman</surname><given-names>M.</given-names></name>
+</person-group> <source>Probabilistic reliability: an engineering approach</source>, <edition>2nd edition</edition>, <year>1990</year> (<publisher-name>Krieger Publishing</publisher-name>, <publisher-loc>Malabar, Florida</publisher-loc>).</citation>
+</ref>
+<ref id="bibr19-1748006X11422624">
+<label>19</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Aperjis</surname><given-names>D.</given-names></name>
+<name><surname>White</surname><given-names>D. C.</given-names></name>
+<name><surname>Schweppe</surname><given-names>F. C.</given-names></name>
+<name><surname>Mettler</surname><given-names>M.</given-names></name>
+<name><surname>Merrill</surname><given-names>H. M.</given-names></name>
+</person-group> <article-title>Energy strategy planning for electric utilities, Part II, SMARTE methodology case study</article-title>. <source>IEEE Trans. Power Apparatus Systems</source>, <year>1982</year>, <volume>101</volume>(<issue>2</issue>), <fpage>347</fpage>–<lpage>355</lpage>.</citation>
+</ref>
+<ref id="bibr20-1748006X11422624">
+<label>20</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Merrill</surname><given-names>H. M.</given-names></name>
+<name><surname>Schweppe</surname><given-names>F. C.</given-names></name>
+</person-group> <article-title>Energy strategy planning for electric utilities, Part II, SMARTE methodology</article-title>. <source>IEEE Trans. Power Apparatus Systems</source>, <year>1982</year>, <volume>101</volume>(<issue>2</issue>), <fpage>340</fpage>–<lpage>346</lpage>.</citation>
+</ref>
+<ref id="bibr21-1748006X11422624">
+<label>21</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Ferson</surname><given-names>S.</given-names></name>
+<name><surname>Kreinovich</surname><given-names>V.</given-names></name>
+<name><surname>Hajagos</surname><given-names>J.</given-names></name>
+<name><surname>Oberkampf</surname><given-names>W.</given-names></name>
+<name><surname>Ginzburg</surname><given-names>L.</given-names></name>
+</person-group> <article-title>Experimental uncertainty estimation and statistics for data having interval uncertainty. Report SAND2007-0939</article-title>, <publisher-name>Sandia National Laboratories</publisher-name>, <publisher-loc>Albuquerque, New Mexico, USA</publisher-loc>, <year>2007</year>, <comment>available from <ext-link ext-link-type="uri" xlink:href="http://www.ramas.com/intstats.pdf">http://www.ramas.com/intstats.pdf</ext-link></comment>.</citation>
+</ref>
+<ref id="bibr22-1748006X11422624">
+<label>22</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Alvarado</surname><given-names>F.</given-names></name>
+<name><surname>Wang</surname><given-names>Z.</given-names></name>
+</person-group> <article-title>Interval arithmetic in power flow analysis</article-title>. <source>IEEE Trans. Power Systems</source>, <year>1992</year>, <volume>7</volume>(<issue>3</issue>), <fpage>1341</fpage>–<lpage>1349</lpage>.</citation>
+</ref>
+<ref id="bibr23-1748006X11422624">
+<label>23</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Piccolo</surname><given-names>A.</given-names></name>
+<name><surname>Vaccaro</surname><given-names>A.</given-names></name>
+<name><surname>Villacci</surname><given-names>D.</given-names></name>
+</person-group> <article-title>Thermal rating assessment of overhead lines by affine arithmetic</article-title>. <source>Electric Power Systems Res.</source>, <year>2004</year>, <volume>71</volume>, <fpage>275</fpage>–<lpage>283</lpage>.</citation>
+</ref>
+<ref id="bibr24-1748006X11422624">
+<label>24</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ferson</surname><given-names>S.</given-names></name>
+<name><surname>Ginzburg</surname><given-names>L. R.</given-names></name>
+</person-group> <article-title>Different methods are needed to propagate ignorance and variability</article-title>. <source>Reliability Engng System Safety</source>, <year>1996</year>, <volume>54</volume>(<issue>2–3</issue>), <fpage>133</fpage>–<lpage>144</lpage>.</citation>
+</ref>
+<ref id="bibr25-1748006X11422624">
+<label>25</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Huber</surname><given-names>W. A.</given-names></name>
+</person-group> <article-title>Ignorance is not probability</article-title>. <source>Risk Analysis</source>, <year>2010</year>, <volume>30</volume>(<issue>3</issue>), <fpage>371</fpage>–<lpage>376</lpage>.</citation>
+</ref>
+<ref id="bibr26-1748006X11422624">
+<label>26</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Rocco</surname><given-names>S. C. M.</given-names></name>
+</person-group> <article-title>Uncertainty analysis of Markov systems using interval arithmetic</article-title>. In <source>Proceedings of the Fifth International Conference on Probabilistic Methods Applied to Power Systems</source>, (Ed. <person-group person-group-type="editor">
+<name><surname>Gutwin</surname><given-names>T. B.</given-names></name>
+</person-group>) <year>1997</year>, pp. <fpage>311</fpage>-<lpage>316</lpage> (<publisher-name>BC Hydro</publisher-name>, <publisher-loc>Vancouver, Canada</publisher-loc>).</citation>
+</ref>
+<ref id="bibr27-1748006X11422624">
+<label>27</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Ferson</surname><given-names>S.</given-names></name>
+<name><surname>Tucker</surname><given-names>W. T.</given-names></name>
+</person-group> <article-title>Sensitivity in risk analyses with uncertain numbers</article-title>. <comment>Report SAND2006-2801</comment>, <publisher-name>Sandia National Laboratories</publisher-name>, <publisher-loc>Albuquerque, New Mexico, USA</publisher-loc>, <year>2006</year>.</citation>
+</ref>
+<ref id="bibr28-1748006X11422624">
+<label>28</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Enszer</surname><given-names>J. A.</given-names></name>
+<name><surname>Lin</surname><given-names>Y.</given-names></name>
+<name><surname>Ferson</surname><given-names>S.</given-names></name>
+<name><surname>Corliss</surname><given-names>G. F.</given-names></name>
+<name><surname>Stadtherr</surname><given-names>M. A.</given-names></name>
+</person-group> <article-title>Propagating uncertainties in modeling nonlinear dynamic systems</article-title>. In <conf-name>Proceedings of the Third International Workshop on Reliable Engineering Computing</conf-name>, <conf-loc>Savannah, Georgia, USA</conf-loc>, <conf-date>20–22 February 2008</conf-date>, pp. <fpage>89</fpage>–<lpage>105</lpage> (<publisher-name>Georgia Institute of Technology</publisher-name>, <publisher-loc>Savannah, Georgia</publisher-loc>).</citation>
+</ref>
+<ref id="bibr29-1748006X11422624">
+<label>29</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kumar</surname><given-names>S.</given-names></name>
+<name><surname>Billinton</surname><given-names>R.</given-names></name>
+</person-group> <article-title>A stable algorithm to calculate steady state probability and frequency of Markov system</article-title>. <source>IEEE Trans. Reliability</source>, <year>1987</year>, <volume>36</volume>(<issue>1</issue>), <fpage>58</fpage>–<lpage>62</lpage>.</citation>
+</ref>
+<ref id="bibr30-1748006X11422624">
+<label>30</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Moore</surname><given-names>R.</given-names></name>
+</person-group> <source>Methods and applications of interval analysis</source>, <comment>SIAM Studies in Applied Mathematics</comment>, <year>1979</year> (<publisher-name>SIAM</publisher-name>, <publisher-loc>Philadelphia, Pennsylvania</publisher-loc>).</citation>
+</ref>
+<ref id="bibr31-1748006X11422624">
+<label>31</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Hansen</surname><given-names>E.</given-names></name>
+<name><surname>Walster</surname><given-names>G. W.</given-names></name>
+</person-group> <source>Global optimization using interval analysis</source>, <edition>2nd edition</edition>, <year>2004</year> (<publisher-name>Marcel Dekker</publisher-name>, <publisher-loc>New York</publisher-loc>).</citation>
+</ref>
+<ref id="bibr32-1748006X11422624">
+<label>32</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Alefeld</surname><given-names>G.</given-names></name>
+<name><surname>Herzberger</surname><given-names>J.</given-names></name>
+</person-group> <source>Introduction to interval computations</source>, <year>1983</year> (<publisher-name>Academic Press</publisher-name>, <publisher-loc>New York</publisher-loc>).</citation>
+</ref>
+<ref id="bibr33-1748006X11422624">
+<label>33</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Hyvönen</surname><given-names>E.</given-names></name>
+<name><surname>De Pascale</surname><given-names>S.</given-names></name>
+</person-group> <article-title>LIA InC++: a local interval arithmetic library</article-title>. <comment>Research Report</comment>, <publisher-name>VTT Technical Research Centre of Finland, Information Technology</publisher-name>, <publisher-loc>Helsinki, Finland</publisher-loc>, <year>1994</year>.</citation>
+</ref>
+<ref id="bibr34-1748006X11422624">
+<label>34</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Kearfott</surname><given-names>R. B.</given-names></name>
+</person-group> <article-title>INTLIB: a portable FORTRAN 77 elementary function library</article-title>. <comment>Preprint</comment>, <publisher-name>Department of Mathematics, University of Southwestern Louisiana</publisher-name>, <publisher-loc>Lafayette, Louisiana, USA</publisher-loc>, <year>1992</year>.</citation>
+</ref>
+<ref id="bibr35-1748006X11422624">
+<label>35</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hansen</surname><given-names>E.</given-names></name>
+</person-group> <article-title>Bounding the solutions of interval linear equations</article-title>. <source>SIAM J. Numer. Analysis</source>, <year>1992</year>, <volume>29</volume>(<issue>5</issue>), <fpage>1493</fpage>–<lpage>1503</lpage>.</citation>
+</ref>
+<ref id="bibr36-1748006X11422624">
+<label>36</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kearfott</surname><given-names>R. B.</given-names></name>
+</person-group> <article-title>Preconditioners for the interval Gauss–Seidel method</article-title>. <source>SIAM J. Numer. Analysis</source>, <year>1990</year>, <volume>27</volume>(<issue>3</issue>), <fpage>804</fpage>–<lpage>822</lpage>.</citation>
+</ref>
+<ref id="bibr37-1748006X11422624">
+<label>37</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Rocco S.</surname><given-names>C. M.</given-names></name>
+</person-group> <article-title>A global sensitivity approach for the assessment of the transition-rate importance in Markov models</article-title>. <source>IIE Trans.</source>, <year>2011</year> (<comment>submitted</comment>).</citation>
+</ref>
+<ref id="bibr38-1748006X11422624">
+<label>38</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Comba</surname><given-names>J. L. D.</given-names></name>
+<name><surname>Stolfi</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Affine arithmetic and its applications to computer graphics</article-title>. In <conf-name>Anais do VI Simpósio Brasileiro de Computação Gráfica e Processamento de Imagens</conf-name>, <conf-date>1993</conf-date>, pp. <fpage>9</fpage>–<lpage>18</lpage> (<conf-loc>Recife, Pernambuco, Brazil</conf-loc>) <ext-link ext-link-type="uri" xlink:href="http://www.dcc.unicamp.br/~stolfi/">http://www.dcc.unicamp.br/~stolfi/</ext-link></citation>
+</ref>
+<ref id="bibr39-1748006X11422624">
+<label>39</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Degrauwe</surname><given-names>D.</given-names></name>
+<name><surname>Lombaert</surname><given-names>G.</given-names></name>
+<name><surname>De Roeck</surname><given-names>G.</given-names></name>
+</person-group> <article-title>Improving interval analysis in finite element calculations by means of affine arithmetic</article-title>. <source>Comput. Structs</source>, <year>2010</year>, <volume>88</volume>, <fpage>247</fpage>–<lpage>254</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

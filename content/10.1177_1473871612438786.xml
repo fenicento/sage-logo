@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">IVI</journal-id>
+<journal-id journal-id-type="hwp">spivi</journal-id>
+<journal-title>Information Visualization</journal-title>
+<issn pub-type="ppub">1473-8716</issn>
+<issn pub-type="epub">1473-8724</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1473871612438786</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1473871612438786</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Heapviz: Interactive heap visualization for program understanding and debugging</article-title>
+</title-group>
+<contrib-group content-type="issue">
+<contrib contrib-type="guest-editor">
+<name><surname>Telea</surname><given-names>Alexandru C.</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Görg</surname><given-names>Carsten</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Reiss</surname><given-names>Steven</given-names></name>
+</contrib>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Kelley</surname><given-names>Sean</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Aftandilian</surname><given-names>Edward</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Gramazio</surname><given-names>Connor</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Ricci</surname><given-names>Nathan</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Su</surname><given-names>Sara L.</given-names></name>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Guyer</surname><given-names>Samuel Z.</given-names></name>
+</contrib>
+<aff id="aff1-1473871612438786">Department of Computer Science, Tufts University, Medford, MA, USA</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-1473871612438786">Samuel Z. Guyer, Halligan Hall 009, 161 College Ave., Medford, MA 02155, USA. Email: <email>sguyer@cs.tufts.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>12</volume>
+<issue>2</issue>
+<issue-title>Special issue: Software Visualization</issue-title>
+<fpage>163</fpage>
+<lpage>177</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Understanding the data structures in a program is crucial to understanding how the program works, or why it does not work. Inspecting the code that implements the data structures, however, is an arduous task and often fails to yield insights into the global organization of a program’s data. Inspecting the actual contents of the heap solves these problems but presents a significant challenge of its own: finding an effective way to present the enormous number of objects it contains.</p>
+<p>In this paper we present <italic>Heapviz</italic>, a tool for visualizing and exploring snapshots of the heap obtained from a running Java program. Unlike existing tools, such as traditional debuggers, Heapviz presents a global view of the program state as a graph, together with powerful interactive capabilities for navigating it. Our tool employs several key techniques that help manage the scale of the data. First, we reduce the size and complexity of the graph by using algorithms inspired by static shape analysis to aggregate the nodes that make up a data structure. Second, we implement a powerful visualization component whose interactive interface provides extensive support for exploring the graph. The user can search for objects based on type, connectivity, and field values; group objects; and color or hide and show each group. The user may also inspect individual objects to see their field values and neighbors in the graph. These interactive abilities help the user manage the complexity of these huge graphs.</p>
+<p>By applying Heapviz to both constructed and real-world examples, we show that it provides programmers with a powerful and intuitive tool for exploring program behavior.</p>
+</abstract>
+<kwd-group>
+<kwd>Software visualization</kwd>
+<kwd>program visualization</kwd>
+<kwd>interactive graph visualization</kwd>
+<kwd>interactive visualization</kwd>
+<kwd>graph visualization</kwd>
+<kwd>force-directed layout</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1473871612438786" sec-type="intro">
+<title>Introduction</title>
+<p><disp-quote>
+<p>Show me your flowcharts and conceal your tables, and I shall continue to be mystified. Show me your tables, and I won’t usually need your flowcharts; they’ll be obvious.</p>
+<attrib>Fred Brooks<sup><xref ref-type="bibr" rid="bibr1-1473871612438786">1</xref></sup></attrib>
+</disp-quote></p>
+<p>Understanding modern software has become a significant challenge, even for expert programmers. Part of the problem is that today’s programs are larger and more complex than their predecessors, in terms of static code base (lines of code), runtime behavior, and memory footprint. Another problem is that modern applications, such as web-based e-commerce and cloud computing platforms, are constructed by assembling reusable software components, ranging from simple container classes to huge middleware frameworks. In many cases, these components are instantiated dynamically and wired together using techniques such as reflection or bytecode rewriting. These features make it very challenging for any one programmer to obtain a global understanding of the program’s state and behavior.</p>
+<p>The size and complexity of software is also a major impediment to program-understanding tools, particularly those based on static analysis of the code. The programming techniques described above often result in very imprecise information that is of little value to the programmer. Tools that analyze the dynamic behavior of programs have traditionally focused on identifying performance problems rather than on general program understanding.<sup><xref ref-type="bibr" rid="bibr2-1473871612438786">2</xref><xref ref-type="bibr" rid="bibr3-1473871612438786"/>–<xref ref-type="bibr" rid="bibr4-1473871612438786">4</xref></sup> The primary technique currently available for inspecting program state is the debugger, which is extremely painful to use for anything but the smallest data structures.</p>
+<p>In this paper we present a new tool called <italic>Heapviz</italic> that is capable of effectively visualizing heap snapshots obtained from running Java programs. By visualizing the actual contents of the heap, we avoid the drawbacks of static analysis tools: the problems caused by dynamic software architectures and the inaccuracy of heap approximation. The main challenge of our approach is the scale of the data: even a modest program can contain an enormous number of objects. We visualize the heap as a graph in which nodes represent objects and edges represent pointers (object references) between them. Our work leverages the Prefuse visualization toolkit,<sup><xref ref-type="bibr" rid="bibr5-1473871612438786">5</xref></sup> which provides a rich set of software tools for building interactive visualizations. Unlike traditional debuggers, Heapviz provides a global view of the data together with powerful interactive capabilities.</p>
+<p>Our solution involves two techniques. First, we introduce algorithms for aggregating and abstracting individual objects to create a more succinct summary of the heap. For example, we might display all the elements of a large container using a single representative element. Second, we implement an interactive visualization that allows the user to (a) inspect individual objects and field values, (b) search for objects based on type and field values, (c) group objects and hide/show/color the groups, and (d) explore the connectivity of the object graph.</p>
+<p>We demonstrate Heapviz on both constructed examples and real-world Java benchmark programs to evaluate its effectiveness as a tool for helping programmers visualize and navigate large, pointer-based data structures at both whole program and individual data structure scales. This ability could greatly increase programmer productivity in many aspects of software construction and maintenance, including finding bugs and memory leaks, identifying opportunities to improve data structures, understanding the overall system architecture and interaction between software components, and helping new members on a development team come up to speed on the code quickly.</p>
+</sec>
+<sec id="section2-1473871612438786">
+<title>Related work</title>
+<p>Previous work on program analysis and understanding includes a number of techniques for visualizing the behavior of programs. A large body of prior research has focused primarily on helping programmers navigate and visualize the <italic>code</italic>.<sup><xref ref-type="bibr" rid="bibr6-1473871612438786">6</xref><xref ref-type="bibr" rid="bibr7-1473871612438786"/><xref ref-type="bibr" rid="bibr8-1473871612438786"/>–<xref ref-type="bibr" rid="bibr9-1473871612438786">9</xref></sup> As many computing researchers and practitioners have observed, however, understanding the <italic>data structures</italic> of a program is often more valuable. Techniques for determining the structure of data in the heap fall into two main categories: static analysis and dynamic analysis. Static analysis algorithms, such as shape analysis,<sup><xref ref-type="bibr" rid="bibr10-1473871612438786">10</xref>,<xref ref-type="bibr" rid="bibr11-1473871612438786">11</xref></sup> build a compile-time approximation of possible heap configurations. In many cases, however, these abstractions are too imprecise for detailed program understanding and debugging tasks.</p>
+<p>Our work is most closely related to dynamic analysis tools that analyze the concrete heap (or a memory trace) in order to present the programmer with a graph or other visual representation of the actual state of the program. As the main challenge for these tools is managing the scale of the data, the critical feature that distinguishes them is how they aggregate information for the user. Different choices lead to suitability for different tasks. Our specific goal for Heapviz is to help programmers understand the overall organization and structure of data.</p>
+<p>Several existing tools provide programmers with an unabstracted graphical representation of the concrete heap.<sup><xref ref-type="bibr" rid="bibr12-1473871612438786">12</xref><xref ref-type="bibr" rid="bibr13-1473871612438786"/>–<xref ref-type="bibr" rid="bibr14-1473871612438786">14</xref></sup> Without aggregation or interactive navigation, however, these visualizations do not scale well beyond a few hundred or thousand objects. Pheng and Verbrugge<sup><xref ref-type="bibr" rid="bibr15-1473871612438786">15</xref></sup> present a tool with two visualizations of the heap. The first is a detailed graph of individual objects and pointers, with no abstraction. Nodes are displayed according to the shape to which they belong (list, tree, or Directed Acyclic Graph (DAG)-from Ghiya and Hendren<sup><xref ref-type="bibr" rid="bibr10-1473871612438786">10</xref></sup>). The second visualization consists of a line graph of the overall heap contents over time broken down by shape category. Their tool focuses on the evolution of the heap over time; Heapviz, on the other hand, aims to make a single snapshot of the heap comprehensible.</p>
+<p>A number of existing heap visualization tools focus primarily on identifying memory utilization problems, such as memory bloat and memory leaks. The main difference between Heapviz and these tools is that they give up much of the detail of the heap organization necessary to understand how the data structures work.</p>
+<p>De Pauw et al.<sup><xref ref-type="bibr" rid="bibr16-1473871612438786">16</xref></sup> present a tool aimed at finding spurious object references. The tool collapses the heap graph by aggregating groups of objects with similar reference patterns. It also supports interactive navigation and expanding and contracting of aggregated nodes. While similar in spirit, this tool is focused on finding spurious references and requires some programmer intervention to identify which references to record and display.</p>
+<p>Several tools aggregate objects by ownership.<sup><xref ref-type="bibr" rid="bibr17-1473871612438786">17</xref><xref ref-type="bibr" rid="bibr18-1473871612438786"/>–<xref ref-type="bibr" rid="bibr19-1473871612438786">19</xref></sup> These tools first analyze the heap and build a model of object ownership, then aggregate objects that have similar patterns of ownership, type, or lifetime. The visualization typically presents the abstracted graph with annotations that summarize the properties of the aggregated nodes. The DYMEM memory visualization tool<sup><xref ref-type="bibr" rid="bibr20-1473871612438786">20</xref></sup> shows the heap as a strict tree, duplicating subtrees as necessary, and uses an elaborate coloring scheme to indicate the amount of memory used and owned by groups of objects. These tools are often not well suited to general program understanding, however, as they abstract away internal organization and individual objects.</p>
+<p>Demsky and Rinard<sup><xref ref-type="bibr" rid="bibr21-1473871612438786">21</xref></sup> present a heap visualization based on a dynamic analysis of object <italic>roles</italic>, or patterns of use in the program. The tool generates a role transition diagram, which focuses on object life cycles, rather than the overall organization of the data. Although this tool presents a unique view, scalability appears to be a concern for large programs.</p>
+<p>Most closely related to Heapviz is the work of Marron et al.<sup><xref ref-type="bibr" rid="bibr22-1473871612438786">22</xref></sup> They process the heap graph using an abstract function previously developed for use in a sophisticated static pointer analysis. The analysis attempts to preserve information about internal structure (such as sharing) whenever nodes are collapsed.</p>
+</sec>
+<sec id="section3-1473871612438786">
+<title>System overview</title>
+<p>In this section, we provide a brief overview of the architecture of Heapviz. We go into further detail in “Heap analysis” and “Heap visualization” sections. The full Heapviz pipeline (<xref ref-type="fig" rid="fig1-1473871612438786">Figure 1</xref>) consists of three major parts:</p>
+<list id="list1-1473871612438786" list-type="order">
+<list-item><p>JVM + HPROF. Generates a heap snapshot from a running Java program using the HPROF tool<sup><xref ref-type="bibr" rid="bibr4-1473871612438786">4</xref></sup> provided by Sun with the Java Development Kit.</p></list-item>
+<list-item><p>Heap analyzer. Parses the heap snapshot, builds a graphical representation of the concrete heap, summarizes the graph, and outputs the resulting heap abstraction.</p></list-item>
+<list-item><p>Heap visualizer. Reads the heap abstraction and displays the (possibly large) graph, allowing the user to explore it interactively.</p></list-item>
+</list>
+<fig id="fig1-1473871612438786" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>The Heapviz pipeline. The JVM and HPROF generate a heap snapshot from a running Java program. Our heap analyzer then parses this snapshot, builds a graphical representation of the concrete heap, summarizes the graph, and outputs a heap abstraction. Our heap visualizer reads the heap abstraction and displays the graph, enabling the user to explore it interactively.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig1.tif"/>
+</fig>
+<p>Our <italic>heap analyzer</italic> parses the heap snapshot and builds a graphical representation of the concrete heap. It then summarizes the concrete heap using the algorithm described in “Heap analysis” section; we call this summarized graph a <italic>heap abstraction</italic>. Finally, the heap analyzer outputs the heap abstraction to GraphML,<sup><xref ref-type="bibr" rid="bibr23-1473871612438786">23</xref></sup> an XML-based graph format.</p>
+<p>Our <italic>heap visualizer</italic> reads the heap abstraction from the GraphML file and displays the summarized graph. As described further in “Heap visualization” section, it displays the graph using a force-directed layout and allows the user to explore the graph interactively, selecting nodes to view the contents of their fields, querying the graph for nodes of specific types or with certain field values, grouping nodes and applying visual filters to them, and displaying the connections among the objects in the heap.</p>
+</sec>
+<sec id="section4-1473871612438786">
+<title>Heap analysis</title>
+<sec id="section5-1473871612438786">
+<title>Heap snapshot</title>
+<p>Our heap analysis starts with a heap snapshot obtained from a running Java program. The heap snapshot tells us which objects are currently in the heap, what their field values are, including the pointer values, and the values of all root references (static variables and stack references). In addition, the heap snapshot provides the runtime type of each object instance and the number of bytes needed to represent each object.</p>
+<p>We use Sun’s HPROF tool<sup><xref ref-type="bibr" rid="bibr4-1473871612438786">4</xref></sup> to generate heap snapshots. HPROF is an agent that connects to a host Java virtual machine and uses the JVM Tool Interface<sup><xref ref-type="bibr" rid="bibr24-1473871612438786">24</xref></sup> to enumerate all the objects in the program’s heap. HPROF outputs the snapshot in a well-documented binary format that is supported by many third-party profiling and memory analysis tools. HPROF runs on top of any JVM that supports the JVM Tool Interface, so it is independent of JVM implementation.</p>
+<p>One of our goals is to allow the programmer to view the heap at any point in the program’s execution. To support this capability we provide a mechanism for dumping a heap snapshot from within the program itself. As the source to HPROF is provided with the Java Development Kit, we modify it to include a class Dumper with a static method dumpHeap() that generates the heap snapshot when called. The programmer adds a call to dumpHeap() in the source code at the point where a heap visualization is desired.</p>
+</sec>
+<sec id="section6-1473871612438786">
+<title>Heap analyzer</title>
+<sec id="section7-1473871612438786">
+<title>Input format</title>
+<p>Our heap analyzer takes the heap snapshot from HPROF and parses it into a sequence of records. Of interest are the class records, which tell us details about the types of the objects in the heap snapshot, the object instance records, which give the types of these objects and their field values, and the root records, which tell us which heap objects are pointed to by root pointers (stack references and static references). Using these data, the heap analyzer builds a graphical representation of the program heap, mapping object instances to graph vertices, pointer fields to graph edges, and roots to entry points in the graph.</p>
+</sec>
+<sec id="section8-1473871612438786">
+<title>Summarization algorithm</title>
+<p>Typical Java programs may contain 100,000, 1,000,000, or more live objects at any given point in program execution<sup><xref ref-type="bibr" rid="bibr25-1473871612438786">25</xref></sup>; drawing all these objects would make the visualization too cluttered to comprehend and too slow to interact with. Our heap analyzer <italic>summarizes</italic> the graph to make visualization manageable.</p>
+<p>Our summarization algorithm is designed to reduce the size of the graph while retaining the relationship among nodes. Each node in the summary graph represents a set of nodes in the concrete graph with the same runtime type and siconcrete graph. It works by merging nodes in the concrete graph according to a set of rules, and repeatemilar connectivity, and the edges in the summary graph represent sets of edges in the dly applying those rules until it reaches a fixed point.</p>
+<p>The rules for merging are:</p>
+<list id="list2-1473871612438786" list-type="order">
+<list-item><p><bold>If there exists a reference from object</bold> <italic>o</italic><sub>1</sub><bold>to object</bold> <italic>o</italic><sub>2</sub>, <bold>and</bold> <italic>o</italic><sub>1</sub> <bold>and</bold> <italic>o</italic><sub>2</sub> <bold>are of the same type, merge</bold> <italic>o</italic><sub>1</sub><bold>and</bold> <italic>o</italic><sub>2</sub>. This rule merges the recursive backbone of a data structure (e.g. the nodes of a linked list or the nodes in a tree).</p></list-item>
+<list-item><p><bold>If objects</bold> <italic>o</italic><sub>1</sub> <bold>and</bold> <italic>o</italic><sub>2</sub> <bold>have the same set of predecessor objects (objects that point to</bold> <italic>o</italic><sub>1</sub> <bold>or</bold> <italic>o</italic><sub>2</sub>) <bold>and are of the same type, merge</bold> <italic>o</italic><sub>1</sub> <bold>and</bold> <italic>o</italic><sub>2</sub>. This rule merges sets of objects that have the same type and the same connectivity (e.g. the objects contained by a data structure).</p></list-item>
+</list>
+<p>With these two simple rules, our system can compress very large graphs into more manageable ones. Consider the linked-list data structure of <xref ref-type="fig" rid="fig2-1473871612438786">Figure 2</xref>. This linked list contains four objects of type T. Our summarization algorithm first merges all the LinkedList$Entry objects into a single object using Rule 1, and then all the T objects into a single object using Rule 2. Note that the summarized graph looks the same no matter how many elements the linked list contains – whether 4, 400, or 40,000. However, if the linked list contains objects of different types, the summarized graph will contain separate nodes for the set of objects of each type.</p>
+<fig id="fig2-1473871612438786" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>An example of applying our summarization algorithm to a linked list. Our algorithm first summarizes all LinkedList$Entry objects into a single node, then summarizes all T objects into a single node. Note that the summary would look the same regardless of the number of T objects in the linked list.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig2.tif"/>
+</fig>
+</sec>
+<sec id="section9-1473871612438786">
+<title>Output format</title>
+<p>We write the summarized graph in GraphML format<sup><xref ref-type="bibr" rid="bibr23-1473871612438786">23</xref></sup> for the heap visualizer to import and display.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section10-1473871612438786">
+<title>Heap visualization</title>
+<p>Given a heap abstraction in GraphML format from the analyzer described in “Heap analysis” section, Heapviz creates an interactive force-directed layout. The goals of the visualization are to create (1) an intuitive display of summarized heap data and (2) an interactive environment where heap data can be easily explored. Heapviz builds upon the Prefuse toolkit.<sup><xref ref-type="bibr" rid="bibr5-1473871612438786">5</xref></sup> Our implementation focuses on facilitating program understanding and debugging.</p>
+<sec id="section11-1473871612438786">
+<title>Graph display</title>
+<sec id="section12-1473871612438786">
+<title>Force-directed layout</title>
+<p>We selected force direction as the layout algorithm because heap abstractions may be arbitrary graphs. The prior version of Heapviz [citation withheld for blind submission]<sup><xref ref-type="bibr" rid="bibr26-1473871612438786">26</xref></sup> used a radial layout and imposed a tree structure on the graph by computing a dominator tree.We found that such a layout was overly rigid and resulted in somewhat confusing graphs. Instead, force direction minimizes edge crossings in the graph (i.e. makes it as planar as possible) to make the structure clear to the user. In our experience, heap abstractions tend to be planar, near-planar, or can become planar with minimal work from the user.</p>
+<p>Efficient use of screen space is important, as even after summarization the graph may contain several hundred nodes.Force direction strikes a balance between maximizing screen space usage and preserving the structure of the heap abstraction.</p>
+</sec>
+<sec id="section13-1473871612438786">
+<title>Visual encoding</title>
+<p>Instead of relying on a dense visual encoding to convey information to the user,Heapviz displays the bare minimum of expected visual properties and relies on the user to modify the graph to suit his own individual needs through the many interactions that are provided.</p>
+<p>Visual encoding of the graph focuses primarily on node size, labels, and color.The schemes that control each of these properties can be selected by the user. Node size may be constant, a function of the node’s size in bytes,or a function of the number of represented instances.Labels display the type of each object. Color carries many different meanings, including differentiating user-defined node groups (see “Groups” section), selected nodes, and nodes being hovered over.</p>
+</sec>
+</sec>
+<sec id="section14-1473871612438786">
+<title>Interaction</title>
+<p>Heapviz depends on rich interactions to make sense of complex heap data. Its interactions can be grouped into three major categories: graph display, groups, and query and selection. All three types provide a method to quickly examine the member variables of nodes through tooltips in their respective graphical user interface elements.</p>
+<p>The supplemental video demonstrates how the user can interact with Heapviz. Because our work relies on the user’s being able to explore the graph interactively, we recommend that the reader view the video to have a better understanding of how Heapviz works and how it can be used.</p>
+<sec id="section15-1473871612438786">
+<title>Graph display</title>
+<p>Heapviz supports many of the interactions one would expect from an interactive node-edge display in order to make using Heapviz as easy and fluid as possible. Among these are the ability to pan, zoom, drag nodes, and bring up context menus. We support node selection in a variety of ways, including selecting singly, in an area, or based on reachability from given source nodes. The user may tweak the physics simulation to suit the nature of the graph by modifying the simulation parameters through sliders. Edges currently do not support any interactions.</p>
+</sec>
+<sec id="section16-1473871612438786">
+<title>Groups</title>
+<p>Once selected, nodes can be put into groups. This helps the user classify nodes in a meaningful way, extended existing interaction modes with further semantic information and allowing many new interactions. For each group, the user can hide it (to reduce clutter), color it (for easy identification), or combine it with other groups (via union and intersection). Groups provide a familiar and robust framework for adding new interactions or augmenting existing ones.</p>
+</sec>
+<sec id="section17-1473871612438786">
+<title>Query and selection</title>
+<p>Nodes carry a large amount of information on the examined program’s state. Heapviz provides a simple yet powerful query language to harness that information, helping the user find and select nodes that satisfy the query. The language supports querying based on structure alone (e.g. degree() &gt; 3), member variables of the represented objects (e.g. my_boolean == false), type or package information of the objects (e.g. type() == “HashMap” or package() == “java.lang”), or group information (e.g. ingroup(“group1”)). Queries can be chained together with Boolean connectors to create more complex ones, allowing the user the flexibility and power to pinpoint the nodes of interest and to create any desired intermediate groups.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section18-1473871612438786">
+<title>Case studies</title>
+<p>We now present the results of visualizing data structures in several Java programs and use these as a basis for discussion of Heapviz’s strengths and weaknesses. First, we show three constructed examples built using standard Java container classes. Second, we explore three real programs: _209_db,<sup><xref ref-type="bibr" rid="bibr27-1473871612438786">27</xref></sup> SPEC JBB 2000,<sup><xref ref-type="bibr" rid="bibr28-1473871612438786">28</xref></sup> and Heapviz itself.</p>
+<sec id="section19-1473871612438786">
+<title>Constructed examples</title>
+<p>We first consider three examples constructed from standard data structures from the Java class library. In the first example, Heapviz reveals a difficult-to-find performance bug in a hash table with little effort on the user’s part. In the second example, the user takes advantage of Heapviz’s interactive abilities to explore the effect of insertion order on the structure of a red–black tree. In the final example, Heapviz’s summarization algorithm makes clear the sharing of elements contained in three distinct data structures.</p>
+<sec id="section20-1473871612438786">
+<title>Hash table</title>
+<p>Hash tables are widely used in production software, and their average case time complexity is well understood by programmers. Furthermore, programmers understand in the abstract that using a poor hash function will cause too many elements to hash into the same bin, resulting in O(n) time complexity in the worst case. But suppose a programmer is debugging a program that uses a hash table, and she wants to determine whether that hash table has elements distributed evenly into bins. Using a debugger to do this would be extremely tedious, and it would be difficult to instrument library hash table code. Instead, we can use Heapviz to visualize the hash table and see whether elements are evenly distributed among bins.</p>
+<p><xref ref-type="fig" rid="fig3-1473871612438786">Figures 3</xref> and <xref ref-type="fig" rid="fig4-1473871612438786">4</xref> show Heapviz visualizations of two different Java HashMaps containing 100 elements each. The HashMap in <xref ref-type="fig" rid="fig3-1473871612438786">Figure 3</xref> contains elements that use a good hash function, and the one in <xref ref-type="fig" rid="fig4-1473871612438786">Figure 4</xref> contains elements that use a poor hash function. We can clearly see in the bad HashMap that many elements have hashed into the same bucket, and this has produced a long hash chain in that bucket. Thus, if the program performs an insert or lookup on an element that hashes into that bucket, it will pay an O(n) cost instead of the expected O(1) cost. This is obvious from a glance at the Heapviz visualization. Indeed, by examining the field values of the HashMap$Entry objects in the long chain, the programmer can easily determine which bucket is experiencing excess collisions and adjust the hash function accordingly.</p>
+<fig id="fig3-1473871612438786" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>A hash table with a good hashing function. The orange node is the HashMap object, the large node at the center is the array of buckets, and the red nodes on the perimeter are the internal HashMap$Entry objects used to implement the hash chains. All the HashMap$Entry nodes are a short distance from the array of buckets, indicating that the hash function has distributed keys evenly.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig3.tif"/>
+</fig>
+<fig id="fig4-1473871612438786" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>A hash table with a bad hashing function. As in <xref ref-type="fig" rid="fig3-1473871612438786">Figure 3</xref>, the orange node is the HashMap object, the large node at the center is the array of buckets, and the red nodes on the perimeter are the internal HashMap$Entry objects used to implement the hash chains. One hash chain is much longer than the others, indicating an excess of collisions into that bucket.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig4.tif"/>
+</fig>
+</sec>
+<sec id="section21-1473871612438786">
+<title>Red–black tree</title>
+<p>A red–black tree is a type of self-balancing binary search tree that is often used to implement a map data structure.To maintain the balanced property, a set of <bold><italic>tree</italic></bold> rotations may be performed when inserting or removing a node from the tree. In a red–black tree, internal tree nodes are colored either red or black, and every path from a given node to a leaf must contain the same number of black nodes. Thus, the worst case height of the tree is 2logn, which occurs when all nodes are black except for those along one path of alternating red and black nodes.</p>
+<p>Suppose a student wants to learn about red–black trees,specifically how to construct a tree in both the best and worst cases.It would be impractical to examine manually a reasonably sized tree using a debugger, but a visualization of the tree with the nodes colored appropriately would make it obvious whether we have a “good” or “bad” tree. Heapviz’s interactive tools make it easy to create such a visualization.</p>
+<p>Below, we list the five steps a Heapviz user would perform to transform an unsummarized heap graph into an effective diagram of the contained red–black tree. A figure accompanies each step, and our supplemental video demonstrates this procedure. The process takes no more than 90 seconds for an experienced user.</p>
+<list id="list3-1473871612438786" list-type="order">
+<list-item><p>The user loads the graph into Heapviz. Default colors are assigned to connected subgraphs to make separating them easier. Notice the main graph component separating into two subsections (<xref ref-type="fig" rid="fig5-1473871612438786">Figure 5</xref>).</p></list-item>
+<list-item><p>To make navigation easier,the user hides the components that are not connected to the main component.She then hovers over the large Integer array node, highlighting its neighbors.The connectedness of the tree and the highlighted Integer objects tells us that the tree’s data are these Integers (<xref ref-type="fig" rid="fig6-1473871612438786">Figure 6</xref>).</p></list-item>
+<list-item><p>Being interested in only the structure of the tree, the user selects all the Integers at once and hides them. Now,we see a central node of type java.lang.Object holding the graph together.Red–black tree leaf nodes cannot contain data, and many implementations use a single sentinel node to represent all leaves. The user deduces that this central node is the sentinel node and is not important to the structure of the tree (<xref ref-type="fig" rid="fig7-1473871612438786">Figure 7</xref>).</p></list-item>
+<list-item><p>The user hides the sentinel node, and the graph lays itself out. Immediately the tree structure becomes obvious. As all the nodes are the same type, the user has opted to use circles instead of labels to represent nodes to reduce clutter (<xref ref-type="fig" rid="fig8-1473871612438786">Figure 8</xref>).</p></list-item>
+<list-item><p>With two simple queries and a few clicks, the user colors each internal node red or black according to a field value. Now the tree looks as we would expect a red–black tree to look. (<xref ref-type="fig" rid="fig9-1473871612438786">Figure 9</xref>)</p></list-item>
+</list>
+<fig id="fig5-1473871612438786" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>The initial state of a Heapviz visualization of a red–black tree. Notice the main graph component separating into two subsections.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig5.tif"/>
+</fig>
+<fig id="fig6-1473871612438786" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>A Heapviz visualization of a red–black tree while a hover action highlights the immediate neighbors of the large Integer array at the center of the graph. This shows that the tree’s data are in the Integers.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig6.tif"/>
+</fig>
+<fig id="fig7-1473871612438786" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>A Heapviz visualization of a red–black tree after hiding the Integer objects (to focus on the structure of the tree). A single sentinel node of type java.lang.Object ties the graph together.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig7.tif"/>
+</fig>
+<fig id="fig8-1473871612438786" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>A Heapviz visualization of a red–black tree after hiding the sentinel node and setting the node display style to circles instead of labels. The tree structure is now obvious.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig8.tif"/>
+</fig>
+<fig id="fig9-1473871612438786" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>A Heapviz visualization of a red–black tree after coloring the nodes according to a field that indicates whether each node is red or black. Now the graph looks just as we would expect a red–black tree to look. Note that the red nodes are evenly distributed in the tree. This red–black tree was created by inserting keys in a random order.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig9.tif"/>
+</fig>
+<p>Now that we can visualize a red–black tree, we can answer our question about the best and worst cases. <xref ref-type="fig" rid="fig9-1473871612438786">Figure 9</xref> shows a tree that was constructed by inserting keys in a random order. The red nodes are evenly distributed throughout the tree, and all paths from the root to a leaf have approximately the same length. This is the best case. <xref ref-type="fig" rid="fig10-1473871612438786">Figure 10</xref> shows a tree that was constructed by inserting keys in ascending order. The nodes in this tree are all black except for those along one path in which nodes alternate between red and black. This is the worst case because the length of the alternating path is 2logn, whereas all the others arelogn. Thus, by exploring with Heapviz we have learned that inserting keys in order produces the worst-case red–black tree.</p>
+<fig id="fig10-1473871612438786" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>A Heapviz visualization of a red–black tree in which keys were inserted in ascending order. All nodes are black except for those along one path, where red and black nodes alternate – the worst case.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig10.tif"/>
+</fig>
+</sec>
+<sec id="section22-1473871612438786">
+<title>Overlapping elements</title>
+<p>Consider a program that contains multiple data structures. These data structures each contain some subset of the data objects in the program, and these subsets may overlap. That is, of the x objects in data structure x, some are pointed to only by x, some by x and y, and some by x and z. Heapviz can explain this situation.</p>
+<p><xref ref-type="fig" rid="fig11-1473871612438786">Figure 11</xref> shows such a program. This program has three data structures, a TreeMap, a HashSet, and a LinkedList, using the standard implementations in the Java class library. These data structures contain IntBox objects, some of which are shared by two or all three data structures. The unsummarized graph on the left in <xref ref-type="fig" rid="fig11-1473871612438786">Figure 11</xref> gives too much detail to discover this sharing, but the summarized graph makes the sharing clear. Each IntBox node in the summarized graph represents a set of concrete nodes with the same set of concrete predecessor nodes. Thus, the summarized graph explains the sharing of IntBox nodes among the different data structures. For example, we can see that the IntBox objects represented by node a are pointed to only by the HashMap, but the ones represented by nodes c and d are pointed to by both the HashMap and the LinkedList. Thus, we can determine that all IntBox objects in the LinkedList are also in the HashMap, but not all of the ones in the HashMap are in the LinkedList. In the interactive visualization, the user can hover over nodes to see exactly how many IntBox nodes are shared among the data structures, and how many are in only the HashMap.</p>
+<fig id="fig11-1473871612438786" position="float">
+<label>Figure 11.</label>
+<caption>
+<p>A Heapviz visualization of three data structures: a TreeMap, a HashSet, and a LinkedList. Each data structure contains a subset of IntBox objects. The unsummarized graph is on the left, and the summarized graph is on the right. Heapviz reveals the sharing among different data structures without requiring the user to look at the program source code.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig11.tif"/>
+</fig>
+<p>From the nodes and edges in <xref ref-type="fig" rid="fig11-1473871612438786">Figure 11</xref>, without looking at the source code of the program, we can determine that:</p>
+<list id="list4-1473871612438786" list-type="order">
+<list-item><p>There are three data structures in the program: a TreeMap, a HashSet, and a LinkedList.</p></list-item>
+<list-item><p>Each data structure contains objects of type IntBox.</p></list-item>
+<list-item><p>Some IntBox objects (the ones represented by node a) are pointed to by only the HashMap. The user could find the exact number by hovering over node a.</p></list-item>
+<list-item><p>Some IntBox objects are shared by all three data structures (node c), and others are shared by only two (nodes b and d). Again, the exact number can be found by hovering over the appropriate summary node.</p></list-item>
+<list-item><p>The HashMap contains all IntBox objects in the program. The other data structures each contain a strict subset of the IntBox objects.</p></list-item>
+</list>
+<p>Heapviz makes clear the sharing among different data structures without requiring the user to look at the program source code.</p>
+</sec>
+</sec>
+<sec id="section23-1473871612438786">
+<title>Real examples</title>
+<p>Now we assess Heapviz’s visualization of three real-world programs, _209_db,<sup><xref ref-type="bibr" rid="bibr27-1473871612438786">27</xref></sup> SPEC JBB 2000,<sup><xref ref-type="bibr" rid="bibr28-1473871612438786">28</xref></sup> and Heapviz itself. We consider how Heapviz is successful in helping us understand the data structures in _209_db, why it is less successful in summarizing the graph from SPEC JBB 2000, and how it can be used to diagnose its own excessive memory use.</p>
+<sec id="section24-1473871612438786">
+<title>_209_db</title>
+<p>_209_db is a database benchmark from the SPEC JVM 98 benchmark suite.<sup><xref ref-type="bibr" rid="bibr26-1473871612438786">26</xref></sup> It performs multiple database operations on an in-memory database. We took a heap snapshot of an execution of _209_db just after the database is built from an input file and before any operations are performed on the database. <xref ref-type="fig" rid="fig12-1473871612438786">Figure 12</xref> shows the summarized visualization on the top left, with the inset zoomed to show the program’s primary data structure</p>
+<fig id="fig12-1473871612438786" position="float">
+<label>Figure 12.</label>
+<caption>
+<p>A summarized visualization of the _209_db benchmark. The top left shows the full graph, with the inset zoomed to show the program’s primary data structure, a database. This database contains two vector objects, each containing strings or database entries. The node representing all entries in this database summarizes 15,332 nodes. Each database entry contain a vector of strings; the total number of these strings in the database is 122,656.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig12.tif"/>
+</fig>
+<p>Before summarization, the graph contained 294,002 objects; after summarization, it contained 254. Because nodes in the visualization are sized by the amount of data they represent, it is easy to pick out visually the primary data structure in the program: an object of type spec.benchmarks._209_db.Database. This database contains two vector objects (vectors are growable arrays of objects), which each contain strings or database entries. The node that represents all database entries in this database summarizes 15,332 nodes. The database entries then each contain a vector of strings; the total number of these strings in the database is 122,656.</p>
+<p>By inspecting the source code of _209_db, we can explain what these data mean. One of the two vector objects pointed to by the database is used to store a format string that describes the records included in each entry. The other vector holds the database entries. Each database entry uses a vector to hold strings for each record: name, address, city, state, and so on. Though we had to look at the source code to understand this program, the visualization quickly showed us the primary data structure in the program and its high-level structure.</p>
+</sec>
+<sec id="section25-1473871612438786">
+<title>SPEC JBB 2000</title>
+<p>The SPEC JBB 2000<sup><xref ref-type="bibr" rid="bibr27-1473871612438786">27</xref></sup> benchmark emulates a three-tier client–server system, with the database replaced by an in-memory tree and clients replaced by driver threads.The system models a wholesale company, with warehouses serving different districts and customers placing orders.We took a heap snapshot of SPEC JBB 2000 during the destroy() method of the District class in order to understand the sharing of Order objects stored by the District.</p>
+<p>A full visualization of the SPEC JBB 2000 heap snapshot is shown in <xref ref-type="fig" rid="fig13-1473871612438786">Figure 13</xref>.From the 117,819 objects in the concrete heap at this point in program execution, we produce a summarized graph of 7578 nodes,a reduction of 93.5%.Although some large data structures are visible after application of the summarization algorithm,the graph is still too visually complex.</p>
+<fig id="fig13-1473871612438786" position="float">
+<label>Figure 13.</label>
+<caption>
+<p>A summarized visualization of the SPEC JBB 2000 benchmark, which contains 117,819 objects in the concrete heap at this point in program execution. The summarized graph contains 7578 nodes. Although some large data structures are visible after this significant reduction, the graph is still cluttered.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig13.tif"/>
+</fig>
+<p>The characteristics of these data provide some clues as to limitations of the summarization algorithm.SPEC JBB 2000 represents an extreme form of the simple program discussed in “Overlapping Elements” section, with a dense web of connections among what we could consider the “leaves” of the data structures – objects that represent the individual elements of the program, such as customers and orders. In SPEC JBB, many of these “leaves” point to other “leaves” and have a one-to-one relationship. This one-to-one pointer mapping gives each of these “leaves” a unique predecessor set, preventing them from being summarized.</p>
+<p>For example, consider the Order objects in SPEC JBB. An Order object points to the Customer who made that Order, and a Customer object points to the last Order the Customer made. Thus, all Customer objects point to different Order objects, which then point back to the Customer object. This situation is shown in <xref ref-type="fig" rid="fig14-1473871612438786">Figure 14</xref>.</p>
+<fig id="fig14-1473871612438786" position="float">
+<label>Figure 14.</label>
+<caption>
+<p>An example of the one-to-one mapping between “leaf” elements that we observed in SPEC JBB 2000. No matter what other objects point to these objects, they will not be summarized because the one-to-one structure guarantees that each has a unique predecessor set.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig14.tif"/>
+</fig>
+<p>Because Customer objects point to different Order objects, any Order pointed to by a Customer has a unique predecessor set and will not be merged with any other Order, unless the Customer objects are merged first. But because these Order objects point back to different Customer objects, those Customer objects also have unique predecessor sets and will not be merged. As a result, our algorithm cannot merge nodes that exhibit this one-to-one structure. We see this exact behavior in our graph: none of the 300 Order objects is summarized because each points to, and is pointed to, by a different Customer object. We discuss possible solutions to this problem in “Future work” section.</p>
+</sec>
+<sec id="section26-1473871612438786">
+<title>Heapviz on Heapviz</title>
+<p>Our early prototypes of the Heapviz heap analyzer component required too much memory to summarize large graphs, such as those for _209_db and SPEC JBB 2000. Having constructed a debugging tool and finding ourselves needing to debug it, we decided to apply Heapviz to itself. We produced a heap snapshot of the analyzer working on our “Overlapping Elements” example from that section, immediately after the analyzer had generated the summarized graph. The resulting visualization of the summarized graph is shown in <xref ref-type="fig" rid="fig15-1473871612438786">Figure 15</xref>.</p>
+<fig id="fig15-1473871612438786" position="float">
+<label>Figure 15.</label>
+<caption>
+<p>A Heapviz visualization of an early version of its own heap analyzer component. In the upper right, we see two large nodes of type Value (shown in green) that represent over 2MB of memory usage.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig15.tif"/>
+</fig>
+<p>To debug our excessive memory usage problem, we first looked at nodes that represent a large amount of memory. Heapviz sizes nodes by the total volume of data summarized by that node, so it is visually obvious which nodes represent the most memory. In this graph, we immediately see a large node of type Value, occupying 2.1MB. Another node of the same type occupies 291kB. We conclude that reducing the size and/or number of Value objects will reduce memory usage.</p>
+<p>Examining the code for the Value class, we find this:
+<disp-quote>
+<p>public class Value{</p>
+<p>public Type type;</p>
+<p>private long objVal;</p>
+<p>private boolean boolVal;</p>
+<p>private char charVal;</p>
+<p>private float floatVal;</p>
+<p>private double doubleVal;</p>
+<p>private byte byteVal;</p>
+<p>private short shortVal;</p>
+<p>private int intVal;</p>
+<p>private long longVal;</p>
+<p>}</p>
+</disp-quote></p>
+<p>Value is being used to represent Java values of various types. Here it is essentially being used as a tagged union type; sometimes it represents an object value, sometimes an boolean value, etc., and which kind of value it is representing is signified by the type field. With this representation, each instance of Value must reserve space for every possible type of value that might be represented. For example, if a particular Value instance represents an object value, it still stores empty fields for a boolean value, a char value, a float value, and so on. This instance uses 38 bytes of memory even though only 8 bytes are required. With our heap containing 58,456 instances of type Value, this inefficient representation incurs a significant memory overhead.</p>
+<p>Based on this finding, we refactored the Value class into an abstract parent-class Value and concrete subclasses for each type of value, each containing only the necessary fields for that type. Re-running Heapviz on the refactored version results in <xref ref-type="fig" rid="fig16-1473871612438786">Figure 16</xref>. Here we can see that Value has been broken up into several subclasses, and by probing the nodes we can quickly determine that all of these instances combined now use 177 kB, down from over 2MB.</p>
+<fig id="fig16-1473871612438786" position="float">
+<label>Figure 16.</label>
+<caption>
+<p>A Heapviz visualization of the refactored version of its own heap analyzer component. The two large Value nodes have been replaced by several smaller nodes of types specific to their content (shown in green).</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612438786-fig16.tif"/>
+</fig>
+</sec>
+</sec>
+</sec>
+<sec id="section27-1473871612438786">
+<title>Future work</title>
+<p>We have demonstrated Heapviz’s performance on large programs; however, our summarization algorithm cannot greatly compress the size of graphs for programs containing a large number of nodes that have unique predecessor sets. With highly connected graphs, such as the SPEC JBB 2000 benchmark (<xref ref-type="fig" rid="fig13-1473871612438786">Figure 13</xref>), it is difficult to see the results of a query, even after highlighting the relevant nodes. Our current summarization algorithm applies the same set of rules for merging nodes to all heap graphs, regardless of complexity. We plan to experiment with adjustable levels of detail, in which the summarization algorithm applies increasingly powerful abstraction rules to a graph until it reaches a certain threshold of complexity, measured in number of nodes and edges. For example, Heapviz currently preserves sharing information among nodes, but for complex graphs like SPEC JBB 2000 it could discard sharing information to produce a more manageable visualization.</p>
+<p>In addition to adjustable levels of detail, we plan to augment our visualization component to allow the user to dynamically summarize and unsummarize portions of the graph. For example, if the user initially asks for a summarized graph, but then locates a data structure of interest and wants to see its unsummarized structure, Heapviz should allow her to expand the summarized nodes in the graph through some interaction with the visualization tool.</p>
+<p>Another direction of future work is to enable viewing of the evolution of a heap graph over time. Currently, Heapviz supports visualizing only a single static snapshot of the program heap. It might be useful to also support an animation facility showing how the heap changes as the program executes. The major challenge with this would be to design a summarization algorithm that remains stable as nodes and edges are added to and removed from the graph.</p>
+<p>Finally, because our long-term goal with Heapviz is to produce a tool that will be useful to developers, we intend to release Heapviz to the developer community. In order to reach this goal, we plan to conduct formal user studies to determine what improvements Heapviz requires before it can be released.</p>
+</sec>
+<sec id="section28-1473871612438786" sec-type="conclusions">
+<title>Conclusions</title>
+<p>We have presented a tool for helping programmers analyze, visualize, and navigate heap snapshots from running Java programs. Heapviz enables users to navigate large, pointer-based data structures at a whole-program scale. We have introduced a heap analyzer, which parses a heap snapshot, builds a graph representation, and applies algorithms to create a summarized heap abstraction. We have demonstrated how to navigate this abstraction with a heap visualizer which supports several interaction styles, including detailed field view, search, and node grouping.</p>
+<p>Heapviz builds on a body of prior work on tools for debugging, static analysis, and data structure visualization. Our system makes several key contributions. Unlike traditional debuggers, we provide both an overview and detail; Heapviz provides the global view of the actual heap contents, as well as the ability to examine detail on demand with the field view. This variable level of detail supports programmer productivity in many common usage scenarios, including finding bugs and memory leaks, identifying data structures that could be improved, and understanding the overall system architecture. We hope that further exploration of domain-specific usage scenarios will spark the development of new analysis and visualization techniques.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work was supported by the National Science Foundation under grant CCF-1018038.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1473871612438786">
+<label>1.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Brooks</surname><given-names>FP</given-names><suffix>Jr.</suffix></name>
+</person-group> <source>The mythical man-month</source>. <publisher-loc>Boston, MA, USA</publisher-loc>: <publisher-name>Addison-Wesley</publisher-name>, <year>1975</year>.</citation>
+</ref>
+<ref id="bibr2-1473871612438786">
+<label>2.</label>
+<citation citation-type="web">
+<collab>Quest</collab>. <article-title>JProbe memory debugger</article-title>. <ext-link ext-link-type="uri" xlink:href="http://www.quest.com/jprobe/">http://www.quest.com/jprobe/</ext-link> (<access-date>accessed 22 July 2010</access-date>).</citation>
+</ref>
+<ref id="bibr3-1473871612438786">
+<label>3.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Sevitsky</surname><given-names>G</given-names></name>
+<name><surname>De Pauw</surname><given-names>W</given-names></name>
+<name><surname>Konuru</surname><given-names>R</given-names></name>
+</person-group>. <article-title>An information exploration tool for performance analysis of Java programs</article-title>. In: <source>TOOLS ‘01: proceedings of the technology of object-oriented languages and systems</source>. <publisher-loc>Washington, DC, USA</publisher-loc>: <publisher-name>IEEE Computer Society</publisher-name>, <year>2001</year>, p. <fpage>85</fpage>.</citation>
+</ref>
+<ref id="bibr4-1473871612438786">
+<label>4.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>O’Hair</surname><given-names>K.</given-names></name>
+</person-group> <article-title>HPROF: a heap/CPU profiling tool in J2SE 5.0</article-title>. <ext-link ext-link-type="uri" xlink:href="http://java.sun.com/developer/technicalArticles/Programming/HPROF.html">http://java.sun.com/developer/technicalArticles/Programming/HPROF.html</ext-link> (<year>2004</year>, <access-date>accessed 30 April 2010</access-date>).</citation>
+</ref>
+<ref id="bibr5-1473871612438786">
+<label>5.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Heer</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Prefuse: a toolkit for interactive information visualization</article-title>. In: <conf-name>CHI ’05: Proceedings of the SIGCHI conference on human factors in computing systems</conf-name>. <conf-loc>New York, NY, USA: ACM</conf-loc>, <year>2005</year>, pp.<fpage>421</fpage>–<lpage>430</lpage>.</citation>
+</ref>
+<ref id="bibr6-1473871612438786">
+<label>6.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>De Pauw</surname><given-names>W</given-names></name>
+<name><surname>Helm</surname><given-names>R</given-names></name>
+<name><surname>Doug</surname><given-names>K</given-names></name>
+<etal/>
+</person-group>. <article-title>Visualizing the behavior of object-oriented systems</article-title>. In: <conf-name>ACM conference on object-oriented programming systems, languages, and applications</conf-name>. <conf-loc>New York, NY, USA: ACM</conf-loc>, <year>1993</year>, pp.<fpage>326</fpage>–<lpage>337</lpage>.</citation>
+</ref>
+<ref id="bibr7-1473871612438786">
+<label>7.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Storey</surname><given-names>M-AD</given-names></name>
+<name><surname>Muller</surname><given-names>HA</given-names></name>
+</person-group>. <article-title>Manipulating and documenting software structures using shrimp views</article-title>. In: <conf-name>ICSM ’95: Proceedings of the international conference on software maintenance</conf-name>. <conf-loc>Washington, DC: IEEE Computer Society</conf-loc>, <year>1995</year>, p. <fpage>275</fpage>.</citation>
+</ref>
+<ref id="bibr8-1473871612438786">
+<label>8.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>De Pauw</surname><given-names>W</given-names></name>
+<name><surname>Vlissides</surname><given-names>JM</given-names></name>
+</person-group>. <article-title>Visualizing object-oriented programs with Jinsight</article-title>. In: <conf-name>The European conference on object-oriented programming</conf-name>. <conf-loc>London, UK: Springer-Verlag</conf-loc>, <year>1998</year>, pp.<fpage>541</fpage>–<lpage>542</lpage>.</citation>
+</ref>
+<ref id="bibr9-1473871612438786">
+<label>9.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Steven</surname><given-names>PR</given-names></name>
+<name><surname>Renieris</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Jove: Java as it happens</article-title>. In: <conf-name>ACM symposium on software visualization</conf-name>. <conf-loc>New York, NY, USA; ACM</conf-loc> <year>2005</year>, pp.<fpage>115</fpage>–<lpage>124</lpage>.</citation>
+</ref>
+<ref id="bibr10-1473871612438786">
+<label>10.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Ghiya</surname><given-names>R</given-names></name>
+<name><surname>Hendren</surname><given-names>LJ</given-names></name>
+</person-group>. <article-title>Is it a tree, a DAG, or a cyclic graph? A shape analysis for heap-directed pointers in C</article-title>. In: <conf-name>ACM symposium on the principles of programming languages</conf-name>. <conf-loc>New York, NY, USA: ACM</conf-loc>, <year>1996</year>, pp.<fpage>1</fpage>–<lpage>15</lpage>.</citation>
+</ref>
+<ref id="bibr11-1473871612438786">
+<label>11.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Sagiv</surname><given-names>M</given-names></name>
+<name><surname>Reps</surname><given-names>T</given-names></name>
+<name><surname>Wilhelm</surname><given-names>R.</given-names></name>
+</person-group> <article-title>Parametric shape analysis via 3-valued logic</article-title>. In: <conf-name>ACM symposium on the principles of programming languages</conf-name>. <conf-loc>New York, NY, USA: ACM</conf-loc>, <year>1999</year>, pp.<fpage>105</fpage>–<lpage>118</lpage>.</citation>
+</ref>
+<ref id="bibr12-1473871612438786">
+<label>12.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zimmerman</surname><given-names>T</given-names></name>
+<name><surname>Zeller</surname><given-names>A.</given-names></name>
+</person-group> <article-title>Visualizing memory graphs</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Diehl</surname><given-names>S</given-names></name>
+</person-group> (ed.) <conf-name>Proceedings of the international Dagstuhl seminar on software visualization</conf-name>, Lecture Notes in Computer Science, vol. <volume>2269</volume>. <publisher-loc>London, UK</publisher-loc>: <publisher-name>Springer-Verlag</publisher-name>, <year>2002</year>, pp.<fpage>533</fpage>–<lpage>537</lpage>.</citation>
+</ref>
+<ref id="bibr13-1473871612438786">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Erkan</surname><given-names>AS</given-names></name>
+<name><surname>VanSlyke</surname><given-names>TJ</given-names></name>
+<name><surname>Scaffidi</surname><given-names>TM.</given-names></name>
+</person-group> <article-title>Data structure visualization with LaTeX and Prefuse</article-title>. In: <conf-name>ITiCSE ’07: Proceedings of the 12th annual SIGCSE conference on innovation and technology in computer science education</conf-name>. <conf-loc>New York: ACM</conf-loc>, <year>2007</year>, pp.<fpage>301</fpage>–<lpage>305</lpage>.</citation>
+</ref>
+<ref id="bibr14-1473871612438786">
+<label>14.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Sundararaman</surname><given-names>J</given-names></name>
+<name><surname>Back</surname><given-names>G</given-names></name>
+</person-group>. <article-title>HDPV: interactive, faithful, in-vivo runtime state visualization for C/C++ and Java</article-title>. In: <conf-name>SoftVis ’08: Proceedings of the 4th ACM symposium on software visualization</conf-name>. <conf-loc>New York: ACM</conf-loc>, <year>2008</year>, pp.<fpage>47</fpage>–<lpage>56</lpage>.</citation>
+</ref>
+<ref id="bibr15-1473871612438786">
+<label>15.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pheng</surname><given-names>S</given-names></name>
+<name><surname>Verbrugge</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Dynamic data structure analysis for Java programs</article-title>. In: <conf-name>Proceedings of IEEE international conference on program comprehension</conf-name>. <conf-loc>Washington, DC, USA: IEEE Computer Society</conf-loc>, <year>2006</year>, pp.<fpage>191</fpage>–<lpage>201</lpage>.</citation>
+</ref>
+<ref id="bibr16-1473871612438786">
+<label>16.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>De Pauw</surname><given-names>W</given-names></name>
+<name><surname>Sevitsky</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Visualizing reference patterns for solving memory leaks in Java</article-title>. In: <conf-name>The European conference on object-oriented programming</conf-name>. <conf-loc>London, UK: Springer-Verlag</conf-loc>, <year>1999</year>, pp.<fpage>116</fpage>–<lpage>134</lpage>.</citation>
+</ref>
+<ref id="bibr17-1473871612438786">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Rayside</surname><given-names>D</given-names></name>
+<name><surname>Mendel</surname><given-names>L</given-names></name>
+<name><surname>Jackson</surname><given-names>D</given-names></name>
+</person-group>. <article-title>A dynamic analysis for revealing object ownership and sharing</article-title>. In: <source>WODA ‘06: Proceedings of the 2006 international workshop on dynamic systems analysis</source>. <year>2006</year>, pp.<fpage>57</fpage>–<lpage>64</lpage>.</citation>
+</ref>
+<ref id="bibr18-1473871612438786">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hill</surname><given-names>T</given-names></name>
+<name><surname>Noble</surname><given-names>J</given-names></name>
+<name><surname>Potter</surname><given-names>J.</given-names></name>
+</person-group> <article-title>Scalable visualizations of object-oriented systems with ownership trees</article-title>. <source>J Visual Lang Comput</source> <year>2002</year>; <volume>13</volume>: <fpage>319</fpage>–<lpage>339</lpage>.</citation>
+</ref>
+<ref id="bibr19-1473871612438786">
+<label>19.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Mitchell</surname><given-names>N</given-names></name>
+<name><surname>Schonberg</surname><given-names>E</given-names></name>
+<name><surname>Sevitsky</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Making sense of large heaps</article-title>. In: <conf-name>The European conference on object-oriented programming</conf-name>. <conf-loc>London, UK: Springer-Verlag</conf-loc>, <year>2009</year>, pp.<fpage>77</fpage>–<lpage>97</lpage>.</citation>
+</ref>
+<ref id="bibr20-1473871612438786">
+<label>20.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Reiss</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Visualizing the Java heap to detect memory problems</article-title>. In: <source>VISSOFT ‘09: Proceedings of the 5th IEEE international workshop on visualizing software for understanding and analysis</source>. <publisher-loc>Washington, DC, USA</publisher-loc>: <publisher-name>IEEE Computer Society</publisher-name> <year>2009</year>, pp.<fpage>73</fpage>–<lpage>80</lpage>.</citation>
+</ref>
+<ref id="bibr21-1473871612438786">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Demsky</surname><given-names>B</given-names></name>
+<name><surname>Rinard</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Automatic extraction of heap reference properties in object-oriented programs</article-title>. <source>IEEE Transactions on Software Engineering</source> <year>2009</year>; <volume>35</volume>: <fpage>305</fpage>–<lpage>324</lpage>.</citation>
+</ref>
+<ref id="bibr22-1473871612438786">
+<label>22.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Marron</surname><given-names>M</given-names></name>
+<name><surname>Sanchez</surname><given-names>C</given-names></name>
+<name><surname>Su</surname><given-names>Z.</given-names></name>
+</person-group> <article-title>High-level heap abstractions for debugging programs</article-title>. <ext-link ext-link-type="uri" xlink:href="http://software.imdea.org/~marron/papers/publications.html">http://software.imdea.org/~marron/papers/publications.html</ext-link> (<year>2010</year>, <access-date>accessed 30 April 2010</access-date>).</citation>
+</ref>
+<ref id="bibr23-1473871612438786">
+<label>23.</label>
+<citation citation-type="web">
+<collab>Graph Drawing Steering Committee</collab>. <article-title>The GraphML file format</article-title>. <ext-link ext-link-type="uri" xlink:href="http://graphml.graphdrawing.org">http://graphml.graphdrawing.org</ext-link> (<year>2010</year>, <access-date>accessed 30 April 2010</access-date>).</citation>
+</ref>
+<ref id="bibr24-1473871612438786">
+<label>24.</label>
+<citation citation-type="web">
+<collab>Sun Microsystems</collab>. <article-title>JVM tool interface</article-title>. <ext-link ext-link-type="uri" xlink:href="http://java.sun.com/javase/6/docs/platform/jvmti/jvmti.html">http://java.sun.com/javase/6/docs/platform/jvmti/jvmti.html</ext-link> (<year>2010</year>, <access-date>accessed 30 April 2010</access-date>).</citation>
+</ref>
+<ref id="bibr25-1473871612438786">
+<label>25.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Blackburn</surname><given-names>SM</given-names></name>
+<name><surname>Garner</surname><given-names>R</given-names></name>
+<name><surname>Hoffmann</surname><given-names>C</given-names></name>
+<etal/>
+</person-group>. <article-title>The DaCapo benchmarks: java benchmarking development and analysis</article-title>. In: <conf-name>ACM conference on object-oriented programming systems, languages, and applications</conf-name>. <conf-loc>New York, NY, USA: ACM</conf-loc>, <year>2006</year>, pp.<fpage>169</fpage>–<lpage>190</lpage>.</citation>
+</ref>
+<ref id="bibr26-1473871612438786">
+<label>26.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Aftandilan</surname><given-names>E</given-names></name>
+<name><surname>Kelley</surname><given-names>S</given-names></name>
+<name><surname>Gramazio</surname><given-names>C</given-names></name><etal/>
+</person-group>. <article-title>Heapviz: interactive heap visualization for program understanding and debugging</article-title>. In: <conf-name>SoftVis ‘10: Proceedings of the 5th ACM Symposium on Software Visualization</conf-name>. <conf-loc>New York, NY, USA: ACM</conf-loc>, <year>2008</year>, pp.<fpage>53</fpage>–<lpage>62</lpage>.</citation>
+</ref>
+<ref id="bibr27-1473871612438786">
+<label>27.</label>
+<citation citation-type="journal">
+<collab>SPECjvm98 Documentation</collab>. <article-title>Standard Performance Evaluation Corporation</article-title>. release 1.03 edition, <year>1999</year>.</citation>
+</ref>
+<ref id="bibr28-1473871612438786">
+<label>28.</label>
+<citation citation-type="journal">
+<collab>SPECjbb2000 Documentation</collab>. <article-title>Standard Performance Evaluation Corporation</article-title>. release 1.01 edition, <year>2001</year>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

@@ -1,0 +1,1629 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JIS</journal-id>
+<journal-id journal-id-type="hwp">spjis</journal-id>
+<journal-title>Journal of Information Science</journal-title>
+<issn pub-type="ppub">0165-5515</issn>
+<issn pub-type="epub">1741-6485</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0165551513478893</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0165551513478893</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Finding more trustworthy answers: Various trustworthiness factors in question answering</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Oh</surname><given-names>Hyo-Jung</given-names></name>
+<aff id="aff1-0165551513478893">Electronics and Telecommunications Research Institute, Korea</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Yoon</surname><given-names>Yeo-Chan</given-names></name>
+<aff id="aff2-0165551513478893">Electronics and Telecommunications Research Institute, Korea</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Kim</surname><given-names>Hyun Ki</given-names></name>
+<aff id="aff3-0165551513478893">Electronics and Telecommunications Research Institute, Korea</aff>
+</contrib>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0165551513478893">Hyo-Jung Oh, Electronics and Telecommunications Research Institute, 218 Gajeongno, Yuseong-gu, Daejeon 305-700, Korea. Email: <email>ohj@etri.re.kr</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>8</month>
+<year>2013</year>
+</pub-date>
+<volume>39</volume>
+<issue>4</issue>
+<fpage>509</fpage>
+<lpage>522</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2013</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="sage">Chartered Institute of Library and Information Professionals</copyright-holder>
+</permissions>
+<abstract>
+<p>In the recent explosion of Web information, it is important to find not only appropriate, but also more trustworthy answers to user questions. This paper proposes an improved ranking model for question answering (QA) which is focused on various answer trustworthiness factors. Contrary to past research that simply focused on document quality, we have identified three different answer trustworthiness factors in multiple layers of answering processes: document quality, authority and reputation of answer sources, and appropriateness of answering method for a given question. Each of these factors is used in the answer selection as an input to the ranking scheme that can be tuned for the confidence value for a particular answer candidate. Through several experiments, we analysed the efficacy of our QA model from two points of view: indexing and answering. In indexing, distilling unreliable documents brings not only a 96% reduction in document size but also a 92% speed increase in indexing time. To reveal the effect of trustworthiness factors in answering, we conducted several experiments to determine the optimum combination of weights of sub-features for trustworthiness factors. Finally, the proposed method using all answer trustworthiness factors obtained an improvement in effectiveness over the simple routing QA by 150% in Top1. We also investigated improvement impacts according to answer trustworthiness factors.</p>
+</abstract>
+<kwd-group>
+<kwd>answer selection</kwd>
+<kwd>answer trustworthiness</kwd>
+<kwd>information quality</kwd>
+<kwd>question answering</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0165551513478893" sec-type="intro">
+<title>1. Introduction</title>
+<p>With the exponential growth of Web information, while information retrieval (IR) and question answering (QA) techniques have improved, we are now faced with the problem of finding ‘trustworthy’ answers, rather than only ‘relevant’ ones. Although IR pioneered some of the approaches used on the Web for locating relevant information sources, ‘trust’-based (or ‘quality’-based) retrieval is a relatively recent focus in that area of research.</p>
+<p>On the other hand, many QA sites with different knowledge sources and technological platforms have been developed. This context forces researchers to raise questions about the reliability of these QA methods. More specifically, researchers should address questions such as: what is the quality of answers that users receive on these QA services? Are these answers accurate, trustworthy, and complete? Do some of these sites provide better services than others [<xref ref-type="bibr" rid="bibr1-0165551513478893">1</xref>]?</p>
+<p>The main thrust of this paper is based on our experience in developing and applying an answer trustworthiness-based QA model. Our goal is not to determine whether answers served by our QA system are true or not, but to determine which answers are more trustworthy from various viewpoints, as a break with the term ‘similarity’. Contrary to past research that simply focused on document quality, we have identified three different answer trustworthiness factors in answering processes: (1) document quality at the document layer; (2) authority and reputation of answer sources at the knowledge base (KB) layer; and (3) the appropriateness of answering strategies by consulting various QA systems at the sub-QA layer.</p>
+<p>This paper is organized as follows. In Section 2, we review some past studies related to identifying the trustworthiness of documents or query answers. Section 3 illustrates an overview of the proposed QA model, and Section 4 describes our three different answer trustworthiness factors in detail. In Section 5, we also analyse the efficacy of out QA model and the effects of the three answer trustworthiness factors. Finally, we conclude with a suggestion for possible future work in Section 6.</p>
+</sec>
+<sec id="section2-0165551513478893">
+<title>2. Related works</title>
+<p>There has been extensive research on the use of ‘trust’ in information retrieval or question answering. Trust in information retrieval is motivated by the need for not just relevant documents, but also high-quality documents as well. One approach to this is through a subjectivity analysis, which aims at distinguishing true facts from subjective opinions [<xref ref-type="bibr" rid="bibr2-0165551513478893">2</xref>].</p>
+<p>Most IR systems on the Internet rely primarily on similarity ranking algorithms based solely on term frequency statistics. Information quality is usually ignored. Xiaolan and Gauch [<xref ref-type="bibr" rid="bibr3-0165551513478893">3</xref>] presented an approach that combines similarity-based similarity ranking with quality ranking in centralized and distributed search environments.</p>
+<p>QA systems have proven to be helpful to users because they can provide succinct answers that do not require users to wade through a large number of documents. Lin [<xref ref-type="bibr" rid="bibr4-0165551513478893">4</xref>] conducted a user study to investigate an effective interface design in the QA field, and discovered that users prefer paragraph-sized chunks of text as answers to their questions, and that the reliability of the source is important. In other contexts, detecting opinions is useful when no single ground truth can be provided in an answer to a question, and instead, multiple perspectives are summarized in the provided answer [<xref ref-type="bibr" rid="bibr5-0165551513478893">5</xref>]. Sometimes, opinions are filtered out in question answering tasks so that only objective facts are returned as answers [<xref ref-type="bibr" rid="bibr6-0165551513478893">6</xref>].</p>
+<p>In order to confidently draw conclusions about the performance of different retrieval methods using test collection, their reliability and trustworthiness must first be established. Lin [<xref ref-type="bibr" rid="bibr7-0165551513478893">7</xref>] evaluated the quality of answer patterns and lists of relevant documents currently employed in automatic question answering evaluations, and concluded that they are not suitable for post-hoc experimentation.</p>
+<p>Jeon et al. [<xref ref-type="bibr" rid="bibr8-0165551513478893">8</xref>] extracted a set of features from a sample of answers in Naver<sup>TM</sup>,<sup><xref ref-type="fn" rid="fn1-0165551513478893">1</xref></sup> a Korean community QA portal similar to Yahoo! Answers. They built a model for answer quality based on features derived from the particular answer being analysed, such as answer length, number of points received, and so on, as well as user features, such as fraction of best answers, number of answers given, etc. They applied the method to improve the quality of the retrieval service that is attached to a community-based question answering web site and achieved significant improvement in retrieval performance.</p>
+<p>The quality of user-generated content varies dramatically, from excellent to abusive and even spam. According to Su et al. [<xref ref-type="bibr" rid="bibr9-0165551513478893">9</xref>], the quality of answers in commercial QA portals is good on average, but the quality of specific answers varies significantly. In particular, in a study of the answers to a set of questions in Yahoo! Answers, the authors proved that a method for finding high-quality answers can have a significant impact on user satisfaction with the system.</p>
+<p>Agichtein et al. [<xref ref-type="bibr" rid="bibr10-0165551513478893">10</xref>] investigated methods for exploiting community feedback to automatically identify high-quality content. They introduced a general classification framework for combining evidence from different sources of information, one that can be tuned automatically for a given social media type and quality definition. In particular, for a community QA domain, they showed that their system is able to separate out high-quality items with accuracy close to that provided by human users.</p>
+<p>In a break from the issue of document quality, Yamamoto et al. [<xref ref-type="bibr" rid="bibr11-0165551513478893">11</xref>] developed a system for helping users determine the trustworthiness of uncertain facts based on sentiment and temporal viewpoints by aggregating information from the Web. They tried to provide users with additional data on which the trustworthiness of the information can be determined.</p>
+<p>In recent research, Cruchet et al. [<xref ref-type="bibr" rid="bibr12-0165551513478893">12</xref>] presented a solution using an existing QA system, and investigated whether the quality of the answers extracted depends on the quality of health of the web pages analysed. According to the results, the trustworthiness of the database used influences the quality and accuracy of the answers retrieved by the Health on the Net Foundation question answering system. Wu and Marian [<xref ref-type="bibr" rid="bibr13-0165551513478893">13</xref>] proposed a framework to aggregate query results from different sources in order to save users the hassle of individually checking query-related web sites to corroborate answers. They assigned a score to each individual answer by taking into account the number, relevance and originality of the sources reporting the answer. However, they only referred relatedness between query and search engine result to score for answer sources.</p>
+<p>In community-based QA researches, Suryanto et al. [<xref ref-type="bibr" rid="bibr14-0165551513478893">14</xref>] proposed a quality-aware framework to design methods that select answers from a community QA portal considering answer quality in addition to answer relevance. They introduced several quality-aware QA methods using answer quality derived from the expertise of answerer. However, they determined the answerer’s expertise for a given question, whereas our proposed method considers the method and the source of the answer.</p>
+<p>Most works in this area are based on only document quality analysis, and few researchers have tried to use the quality of answers in a collection of question and answer pairs during the retrieval process. They use simple trustworthy factors for improving document quality in IR or answers in the QA field. In contrast, we propose a QA model using three different answer trustworthiness factors from the viewpoint of various layers in answering processes.</p>
+</sec>
+<sec id="section3-0165551513478893">
+<title>3. System overview</title>
+<p><xref ref-type="fig" rid="fig1-0165551513478893">Figure 1</xref> illustrates an overview of our system, which consists of a question analysis, an answer selection and multiple sub-QA modules based on several KBs generated by answer indexing from heterogeneous sources. In this section, we describe how to analyse user questions and how to select the best appropriate answer candidate for the given question. During the answer selection stage, three different answer trustworthiness factors, to be explained in Section 4, are combined.</p>
+<fig id="fig1-0165551513478893" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>System overview.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551513478893-fig1.tif"/>
+</fig>
+<sec id="section4-0165551513478893">
+<title>3.1. Question analysis</title>
+<p>A user question in the form of natural language is entered into the system and analysed by the <italic>question analysis</italic> component, which employs various linguistic analysis techniques [<xref ref-type="bibr" rid="bibr15-0165551513478893">15</xref>] such as POS (Part-of-speech) tagging, chunking, answer type (AT) tagging and certain semantic analyses such as word sense disambiguation. An internal question generated from the question analysis has the following form:</p>
+<p>
+<disp-formula id="disp-formula1-0165551513478893">
+<label>(1)</label>
+<mml:math display="block" id="math1-0165551513478893">
+<mml:mrow>
+<mml:mtext>Q</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo>&lt;</mml:mo>
+<mml:mtext>AF</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>AT</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>QT</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mtext>SS</mml:mtext>
+<mml:mo>&gt;</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0165551513478893" xlink:href="10.1177_0165551513478893-eq1.tif"/>
+</disp-formula>
+</p>
+<p>where AF is the expected answer format, AT is the expected answer type, QT is the theme of the question, and SS is the information related to the expected answer source or QA module from which the answer is to be found.</p>
+<list id="list1-0165551513478893" list-type="bullet">
+<list-item>
+<p>The answer format (AF) of a question is determined to be one of these four types of questions: single, multiple, descriptive or yes/no. For example, single is the AF value in the question, ‘Who killed President Kennedy?’</p>
+</list-item>
+<list-item>
+<p>There are 147 fine-grained ATs organized in a hierarchical structure with 15 nodes at the level right below the root, each of which has two to four lower levels [<xref ref-type="bibr" rid="bibr16-0165551513478893">16</xref>]. The AT gives information about the type of the entity being sought. The sub-type/super-type relations among the ATs give flexibility in matching. For the example above, the AT would be ‘people’ because of ‘who’, which can be matched with ‘president’ in the passage.</p>
+</list-item>
+<list-item>
+<p>A question theme has two parts: a target and a focus. The target of a question is the object or event that the question is about, whereas the focus is the property being sought by the question. In the example above, the target is ‘J.F. Kennedy’ and the focus is ‘killer’.</p>
+</list-item>
+<list-item>
+<p>The sub-QA source of a question indicates the most likely source (QA module) from which an answer can be found, which is determined based on the other traits of the question (AF, AT and QT). It also contains some detailed information about what should be sought after in the QA module. For example, ‘How to play <italic>Starcraft</italic><sup><xref ref-type="fn" rid="fn2-0165551513478893">2</xref></sup> well using Protos’ and ‘How to execute a Terran tank push in <italic>Starcraft</italic>’ are analysed for an answer by the community-QA module, but with additional information showing that the answer must be a method for something.</p>
+</list-item>
+</list>
+</sec>
+<sec id="section5-0165551513478893">
+<title>3.2. Answer indexing for multiple sub-QAs</title>
+<p><italic>Multiple sub-QA modules</italic> are tailored to various answer classes that are identifiable from documents. Each QA module except a general QA in our system is tailored to an answer class determined primarily by extractable and identifiable answers from documents, and by the nature of the questions collected from users. While an answer type refers to the named entity type being asked for in a question, answer classes are used to make a distinction among different traits of the answers, such as list, description and general answer classes.</p>
+<p>In <italic>answer indexing</italic>, a mass of documents is collected from <italic>heterogeneous sources</italic> such as news sites, blogs, Wikipedia and community boards. In the current implementation, the indexing component builds four different QA modules: a learning-based method for a KB QA; a pattern-based method for a descriptive QA; a frequently-asked-questions (FAQ) method for a community-based QA; and a statistical method for a general QA [<xref ref-type="bibr" rid="bibr16-0165551513478893">16</xref>].</p>
+<p>In our document collection, unstructured text and structured/semi-structured data are mixed. Many sentences that appear there have particular structural patterns. Using information extraction techniques, these answers can be pre-acquired for the KB QA. Another typical sentence type is the descriptive sentence, such as ‘A <italic>tsunami</italic> is a large wave, often caused by an earthquake’ (X is Y). Because a corpus such as an encyclopaedia or Wikipedia contains facts about many different subjects, or explains one particular subject in detail, there are many sentences that present definitions such that ‘X is Y’. On the other hand, some sentences describe the process of a special event (e.g. World War I), so that they consist of particular syntactic structures (5W1H) similar to those found in news documents. We detected these descriptive sentences using syntactic patterns for the descriptive QA.</p>
+<p>We noticed that people usually ask their question on community boards, so we regarded these boards as FAQ systems. We analysed articles on the board as &lt;question–answer&gt; pair sets. For example, the title of an article can be assumed to be a user question and its replied comments are answers. The other types are general answers and passage retrieval. These answers are retrieved in real time based on the similarity calculation when a user question is entered, and are different from other answers.</p>
+<p>While <italic>QA modules</italic> are complementary to each other in providing answers of different types, their answer spaces are not completely disjointed. For example, some factoid answers are found both in KB QA and general QA. In other words, a general QA index is generally enough to include terms in the knowledge-based QA. This redundancy is a catalyst for answer verification by which answers from different modules boost their confidence levels among themselves.</p>
+</sec>
+<sec id="section6-0165551513478893">
+<title>3.3. Answer selection based on strategies</title>
+<p>Our QA framework with a learnable strategy makes use of a number of independent QA modules employing different answer finding methods [<xref ref-type="bibr" rid="bibr16-0165551513478893">16</xref>]. The term ‘strategy’ sometimes refers to a particular QA source or technique in previous work, making ‘multi-strategy’ mean more than one QA module in a system. To avoid confusion, we use ‘module’ for a QA source and ‘strategy’ for a sequence of QA module invocations.</p>
+<p>In some researches, ‘strategy’ can be considered ‘user behaviour’. Kim and Sin [<xref ref-type="bibr" rid="bibr17-0165551513478893">17</xref>] investigated undergraduates’ source selection behaviour: what sources they use frequently, what criteria they consider important for source selection, how they perceive different sources and whether their source selection behaviour is related to what they know about selection criteria. In the same context, we learned strategies based on the question–answer pairs’ characteristics in this paper [<xref ref-type="bibr" rid="bibr18-0165551513478893">18</xref>].</p>
+<p>A strategy is selected based on several factors, such as the question’s expected AF, AT, and SS, which are explained in the previous section. Given a question, the system determines a strategy to predict which QA modules are likely to find answers. The QA modules are then invoked sequentially to extract and verify the answers and to boost their confidence values if possible.</p>
+<p>The <italic>answer selection</italic> chooses a strategy based on an internal query, translated by a <italic>question analysis</italic> for the given question; invokes one or more QA modules depending on whether the answer confidence for each answer candidate is strong enough; and finalizes the answer by incorporating answers and their evidence values returned from multiple QA modules if necessary. For the example of ‘How to play <italic>Starcraft</italic> between 2 computers connected by a router’, the question should be analysed as follows:</p>
+<list id="list2-0165551513478893" list-type="bullet">
+<list-item>
+<p>answer format – descriptive;</p>
+</list-item>
+<list-item>
+<p>answer type – method;</p>
+</list-item>
+<list-item>
+<p>question theme – target = <italic>Starcraft</italic>, focus = H/W problem;</p>
+</list-item>
+<list-item>
+<p>sub-QA source – community QA;</p>
+</list-item>
+<list-item>
+<p>the selected strategy – community-QA → general QA + passage retrieval.</p>
+</list-item>
+</list>
+<p>Then, the strategy for invoking a community-QA is selected. The ‘→’ symbol indicates the order of the QA module invocations. Given two QA modules, <italic>QA</italic><sub>1</sub> and <italic>QA</italic><sub>2</sub>, <italic>QA</italic><sub>1</sub>→<italic>QA</italic><sub>2</sub> shows that <italic>QA</italic><sub>1</sub> and <italic>QA</italic><sub>2</sub> need to be invoked in sequence, whereas <italic>QA</italic><sub>1</sub><italic>+ QA</italic><sub>2</sub> indicates that they are to be processed in parallel [<xref ref-type="bibr" rid="bibr16-0165551513478893">16</xref>]. When the candidate answer from the community-QA is higher than a threshold, the candidate can be served as the final answer to the user. If not, other QA modules are activated in sequence until the stopping condition is satisfied.</p>
+<p>The goal of the <italic>answer selection</italic> is to determine which answer candidate has the maximum confidence value to support the given question. Let <italic>Q</italic> and <italic>a</italic> be the user question and candidate, respectively. Then, the final answer, <italic>a</italic><sup>*</sup>, is selected by</p>
+<p>
+<disp-formula id="disp-formula2-0165551513478893">
+<label>(2)</label>
+<mml:math display="block" id="math2-0165551513478893">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:mi>arg</mml:mi>
+<mml:mo>max</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0165551513478893" xlink:href="10.1177_0165551513478893-eq2.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>C</italic>(<italic>a, Q</italic>) computes the confidence value between <italic>a</italic> and <italic>Q</italic>. As <italic>Q</italic> is translated into a set of internal queries, &lt;<italic>q</italic><sub>1</sub>, <italic>q</italic><sub>2</sub>, …, <italic>q<sub>N</sub></italic>&gt; (where <italic>N</italic> is the number of QA modules), for the strategy chosen based on the <italic>question analysis</italic> module, <italic>C</italic>(<italic>a, Q</italic>) is defined as follows:</p>
+<p>
+<disp-formula id="disp-formula3-0165551513478893">
+<label>(3)</label>
+<mml:math display="block" id="math3-0165551513478893">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>×</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>α</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mi>α</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0165551513478893" xlink:href="10.1177_0165551513478893-eq3.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>S</italic>(<italic>a, q<sub>i</sub></italic>) is the semantic distance between the answer candidate and the original question term, <italic>w<sub>i</sub></italic> is the weight assigned by the <italic>i</italic>th QA module to the answer candidate <italic>a</italic>, and <italic>tw</italic><sub>(1<italic>–</italic>3)<italic>i</italic></sub> are the three answer trustworthiness factors to be explained in the next section. Semantic distance values can be computed using a lexical database such as Korean WordNet. When the original question looks for a ‘location’, for example, it can be matched with ‘city’, ‘province’ or ‘country’ with decreasing values of semantic distance.</p>
+</sec>
+</sec>
+<sec id="section7-0165551513478893">
+<title>4. Using trustworthiness factors</title>
+<p>We now focus on the task of determining the trustworthiness of candidate answers, and describe our overall approach to solve this problem. As shown in <xref ref-type="fig" rid="fig1-0165551513478893">Figure 1</xref>, we identify a set of trustworthiness factors for three different layers: document layer, answer source layer and sub-QAs layer. Each of these factors are used in the <italic>answer selection</italic> as an input to the ranking <xref ref-type="disp-formula" rid="disp-formula3-0165551513478893">equation (3)</xref> that can be tuned for the confidence value for a particular answer candidate</p>
+<sec id="section8-0165551513478893">
+<title>4.1. Document quality at document layer</title>
+<p>The first trustworthiness factor, <italic>tw</italic><sub>1</sub>, represents the intrinsic quality of answers, and is determined mainly on how <italic>informative</italic> and <italic>readable</italic> the contents of a document are. We assumed that a document is informative when it is at least not spam (not an advertisement), has originality (not just a clipping) and has good quality with a large potential for containing answers. The informative documents can be detected using the following processes: (1) spam filtering; (2) duplicate detection; and (3) document quality evaluation [<xref ref-type="bibr" rid="bibr19-0165551513478893">19</xref>].</p>
+<p>For spam filtering, we classify input documents into three categories – adult pages, spam and ham (valid document) – using a support vector machine [<xref ref-type="bibr" rid="bibr20-0165551513478893">20</xref>] classification algorithm. Duplicated documents can be detected by breaking them into sentences and comparing them with the sentences of the original documents. For efficiency of the indexing process, duplicated documents should be filtered, whereas ‘duplication’ is an important clue for answer selection as a redundancy factor. To satisfy both sides, we only keep the original document, while maintaining the number of duplications.</p>
+<p>We determined various feature for document quality and evaluate their characteristics [<xref ref-type="bibr" rid="bibr19-0165551513478893">19</xref>]. In this research, document quality is evaluated according to seven quality metrics reflecting <italic>text-related</italic> features:</p>
+<list id="list3-0165551513478893" list-type="bullet">
+<list-item>
+<p>informativeness features;</p>
+</list-item>
+<list-item>
+<p>document length;</p>
+</list-item>
+<list-item>
+<p>the number of words;</p>
+</list-item>
+<list-item>
+<p>the number of attached multimedia files (such as images and video);</p>
+</list-item>
+<list-item>
+<p>descriptive vocabulary;</p>
+</list-item>
+<list-item>
+<p>readability features;</p>
+</list-item>
+<list-item>
+<p>lexical density;</p>
+</list-item>
+<list-item>
+<p>the frequency of Internet-based terms (such as emoticon);</p>
+</list-item>
+<list-item>
+<p>the frequency of vulgarities.</p>
+</list-item>
+</list>
+<p>After the document quality scores are normalized from 0 to 1, we cut off documents that have lower scores than a threshold during the <italic>answer indexing</italic> stage. Examples of high- and low-quality documents are compared in <xref ref-type="fig" rid="fig2-0165551513478893">Figure 2</xref>. Compared with the document on the bottom, the top example is longer and more formal. Even though the two documents are related to <italic>Starcraft</italic>, the lexical density of the top is stronger. Moreover, the top has no emoticons, slang or vulgarity. Based on these observations, we can say that the top document is more readable.</p>
+<fig id="fig2-0165551513478893" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Two examples of document quality.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551513478893-fig2.tif"/>
+</fig>
+</sec>
+<sec id="section9-0165551513478893">
+<title>4.2. Authority and reputation at answer source layer</title>
+<p>The second trustworthiness factor, <italic>tw</italic><sub>2</sub>, represents the authority and reputation of answer sources. It is determined depending on how associated and reliable the answer source is. As shown in <xref ref-type="fig" rid="fig1-0165551513478893">Figure 1</xref>, we collected documents from heterogeneous sources such as public media including news articles, personalized media including blogs, Internet community board articles, and commercial content providers. Usually, public media contents are more reliable than blogs or community boards. Contrary to general expectations, in some cases, a particular community board might have a high reputation. For example, if a question is about the game, <italic>Starcraft</italic>, then the answer is trustworthy when it is extracted from the official user bulletin board system developed by Blizzard Entertainment, which created the game. This indicates that answer sources have different authority scores according to the question theme, especially the question target. We built 1000 &lt;question, answer&gt; pairs, which are annotated question targets and sources for each pair. As a result, we set authority scores for 312 answer sources according to 137 frequently asked question targets.</p>
+<p>To calculate the reputation score of answer sources, we also used four reputation metrics reflecting <italic>non-textual</italic> features such as:</p>
+<list id="list4-0165551513478893" list-type="bullet">
+<list-item>
+<p>the name of web sites or community boards;</p>
+</list-item>
+<list-item>
+<p>the name of web site sub-session (or categories);</p>
+</list-item>
+<list-item>
+<p>the publication date;</p>
+</list-item>
+<list-item>
+<p>the number of replies;</p>
+</list-item>
+<list-item>
+<p>the number of RSS feeds;</p>
+</list-item>
+<list-item>
+<p>the number of user recommendations.</p>
+</list-item>
+</list>
+<p>If a document had many replies and was given a commendation by a lot of readers, then answer candidates from the document receive higher reputation scores. When two candidate answer documents have the same confidence value for the given question, we place the priority on the latest document. This is contrary to the first trustworthiness factor, which reflects <italic>textual</italic> features. The final <italic>tw</italic><sub>2</sub> values are calculated by multiplying authority scores and reputation score, then are normalized from 0 to 1.</p>
+</sec>
+<sec id="section10-0165551513478893">
+<title>4.3. Appropriateness for the given question at sub-QA layer</title>
+<p>The third trustworthiness factor, <italic>tw</italic><sub>3</sub>, represents the association with questions. It is determined depending on how <italic>appropriate</italic> the answering strategy is for the given question. As explained in Section 3.3, the strategy invokes the most suitable sub-QA module and attempts to verify the answers by consulting other modules. For example, if a question is about the definition of a natural phenomenon, then the KB QA based on Wikipedia can be an appropriate answering strategy. On the other hand, the community QA is suitable to answer a question about the know-how of a particular subject.</p>
+<p>If the learning task had been simply to build a classifier that maps a question to the most appropriate sub-QA module or a ranked list of modules, we could have employed one of the existing classification methods [<xref ref-type="bibr" rid="bibr20-0165551513478893">20</xref>]. However, it was not clear how a classification algorithm could be extended to include the task of setting the threshold value for the sequence of selected sub-QA modules, requiring us to devise a new algorithm [<xref ref-type="bibr" rid="bibr18-0165551513478893">18</xref>]. For strategy learning, we used 260 &lt;question, answer&gt; pairs of training data of various sorts in terms of sub-QA sources and difficulty levels, which are part of the entire set of 1000 pairs used in the prevision section. We assumed 260 pairs in the training set and four QA modules had no loss of generality. Additional details for the strategy learning algorithm are beyond the scope of this article and can be found in Oh et al. [<xref ref-type="bibr" rid="bibr18-0165551513478893">18</xref>].</p>
+<p>The performance of our QA depends heavily on the accuracy of the <italic>question analysis</italic> because a strategy is selected based on the sub-QA source of the analysis result, which determines the sub-QA module to be invoked first. Invoking more than one module can compensate for any possible errors in the <italic>question analysis</italic> and in the answers from a sub-QA module. In other words, answers from the first sub-QA module are verified, and their confidence values are boosted if appropriate.</p>
+</sec>
+</sec>
+<sec id="section11-0165551513478893">
+<title>5. Empirical evaluation</title>
+<p>To evaluate our proposed QA model, various answer source information should be collected, including non-textual data such as the content provider’s name, publication date and RSS feed tags. Therefore, we decided to develop a vertical QA focused on the ‘game’ domain and analysed all answer sources in advance. Nonetheless, this does not mean that our proposed methodologies are biased toward a specific-domain.</p>
+<p>As in the TREC QA track [<xref ref-type="bibr" rid="bibr21-0165551513478893">21</xref>], we have constructed various levels of question–answer types. We collected 5028 questions from commercial Korean Web portal logs<sup><xref ref-type="fn" rid="fn3-0165551513478893">3</xref></sup> and from questionnaires of elementary students. Among them, a total of 811 question–answer pairs were selected in varying difficulties and various topics of the ‘game’ domain. A total of 311 pairs were used for building and tuning the system and an additional 500 pairs were used for evaluation.</p>
+<p>Prior research on QA answer quality has primarily assessed quality based on user rankings of ‘best answers’ [<xref ref-type="bibr" rid="bibr1-0165551513478893">1</xref>, <xref ref-type="bibr" rid="bibr17-0165551513478893">17</xref>]. However, multiple answers for a given question can be found from multiple sources. Thus, for effective comparisons, we employed a <italic>mean reciprocal rank</italic> (MRR, [<xref ref-type="bibr" rid="bibr21-0165551513478893">21</xref>]). We also used the <italic>F-</italic>score, which combines <italic>precision</italic> and <italic>recall</italic>, with the well-known ‘top-five’ measure that considers whether a correct nugget is found within the top five answers.</p>
+<p>Evaluations were made by the human judges who understand the functionality of the existing QA modules. For factoid questions, we used the TREC ‘exact answer’ criterion. For descriptive questions including definitional questions, our evaluation was based on whether candidate answer sentences contain ‘key phrases’. It is similar to TREC ‘nugget’ criterion [<xref ref-type="bibr" rid="bibr22-0165551513478893">22</xref>].</p>
+<p>Before revealing the impact of trustworthiness factors on QA accuracy, we first evaluated the effect of various sub-features in trustworthiness factors and set the best combination weights. For this evaluation, we used the <italic>average precision</italic>, which is computed at the point of each of the trustworthy documents in the ranked sequence. In next two sections, we analyse the efficacy of answer trustworthiness in QA model from two points of view: indexing and answering.</p>
+<sec id="section12-0165551513478893">
+<title>5.1. Effects of sub-features in trustworthiness factors</title>
+<p>To analyse the effect of sub-features for scoring document quality, we built a test collection consisting of 460 blogs about the game domain and 486 articles in the game community board. <xref ref-type="fig" rid="fig3-0165551513478893">Figure 3</xref> depicts the average precision according to text-related features individually. As shown, the number of descriptive vocabularies in the target document is very important feature. In contrast, document quality is in inverse proportion to how many vulgarities are in the document. Even though the other features show insignificant effects individually, the combination of these two generates a significant synergy effect. Based on initial experiments, we set the combination weight of seven sub-features for document quality scores, <italic>tw</italic><sub>1</sub>, as shown in <xref ref-type="table" rid="table1-0165551513478893">Table 1</xref>. <xref ref-type="table" rid="table1-0165551513478893">Table 1</xref> shows the final accuracy of the document quality. We considered that a document has a guarantee of quality when the document quality score exceeds a threshold. Readability features including the number of vulgarities are more important on blog documents, whereas informativeness features, including the number of descriptive vocabularies, have similar weight to readability features on community board documents. The overall classification accuracy and average precision are 89.42 and 81.07, respectively.</p>
+<fig id="fig3-0165551513478893" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Average precision of text-related features.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551513478893-fig3.tif"/>
+</fig>
+<table-wrap id="table1-0165551513478893" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Accuracy of document quality</p>
+</caption>
+<graphic alternate-form-of="table1-0165551513478893" xlink:href="10.1177_0165551513478893-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Classification accuracy</th>
+<th align="left">Average precision</th>
+<th align="left" colspan="3">Combination weights of sub-features<hr/></th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th/>
+<th align="left">Descriptive vocabularies</th>
+<th align="left">Number of vulgarities</th>
+<th align="left">Sum of other features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blog post (460)</td>
+<td>85.43</td>
+<td>75.75</td>
+<td>0.3</td>
+<td>0.6</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Community articles (489)</td>
+<td>92.43</td>
+<td>86.07</td>
+<td>0.45</td>
+<td>0.4</td>
+<td>0.15</td>
+</tr>
+<tr>
+<td>Overall</td>
+<td>89.43</td>
+<td>81.07</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>To find the best condition of sub-features for scoring authority and reputation, <italic>tw</italic><sub>2</sub>, we performed the same experiment for document quality. <xref ref-type="fig" rid="fig4-0165551513478893">Figure 4</xref> shows six individual sub-features’ average precisions. The most important feature to determine the reputation of a document turned out to be the number of recommendations. The names of web sites and sessions have a major influence on the evaluation of quality, but these features are dependent on a particular domain – the game domain in this experiment. Towards an unbiased model for a specific domain, we reduced the effect weights of domain-dependent features for <italic>tw</italic><sub>2</sub> compared with <italic>tw</italic><sub>1</sub>.</p>
+<fig id="fig4-0165551513478893" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Average precision of non-textual features.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551513478893-fig4.tif"/>
+</fig>
+<p>The third trustworthiness factor, <italic>tw</italic><sub>3</sub>, reflects the appropriateness of selected strategies to answer a user question. The strategy determined how to combine different QA modules. In this paper, four sub-QAs were employed as described in Section 3.2: the KB-QA, the descriptive QA, the community-based QA and the general QA. To see the value of the learned strategies, we compared three different QA models: (a) a traditional QA using general indexing and passage retrieval tradition; (b) simple routing QA where a question was routed to all the available QA modules and the answers were combined; and (c) strategy-driven QA based on the learning method [<xref ref-type="bibr" rid="bibr15-0165551513478893">15</xref>].</p>
+<p>For the traditional QA, we calculated <italic>C</italic>(<italic>a, Q</italic>) based on only passage retrieval scores and weights of a keyword using the BM25 [<xref ref-type="bibr" rid="bibr23-0165551513478893">23</xref>] as follows:</p>
+<p>
+<disp-formula id="disp-formula4-0165551513478893">
+<label>(4)</label>
+<mml:math display="block" id="math4-0165551513478893">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Q</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>traditional</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>×</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>Passage</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mi>score</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>Keyword</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mi>score</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>•</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Passage</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mi>score</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mtext>where</mml:mtext>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>weight</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>for</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>Title</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mi>Passage</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mi>topic</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mi>or</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>AT</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>feature</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>i</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mtext>exist</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>in</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>the</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>passage</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mtext>otherwise</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>•</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Keyword</mml:mi>
+<mml:mi>_</mml:mi>
+<mml:mi>score</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>Q</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mtext>where</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Sentence</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>weight</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mi>k</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>keyword</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>weight</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0165551513478893" xlink:href="10.1177_0165551513478893-eq4.tif"/>
+</disp-formula>
+</p>
+<p>In the simple routing QA, answer candidates are merged from four sub-QAs and the system selects the best answers, whereas the strategy-driven QA chooses the most appropriate strategy for the given question and invokes a suitable sub-QA. For the simple routing QA and the strategy-driven QA, <italic>C</italic>(<italic>a, Q</italic>) in <xref ref-type="disp-formula" rid="disp-formula3-0165551513478893">equation (3)</xref> are simplified as follows:</p>
+<p>
+<disp-formula id="disp-formula5-0165551513478893">
+<label>(5)</label>
+<mml:math display="block" id="math5-0165551513478893">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Q</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Simpel</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>Rounting</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>×</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0165551513478893" xlink:href="10.1177_0165551513478893-eq5.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula6-0165551513478893">
+<label>(6)</label>
+<mml:math display="block" id="math6-0165551513478893">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Q</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Strategy</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>driven</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>×</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0165551513478893" xlink:href="10.1177_0165551513478893-eq6.tif"/>
+</disp-formula>
+</p>
+<p>to archive the best performance for each case, we optimized not only the four different QA models but also the individual sub-QA modules shown in <xref ref-type="fig" rid="fig1-0165551513478893">Figure 1</xref>. As shown in <xref ref-type="table" rid="table2-0165551513478893">Table 2</xref>, the final F-score in Top-5 values for the traditional QA, simple routing (baseline) QA, and strategy-driven QA respectively are 0.222, 0.256, and 0.334. In comparison with the simple routing method, which also makes use of the same multiple QA modules, the strategy-driven QA shows 50.32% of improvement (0.222 to 0.334 F-score). This result proves that strategies for answering are important factor to improve accuracy.</p>
+<table-wrap id="table2-0165551513478893" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Accuracy comparison of different QA models</p>
+</caption>
+<graphic alternate-form-of="table2-0165551513478893" xlink:href="10.1177_0165551513478893-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Number of questions</th>
+<th align="left">Number of responses</th>
+<th align="left">Number of corrections</th>
+<th align="left" colspan="3">Top-fiv<hr/></th>
+<th align="left">Improvement</th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th/>
+<th/>
+<th/>
+<th align="left">Precision</th>
+<th align="left">Recall</th>
+<th align="left"><italic>F</italic>-Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Traditional (general QA)</td>
+<td>500</td>
+<td>401</td>
+<td>100</td>
+<td>0.249</td>
+<td>0.200</td>
+<td>0.222</td>
+<td/>
+</tr>
+<tr>
+<td>Simple routing (baseline)</td>
+<td>500</td>
+<td>500</td>
+<td>128</td>
+<td>0.256</td>
+<td>0.256</td>
+<td>0.256</td>
+<td>15.33%<sup><xref ref-type="table-fn" rid="table-fn1-0165551513478893">a</xref></sup></td>
+</tr>
+<tr>
+<td>Strategy-driven (referred to <italic>tw</italic><sub>3</sub>)</td>
+<td>500</td>
+<td>483</td>
+<td>164</td>
+<td>0.340</td>
+<td>0.328</td>
+<td>0.334</td>
+<td>30.34%,<sup><xref ref-type="table-fn" rid="table-fn1-0165551513478893">b</xref></sup> 50.327%<sup><xref ref-type="table-fn" rid="table-fn1-0165551513478893">a</xref></sup></td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-0165551513478893">
+<label>a</label>
+<p>Improvement over the general QA; <sup>b</sup>over the simple routing (baseline).</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+</sec>
+<sec id="section13-0165551513478893">
+<title>5.2. Impact on indexing stage</title>
+<p>As shown in <xref ref-type="fig" rid="fig1-0165551513478893">Figure 1</xref>, the first trustworthiness factor, <italic>tw</italic><sub>1</sub>, can be determined during the answer indexing stage in the document layer. If a document’s <italic>tw</italic><sub>1</sub> value exceeds a predetermined threshold, the document can be indexed as an answer candidate source. Otherwise, the document is considered as noise, which we then ignore.</p>
+<p>To set the threshold, we analyse the distribution of document trustworthiness for Web documents after a duplicated filtering. The total number of documents in the entire set is 7,017,704. As shown in <xref ref-type="table" rid="table3-0165551513478893">Table 3</xref> and <xref ref-type="fig" rid="fig5-0165551513478893">Figure 5</xref>, document trustworthiness values are inclined. Most documents (82.65 = 65.03 + 17.62%) have <italic>tw</italic><sub>1</sub> values from 0.2 to 0.4. <xref ref-type="table" rid="table4-0165551513478893">Table 4</xref> and <xref ref-type="fig" rid="fig6-0165551513478893">Figure 6</xref> show more minutely the distribution of documents that have document quality scores between 0.2 and 0.4. Based on a manual evaluation of document quality, documents that have values of lower than 0.3 are determined to be noise. We set the <italic>tw</italic><sub>1</sub> threshold as 0.3 and the document quality accuracy is 89.42, as shown in <xref ref-type="table" rid="table1-0165551513478893">Table 1</xref>.</p>
+<table-wrap id="table3-0165551513478893" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Distribution of <italic>tw</italic><sub>1</sub> for an entire set</p>
+</caption>
+<graphic alternate-form-of="table3-0165551513478893" xlink:href="10.1177_0165551513478893-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Range</th>
+<th align="left">N<bold>umber</bold> of documents</th>
+<th align="left">Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–0.10</td>
+<td>127,745</td>
+<td>1.82%</td>
+</tr>
+<tr>
+<td>0.10–0.20</td>
+<td>165,253</td>
+<td>2.35%</td>
+</tr>
+<tr>
+<td>0.20–0.3</td>
+<td>4,563,783</td>
+<td>65.03%</td>
+</tr>
+<tr>
+<td>0.30–0.40</td>
+<td>1,236,431</td>
+<td>17.62%</td>
+</tr>
+<tr>
+<td>0.40–0.50</td>
+<td>18,374</td>
+<td>0.26%</td>
+</tr>
+<tr>
+<td>0.50–0.60</td>
+<td>14</td>
+<td>0.00%</td>
+</tr>
+<tr>
+<td>0.60–0.70</td>
+<td>557,632</td>
+<td>7.95%</td>
+</tr>
+<tr>
+<td>0.70–0.80</td>
+<td>392,643</td>
+<td>5.60%</td>
+</tr>
+<tr>
+<td>0.80–0.90</td>
+<td>53,264</td>
+<td>0.76%</td>
+</tr>
+<tr>
+<td>0.90–1</td>
+<td>30,310</td>
+<td>0.43%</td>
+</tr>
+<tr>
+<td>All</td>
+<td>7,017,704</td>
+<td>100%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig5-0165551513478893" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Distribution chart of <italic>tw</italic><sub>1</sub> for an entire set.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551513478893-fig5.tif"/>
+</fig>
+<table-wrap id="table4-0165551513478893" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Distribution of <italic>tw</italic><sub>1</sub> from 0.2 to 0.4</p>
+</caption>
+<graphic alternate-form-of="table4-0165551513478893" xlink:href="10.1177_0165551513478893-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Range</th>
+<th align="left">N<bold>umber</bold> of documents</th>
+<th align="left">Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.20–0.23</td>
+<td>374</td>
+<td>0.01%</td>
+</tr>
+<tr>
+<td>0.23–0.25</td>
+<td>32,963</td>
+<td>0.47%</td>
+</tr>
+<tr>
+<td>0.25–0.28</td>
+<td>584,942</td>
+<td>8.34%</td>
+</tr>
+<tr>
+<td>0.28–0.30</td>
+<td>3,945,504</td>
+<td>56.22%</td>
+</tr>
+<tr>
+<td>0.30–0.33</td>
+<td>800,633</td>
+<td>11.41%</td>
+</tr>
+<tr>
+<td>0.33–0.37</td>
+<td>425234</td>
+<td>6.06%</td>
+</tr>
+<tr>
+<td>0.37–0.40</td>
+<td>10564</td>
+<td>0.15%</td>
+</tr>
+<tr>
+<td>All (0.2–0.4)</td>
+<td>5,800,214</td>
+<td>82.65%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig6-0165551513478893" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Distribution chart for <italic>tw</italic><sub>1</sub> from 0.2 to 0.4.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551513478893-fig6.tif"/>
+</fig>
+<p>
+<xref ref-type="table" rid="table5-0165551513478893">Table 5</xref> shows the total number of documents and the indexing speed according to the document trustworthiness detection processes. We crawled through thousands of web pages from 312 major game sites and 257 game communities, including a number of personal blog posts. As shown in <xref ref-type="table" rid="table5-0165551513478893">Table 5</xref>, our answer sources can be roughly divided into three types: community articles, web documents and blogs. Through only spam and duplicated document detection without document quality judgment, we can filter out over 80% (6 + 75%) of useless documents. Based on this result, we can affirm that much web data is produced by simply pasting portions of another web document.</p>
+<table-wrap id="table5-0165551513478893" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Impact on indexing stage (document size and indexing time)</p>
+</caption>
+<graphic alternate-form-of="table5-0165551513478893" xlink:href="10.1177_0165551513478893-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th/>
+<th align="left">Original (<italic>t</italic> &gt; 0)</th>
+<th align="left">After spam filtering</th>
+<th align="left">After duplicate filtering</th>
+<th align="left">After quality filtering (<italic>t</italic> &gt; 0.3)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Number of documents</td>
+<td>Communities</td>
+<td>682,161</td>
+<td>675,339 (1%)</td>
+<td>482,222 (29%)</td>
+<td>468,700 (31%)</td>
+</tr>
+<tr>
+<td/>
+<td>Web documents</td>
+<td>7,703,882</td>
+<td>7,395,727 (4%)</td>
+<td>7,017,704 (9%)</td>
+<td>853,540 (89%)</td>
+</tr>
+<tr>
+<td/>
+<td>Blogs</td>
+<td>40,591,073</td>
+<td>37,749,698 (7%)</td>
+<td>4,529,403 (89%)</td>
+<td>812,972 (98%)</td>
+</tr>
+<tr>
+<td/>
+<td>Total</td>
+<td>48,977,116</td>
+<td>45,820,764 (6%)</td>
+<td>12,029,230 (75%)</td>
+<td>2,135,212 (96%)</td>
+</tr>
+<tr>
+<td colspan="2">Indexing time (min)</td>
+<td>28,993</td>
+<td>27,125 (6%)</td>
+<td>7121 (75%)</td>
+<td>2293 (92%)</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn2-0165551513478893">
+<p>(%) Indicates the improvement over the baseline.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>Major filtering factors vary depending on document types. For filtering blogs, duplication detection is the most important factor (89% of documents are filtered), whereas document quality analysis is more important for web documents (89%). When the cut-off threshold is 0.3, the total number of documents is reduced by 96%; accordingly, the indexing time is also reduced by 92% (from 28,993 to 2293 min).</p>
+</sec>
+<sec id="section14-0165551513478893">
+<title>5.3. Impact on answering stage</title>
+<p>Contrary to the first trustworthiness factor, the second and third factors, <italic>tw</italic><sub>2</sub> and <italic>tw</italic><sub>3</sub>, can be determined at the answering stage in real time since they reflect relatedness to a given user question and candidate answers. To see the value of the impact of trustworthiness in answer selection, five cases were examined: (a) the simple routing QA based on <xref ref-type="disp-formula" rid="disp-formula5-0165551513478893">equation (5)</xref> without any trustworthiness factors; (b) using only <italic>tw</italic><sub>1</sub>; (c) using <italic>tw</italic><sub>1</sub> and <italic>tw</italic><sub>2</sub>; (d) the strategy-driven QA based on <xref ref-type="disp-formula" rid="disp-formula6-0165551513478893">equation (6)</xref> using only <italic>tw</italic><sub>3</sub>; and (e) using all factors of the proposed model based on the <xref ref-type="disp-formula" rid="disp-formula3-0165551513478893">equation (3)</xref>. An overall comparison is shown in <xref ref-type="table" rid="table6-0165551513478893">Table 6</xref> and all trustworthiness scores –<italic>tw</italic><sub>1</sub>, <italic>tw</italic><sub>2</sub>, and <italic>tw</italic><sub>3</sub>– are normalized from 0 to 1.</p>
+<table-wrap id="table6-0165551513478893" position="float">
+<label>Table 6.</label>
+<caption>
+<p>Impact on answering stage (accuracy)</p>
+</caption>
+<graphic alternate-form-of="table6-0165551513478893" xlink:href="10.1177_0165551513478893-table6.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left" colspan="2">Top-one<hr/></th>
+<th align="left" colspan="2">Top-five<hr/></th>
+<th align="left" colspan="2">MRR<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="left"><italic>F</italic>-Score</th>
+<th align="left">Improvement</th>
+<th align="left"><italic>F</italic>-Score</th>
+<th align="left">Improvement</th>
+<th align="left"><italic>F</italic>-Score</th>
+<th align="left">Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline (simple routing QA)</td>
+<td>0.186</td>
+<td/>
+<td>0.256</td>
+<td/>
+<td>0.216</td>
+<td/>
+</tr>
+<tr>
+<td>Only <italic>tw</italic><sub>1</sub></td>
+<td>0.280</td>
+<td>50.5%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+<td>0.380</td>
+<td>48.4%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+<td>0.310</td>
+<td>43.5%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+</tr>
+<tr>
+<td><italic>tw</italic><sub>1</sub>+<italic>tw</italic><sub>2</sub></td>
+<td>0.357</td>
+<td>27.5%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">b</xref></sup> 91.9%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+<td>0.421</td>
+<td>10.8%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">b</xref></sup> 64.5%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+<td>0.385</td>
+<td>24.2%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">b</xref></sup> 78.2%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+</tr>
+<tr>
+<td>Only <italic>tw</italic><sub>3</sub> (strategy-driven QA)</td>
+<td>0.311</td>
+<td>11.5%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">b</xref></sup> 67.2%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+<td>0.334</td>
+<td>-12.1,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">b</xref></sup> 30.5%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+<td>0.321</td>
+<td>3.5%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">b</xref></sup> 48.6%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+</tr>
+<tr>
+<td>All (<italic>tw</italic><sub>1</sub>+<italic>tw</italic><sub>2</sub>+<italic>tw</italic><sub>3</sub>)</td>
+<td>0.464</td>
+<td>49.2%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">d</xref></sup> 30.0%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">c</xref></sup> 65.7%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">b</xref></sup> 149.5%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+<td>0.571</td>
+<td>71.0%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">d</xref></sup> 35.6%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">c</xref></sup> 50.3%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">b</xref></sup> 123.0%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+<td>0.506</td>
+<td>57.6%,<sup>4</sup> 31.4%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">c</xref></sup> 63.2%,<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">b</xref></sup> 134.3%<sup><xref ref-type="table-fn" rid="table-fn3-0165551513478893">a</xref></sup></td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn3-0165551513478893">
+<p>Improvement <sup>a</sup> over the baseline; <sup>b</sup> over using <italic>tw</italic><sub>1</sub>; <sup>c</sup> over using <italic>tw</italic><sub>1</sub>+<italic>tw</italic><sub>2</sub>, <sup>d</sup> over using only <italic>tw</italic><sub>3</sub>.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>As shown in <xref ref-type="table" rid="table6-0165551513478893">Table 6</xref>, the final MRR values for the simple routing QA (baseline), <italic>tw</italic><sub>1</sub> only, <italic>tw</italic><sub>1</sub> and <italic>tw</italic><sub>2</sub>, <italic>tw</italic><sub>3</sub> only and all factors together are 0.216, 0.310, 0.385, 0.321 and 0.506, respectively. Our proposed model using all factors also shows the highest overall performance in <italic>F</italic>-scores in top-one (0.464) and top-five (0.571).</p>
+<p>The relative improvement shows the impact of each trustworthiness factor. In comparison with the baseline and <italic>tw</italic><sub>1</sub> only, the improvement of MRR is up to 50% (from 0.216 to 0.310), whereas the <italic>tw</italic><sub>2</sub> addition obtains only a gain of 24.2% (from 0.310 to 0.385). The effect of using only <italic>tw</italic><sub>3</sub> brings a lesser achievement than using only <italic>tw</italic><sub>1</sub> in the top-five (−12.1%, from 0.334 to 0.380). By using all factors, a 31.4% (from 0.385 to 0.506) gain can be achieved over only <italic>tw</italic><sub>1</sub> and <italic>tw</italic><sub>2</sub>. Reflecting this observation and the insights of preliminary results in Section 5.1, the importance of each trustworthiness factor is:</p>
+<p>
+<disp-formula id="disp-formula7-0165551513478893">
+<label>(7)</label>
+<mml:math display="block" id="math7-0165551513478893">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0165551513478893" xlink:href="10.1177_0165551513478893-eq7.tif"/>
+</disp-formula>
+</p>
+<p>The final QA model shows the best accuracy (0.506 MRR) when we set weight values, <italic>α, β</italic> and <italic>γ</italic>, in <xref ref-type="disp-formula" rid="disp-formula3-0165551513478893">equation (3)</xref> to 0.5, 0.2 and 0.3, respectively.</p>
+<p>To sum up our experimental results, the proposed method using all answer trustworthiness factors showed a dramatic improvement: 149.5% (from 0.186 to 0.464, top-one) and 134.3% (from 0.150 to 0.506 MRR) for answering effectiveness and 92% (from 28,993 to 2293 min) for indexing efficiency. These results indicate that referring to answer trustworthiness brings advantages not only of saving time, but also of selecting better appropriate answers, while suppressing unreliable ones.</p>
+</sec>
+</sec>
+<sec id="section15-0165551513478893" sec-type="discussion|conclusions">
+<title>6. Discussion and conclusion</title>
+<p>This paper proposed a QA model based on answer trustworthiness. Contrary to past research that focused on the simple quality factors of a document, we have taken into consideration document/answer quality, authority and the combination of sub-QA modules that are used to answer questions. We identified three different answer trustworthiness factors: (1) incorporating document quality at the document layer; (2) representing the authority and reputation of answer sources at the answer source layer; and (3) verifying the answers by consulting various QA systems at the sub-QAs layer. In addition, we provided an end-to-end system description with empirical evaluation results.</p>
+<p>To prove the efficacy of the proposed model, we analysed the impact of answer trustworthiness in the indexing stage as well as in the answering stage. In indexing, distilling unreliable documents that have a trustworthiness value &lt;0.3 brings not only a 96% reduction in document size but also a 92% speed increase in indexing time. To reveal the effect of trustworthiness factors in answering, we conducted experiments for five different cases, using (1) a simple routing QA, (2) <italic>tw</italic><sub>1</sub> only, (3) <italic>tw</italic><sub>1</sub> and <italic>tw</italic><sub>2</sub>, (4) <italic>tw</italic><sub>3</sub> only and (5) all factors together. Based on the result, we distilled trustworthiness factor priorities and set the optimum weight values for each of them. The proposed method using all answer trustworthiness factors obtained an improvement in effectiveness over the simple routing QA by 150% in the top-one.</p>
+<p>We plan to improve each answer trustworthiness calculation method by extending various features. In particular, the document thronging problem in selected ranges should be solved. Many documents that we collected have <italic>tw</italic><sub>1</sub> values from 0.2 to 0.4. This means that only a few documents have high quality. Thus, we have to consider other normalization mechanisms or reveal additional features to determine document and answer quality for <italic>tw</italic><sub>1</sub> and <italic>tw</italic><sub>2</sub>, respectively. Based on the result of question analysis, our QA model determines the strategy for invocation of sub-QAs. In particular, the expected answer type and answer domain analysis for a question presents a critical problem because it influences the strategy selection process. We plan to improve upon the answer type classification and domain expectation modules by expanding the training corpus towards including various question types.</p>
+<p>We have designed our proposed methodologies without bias towards a specific domain. To prove this, we also plan to apply our QA model to others domains or expand it to open-domain. In addition, to overcome false alarms of reliable documents in the indexing process, a dynamic cut-off scheme will be developed.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work was supported in part by the Korea Ministry of Knowledge Economy under grant no. 2011-140 (10039158).</p>
+</fn>
+</fn-group>
+<notes>
+<fn-group>
+<fn fn-type="other" id="fn1-0165551513478893">
+<label>1.</label>
+<p><ext-link ext-link-type="uri" xlink:href="http://www.naver.com">www.naver.com</ext-link></p>
+</fn>
+<fn fn-type="other" id="fn2-0165551513478893">
+<label>2.</label>
+<p>StarCraft<sup>TM</sup> is a military science fiction real-time strategy video game developed by Blizzard Entertainment ©.</p>
+</fn>
+<fn fn-type="other" id="fn3-0165551513478893">
+<label>3.</label>
+<p>Naver<sup>TM</sup> Manual QA Service (<ext-link ext-link-type="uri" xlink:href="http://kin.naver.com">http://kin.naver.com</ext-link>), Paran<sup>TM</sup> Game IR Service (<ext-link ext-link-type="uri" xlink:href="http://search.paran.com/pgame/">http://search.paran.com/pgame/</ext-link>).</p>
+</fn>
+</fn-group>
+</notes>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0165551513478893">
+<label>[1]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Fichman</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Comparative assessment of answer quality on four question answering sites</article-title>. <source>Journal of Information Science</source><year>2011</year>; <volume>37</volume>(<issue>5</issue>): <fpage>476</fpage>–<lpage>486</lpage>.</citation>
+</ref>
+<ref id="bibr2-0165551513478893">
+<label>[2]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Riloff</surname><given-names>E</given-names></name>
+<name><surname>Wiebe</surname><given-names>J</given-names></name>
+<name><surname>Phillips</surname><given-names>W</given-names></name>
+</person-group>. <article-title>Exploiting subjectivity classification &gt;to improve information extraction</article-title>. In: <source>Proceedings of the 20th national conference on artificial intelligence</source>. <publisher-loc>Palo Alto, CA</publisher-loc>: <publisher-name>AAAI Press</publisher-name>, <year>2005</year>, pp. <fpage>1106</fpage>–<lpage>1111</lpage>.</citation>
+</ref>
+<ref id="bibr3-0165551513478893">
+<label>[3]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Xiaolan</surname><given-names>Z</given-names></name>
+<name><surname>Gauch</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Incorporating quality metrics in centralized/distributed information retrieval on the World Wide Web</article-title>. In: <source>Proceedings of the 23rd annual international ACM/SIGIR conference</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, <year>2000</year>, pp. <fpage>288</fpage>–<lpage>295</lpage>.</citation>
+</ref>
+<ref id="bibr4-0165551513478893">
+<label>[4]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Lin</surname><given-names>J</given-names></name>
+<name><surname>Quan</surname><given-names>D</given-names></name>
+<name><surname>Sinha</surname><given-names>V</given-names></name><etal/>
+</person-group>. <article-title>What makes a good answer? The role of context in question answering</article-title>. In: <source>Proceedings of the ninth IFIP TC13 international conference on human–computer interaction</source>. <publisher-loc>Amsterdam</publisher-loc>: <publisher-name>IOS Press</publisher-name>, <year>2003</year>, pp. <fpage>25</fpage>–<lpage>32</lpage>.</citation>
+</ref>
+<ref id="bibr5-0165551513478893">
+<label>[5]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Cardie</surname><given-names>C</given-names></name>
+<name><surname>Wiebe</surname><given-names>J</given-names></name>
+<name><surname>Wilson</surname><given-names>T</given-names></name><etal/>
+</person-group>. <article-title>Low-level annotations and summary representations of opinions for multi-perspective question answering</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Maybury</surname><given-names>M</given-names></name>
+</person-group> (ed.) <source>New directions in question answering</source>. <publisher-loc>Cambridge, MA</publisher-loc>: <publisher-name>AAAI Press/MIT Press</publisher-name>, <year>2004</year>.</citation>
+</ref>
+<ref id="bibr6-0165551513478893">
+<label>[6]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Stoyanov</surname><given-names>V</given-names></name>
+<name><surname>Cardie</surname><given-names>C</given-names></name>
+<name><surname>Wiebe</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Multi-perspective question answering using the OPQA corpus</article-title> In: <conf-name>Proceedings of the human language technology conference and conference on empirical methods in natural language</conf-name>, <year>2005</year>, pp. <fpage>923</fpage>–<lpage>930</lpage>.</citation>
+</ref>
+<ref id="bibr7-0165551513478893">
+<label>[7]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Lin</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Evaluation of resources for question answering evaluation</article-title>. In: <source>Proceedings of the 28th annual international ACM SIGIR conference</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, <year>2005</year>.</citation>
+</ref>
+<ref id="bibr8-0165551513478893">
+<label>[8]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Jeon</surname><given-names>JW</given-names></name>
+<name><surname>Croft</surname><given-names>B</given-names></name>
+<name><surname>Lee</surname><given-names>JH</given-names></name><etal/>
+</person-group>. <article-title>A framework to predict the quality of answers with non-textual features</article-title>. In: <source>Proceedings of the 29th annual international ACM SIGIR conference</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, <year>2006</year>, pp. <fpage>228</fpage>–<lpage>235</lpage>.</citation>
+</ref>
+<ref id="bibr9-0165551513478893">
+<label>[9]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Su</surname><given-names>Q</given-names></name>
+<name><surname>Pavlov</surname><given-names>D</given-names></name>
+<name><surname>Choi</surname><given-names>JH</given-names></name><etal/>
+</person-group>. <article-title>Internet-scale collection of human-reviewed data</article-title>. In: <source>Proceedingsof the 16th international conference on World Wide Web</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, <year>2007</year>, pp. <fpage>231</fpage>–<lpage>240</lpage>.</citation>
+</ref>
+<ref id="bibr10-0165551513478893">
+<label>[10]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Agichtein</surname><given-names>E</given-names></name>
+<name><surname>Castillo</surname><given-names>C</given-names></name>
+<name><surname>Donat</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Finding high-quality content in social media</article-title>. In: <source>Proceedings of the web search and data mining (WSDM)</source>. <publisher-loc>Stanford, CA</publisher-loc>: <publisher-name>ACM Press</publisher-name>, <year>2008</year>, pp. <fpage>183</fpage>–<lpage>194</lpage>.</citation>
+</ref>
+<ref id="bibr11-0165551513478893">
+<label>[11]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Yamamoto</surname><given-names>Y</given-names></name>
+<name><surname>Tezuka</surname><given-names>T</given-names></name>
+<name><surname>Jatowt</surname><given-names>A</given-names></name><etal/>
+</person-group>. <article-title>Supporting judgment of fact trustworthiness by considering temporal and sentimental aspects</article-title>. In: <source>Proceedings of the 9th web information systems engineering conference (WISE2008), Auckland. Lecture Notes in Computer Science</source>, <volume>Vol. 5175</volume>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2008</year>, pp. <fpage>206</fpage>–<lpage>220</lpage>.</citation>
+</ref>
+<ref id="bibr12-0165551513478893">
+<label>[12]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Cruchet</surname><given-names>S</given-names></name>
+<name><surname>Gaudinat</surname><given-names>A</given-names></name>
+<name><surname>Rindflesch</surname><given-names>T</given-names></name><etal/>
+</person-group>. <article-title>What about trust in the question answering world?</article-title> In: <conf-name>Proceedings of AMIA 2009 annual symposium</conf-name>, <year>2009</year>.</citation>
+</ref>
+<ref id="bibr13-0165551513478893">
+<label>[13]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wu</surname><given-names>M</given-names></name>
+<name><surname>Marian</surname><given-names>A</given-names></name>
+</person-group>. <article-title>A framework for corroborating answers from multiple web</article-title>. <source>Information Systems</source><year>2011</year>; <volume>36</volume>(<issue>2</issue>): <fpage>431</fpage>–<lpage>449</lpage>.</citation>
+</ref>
+<ref id="bibr14-0165551513478893">
+<label>[14]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Suryanto</surname><given-names>MA</given-names></name>
+<name><surname>Lim</surname><given-names>EP</given-names></name>
+<name><surname>Sun</surname><given-names>A</given-names></name>
+<name><surname>Chiang</surname><given-names>RHL</given-names></name>
+</person-group>. <article-title>Chiang RHL. Quality-aware collaborative question answering: Methods and evaluation</article-title>. In: <source>Proceedings Of the Web Search and Data Mining (WSDM)</source>. <publisher-loc>Stanford, CA</publisher-loc>: <publisher-name>ACM Press</publisher-name>, <year>2009</year>, pp. <fpage>142</fpage>–<lpage>151</lpage>.</citation>
+</ref>
+<ref id="bibr15-0165551513478893">
+<label>[15]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Oh</surname><given-names>H-J</given-names></name>
+<name><surname>Lee</surname><given-names>CK</given-names></name>
+<name><surname>Lee</surname><given-names>CH</given-names></name>
+</person-group>. <article-title>Analysis of the empirical of contextual matching advertising for online news</article-title>. <source>ETRI Journal</source><year>2012</year>; <volume>34</volume>(<issue>2</issue>): <fpage>292</fpage>–<lpage>295</lpage>.</citation>
+</ref>
+<ref id="bibr16-0165551513478893">
+<label>[16]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Oh</surname><given-names>H-J</given-names></name>
+<name><surname>Myaeng</surname><given-names>SH</given-names></name>
+<name><surname>Jang</surname><given-names>MG</given-names></name>
+</person-group>. <article-title>Effects of answer weight boosting in strategy-driven question answering</article-title>. <source>Information Processing and Management</source><year>2012</year>; <volume>48</volume>(<issue>1</issue>): <fpage>83</fpage>–<lpage>93</lpage>.</citation>
+</ref>
+<ref id="bibr17-0165551513478893">
+<label>[17]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kim</surname><given-names>K-S</given-names></name>
+<name><surname>Sin</surname><given-names>S-CJ</given-names></name>
+</person-group>. <article-title>Selecting quality sources: Bridging the gap between the perception and use of information sources</article-title>. <source>Journal of Information Science</source><year>2011</year>; <volume>37</volume>(<issue>2</issue>): <fpage>178</fpage>–<lpage>188</lpage>.</citation>
+</ref>
+<ref id="bibr18-0165551513478893">
+<label>[18]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Oh</surname><given-names>H-J</given-names></name>
+<name><surname>Sung</surname><given-names>KY</given-names></name>
+<name><surname>Myaeng</surname><given-names>SH</given-names></name>
+<name><surname>Jang</surname><given-names>MG</given-names></name>
+</person-group>. <article-title>Compositional question answering: A divide and conquer approach</article-title>. <source>Information Processing &amp; Management</source><year>2011</year>; <volume>47</volume>(<issue>6</issue>): <fpage>808</fpage>–<lpage>824</lpage>.</citation>
+</ref>
+<ref id="bibr19-0165551513478893">
+<label>[19]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Lee</surname><given-names>HG</given-names></name>
+<name><surname>Shin</surname><given-names>MJ</given-names></name>
+<name><surname>Lim</surname><given-names>HC</given-names></name>
+</person-group>. <article-title>Document quality evaluation for question answering system</article-title>. In: <conf-name>Proceedings of the 20th conference of Hangul and Korean information processing</conf-name> (in Korean, <year>2008</year>), pp. <fpage>176</fpage>–<lpage>181</lpage>.</citation>
+</ref>
+<ref id="bibr20-0165551513478893">
+<label>[20]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lee</surname><given-names>CK</given-names></name>
+<name><surname>Jang</surname><given-names>MG</given-names></name>
+</person-group>. <article-title>A modified fixed-threshold SMO for 1-slack structural SVMs</article-title>. <source>ETRI Journal</source> <year>2010</year>; <volume>32</volume>(<issue>1</issue>): <fpage>120</fpage>–<lpage>128</lpage>.</citation>
+</ref>
+<ref id="bibr21-0165551513478893">
+<label>[21]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Lin</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Is question answering better than information retrieval? A task-based evaluation framework for question series</article-title>. In: <conf-name>Proceedings of the human language technology conference and the North American chapter of the Association for Computational Linguistics annual meeting (HLT/NAACL)</conf-name>, <year>2007</year>, pp. <fpage>212</fpage>–<lpage>219</lpage>.</citation>
+</ref>
+<ref id="bibr22-0165551513478893">
+<label>[22]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Dang</surname><given-names>HT</given-names></name>
+<name><surname>Lin</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Different structures for evaluating answers to complex questions: Pyramids won’t topple, and neither will human assessors</article-title>. In: <conf-name>Proceedings of the 45th annual meeting of the Association for Computational Linguistics (ACL)</conf-name>, <year>2007</year>, pp. <fpage>768</fpage>–<lpage>775</lpage>.</citation>
+</ref>
+<ref id="bibr23-0165551513478893">
+<label>[23]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Robertson</surname><given-names>SE</given-names></name>
+<name><surname>Walker</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Some simple effective approximations to the 2-Poisson model for probabilistic weighted retrieval</article-title>. In: <conf-name>Proceedings of the 17th annual international ACM SIGIR conference</conf-name>, <year>1994</year>, pp. <fpage>232</fpage>–<lpage>241</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

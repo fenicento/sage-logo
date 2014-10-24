@@ -1,0 +1,1211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">HPC</journal-id>
+<journal-id journal-id-type="hwp">sphpc</journal-id>
+<journal-title>The International Journal of High Performance Computing Applications</journal-title>
+<issn pub-type="ppub">1094-3420</issn>
+<issn pub-type="epub">1741-2846</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1094342011429952</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1094342011429952</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>A tuned and scalable fast multipole method as a preeminent algorithm for exascale systems</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name>
+<surname>Yokota</surname>
+<given-names>Rio</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342011429952"/>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name>
+<surname>Barba</surname>
+<given-names>Lorena A</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342011429952"/>
+<xref ref-type="corresp" rid="corresp1-1094342011429952"/>
+</contrib>
+<bio>
+<title>Author’s Biographies</title>
+<p>
+<italic>Rio Yokota</italic> obtained his PhD from Keio University, Japan, in 2009 and went on to work as a postdoctoral researcher with Professor Lorena Barba at the University of Bristol and then Boston University. He has worked on the implementation of fast <inline-formula id="inline-formula1-1094342011429952">
+<mml:math id="mml-inline1-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-body algorithms on special-purpose machines such as <sc>mdgrape</sc>-3, and then on <sc>gpu</sc>s after <sc>cuda</sc> was released, and on vortex methods for fluids simulation. In 2009, he co-authored a paper awarded the ACM Gordon Bell prize in the price/performance category, using <sc>gpu</sc>s. He joined the King Abdullah University of Science and Technology (KAUST) as a research scientist in September 2011.</p>
+<p>
+<italic>Lorena Barba</italic> is an Assistant Professor of Mechanical Engineering at Boston University since 2008. She obtained her PhD in Aeronautics from the California Institute of Technology in 2004, and then joined Bristol University in the United Kingdom as a Lecturer in Applied Mathematics. Her research interests include computational fluid dynamics, especially particle methods for fluid simulation; fundamental and applied aspects of fluid dynamics, especially flows dominated by vorticity dynamics; the fast multipole method and applications; and scientific computing on <sc>gpu</sc> architecture. She was a recipient of the Engineering and Physical Sciences Research Council (EPSRC) First Grant in 2007, and was awarded an n<sc>vidia</sc> Academic Partnership grant in 2011.</p>
+</bio>
+</contrib-group>
+<aff id="aff1-1094342011429952">Mechanical Engineering Department, Boston University, Boston, MA, USA</aff>
+<author-notes>
+<corresp id="corresp1-1094342011429952">Lorena A Barba, Mechanical Engineering Department, Boston University, 110 Cummington Street, Boston, MA 02215, USA Email: <email>labarba@bu.edu</email>
+</corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>11</month>
+<year>2012</year>
+</pub-date>
+<volume>26</volume>
+<issue>4</issue>
+<issue-title>Special Issue: Manycore and Accelerator-based High-performance Scientific Computing</issue-title>
+<fpage>337</fpage>
+<lpage>346</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Among the algorithms that are likely to play a major role in future exascale computing, the fast multipole method (<sc>fmm</sc>) appears as a rising star. Our previous recent work showed scaling of an <sc>fmm</sc> on <sc>gpu</sc> clusters, with problem sizes of the order of billions of unknowns. That work led to an extremely parallel <sc>fmm</sc>, scaling to thousands of <sc>gpu</sc>s or tens of thousands of <sc>cpu</sc>s. This paper reports on a campaign of performance tuning and scalability studies using multi-core <sc>cpu</sc>s, on the Kraken supercomputer. All kernels in the <sc>fmm</sc> were parallelized using OpenMP, and a test using 10<sup>7</sup> particles randomly distributed in a cube showed 78% efficiency on 8 threads. Tuning of the particle-to-particle kernel using single instruction multiple data (SIMD) instructions resulted in 4 × speed-up of the overall algorithm on single-core tests with 10<sup>3</sup>–10<sup>7</sup> particles. Parallel scalability was studied in both strong and weak scaling. The strong scaling test used 10<sup>8</sup> particles and resulted in 93% parallel efficiency on 2048 processes for the non-SIMD code and 54% for the SIMD-optimized code (which was still 2 × faster). The weak scaling test used 10<sup>6</sup> particles per process, and resulted in 72% efficiency on 32,768 processes, with the largest calculation taking about 40 seconds to evaluate more than 32 billion unknowns. This work builds up evidence for our view that <sc>fmm</sc> is poised to play a leading role in exascale computing, and we end the paper with a discussion of the features that make it a particularly favorable algorithm for the emerging heterogeneous and massively parallel architectural landscape. The code is open for unrestricted use under the MIT license.</p>
+</abstract>
+<kwd-group>
+<kwd>fast multipole method</kwd>
+<kwd>FMM</kwd>
+<kwd>hierarchical algorithms</kwd>
+<kwd>exascale</kwd>
+<kwd>performance tuning</kwd>
+<kwd>OpenMP</kwd>
+<kwd>MPI</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1094342011429952">
+<title>1 Introduction</title>
+<p>Achieving computing at the exascale means accelerating today’s applications by a factor of 1,000. Clearly, this cannot be accomplished by hardware alone, at least not in the short time frame expected for reaching this performance milestone. Thus, a lively discussion has begun in the last 2 or 3 years about programming models, software components and tools, and algorithms that will facilitate exascale computing.</p>
+<p>The hardware path to exascale systems, although not entirely certain, points to computing systems involving nodes with increasing number of cores, and consisting of compute engines with significant structural differences (for example, having different instruction set architectures), i.e. heterogeneous systems. Among heterogeneous systems, those involving <sc>gpu</sc>s are currently at the forefront and poised to continue gaining ground, until and unless a totally new and unexpected technology comes along. The latest Top500 list of the world’s supercomputers (as of June 2011) has three <sc>gpu</sc>-based systems ranked among the top five. Furthermore, on the Green500 list (<xref ref-type="bibr" rid="bibr7-1094342011429952">Feng and Cameron 2009</xref>) of the world’s most energy efficient supercomputers (as of June 2011), three out of the top five are also <sc>gpu</sc>-based systems (not the same systems leading the Top500 list, however). Even if a totally new technology were to come around the corner on our path to the exascale, the lessons learned from adapting our scientific algorithms to the challenges posed by <sc>gpu</sc>s and many-core systems will better prepare us. Features that are inevitable in emerging hardware models, as recognized by <xref ref-type="bibr" rid="bibr1-1094342011429952">Bergman et al. (2008)</xref>, are many (hundreds of) cores in a compute engine and programmer-visible parallelism, data-movement bottlenecks, and cheaper compute than memory transfers.</p>
+<p>Computational methods and software will have to evolve to function in this new ultra-parallel ecosystem. One of the greatest challenges for scalability (as well as programmability) is the growing imbalance between compute capacity and interconnect bandwidth. This situation demands our investment in algorithmic research, co-developed with exascale applications so that the new architectures can indeed be exploited for scientific discovery at the highest performance.</p>
+<p>On the other hand, it is clear that achieving exascale computing in the short time frame anticipated (the next decade) will require much more than hardware advances. Developments in algorithms must play a leading role. If history is to be our guide, algorithm developments have often provided great leaps in capability, comparable or higher than those offered by progress in hardware. Thus, we can be fairly optimistic that if we maintain a substantial research effort into both scientific algorithms and their implementation, the chances of success are higher.</p>
+<p>It is interesting to note that many of the most successful algorithms of today are hierarchical in nature, such as the case of multi-grid methods. Hierarchical algorithms often result in the ideal <inline-formula id="inline-formula2-1094342011429952">
+<mml:math id="mml-inline2-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> scaling, with <inline-formula id="inline-formula3-1094342011429952">
+<mml:math id="mml-inline3-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> representing the problem size. A quintessential <inline-formula id="inline-formula4-1094342011429952">
+<mml:math id="mml-inline4-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> algorithm, which we focus on here, is the fast multipole method (<sc>fmm</sc>). This algorithm was introduced by <xref ref-type="bibr" rid="bibr9-1094342011429952">Greengard and Rokhlin (1987)</xref> for performing fast calculations of <inline-formula id="inline-formula5-1094342011429952">
+<mml:math id="mml-inline5-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-body type problems, such as are encountered in gravitational or electrostatic calculations. These problems naturally have a computational complexity of <inline-formula id="inline-formula6-1094342011429952">
+<mml:math id="mml-inline6-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> for <inline-formula id="inline-formula7-1094342011429952">
+<mml:math id="mml-inline7-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> bodies (masses or charges), but the <sc>fmm</sc> provides a solution in <inline-formula id="inline-formula8-1094342011429952">
+<mml:math id="mml-inline8-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> operations, to within a controllable accuracy. It is important to note that the <sc>fmm</sc> can be used not only as an <inline-formula id="inline-formula9-1094342011429952">
+<mml:math id="mml-inline9-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-body solver, as it was originally designed to be, it can also be used to solve any elliptic <sc>pde</sc> (see, e.g., <xref ref-type="bibr" rid="bibr6-1094342011429952">Ethridge and Greengard 2001</xref>; <xref ref-type="bibr" rid="bibr4-1094342011429952">Cheng et al. 2006</xref>; <xref ref-type="bibr" rid="bibr12-1094342011429952">Langston et al. 2011</xref>).</p>
+<p>There are several groups actively contributing to the field of hierarchical <inline-formula id="inline-formula10-1094342011429952">
+<mml:math id="mml-inline10-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-body algorithms, and their high-performance implementation in both massively parallel <sc>cpu</sc> systems and <sc>gpu</sc> architecture. These efforts have often been divided along two lines: the <inline-formula id="inline-formula11-1094342011429952">
+<mml:math id="mml-inline11-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo form="prefix" movablelimits="false">log</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> treecodes, with a strong following in the astrophysics community, and the <inline-formula id="inline-formula12-1094342011429952">
+<mml:math id="mml-inline12-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+<sc>fmm</sc>, and its variants. A notable player in the field is the kernel-independent version of the <sc>fmm</sc>, a variant which does not make use of multipole expansions of the sources in a cluster but rather an equivalent density on a surface enclosing the cluster. The group working on this algorithm, known as <bold>kifmm</bold> (<xref ref-type="bibr" rid="bibr18-1094342011429952">Ying et al. 2004</xref>), has provided a continued stream of evidence of the high performance levels that can be attained with this family of algorithms. Most recently, they were awarded the coveted ACM Gordon Bell prize at the Supercomputing conference (<xref ref-type="bibr" rid="bibr14-1094342011429952">Rahimian et al. 2010</xref>), with a sustained performance of 0.7 petaflop/s: this is merely a factor of <inline-formula id="inline-formula13-1094342011429952">
+<mml:math id="mml-inline13-1094342011429952">
+<mml:mn>3.7</mml:mn>
+</mml:math>
+</inline-formula> less than the peak HPC Linpack benchmark of the same date, but achieved with a full application run (involving flow of deformable red blood cells). Thus, we are convinced that hierarchical algorithms, and the <sc>fmm</sc> in particular, are especially poised to be leading players in the exascale computing future.</p>
+<p>In our own recent efforts, we have achieved excellent scaling on <sc>gpu</sc> clusters, with problem sizes that are in the order of billions of unknowns (<xref ref-type="bibr" rid="bibr20-1094342011429952">Yokota et al. 2011b</xref>,a). This work has led to an extremely parallel <sc>fmm</sc>, which is capable of scaling to thousands of <sc>gpu</sc>s or tens of thousands of <sc>cpu</sc>s. In the present study, we demonstrate the scalability of our new <sc>fmm</sc> on a large <sc>cpu</sc>-based system (Kraken, at the National Institute for Computational Science, University of Tennessee). We also perform single-node performance tuning by using single instruction multiple data (<sc>simd</sc>) instructions and OpenMP. Our efforts are on a par with the most high-performing computations using <sc>fmm</sc>, yet are fully independent. Thus, we contribute to the mounting evidence of the decisive role of <sc>fmm</sc> and related algorithms in the quest for exascale. In view of this, we conclude our paper with a brief discussion of the features of the <sc>fmm</sc> that make it a particularly favorable algorithm for the emerging heterogeneous, massively parallel architectural landscape. We hope that this will enrich the ongoing discussions about the challenges and opportunities to reach the milestone of exascale computing within a decade.</p>
+<p>Given the magnitude of the challenge, we maintain that working in collaboration and under a model of openness should offer the best opportunities. Consistent with this view, all codes developed as part of this research effort are open source, and released at the time of publication. The full implementation of the <sc>fmm</sc> used to produce the results of this paper, as well as some of our previous publications, is available via the website at <ext-link ext-link-type="uri" xlink:href="http://www.bu.edu/exafmm/">http://www.bu.edu/exafmm/</ext-link>.</p>
+</sec>
+<sec id="section2-1094342011429952">
+<title>2 The fast multipole method, and its place in high-performance computing</title>
+<sec id="section3-1094342011429952">
+<title>2.1 Brief overview of the algorithm</title>
+<p>Evaluating the interactions among <inline-formula id="inline-formula14-1094342011429952">
+<mml:math id="mml-inline14-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> sources of a force potential that has long-range effects in principle requires <inline-formula id="inline-formula15-1094342011429952">
+<mml:math id="mml-inline15-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mi>N</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> operations. The canonical examples of this situation are gravitational and electrostatic problems. The <sc>fmm</sc> of <xref ref-type="bibr" rid="bibr9-1094342011429952">Greengard and Rokhlin (1987)</xref> is able to reduce the computational complexity of this problem to <inline-formula id="inline-formula16-1094342011429952">
+<mml:math id="mml-inline16-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> operations, and thus can have a tremendous impact on the time to solution in applications.</p>
+<p>The <sc>fmm</sc> begins with a hierarchical subdivision of space, allowing a systematic categorization of spatial regions as either <italic>near</italic> or <italic>far</italic> from one another. Different analytical approximations to the kernel that represents the interaction are used for pairs of points that are in near or far regions, correspondingly. These approximations are then transferred between different scales, up and down, using the subdivision hierarchy, eventually resulting in the assembly of a complete interaction force field at all of the points to a given approximation. A view of the complete algorithm is given in <xref ref-type="fig" rid="fig1-1094342011429952">Figure 1</xref>, where the main computational steps are associated to a tree graph representing the hierarchical subdivision of a one-dimensional domain space. The multi-resolution nature of the hierarchical space division, with its associated tree, is illustrated in <xref ref-type="fig" rid="fig1-1094342011429952">Figure 1</xref> for the 2D case.</p>
+<fig id="fig1-1094342011429952" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Illustration of <sc>fmm</sc> algorithm components, with the <italic>upward sweep</italic> depicted on the left side of the tree, and the <italic>downward sweep</italic> depicted on the right side of the tree. The multipole expansions are created at the leaf level in the P2M operation, they are translated upwards to the center of the parent cells in the multipole-to-multipole (M2M) translation, then transformed to a local expansion in the M2L operation for the siblings at all levels deeper than level 1. The local expansions are translated downward to children cells in the L2L operation and finally, the local expansions are added at the leaf level and evaluated in the L2P operation.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429952-fig1.tif"/>
+</fig>
+<p>The <sc>fmm</sc> algorithm defines the following mathematical tools. The Multipole Expansion (<sc>me</sc>) is a series expansion, truncated after <inline-formula id="inline-formula17-1094342011429952">
+<mml:math id="mml-inline17-1094342011429952">
+<mml:mi>p</mml:mi>
+</mml:math>
+</inline-formula> terms, which represents the influence of a cluster of sources on far-away regions of space, and is valid at distances large with respect to the cluster radius. The Local Expansion (<sc>le</sc>) is also a series expansion of <inline-formula id="inline-formula18-1094342011429952">
+<mml:math id="mml-inline18-1094342011429952">
+<mml:mi>p</mml:mi>
+</mml:math>
+</inline-formula> terms, valid only <italic>inside</italic> a given subdomain, and used to efficiently evaluate the contribution of a group of <sc>me</sc>s on thatsubdomain. In other words, the <sc>me</sc>s and <sc>le</sc>s are series (e.g., Taylor series) that converge in different subdomains. The center of the series for an <sc>me</sc> is the center of the cluster of source particles, and it only converges outside the cluster of particles. In the case of an <sc>le</sc>, the series is centered near an evaluation point and converges locally. All the distinct operations that are required in the algorithm are illustrated in the flow diagram of <xref ref-type="fig" rid="fig3-1094342011429952">Figure 3</xref>.</p>
+<fig id="fig2-1094342011429952" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>A three-level hierarchical decomposition of a 2D domain. Tree nodes corresponding to domain boxes are shown in corresponding color.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429952-fig2.tif"/>
+</fig>
+<fig id="fig3-1094342011429952" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Flow of the <sc>fmm</sc> calculation, showing all of the operations required in the algorithms: <sc>p</sc>2<sc>m</sc>, transformation of points into <sc>me</sc>s (points-to-multipole); <sc>m</sc>2<sc>m</sc>, translation of <sc>me s</sc> (multipole-to-multipole); <sc>m</sc>2<sc>l</sc>, transformation of an <sc>me</sc> into an <sc>le</sc> (multipole-to-local); <sc>l</sc>2<sc>l</sc>, translation of an <sc>le</sc> (local-to-local); <sc>l</sc>2<sc>p</sc>, evaluation of <sc>le</sc>s at point locations (local-to-point).</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429952-fig3.tif"/>
+</fig>
+<p>The utilization of an aggregate representation for a cluster of particles, via the <sc>me</sc>, effectively permits a decoupling of the influence of the source particles from the evaluation points. This is a key idea, resulting in the factorization of the computations of <sc>me</sc>s that are centered at the same point. This factorization allows pre-computation of terms that can be re-used many times, increasing the efficiency of the overall computation. Similarly, the <sc>le</sc> is used to decouple the influence of an <sc>me</sc> from the evaluation points. A group of <sc>me</sc>s can be factorized into a single <sc>le</sc> so that one single evaluation can be used at multiple points locally. The combined effect of using <sc>me</sc>s and <sc>le</sc>s is a computational complexity of <inline-formula id="inline-formula19-1094342011429952">
+<mml:math id="mml-inline19-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> for a full evaluation of the force field.</p>
+</sec>
+<sec id="section4-1094342011429952">
+<title>2.2 Our ongoing work on parallel FMM</title>
+<p>Previously, our research group has led the development of an open-source parallel software, called Pet<sc>fmm</sc>, which aims to offer a <sc>pets</sc>c-like package for <sc>fmm</sc> algorithms. It is characterized by dynamic load-balancing based on re-casting the tree-based algorithm, illustrated in <xref ref-type="fig" rid="fig1-1094342011429952">Figure 1</xref>, into an undirected graph created using a computational model of the <sc>fmm</sc> (<xref ref-type="bibr" rid="bibr5-1094342011429952">Cruz et al. 2010</xref>). The spatial hierarchy is divided into many subdomains, more than the number of processes available, and an auxiliary optimization problem for the partition is constructed such that it minimizes both load imbalance and communication. The problem is modeled by a weighted graph, and solved using the partitioner ParMetis (<xref ref-type="bibr" rid="bibr11-1094342011429952">Karypis and Kumar 1998</xref>). Strong scaling results showing the parallel performance of Pet<sc>fmm</sc> were given in <xref ref-type="bibr" rid="bibr5-1094342011429952">Cruz et al. (2010)</xref>, with a test evaluating the field due to 10 million particles using up to 256 processors of a <sc>cpu</sc> cluster.</p>
+<p>Recently, we have produced a multi-<sc>gpu</sc>
+<sc>fmm</sc> implementation, and performed new scalability studies. The parallel partitioning in this code is based on work-only load balancing, by equally distributing the Morton-indexed boxes at the leaf level; this is the standard and most commonly used technique for distributing <inline-formula id="inline-formula20-1094342011429952">
+<mml:math id="mml-inline20-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-body codes, first introduced by <xref ref-type="bibr" rid="bibr17-1094342011429952">Warren and Salmon (1993)</xref>. A host of detailed performance improvements were applied to accomplish good scalability on up to 512 <sc>gpu</sc>s in our first study (<xref ref-type="bibr" rid="bibr19-1094342011429952">Yokota et al 2011a</xref>). We should note that achieving parallel scalability on a cluster of <sc>gpu</sc>s is a greater challenge than scaling on a <sc>cpu</sc>-only cluster. The high-compute capability of <sc>gpu</sc>s accelerates the computation and exposes the time required for communications and other overheads, which is exacerbated by the fact that, for multi-<sc>gpu</sc> calculations, the <sc>gpu</sc>s cannot communicate with each other directly. With current technology, it is necessary to send the data back to the host machine and communicate between nodes via MPI. Yet, our <italic>strong scaling</italic> tests for the <sc>fmm</sc> on multi-<sc>gpu</sc>s demonstrated high parallel efficiency despite these challenges; see <xref ref-type="fig" rid="fig4-1094342011429952">Figure 4</xref>. On the Degima cluster,<sup>
+<xref ref-type="fn" rid="fn1-1094342011429952">1</xref>
+</sup> parallel efficiency remains close to <inline-formula id="inline-formula21-1094342011429952">
+<mml:math id="mml-inline21-1094342011429952">
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula> all of the way up to 128 <sc>gpu</sc>s, then drops to 78% at 256, and to 48% at 512 processes. The efficiency drop was ascribed to the configuration of the interconnect in the machine, and the number of <sc>gpu</sc>s per node: up to 128 <sc>gpu</sc>s, only one process was running on each node; for the case with 256 <sc>gpu</sc>s, two processes were running on each node; and for the case with 512 <sc>gpu</sc>s, four processes were running per node. This situation limits the effective bandwidth per process as bandwidth must be shared within the node. To alleviate this problem, we implemented a hierarchical all-to-all communication with <bold>MPI_Comm_split</bold>, splitting the MPI communicator into sub-sets of size <inline-formula id="inline-formula22-1094342011429952">
+<mml:math id="mml-inline22-1094342011429952">
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula>. With <inline-formula id="inline-formula23-1094342011429952">
+<mml:math id="mml-inline23-1094342011429952">
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula> processes per node, we are effectively splitting the communicator into an inter-node and an intra-node communicator. Thus, we first perform an intra-node <bold>MPI_Alltoallv</bold>, then an inter-node <bold>MPI_Alltoallv</bold>. We found that this could speed-up the communication nearly <inline-formula id="inline-formula24-1094342011429952">
+<mml:math id="mml-inline24-1094342011429952">
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula> times at <inline-formula id="inline-formula25-1094342011429952">
+<mml:math id="mml-inline25-1094342011429952">
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula> processes. This is an example of applying a <italic>hierarchical parallel model</italic> to effectively obtain performance from a heterogeneous system.</p>
+<fig id="fig4-1094342011429952" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Multi-<sc>gpu</sc> strong scaling, and timing breakdown of the different <sc>fmm</sc> kernels, tree construction (done on the <sc>cpu</sc>) and communications. Test problem: <inline-formula id="inline-formula61-1094342011429952">
+<mml:math id="mml-inline61-1094342011429952">
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>8</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> points placed at random in a cube; <sc>fmm</sc> with order <inline-formula id="inline-formula62-1094342011429952">
+<mml:math id="mml-inline62-1094342011429952">
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>10</mml:mn>
+</mml:math>
+</inline-formula> and spherical harmonic rotation before each translation at <inline-formula id="inline-formula63-1094342011429952">
+<mml:math id="mml-inline63-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mi>p</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> cost. Parallel efficiency is slightly above 1 for 4–32 processes, possibly due to cache advantage on the tree construction. Parallel efficiency is 78% on 256 and 48% on 512 <sc>gpu</sc>s. Reproduced with permission from <xref ref-type="bibr" rid="bibr19-1094342011429952">Yokota et al. (2011a)</xref>.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429952-fig4.tif"/>
+</fig>
+</sec>
+<sec id="section5-1094342011429952">
+<title>2.3 High-performance FMM computing</title>
+<p>Hierarchical <inline-formula id="inline-formula26-1094342011429952">
+<mml:math id="mml-inline26-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-body algorithms, including both the <inline-formula id="inline-formula27-1094342011429952">
+<mml:math id="mml-inline27-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo form="prefix" movablelimits="false">log</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula> treecode and the <inline-formula id="inline-formula28-1094342011429952">
+<mml:math id="mml-inline28-1094342011429952">
+<mml:mrow>
+<mml:mi mathvariant="script">O</mml:mi>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:math>
+</inline-formula>
+<sc>fmm</sc>, have been visible players in the field of high-performance computing for many years. In fact, the top place in performance of the Gordon Bell award<sup>
+<xref ref-type="fn" rid="fn2-1094342011429952">2</xref>
+</sup> has been obtained several times with these algorithms. In 1992, the first place was awarded to <xref ref-type="bibr" rid="bibr16-1094342011429952">Warren and Salmon (1992)</xref> for a simulation of 9 million gravitating stars with a parallel treecode (sustaining 5 Gflop/s); some of the techniques used in that work remain important to this day. The same authors (with others) achieved the first place again in 1997 with a simulation of the dynamics of 322 million self-gravitating particles, at a sustained 430 Gflop/s (<xref ref-type="bibr" rid="bibr15-1094342011429952">Warren et al. 1997</xref>). That year, the award in the price/performance category also went to this team, who reported US$50/Mflop.</p>
+<p>More recently, we have seen treecodes and <sc>fmm</sc> figure prominently with Gordon Bell awards in the last two years. In 2009, the work by <xref ref-type="bibr" rid="bibr10-1094342011429952">Hamada et al. (2009)</xref> was recipient of the award in the price/performance category, achieving 124 Mflop/US$ (more than 6,000 times ‘cheaper’ than the 1997 winner) with a <sc>gpu</sc> cluster. Last year, the first place in the performance category was achieved with an <sc>fmm</sc>-based Stokes solver of blood flow which sustained 0.7 Pflop/s when solving for 90 billion unknowns (<xref ref-type="bibr" rid="bibr14-1094342011429952">Rahimian et al. 2010</xref>). To achieve this performance, an <sc>fmm</sc> that already had undergone development to attain high parallel scaling (<xref ref-type="bibr" rid="bibr13-1094342011429952">Lashuk et al. 2009</xref>) was further optimized by means of explicit SSE vectorization and OpenMP multi-threading (<xref ref-type="bibr" rid="bibr3-1094342011429952">Chandramowlishwaran et al. 2010</xref>). As a result, a full application code was obtained that was merely a factor of <inline-formula id="inline-formula29-1094342011429952">
+<mml:math id="mml-inline29-1094342011429952">
+<mml:mn>3.7</mml:mn>
+</mml:math>
+</inline-formula> slower than the Linpack high-performance computing benchmark that is used to build the Top500 list.<sup>
+<xref ref-type="fn" rid="fn3-1094342011429952">3</xref>
+</sup>
+</p>
+<p>Given that the <sc>fmm</sc> algorithm can achieve performance <italic>in applications</italic> that is close to the Linpack benchmark, and that moreover it has excellent compatibility with massively parallel <sc>gpu</sc> hardware, we estimate that it will feature prominently in the path to exascale. In the present contribution, we perform optimizations of our <sc>fmm</sc> for single-core performance, and carry out scalability studies at large scale on <sc>cpu</sc>-based systems. Added to our ongoing work on <sc>gpu</sc> implementation, we keep the momentum going in the direction of exascale <sc>fmm</sc> for the next decade.</p>
+</sec>
+</sec>
+<sec id="section6-1094342011429952">
+<title>3 Intra-node performance optimization</title>
+<p>This section is dedicated to reporting a campaign of code optimization for single-node performance, including both <sc>simd</sc> vectorization and multithreading within a node using OpenMP. All runs were performed on the Kraken Cray XT5 system of the National Institute for Computational Sciences (NICS) at the University of Tennessee, via TeraGrid access.</p>
+<p>Each node of the Kraken system has two 2.6 GHz six-core AMD Opteron processors (Istanbul) and 16 GB of memory. The system is connected via a Cray SeaStar2+ router, and it has 9,408 compute nodes for a total of 112,896 compute cores.</p>
+<sec id="section7-1094342011429952">
+<title>3.1 Multithreading with OpenMP</title>
+<p>All kernels in the <sc>fmm</sc> were parallelized using OpenMP (the outermost loop for each kernel was explicitly parallelized by using the thread id). Results are presented in <xref ref-type="fig" rid="fig5-1094342011429952">Figure 5</xref>, consisting of the breakdown of the calculation time of the <sc>fmm</sc> for different numbers of threads. The calculation time is multiplied by the number of threads for ease of comparison, i.e., bars of equal height would indicate perfect scaling. These tests were performed on a single node of Kraken using 1, 2, 4, and 8 cores, and the test problem was a set of <inline-formula id="inline-formula30-1094342011429952">
+<mml:math id="mml-inline30-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>7</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> particles randomly distributed in a cube. In the legend on the right-hand side, the <sc>p</sc>2<sc>p</sc>, <sc>p</sc>2<sc>m</sc>, <sc>m</sc>2<sc>m</sc>, <sc>m</sc>2<sc>l</sc>, <sc>l</sc>2<sc>l</sc>, <sc>l</sc>2<sc>p</sc> labels correspond to the individual stages of the <sc>fmm</sc> as shown in <xref ref-type="fig" rid="fig3-1094342011429952">Figure 3</xref>. The <sc>p</sc>2<sc>p</sc> kernel (the direct particle–particle interaction for the near field) takes up most of the calculation time, with the <sc>m</sc>2<sc>l</sc> (multipole-to-local translation between two distant cells) also taking a significant portion. These two kernels are balanced in an <sc>fmm</sc> calculation by the number of levels in the tree, and the proportion of time taken by each will change as <inline-formula id="inline-formula31-1094342011429952">
+<mml:math id="mml-inline31-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> changes; in this case, with <inline-formula id="inline-formula32-1094342011429952">
+<mml:math id="mml-inline32-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>7</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula>, the situation shown in <xref ref-type="fig" rid="fig5-1094342011429952">Figure 5</xref> offers the best timing and hence it is balanced. The results in <xref ref-type="fig" rid="fig5-1094342011429952">Figure 5</xref> show that the two main kernels scale quite well up to 8 threads. Some of the other kernels do not scale as well, which requires further investigation; however, this is not of primary importance since we do not need to scale to a large number of threads with the OpenMP model at the moment.</p>
+<fig id="fig5-1094342011429952" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>OpenMP strong scaling, and timing breakdown of the different kernels, tree construction and communications. Calculation time is multiplied by the number of threads. Test problem: <inline-formula id="inline-formula64-1094342011429952">
+<mml:math id="mml-inline64-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>7</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> points placed at random in a cube; <sc>fmm</sc> with order <italic>p</italic> = 3. Parallel efficiency is 78% on 8 threads.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429952-fig5.tif"/>
+</fig>
+<p>The order of the <sc>fmm</sc> expansions is set to <inline-formula id="inline-formula33-1094342011429952">
+<mml:math id="mml-inline33-1094342011429952">
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula> for the tests in <xref ref-type="fig" rid="fig5-1094342011429952">Figure 5</xref>, which will give three or four significant digits of accuracy. We simply choose this value because it is common in astrophysics applications, one of the main application areas for the <sc>fmm</sc>, where high accuracy is not required. Using a larger <inline-formula id="inline-formula34-1094342011429952">
+<mml:math id="mml-inline34-1094342011429952">
+<mml:mi>p</mml:mi>
+</mml:math>
+</inline-formula> would result in more work for the <sc>p</sc>2<sc>m</sc>, <sc>m</sc>2<sc>m</sc>, <sc>l</sc>2<sc>l</sc>, <sc>l</sc>2<sc>p</sc>, and especially the <sc>m</sc>2<sc>l</sc> kernel, which would require in turn using more particles per leaf cell to balance the calculation load of <sc>p</sc>2<sc>p</sc> and <sc>m</sc>2<sc>l</sc> kernels. This would affect the parallel scalability of the <sc>p</sc>2<sc>p</sc> kernel favorably, because of more data parallelism within each cell. Increasing <inline-formula id="inline-formula35-1094342011429952">
+<mml:math id="mml-inline35-1094342011429952">
+<mml:mi>p</mml:mi>
+</mml:math>
+</inline-formula> would also increase the fine-grained parallelism of the <sc>m</sc>2<sc>l</sc> kernel because of more expansion coefficients to calculate, but would decrease the coarse-grained parallelism because the tree would become shallower for a given <inline-formula id="inline-formula36-1094342011429952">
+<mml:math id="mml-inline36-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>.</p>
+</sec>
+<sec id="section8-1094342011429952">
+<title>3.2 Vectorization with inline assembly</title>
+<p>Recently, other researchers have dedicated substantial effort to single-node optimization and multi-core parallelization of an <sc>fmm</sc>-type algorithm. <xref ref-type="bibr" rid="bibr3-1094342011429952">Chandramowlishwaran et al. (2010)</xref> reported the first extensive study of its kind, which included not only <sc>simd</sc> vectorization and intra-node parallelization, but also various other optimizations of the <bold>kifmm</bold> algorithm. They reported a total performance improvement of <inline-formula id="inline-formula37-1094342011429952">
+<mml:math id="mml-inline37-1094342011429952">
+<mml:mn>25</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+</mml:math>
+</inline-formula> for both optimizations and 8-core parallelization on Intel Nehalem <sc>cpu</sc>s (plus differing performance improvements in other, less-advanced, platforms). The speed-up from optimizations only on the overall algorithm is not specifically stated, but assuming perfect scaling on the 8 Nehalem cores, we can infer a factor of <inline-formula id="inline-formula38-1094342011429952">
+<mml:math id="mml-inline38-1094342011429952">
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula> speed-up by the optimizations (including manual <sc>simd</sc> vectorization) in double precision.</p>
+<p>We have performed a similar optimization campaign using inline assembly and achieve a factor of <inline-formula id="inline-formula39-1094342011429952">
+<mml:math id="mml-inline39-1094342011429952">
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula> overall acceleration for a single-thread execution using single precision. Results are shown in <xref ref-type="fig" rid="fig6-1094342011429952">Figure 6</xref>, consisting of the calculation time of the <sc>fmm</sc> with and without <sc>simd</sc> vectorization, for <inline-formula id="inline-formula40-1094342011429952">
+<mml:math id="mml-inline40-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>3</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula>–<inline-formula id="inline-formula41-1094342011429952">
+<mml:math id="mml-inline41-1094342011429952">
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>7</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> particles randomly distributed in a cube. At the moment, the optimization was performed for the <sc>p</sc>2<sc>p</sc> kernel only. The <sc>p</sc>2<sc>p</sc> kernel itself accelerates a factor of <inline-formula id="inline-formula42-1094342011429952">
+<mml:math id="mml-inline42-1094342011429952">
+<mml:mn>16</mml:mn>
+</mml:math>
+</inline-formula> compared with an unoptimized double-precision kernel, but since the acceleration is limited to a certain part of the algorithm the overall acceleration is only a factor of <inline-formula id="inline-formula43-1094342011429952">
+<mml:math id="mml-inline43-1094342011429952">
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula>. We expect a further increase in performance when the other kernels are optimized using the same method. Nevertheless, even with the present implementation we are able to calculate <inline-formula id="inline-formula44-1094342011429952">
+<mml:math id="mml-inline44-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>7</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> particles in less than 100 seconds on a single core on Kraken (as shown in <xref ref-type="fig" rid="fig6-1094342011429952">Figure 6</xref>).</p>
+<fig id="fig6-1094342011429952" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Calculation time with/without <sc>simd</sc>. Test problem: <inline-formula id="inline-formula65-1094342011429952">
+<mml:math id="mml-inline65-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>3</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula>–<inline-formula id="inline-formula66-1094342011429952">
+<mml:math id="mml-inline66-1094342011429952">
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>7</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> points placed at random in a cube; <sc>fmm</sc> with order <inline-formula id="inline-formula67-1094342011429952">
+<mml:math id="mml-inline67-1094342011429952">
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula>. Only the <sc>p</sc>2<sc>p</sc> kernel is accelerated with <sc>simd</sc> instructions. The overall speed-up of the <sc>fmm</sc> is approximately a factor of 4.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429952-fig6.tif"/>
+</fig>
+<p>It is worth noting that in citing the independent work on single-node optimization of the <bold>kifmm</bold> algorithm by <xref ref-type="bibr" rid="bibr3-1094342011429952">Chandramowlishwaran et al. (2010)</xref>, we are not encouraging that our work be compared toe to toe with regards to performance. The <bold>kifmm</bold> algorithm is in many ways different from our <sc>fmm</sc>, although it solves the same type of problems and shares a fundamental structure (e.g., hierarchical domain partition and associated tree structure). Quite the contrary, the point is that two completely independent efforts with hierarchical <inline-formula id="inline-formula45-1094342011429952">
+<mml:math id="mml-inline45-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-body algorithms are demonstrating the potential for applications based on these algorithms to benefit from excellent performance on multi-core systems.</p>
+</sec>
+</sec>
+<sec id="section9-1094342011429952">
+<title>4 Parallel scalability on Kraken</title>
+<p>In this section, we report the results of parallel scalability tests on Kraken using the same <sc>fmm</sc> code we described in the previous section. Strong scaling is shown between 1 and 2,048 processes and weak scaling up to 32,768 processes, with excellent parallel efficiency. For the strong scaling tests, we used one thread per process, and for the weak scaling tests we used eight threads per process. The largest calculation is performed on a problem size of 32 billion particles, taking less than 40 seconds to complete.</p>
+<p>The most recent results by researchers working with the <bold>kifmm</bold> algorithm and code base were reported by <xref ref-type="bibr" rid="bibr14-1094342011429952">Rahimian et al. (2010)</xref>, a work awarded the 2010 ACM Gordon Bell prize in the performance category. They report 84% parallel efficiency for a strong scaling test between 48 and 3,072 processes of the Jaguar supercomputer.<sup>
+<xref ref-type="fn" rid="fn4-1094342011429952">4</xref>
+</sup> The study was carried out on an application of the <bold>kifmm</bold> algorithm to Stokes flow (red blood cells), and the reported strong scaling test used a problem of size <inline-formula id="inline-formula46-1094342011429952">
+<mml:math id="mml-inline46-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>8</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> unknowns. This is the same problem size that we used in our strong scaling test (below), but it must be noted that we are using a different (Laplace) kernel. Moreover, the current literature points to many sophisticated features in the <bold>kifmm</bold> code (including bottom-up parallel tree construction scheme, all-reduce-on-hypercube communication, FFT-based translation methods for the cell–cell interactions, among others), which are not utilized in our present software. Thus, it is not appropriate to make a performance comparison between these two very different variations of the <sc>fmm</sc> and scaling studies. The point we would like to make here is that the <sc>fmm</sc> is a highly ‘strong-scalable’ algorithm, and therefore a truly suitable algorithm for the exascale era. The fact that two completely independent efforts both show similar excellent scalability is indeed promising.</p>
+<p>We start by presenting our strong scaling results without <sc>simd</sc> vectorization. <xref ref-type="fig" rid="fig7-1094342011429952">Figure 7</xref> shows the breakdown of each stage of the <sc>fmm</sc> for a test consisting of <inline-formula id="inline-formula47-1094342011429952">
+<mml:math id="mml-inline47-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>8</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> points placed at random in a cube, with the order of multipole expansions set to <inline-formula id="inline-formula48-1094342011429952">
+<mml:math id="mml-inline48-1094342011429952">
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula>. The calculation time is multiplied by the number of <sc>mpi</sc> processes (<inline-formula id="inline-formula49-1094342011429952">
+<mml:math id="mml-inline49-1094342011429952">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">p</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:math>
+</inline-formula>) for better visibility at large <inline-formula id="inline-formula50-1094342011429952">
+<mml:math id="mml-inline50-1094342011429952">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">p</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:math>
+</inline-formula>. The exponent of the number of processes is shown in the horizontal axis, e.g., the bar labeled with ‘11’ represents <inline-formula id="inline-formula51-1094342011429952">
+<mml:math id="mml-inline51-1094342011429952">
+<mml:msub>
+<mml:mi>N</mml:mi>
+<mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mi mathvariant="normal">p</mml:mi>
+</mml:mrow>
+</mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>2</mml:mn>
+<mml:mrow>
+<mml:mn>11</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>048</mml:mn>
+</mml:math>
+</inline-formula>. The legend is similar to that of <xref ref-type="fig" rid="fig5-1094342011429952">Figure 5</xref> except we include the <sc>mpi</sc> communication times ‘mpisendp2p’ and ‘mpisendm2l’, which are the communication times for the <sc>p</sc>2<sc>p</sc> kernel and <sc>m2l</sc> kernel, respectively. All of the other kernels do not require communication. The parallel efficiency at 2,048 processes is in this case approximately <inline-formula id="inline-formula52-1094342011429952">
+<mml:math id="mml-inline52-1094342011429952">
+<mml:mn>93</mml:mn>
+<mml:mi mathvariant="normal">%</mml:mi>
+</mml:math>
+</inline-formula>.</p>
+<fig id="fig7-1094342011429952" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>
+<sc>mpi</sc> strong scaling from 1 to 2,048 processes, and timing breakdown of the different kernels, tree construction and communications. Test problem: <inline-formula id="inline-formula68-1094342011429952">
+<mml:math id="mml-inline68-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>8</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> points placed at random in a cube; <sc>fmm</sc> with order <inline-formula id="inline-formula69-1094342011429952">
+<mml:math id="mml-inline69-1094342011429952">
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula>. Calculation time is multiplied by the number of processes. Parallel efficiency is 93% on 2,048 processes.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429952-fig7.tif"/>
+</fig>
+<p>The results shown in <xref ref-type="fig" rid="fig7-1094342011429952">Figure 7</xref> were obtained with the <sc>fmm</sc> code <italic>without</italic> single-node performance optimizations. The results for the same strong-scaling test using the <sc>fmm</sc>
+<italic>with</italic> the <sc>simd</sc> kernels are shown in <xref ref-type="fig" rid="fig8-1094342011429952">Figure 8</xref>. As we have mentioned in the previous section, only the <sc>p</sc>2<sc>p</sc> kernel is optimized in our present code. Therefore, the tree is shallower and there are more particles in the leaf cell to keep the <sc>p</sc>2<sc>p</sc> and <sc>m</sc>2<sc>l</sc> balanced. Since the calculation time of the <sc>p</sc>2<sc>p</sc> kernel decreases significantly, the other parts start to dominate. The parallel efficiency is 54% at 2,048 processes, with about half of the total run time corresponding to the sum of tree construction time and time for communication between nodes: we must stress, however, that this is a strong-scaling test between 1 and 2,048 processes (not offset scaling, as shown in some other works), and that communications are not overlapped.</p>
+<fig id="fig8-1094342011429952" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>
+<sc>mpi</sc> strong scaling with <sc>simd</sc> from 1 to 2,048 processes, and timing breakdown of the different kernels, tree construction and communications. Test problem: <inline-formula id="inline-formula70-1094342011429952">
+<mml:math id="mml-inline70-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>8</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> points placed at random in a cube; <sc>fmm</sc> with order <inline-formula id="inline-formula71-1094342011429952">
+<mml:math id="mml-inline71-1094342011429952">
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula>. Calculation time is multiplied by the number of processes. Parallel efficiency is 54% on 2,048 processes.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429952-fig8.tif"/>
+</fig>
+<p>By comparing <xref ref-type="fig" rid="fig7-1094342011429952">Figures 7</xref> and <xref ref-type="fig" rid="fig8-1094342011429952">8</xref>, we see that the calculation is approximately a factor of 4 faster for the optimized version when the number of processes is small. However, since the optimized version does not scale as well, the speed-up is about a factor of 3 at 1,024 and only doubles at 2,048 processes. These trends are similar to what we observed in the strong-scaling tests on the <sc>gpu</sc>, where the acceleration of the <sc>p</sc>2<sc>p</sc> and <sc>m</sc>2<sc>l</sc> kernels causes the communication and tree construction to become the bottleneck.</p>
+<p>
+<xref ref-type="fig" rid="fig9-1094342011429952">Figure 9</xref> shows weak scaling results on a test using <inline-formula id="inline-formula53-1094342011429952">
+<mml:math id="mml-inline53-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>6</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> particles per process and <inline-formula id="inline-formula54-1094342011429952">
+<mml:math id="mml-inline54-1094342011429952">
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula>. We achieve a parallel efficiency of 72% on 32,768 processes. The largest problem size that was calculated consisted in 32 billion unknowns, being solved in less than 40 seconds. It can be seen in <xref ref-type="fig" rid="fig9-1094342011429952">Figure 9</xref> that the calculation times per process of both <sc>p</sc>2<sc>p</sc> and <sc>m</sc>2<sc>l</sc> kernels remain somewhat constant up to 32k processes.</p>
+<fig id="fig9-1094342011429952" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>
+<sc>mpi</sc> weak scaling with <sc>simd</sc> from 1 to 32,768 processes, and timing breakdown of the different kernels, tree construction and communications. Test problem: <inline-formula id="inline-formula72-1094342011429952">
+<mml:math id="mml-inline72-1094342011429952">
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:msup>
+<mml:mn>10</mml:mn>
+<mml:mn>6</mml:mn>
+</mml:msup>
+</mml:math>
+</inline-formula> points per process placed at random in a cube; <sc>fmm</sc> with order <inline-formula id="inline-formula73-1094342011429952">
+<mml:math id="mml-inline73-1094342011429952">
+<mml:mi>p</mml:mi>
+<mml:mo stretchy="false">=</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:math>
+</inline-formula>. Parallel efficiency is 72% on 32,768 processes.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342011429952-fig9.tif"/>
+</fig>
+</sec>
+<sec id="section10-1094342011429952">
+<title>5 Suitability of the FMM for achieving exascale and future directions</title>
+<p>The results shown here, added to our previous work and comparable recent work by other researchers, point to certain features of the <sc>fmm</sc> that make it a particularly favorable algorithm for the emerging heterogenous, many-core architectural landscape. In this section, we make this view more clear, addressing specific exascale application characteristics identified in <xref ref-type="bibr" rid="bibr1-1094342011429952">Bergman et al. (2008)</xref>. The expectation for exascale is that in the order of a million terascale processors will be required. (Note that the results presented on <xref ref-type="fig" rid="fig4-1094342011429952">Figure 4</xref> mean that we already have several million simultaneous threads running, if we consider the 32 non-divergent threads in a <sc>simd</sc> warp to be independent threads.) In recent feasibility studies, hypothetical exascale systems are proposed which would consist of 1,024-core nodes, with each core clocking at 1 GHz, and a total of <inline-formula id="inline-formula55-1094342011429952">
+<mml:math id="mml-inline55-1094342011429952">
+<mml:msup>
+<mml:mn>2</mml:mn>
+<mml:mrow>
+<mml:mn>28</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula> or <inline-formula id="inline-formula56-1094342011429952">
+<mml:math id="mml-inline56-1094342011429952">
+<mml:msup>
+<mml:mn>2</mml:mn>
+<mml:mrow>
+<mml:mn>30</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:math>
+</inline-formula> such cores (<xref ref-type="bibr" rid="bibr8-1094342011429952">Gahvari and Gropp 2010</xref>; <xref ref-type="bibr" rid="bibr2-1094342011429952">Bhatele et al. 2011</xref>). Analysis of representative algorithms can then be performed to determine the problem sizes required to reach 1 exaflop/s, and the constraints in terms of system communication capacity that would make this performance feasible. <xref ref-type="bibr" rid="bibr2-1094342011429952">Bhatele et al. (2011)</xref> considered three classes of algorithms in their analysis: pure short-range molecular dynamics, tree-based <inline-formula id="inline-formula57-1094342011429952">
+<mml:math id="mml-inline57-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-body cosmology, and unstructured-grid finite element solvers. <xref ref-type="bibr" rid="bibr8-1094342011429952">Gahvari and Gropp (2010)</xref> similarly consider multigrid algorithms and fast Fourier transform. The conclusion of these studies is that the feasibility region for molecular dynamics (which is pleasantly parallel) and tree-based simulations is considerably less restricted than for other algorithms, having viable bandwidth requirements (of the order of 1–2 GB/s). These analysis-based studies add to the experimental demonstrations of both our and other groups' ongoing work with <sc>fmm</sc> to indicate great potential for this family of algorithms. Below, we explain some of the reasons for this potential.</p>
+<sec id="section11-1094342011429952">
+<title>5.1 Load balancing</title>
+<p>Customarily, the <sc>fmm</sc> is load-balanced via space-filling curves, either Morton or Hilbert. The latter is an improvement because the length of each segment of the space-filling curve is more uniform, i.e., it never jumps from one space location to another far away. These techniques balance only the computational work, without attempting to optimize communications. We have demonstrated an approach that optimizes both work and communications via a graph partitioning scheme in <xref ref-type="bibr" rid="bibr5-1094342011429952">Cruz et al. (2010)</xref>; however, this approach is not tested in large numbers of processors and extending it (by means of recursive graphs, for example) is an open research problem. In general, we believe that research into hierarchical load balancing techniques should be a high priority in our quest for exascale. The underlying tree-based structure of the <sc>fmm</sc> points to an opportunity in this case.</p>
+</sec>
+<sec id="section12-1094342011429952">
+<title>5.2 Spatial and temporal locality</title>
+<p>The <sc>fmm</sc> is an algorithm that has intrinsic geometric locality, as the global <inline-formula id="inline-formula58-1094342011429952">
+<mml:math id="mml-inline58-1094342011429952">
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula>-body interactions are converted to a series of hierarchical local interactions associated with a tree data structure. This is illustrated in <xref ref-type="fig" rid="fig1-1094342011429952">Figures 1</xref> and <xref ref-type="fig" rid="fig2-1094342011429952">2</xref>. However, the access patterns could potentially be non-local. An established technique is to work with sorted particle indices, which can then be accessed by a start/offset combination (this also saves storage because not every index needs to be saved). Temporal locality is especially important on the <sc>gpu</sc>, and is moreover programmer-managed. We have implemented a technique that improves locality at a coarse level and is appropriate for <sc>gpu</sc>s, namely, an efficient queuing of <sc>gpu</sc> tasks before execution. The queuing is performed on the <sc>cpu</sc>, and buffers the input and output of data making memory access contiguous. On the other hand, locality at a fine level is accomplished by means of memory coalescing; this is natural on the <sc>fmm</sc> due to the index-sorting technique used. In conclusion, the <sc>fmm</sc> is <italic>not</italic> a ‘locality-sensitive application’ (<xref ref-type="bibr" rid="bibr1-1094342011429952">Bergman et al. 2008</xref>). This is in contrast to stencil-type calculations, for example, where non-contiguous memory access is unavoidable.</p>
+</sec>
+<sec id="section13-1094342011429952">
+<title>5.3 Global data communications and synchronization</title>
+<p>The overheads associated with large data transfers and global barrier synchronization are a significant impediment to scalability for many algorithms. In the <sc>fmm</sc>, the two most time-consuming operations are the <sc>p</sc>2<sc>p</sc> (particle-to-particle) and <sc>m</sc>2<sc>l</sc> (multipole-to-local) kernels. The first is purely local, while the second effectively has what we can call <italic>hierarchical synchronization</italic>. The <sc>m</sc>2<sc>l</sc> operations happen simultaneously at every level of the hierarchical tree, without synchronization required <italic>between</italic> levels. This is in contrast, for example, to the situation in the multi-grid algorithm, which requires each level to finish before moving on to the next level. Among hierarchical algorithms, the <sc>fmm</sc> appears to have especially favorable characteristics for ‘exascaling’.</p>
+</sec>
+<sec id="section14-1094342011429952">
+<title>5.4 Future directions</title>
+<p>Based on the performance study reported in this paper, and also the features of the <sc>fmm</sc> as mentioned above, we plan to continue improving our <sc>fmm</sc> code and addressing some immediate tasks. First of all, strong scaling results in <xref ref-type="fig" rid="fig8-1094342011429952">Figure 8</xref> show that communication and tree construction become a bottleneck for continuing to achieve strong scaling beyond 2,000 processes. Therefore, improvement of the tree construction phase is necessary, as well as overlapping of the local computation and communication. The tree construction can be accelerated by taking the particle distribution into account. For example, many applications in fluid dynamics and molecular dynamics have a uniform distribution of particles. For these cases, the tree structure is very easily formed by assigning a Morton index for a prescribed maximum level. It will be useful to have the capability to switch between uniform and adaptive tree construction, depending on the application. The efficient overlapping of communications and computations is the obvious next step. We are currently working on these improvements, and others, which will be reported in separate publications.</p>
+<p>These and other new features will be available in the <bold>ExaFMM</bold> code that we are releasing on the occasion of the Supercomputing conference in November 2011; for more information and access to the codes, visit <ext-link ext-link-type="uri" xlink:href="http://www-bu.edu/exafmm">http://www-bu.edu/exafmm</ext-link>.</p>
+</sec>
+</sec>
+<sec id="section15-1094342011429952">
+<title>6 Conclusions</title>
+<p>The present contribution aims to build on the mounting evidence of the suitability of the fast multipole method, <sc>fmm</sc>, and related algorithms, to reach exascale. The challenges to reach that milestone, which the community expects should be achieved by 2018, are varied and quite severe. They include serious technical hurdles, such as reducing the power consumption for computing by a significant factor, and dealing with frequent failures in systems involving millions of processors. While those challenges are recognized as the top concerns, the need for research into the appropriate algorithms and software for exascale is recognized as equally important. We maintain that <sc>fmm</sc> is among the algorithms that will play a visible role in the exascale ecosystem.</p>
+<p>We have conducted a campaign of single-node optimization and massively parallel scalability studies of our <sc>fmm</sc>. Intra-node performance optimization is obtained both with multi-threading using OpenMP, and with vectorization using inline assembly for the most costly kernel. OpenMP parallelization of all kernels achieved 78% efficiency in strong scaling with 8 cores, while inline assembly vectorization of only the <sc>p</sc>2<sc>p</sc> kernel provided a factor of 4 speed-up of the overall algorithm.</p>
+<p>Parallel scalability was studied both in strong and weak scaling. Strong scaling between 1 and 2,048 processes obtained 93% parallel efficiency with the non-vectorized code, and 54% efficiency with the <sc>simd</sc>-capable code. The <sc>simd</sc> instructions sped up the calculation by a factor of <inline-formula id="inline-formula59-1094342011429952">
+<mml:math id="mml-inline59-1094342011429952">
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula> when using less than 1,000 processes, and by a factor of <inline-formula id="inline-formula60-1094342011429952">
+<mml:math id="mml-inline60-1094342011429952">
+<mml:mn>2</mml:mn>
+</mml:math>
+</inline-formula> when using 2,048 processes. In this last case, we start to see the inter-node communications and tree construction take a significant portion on the total run time. However, even the vectorized code strong scales excellently up to one thousand processes, which is a situation rarely seen with other popular algorithms. Weak scaling tests resulted in 72% parallel efficiency on 32,768 processes for a test problem with 1 million points per process, and the largest calculation involved more than 32 billion points with a time to solution of under 40 seconds.</p>
+<p>Further work is ongoing to improve parallel efficiency in strong scaling by overlapping of communications and computations and enhancing tree construction. All such improvements are available on real time in the code repository, and the code is open for unrestricted use under the MIT License.</p>
+</sec>
+</body>
+<back>
+<notes>
+<fn-group>
+<title>Notes</title>
+<fn fn-type="other" id="fn1-1094342011429952">
+<label>1.</label>
+<p>Degima is the <sc>gpu</sc> cluster at the Nagasaki Advanced Computing Center, which at the time had two n<sc>vidia</sc>
+<sc>gtx</sc>295 cards per node (two <sc>gpu</sc>s per card), and mixed <sc>qdr</sc>/<sc>sdr</sc> Infiniband network.</p>
+</fn>
+<fn fn-type="other" id="fn2-1094342011429952">
+<label>2.</label>
+<p>See <ext-link ext-link-type="uri" xlink:href="http://awards.acm.org/bell/">http://awards.acm.org/bell/</ext-link>.</p>
+</fn>
+<fn fn-type="other" id="fn3-1094342011429952">
+<label>3.</label>
+<p>See <ext-link ext-link-type="uri" xlink:href="http://www.netlib.org/benchmark/hpl/">http://www.netlib.org/benchmark/hpl/</ext-link>.</p>
+</fn>
+<fn fn-type="other" id="fn4-1094342011429952">
+<label>4.</label>
+<p>Jaguar is a Cray XT5 system, very similar to Kraken.</p>
+</fn>
+</fn-group>
+</notes>
+<fn-group>
+<fn fn-type="financial-disclosure" id="fn5-1094342011429952">
+<label>Funding</label>
+<p>This research was supported in part by the National Science Foundation (NSF) through TeraGrid resources provided by the National Institute for Computational Sciences (NICS) at University of Tennessee (grant number TG-ASC100042). Additional support from NSF (grant number OCI-0946441), from the Office of Naval Research (ONR) (award number N00014-11-1-0356), and from Boston University College of Engineering. We also acknowledge guest access to the <sc>gpu</sc> cluster at the Nagasaki Advanced Computing Center and to T<sc>subame</sc> 2.0 at the Tokyo Institute of Technology. LAB is also grateful of the support from n<sc>vidia</sc> via an Academic Partnership award.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1094342011429952">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Bergman</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Borkar</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Campbell</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Carlson</surname>
+<given-names>W</given-names>
+</name>
+<name>
+<surname>Dally</surname>
+<given-names>W</given-names>
+</name>
+<name>
+<surname>Denneau</surname>
+<given-names>M</given-names>
+</name>
+<etal/>
+</person-group> (<year>2008</year>) <source>Exascale Computing Study: Technology Challenges in Achieving Exascale Systems</source>. <publisher-name>Technical Report</publisher-name>, <publisher-loc>DARPA IPTO</publisher-loc>.</citation>
+</ref>
+<ref id="bibr2-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Bhatele</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Jetley</surname>
+<given-names>P</given-names>
+</name>
+<name>
+<surname>Gahvari</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Wesolowski</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Gropp</surname>
+<given-names>W</given-names>
+</name>
+<name>
+<surname>Kale</surname>
+<given-names>L</given-names>
+</name>
+</person-group> (<year>2011</year>) <article-title>Architectural constraints to attain 1 exaflop/s for three scientific application classes</article-title>. In <source>2011 IEEE International Parallel Distributed Processing Symposium (IPDPS)</source>, pp. <fpage>80</fpage>–<lpage>91</lpage>.</citation>
+</ref>
+<ref id="bibr3-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Chandramowlishwaran</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Williams</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Oliker</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Lashuk</surname>
+<given-names>I</given-names>
+</name>
+<name>
+<surname>Biros</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Vuduc</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Optimizing and tuning the fast multipole method for state-of-the-art multicore architectures</article-title>. In <source>IEEE International Symposium on Parallel Distributed Processing (IPDPS)</source>, pp. <fpage>1</fpage>–<lpage>12</lpage>.</citation>
+</ref>
+<ref id="bibr4-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Cheng</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Huang</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Leiterman</surname>
+<given-names>TJ</given-names>
+</name>
+</person-group> (<year>2006</year>) <article-title>An adaptive fast solver for the modified Helmholtz equation in two dimensions</article-title>. <source>J Comput Phys</source> <volume>211</volume>: <fpage>616</fpage>–<lpage>637</lpage>.</citation>
+</ref>
+<ref id="bibr5-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Cruz</surname>
+<given-names>FA</given-names>
+</name>
+<name>
+<surname>Knepley</surname>
+<given-names>MG</given-names>
+</name>
+<name>
+<surname>Barba</surname>
+<given-names>LA</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>PetFMM––a dynamically load-balancing parallel fast multipole library</article-title>. <source>Int J Num Meth Eng</source> <volume>85</volume>: <fpage>403</fpage>–<lpage>428</lpage>.</citation>
+</ref>
+<ref id="bibr6-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Ethridge</surname>
+<given-names>F</given-names>
+</name>
+<name>
+<surname>Greengard</surname>
+<given-names>L</given-names>
+</name>
+</person-group> (<year>2001</year>) <article-title>A new fast-multipole accelerated Poisson solver in two dimensions</article-title>. <source>SIAM J Sci Comput</source> <source>23</source>: <fpage>741</fpage>–<lpage>760</lpage>.</citation>
+</ref>
+<ref id="bibr7-1094342011429952">
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name>
+<surname>Feng</surname>
+<given-names>W-C</given-names>
+</name>
+<name>
+<surname>Cameron</surname>
+<given-names>KW</given-names>
+</name>
+</person-group> (<year>2009</year>) <article-title>The Green500 List</article-title>. <ext-link ext-link-type="uri" xlink:href="http://www.green500.org/">http://www.green500.org/</ext-link>.</citation>
+</ref>
+<ref id="bibr8-1094342011429952">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Gahvari</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Gropp</surname>
+<given-names>WD</given-names>
+</name>
+</person-group> (<year>2010</year>) <source>An introductory exascale feasibility study for FFTs and multigrid. In <italic>International Symposium on Parallel and Distributed Processing (IPDPS)</italic>
+</source>, <publisher-name>Atlanta</publisher-name>, <publisher-loc>GA</publisher-loc>, pp. <fpage>1</fpage>–<lpage>9</lpage>.</citation>
+</ref>
+<ref id="bibr9-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Greengard</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Rokhlin</surname>
+<given-names>V</given-names>
+</name>
+</person-group> (<year>1987</year>) <article-title>A fast algorithm for particle simulations</article-title>. <source>J Comput Phys</source> <source>73</source>: <fpage>325</fpage>–<lpage>348</lpage>.</citation>
+</ref>
+<ref id="bibr10-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Hamada</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Narumi</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Yokota</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Yasuoka</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Nitadori</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Taiji</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>2009</year>) <article-title>42 TFlops hierarchical N-body simulations on GPUs with applications in both astrophysics and turbulence</article-title>. In <source>SC’09: Proceedings of the Conference on High Performance Computing Networking, Storage and Analysis</source>, pp. <fpage>1</fpage>–<lpage>12</lpage>.</citation>
+</ref>
+<ref id="bibr11-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Karypis</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Kumar</surname>
+<given-names>V</given-names>
+</name>
+</person-group> (<year>1998</year>) <article-title>A parallel algorithm for multilevel graph partitioning and sparse matrix ordering</article-title>. <source>J Par Dist Comp</source> <volume>48</volume>: <fpage>71</fpage>–<lpage>85</lpage>.</citation>
+</ref>
+<ref id="bibr12-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Langston</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Greengard</surname>
+<given-names>LF</given-names>
+</name>
+<name>
+<surname>Zorin</surname>
+<given-names>D</given-names>
+</name>
+</person-group> (<year>2011</year>) <article-title>A free-space adaptive FMM-based PDE solver in three dimensions</article-title>. <source>Comm Appl Math Comput Sci</source> <volume>6</volume>: <fpage>79</fpage>–<lpage>122</lpage>.</citation>
+</ref>
+<ref id="bibr13-1094342011429952">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Lashuk</surname>
+<given-names>I</given-names>
+</name>
+<name>
+<surname>Chandramowlishwaran</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Langston</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Nguyen</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Sampath</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Shringarpure</surname>
+<given-names>A</given-names>
+</name>
+</person-group>, (<year>2009</year>) <source>A massively parallel adaptive fast-multipole method on heterogeneous architectures. In <italic>Proceedings of the Conference on High Performance Computing Networking, Storage and Analysis, SC’09</italic>
+</source>, <publisher-name>Portland</publisher-name>, <publisher-loc>OR</publisher-loc>, pp. <fpage>1</fpage>–<lpage>12</lpage>.</citation>
+</ref>
+<ref id="bibr14-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Rahimian</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Lashuk</surname>
+<given-names>I</given-names>
+</name>
+<name>
+<surname>Veerapaneni</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Chandramowlishwaran</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Malhotra</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Moon</surname>
+<given-names>L</given-names>
+</name>
+<etal/>
+</person-group>. (<year>2010</year>) <article-title>Petascale direct numerical simulation of blood flow on 200k cores and heterogeneous architectures</article-title>. In <source>Proceedings of the 2010 ACM/IEEE International Conference for High Performance Computing, Networking, Storage and Analysis</source>, pp. <fpage>1</fpage>–<lpage>11</lpage>.</citation>
+</ref>
+<ref id="bibr15-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Warren</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Salmon</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Becker</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Goda</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Sterling</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Winckelmans</surname>
+<given-names>W.</given-names>
+</name>
+</person-group> (<year>1997</year>) <article-title>Pentium Pro inside: I. A treecode at 430 Gigaflops on ASCI Red, II. Price/performance of US$50/Mflop on Loki and Hyglac</article-title>. In <source>ACM/IEEE 1997 Conference of Supercomputing</source>, p. <fpage>61</fpage>.</citation>
+</ref>
+<ref id="bibr16-1094342011429952">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Warren</surname>
+<given-names>MS</given-names>
+</name>
+<name>
+<surname>Salmon</surname>
+<given-names>JK</given-names>
+</name>
+</person-group> (<year>1992</year>) <source>Astrophysical <italic>N</italic>-body simulations using hierarchical tree data structures. In <italic>Proceedings of the 1992 ACM/IEEE conference on Supercomputing</italic>
+</source>. <publisher-loc>Los Alamitos, CA</publisher-loc>: <publisher-name>IEEE Computer Society Press</publisher-name>, pp. <fpage>570</fpage>–<lpage>576</lpage>.</citation>
+</ref>
+<ref id="bibr17-1094342011429952">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Warren</surname>
+<given-names>MS</given-names>
+</name>
+<name>
+<surname>Salmon</surname>
+<given-names>JK</given-names>
+</name>
+</person-group> (<year>1992</year>) <source>A parallel hashed oct-tree <italic>N</italic>-body algorithm. In <italic>Proceedings of the 1993 ACM/IEEE Conference on Supercomputing</italic>
+</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, pp. <fpage>12</fpage>–<lpage>21</lpage>.</citation>
+</ref>
+<ref id="bibr18-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Ying</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Biros</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Zorin</surname>
+<given-names>D</given-names>
+</name>
+</person-group> (<year>2004</year>) <article-title>A kernel-independent adaptive fast multipole algorithm in two and three dimensions</article-title>. <source>J Comput Phys</source> <volume>196</volume>: <fpage>591</fpage>–<lpage>626</lpage>.</citation>
+</ref>
+<ref id="bibr19-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Yokota</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Barba</surname>
+<given-names>LA</given-names>
+</name>
+<name>
+<surname>Narumi</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Yasuoka</surname>
+<given-names>K</given-names>
+</name>
+</person-group> (<year>2011a</year>) <article-title>Petascale turbulence simulation using a highly parallel fast multipole method</article-title>. <source>Preprint arXiv</source>:<volume>1106</volume>.<fpage>5273</fpage>.</citation>
+</ref>
+<ref id="bibr20-1094342011429952">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Yokota</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Bardhan</surname>
+<given-names>JP</given-names>
+</name>
+<name>
+<surname>Knepley</surname>
+<given-names>MG</given-names>
+</name>
+<name>
+<surname>Barba</surname>
+<given-names>LA</given-names>
+</name>
+<name>
+<surname>Hamada</surname>
+<given-names>T</given-names>
+</name>
+</person-group> (<year>2011b</year>) <article-title>Biomolecular electrostatics using a fast multipole BEM on up to 512 GPUs and a billion unknowns</article-title>. <source>Comput Phys Commun</source> <volume>182</volume>: <fpage>1271</fpage>–<lpage>1283</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

@@ -1,0 +1,867 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">SAG</journal-id>
+<journal-id journal-id-type="hwp">spsag</journal-id>
+<journal-title>Simulation &amp; Gaming</journal-title>
+<issn pub-type="ppub">1046-8781</issn>
+<issn pub-type="epub">1552-826X</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage CA: Los Angeles, CA</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1046878110388239</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1046878110388239</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Formalizing Game-play</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>By</surname><given-names>Tomas</given-names></name>
+<xref ref-type="aff" rid="aff1-1046878110388239">1</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-1046878110388239"><label>1</label>Technische Universität München, München, Germany</aff>
+<author-notes>
+<corresp id="corresp1-1046878110388239">Tomas By, Institut für Informatik, Technische Universität München, Boltzmannstraße 3, 85748 Garching bei München, Germany Email: <email>tomas.by@in.tum.de</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2012</year>
+</pub-date>
+<volume>43</volume>
+<issue>2</issue>
+<fpage>157</fpage>
+<lpage>187</lpage>
+<permissions>
+<copyright-statement>© 2012 SAGE Publications</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Current computer conflict simulation games, or wargames, are opaque in the sense that most of the game mechanisms are not directly visible to the players and are frequently not described in user accessible documentation, have a transient lifetime that is mainly shaped by the evolution of graphics hardware and processor speed, and do not, in contrast with, for example, the well-known abstract board games CHESS and GO, have the technical prerequisites for critical intellectual discussion that the thought-intensive and knowledge-rewarding character of these games seems to warrant. The main reason for this state of affairs is that many of the mechanisms of the games, and in particular the details of how the game state changes over time, are directly expressed in computer code. This is purely a technical problem, and it has a straightforward solution, namely, treating this information as data by creating a formalism for describing not just the game map and playing pieces but also all the game rules including the “sequence of play.” The article suggests such a formalism and shows a complete specification of a simple, but complicated enough for present purposes, “introductory” board wargame. This formalism, with tools that support it, can provide an unambiguous authoritative definition of the rules, accessible by both human and computer players; would allow existing board wargames to be played on a computer, without any simplifications or sacrifices of rule details; and may allow construction of more advanced computer players, since a complete formal specification of the game rules is available as input to them.</p>
+</abstract>
+<kwd-group>
+<kwd>board games</kwd>
+<kwd>computer conflict simulation games</kwd>
+<kwd>computer games</kwd>
+<kwd>formal specification</kwd>
+<kwd>formalism</kwd>
+<kwd>game construction</kwd>
+<kwd>game design</kwd>
+<kwd>game development</kwd>
+<kwd>game formalization</kwd>
+<kwd>game map</kwd>
+<kwd>game mechanisms</kwd>
+<kwd>game-play</kwd>
+<kwd>game rules</kwd>
+<kwd>game specification</kwd>
+<kwd>rules</kwd>
+<kwd>sequence of play</kwd>
+<kwd>simulation games</kwd>
+<kwd>strategy board games</kwd>
+<kwd>wargame</kwd>
+<kwd>war gaming</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<p><disp-quote>
+<p>Wouldn’t you prefer a good game of Chess?</p>
+<p>Later. Let’s play Global Thermonuclear War.</p>
+<attrib>—Wargames (1983)</attrib>
+</disp-quote></p>
+<p>The term <italic>wargaming</italic> covers a wide spectrum of activities, from multiday events involving purpose-built facilities and hundreds of people to inexpensive game software for personal computers. While wargaming in some form has a long history,<sup><xref ref-type="fn" rid="fn1-1046878110388239">1</xref></sup> the traditions that exist today can be traced back to 19th-century Prussia.<sup><xref ref-type="fn" rid="fn2-1046878110388239">2</xref></sup> Parallel to the military use of wargames for training<sup><xref ref-type="fn" rid="fn3-1046878110388239">3</xref></sup> and research,<sup><xref ref-type="fn" rid="fn4-1046878110388239">4</xref></sup> a tradition exists of recreational or hobby wargaming, which started in the early 20th century and grew into a significant industry in the second half of it (<xref ref-type="bibr" rid="bibr4-1046878110388239">Berg, Patrick, Simonsen, Isby, &amp; Dunnigan, 1977</xref>, pp. 10-25; <xref ref-type="bibr" rid="bibr34-1046878110388239">Palmer, 1977</xref>, pp. 13, 19-20; <xref ref-type="bibr" rid="bibr40-1046878110388239">Sabin, 2002</xref>). Today, this type of wargaming is marginal compared with “real-time strategy” and “first-person shooter” games. As objects of analysis, however, games in the “classical” format, characterized by step-wise movement on a hexagonal grid,<sup><xref ref-type="fn" rid="fn5-1046878110388239">5</xref></sup> have some advantages. Because of the discrete, low granularity modeling of time and space, things such as the number of possible unit locations, the number of possible moves at any one time, and the total number of moves in a game are tractable. This means that game states and histories can be described in print using a reasonable amount of space. Detailed, concrete discussions of the play of specific games is quite common in the literature on hobby wargaming,<sup><xref ref-type="fn" rid="fn6-1046878110388239">6</xref></sup> as it is in the literature on the board games CHESS and GO.<sup><xref ref-type="fn" rid="fn7-1046878110388239">7</xref></sup> Wargames differ from the latter, of course, in that each game has its own rules, and these rule sets can differ considerably. With the shift from printed board games to computer implementations the situation worsened dramatically, and very little detailed discussion of this type concerning computer wargames appears in public. One reason for this, no doubt, is that the game rules for the computer versions are typically not available in enough detail. The main outlines may be explained in the manual, but specific information on things such as the cost of movement in various types of terrain under various conditions and exactly how combat is resolved is often not revealed.</p>
+<p>What computer wargames need to make the game mechanisms accessible to the user, and what the critical discussions of wargame play need to be independent of physical rule books and human rule interpretation efforts, is a formalism for writing wargame rules. This would include all the conditions, procedures, tables, and so forth that make up the game rules, and a particular game can be encoded as a set of statements in this formalism and will then exist as a logical object that can be read as input by a game-playing program, or some other software tool, and be referred to unambiguously in discussions of technical game-playing details.</p>
+<p>Two terms that are commonly heard in discussions of war gaming are <italic>model</italic> and <italic>simulation</italic>. Generally speaking, a model is a simplified representation of something, including only those aspects that are considered relevant, and a simulation is a representation whose behavior is similar, in some respects, to the original over time (<xref ref-type="bibr" rid="bibr13-1046878110388239">Davis &amp; Anderson, 2003</xref>, pp. 1, 76; <xref ref-type="bibr" rid="bibr11-1046878110388239">Davis &amp; Blumenthal, 1991</xref>, p. 2). So in some sense any wargame is a simulation, and any simulation includes a model.<sup><xref ref-type="fn" rid="fn8-1046878110388239">8</xref></sup></p>
+<p>The remainder of the article has three parts, of two sections each. First section is on the notion of game-play, and the second is on the problems with present-day computer wargames. Then two sections on the proposed solution: the human-friendly external representation and the computer-friendly internal one. Finally, a section on possible future developments of the approach proposed here and a summary.</p>
+<sec id="section1-1046878110388239">
+<title>The Notion of <italic>Game-Play</italic></title>
+<p>Simple computer games such as SPACE INVADERS and PAC-MAN (<xref ref-type="bibr" rid="bibr8-1046878110388239">Crawford, 2003</xref>, pp. 18, 19) were originally written for arcade consoles and now exist for almost any combination of computer hardware and operating system. What makes us say that these various pieces of software, which may differ greatly in superficial qualities such as sound and graphics, not to mention the actual program code, implement the “same” game is the fact that the in-game figures and objects, the actions available to the player, and their effects in the game are the same. Similarly, the rules of CHESS are the same whether it is played on a physical board or it is all just a picture in a book or moving images on a computer screen. The game-play of CHESS is well known, since the game is normally played manually and it is recognized that both players need to be familiar with the rules. In the case of wargames, the situation is more complicated. It is probably not the case that players generally know all the rules of the game, for a couple of reasons. Most games have quite a few rules,<sup><xref ref-type="fn" rid="fn9-1046878110388239">9</xref></sup> and because wargames are typically not abstract like CHESS, but intended to portray an actual historical situation, or at least one that could conceivably occur in the real world, it seems often to be possible to play credibly based on general knowledge of warfare and history, without detailed knowledge of the formal game rules. Nevertheless, the games have rules, and together with (some of) the information represented by the mapboard and playing pieces, they constitute what we call the game-play.</p>
+<sec id="section2-1046878110388239">
+<title>Rules and Procedures</title>
+<p>In the available literature, the degree of consistency in the detailed classification and terminology is limited. <xref ref-type="bibr" rid="bibr39-1046878110388239">Prados (1987)</xref> makes a general observation.</p>
+<p><disp-quote>
+<p>Typically, a wargame includes systems governing the amount of information players will have, the movement of forces, combat interactions among forces, the method of controlling forces, and the capabilities of military units. (p. 20)</p>
+</disp-quote></p>
+<p><xref ref-type="bibr" rid="bibr5-1046878110388239">Bowen (1978)</xref> is more technical and contrasts <italic>model</italic> with <italic>rules</italic>.</p>
+<p><disp-quote>
+<p>If the participation of people is overlooked, a game can be thought of as a deterministic model with two main subsystems—a model of the real world (the <italic>Game-world</italic>), and a set of <italic>Rules</italic>, describing its behavior as time passes and as the situation develops. (p. 60)</p>
+</disp-quote></p>
+<p>These rules are then further divided into “system transition rules,” which control the updates of the game-world in response to player actions, and “game communication rules,” which determine what information the player receives (<xref ref-type="bibr" rid="bibr5-1046878110388239">Bowen, 1978</xref>, p. 71). <xref ref-type="bibr" rid="bibr37-1046878110388239">Perla (1990</xref>) replaces Bowen’s <italic>world model</italic> with a <italic>data base</italic> and a <italic>scenario</italic>, and uses the word model in a more narrow technical sense.</p>
+<p><disp-quote>
+<p>A set of models, usually a combination of look-up tables and mathematical expressions, translates the game’s data and the players’ decisions into game events. (p. 165)</p>
+<p>But models alone are not enough. A wargame must also have a set of rules or procedures that dictate how and when to apply the models. These rules and procedures help sequence game events, and allow for accurate chains of cause and effect, or action and reaction. They must also ensure that the players receive the appropriate quantity and quality of information during play. (p. 166)</p>
+</disp-quote></p>
+<p>Following <xref ref-type="bibr" rid="bibr28-1046878110388239">McHugh (1966</xref>, pp. 3-25, 3-27), the procedures are divided into three types (<xref ref-type="bibr" rid="bibr37-1046878110388239">Perla, 1990</xref>):</p>
+<list id="list1-1046878110388239" list-type="simple">
+<list-item><p>those that monitor player actions,</p></list-item>
+<list-item><p>those that evaluate interactions (i.e., combat), and</p></list-item>
+<list-item><p>those that provide information to the players (p. 217)</p></list-item></list>
+<p>The main reason for having separate rules for the communication of information to the player, which would seem to be a simple matter, is to introduce fog of war<sup><xref ref-type="fn" rid="fn10-1046878110388239">10</xref></sup> effects, where the information that the player gets is partial and/or distorted. For obvious practical reasons, this has seldom been used in board wargames,<sup><xref ref-type="fn" rid="fn11-1046878110388239">11</xref></sup> but it is a standard feature in computational ones (e.g., <xref ref-type="bibr" rid="bibr9-1046878110388239">Darby, 2009</xref>, pp. 381-383).</p>
+</sec>
+<sec id="section3-1046878110388239">
+<title>Synthesis</title>
+<p><xref ref-type="fig" rid="fig1-1046878110388239">Figure 1</xref> is an attempt at a synthesis of these various theories, showing the major parts of what we want to call the game-play of a wargame. The most basic components are the available terrain types (clear, forest, mountains, etc.) and unit types (infantry, armor, etc.). The available actions would normally be defined in terms of the types of units and terrain, and the “sequence of play” defined in terms of the available actions. These things together constitute the “rules” as opposed to the “scenario.” The victory conditions are shown as depending on the units and map, because they normally consist of requirements to occupy certain areas or eliminate specific units (or a certain number of units). Like the authorities say, the central element is the sequence of play (<xref ref-type="bibr" rid="bibr4-1046878110388239">Berg et al., 1977</xref>, pp. 78, 108-109; <xref ref-type="bibr" rid="bibr37-1046878110388239">Perla, 1990</xref>, pp. 227, 252).</p>
+<fig id="fig1-1046878110388239" position="float">
+<label>Figure 1.</label>
+<caption><p>The major components of the wargame “game-play”</p></caption>
+<graphic xlink:href="10.1177_1046878110388239-fig1.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section4-1046878110388239">
+<title>Present Realities</title>
+<p>In a board wargame, all the components in <xref ref-type="fig" rid="fig1-1046878110388239">Figure 1</xref> are directly accessible to the players. The entire map is visible, with all the units placed on it; the sequence of play, available actions, and victory conditions are described in the rule book, which the players can refer to in case they have not memorized all the details. Typically, a summary of the sequence of play, victory conditions, and terrain and unit types, together with explanations of unit color codes and map symbols, are provided on separate charts. The situation is markedly different in a computer wargame. While the computer relieves the players of some administrative tedium, it also hides information. It is generally harder to get an overview of the map and units in a computer game (pointed out, e.g., by <xref ref-type="bibr" rid="bibr14-1046878110388239">Dunnigan, 2000</xref>, p. 74, and <xref ref-type="bibr" rid="bibr37-1046878110388239">Perla, 1990</xref>, p. 314). Computer display technology is impressive and shows no signs of ceasing to improve, but it may never match the vividness and immediacy of small physical objects at arm’s-length distance. Another related problem, which is not excused by any technical limitations, is that the workings of the game mechanisms are not visible to the players.<sup><xref ref-type="fn" rid="fn12-1046878110388239">12</xref></sup> In a computer wargame, the rules of the game are typically encoded directly in the software (see <xref ref-type="bibr" rid="bibr14-1046878110388239">Dunnigan, 2000</xref>, p. 73) and only partially explained in the documentation. It is very seldom that, for example, the exact procedure for combat resolution or the actual probabilities in various situations are given. The player may be given an option to “attack,” and be told the numerical strengths of his/her own units, and perhaps an estimate of the opponent’s, but not the precise effects of terrain and weather, the full range of possible outcomes, or the exact probabilities of them. This is not primarily a question of player enjoyment but of the fundamental nature of the game. Wargames are not puzzles; they are, or at least should be, tests of skill, knowledge, and tactical and strategic ability. Launching an attack with only a very hazy idea of the likely result may perhaps accurately portray the experience of an incompetent or indifferent commander, but for a game to be an even-sided intellectual duel both players must have full access to the rules.<sup><xref ref-type="fn" rid="fn13-1046878110388239">13</xref></sup></p>
+<sec id="section5-1046878110388239">
+<title>Basic Events</title>
+<p>Perhaps because war itself is often large and complicated, and probably also by way of contrast with the superficially very simple games CHESS and GO, it seems to be generally felt that wargames are complicated and therefore translating them to computer code is necessarily difficult. For a clear appreciation of the technicalities involved, it might be helpful to look at an example, a good source of which is the “introductory” wargame STRIKE FORCE ONE (<xref ref-type="bibr" rid="bibr47-1046878110388239">Simonsen &amp; Dunnigan, 1975</xref>), published as a marketing device by one of the then leading hobby wargame publishers<sup><xref ref-type="fn" rid="fn14-1046878110388239">14</xref></sup> and probably one of the simplest board wargames ever created. <xref ref-type="fig" rid="fig2-1046878110388239">Figure 2</xref>, taken from the sample game included in the manual, shows the entire first game turn, where six different units move four hexes each, and three of them then make an attack. As can easily be verified by the reader, the game turn displayed in <xref ref-type="fig" rid="fig2-1046878110388239">Figure 2</xref> contains six times four separate one-hex movements, plus an attack followed by a one-hex retreat by the defending unit and a one-hex advance by one of the attackers, for a total of 27 separate basic actions. These are listed in <xref ref-type="table" rid="table1-1046878110388239">Table 1</xref>. The events are “basic” in the sense that they cannot be divided into parts. Any shorter movement than from one hexagon to another is not possible, which is of course the purpose of the map grid. Combat between units is simply resolved by a die roll, a common technique in operational and strategic games. In a tactical game, a basic combat action may be the firing of a weapon at a target. In addition to the action types exemplified in <xref ref-type="table" rid="table1-1046878110388239">Table 1</xref> (one-hex movement; attack), STRIKE FORCE ONE also allows units to be eliminated, but not created, as all units are on the map at the start of the game. The entire sample game, of eight turns, has 68 basic events.</p>
+<fig id="fig2-1046878110388239" position="float">
+<label>Figure 2.</label>
+<caption><p>The first (Soviet) turn of the STRIKE FORCE ONE <italic>sample game</italic></p></caption>
+<graphic xlink:href="10.1177_1046878110388239-fig2.tif"/>
+</fig>
+<table-wrap id="table1-1046878110388239" position="float">
+<label>Table 1.</label>
+<caption><p>The 27 Basic Events During the First Turn of the Sample Game</p></caption>
+<graphic alternate-form-of="table1-1046878110388239" xlink:href="10.1177_1046878110388239-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="center">Unit</th>
+<th align="center">Action</th>
+<th/>
+<th align="center">Unit</th>
+<th align="center">Action</th>
+<th/>
+<th align="center">Unit(s)</th>
+<th align="center">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><bold>A</bold></td>
+<td>0901 → 0801</td>
+<td>10</td>
+<td><bold>C</bold></td>
+<td>0802 → 0703</td>
+<td>19</td>
+<td><bold>E</bold></td>
+<td>0706 → 0605</td>
+</tr>
+<tr>
+<td>2</td>
+<td><bold>A</bold></td>
+<td>0801 → 0701</td>
+<td>11</td>
+<td><bold>C</bold></td>
+<td>0703 → 0602</td>
+<td>20</td>
+<td><bold>E</bold></td>
+<td>0605 → 0505</td>
+</tr>
+<tr>
+<td>3</td>
+<td><bold>A</bold></td>
+<td>0701 → 0601</td>
+<td>12</td>
+<td><bold>C</bold></td>
+<td>0602 → 0503</td>
+<td>21</td>
+<td><bold>F</bold></td>
+<td>0908 → 0807</td>
+</tr>
+<tr>
+<td>4</td>
+<td><bold>A</bold></td>
+<td>0601 → 0501</td>
+<td>13</td>
+<td><bold>D</bold></td>
+<td>0806 → 0805</td>
+<td>22</td>
+<td><bold>F</bold></td>
+<td>0807 → 0708</td>
+</tr>
+<tr>
+<td>5</td>
+<td><bold>B</bold></td>
+<td>0801 → 0702</td>
+<td>14</td>
+<td><bold>D</bold></td>
+<td>0805 → 0705</td>
+<td>23</td>
+<td><bold>F</bold></td>
+<td>0708 → 0607</td>
+</tr>
+<tr>
+<td>6</td>
+<td><bold>B</bold></td>
+<td>0702 → 0602</td>
+<td>15</td>
+<td><bold>D</bold></td>
+<td>0705 → 0604</td>
+<td>24</td>
+<td><bold>F</bold></td>
+<td>0607 → 0507</td>
+</tr>
+<tr>
+<td>7</td>
+<td><bold>B</bold></td>
+<td>0602 → 0502</td>
+<td>16</td>
+<td><bold>D</bold></td>
+<td>0604 → 0504</td>
+<td>25</td>
+<td><bold>B, C, D</bold></td>
+<td>Attack 0403</td>
+</tr>
+<tr>
+<td>8</td>
+<td><bold>B</bold></td>
+<td>0502 → 0402</td>
+<td>17</td>
+<td><bold>E</bold></td>
+<td>0907 → 0806</td>
+<td>26</td>
+<td><bold>X</bold></td>
+<td>0403 → 0304</td>
+</tr>
+<tr>
+<td>9</td>
+<td><bold>C</bold></td>
+<td>0902 → 0802</td>
+<td>18</td>
+<td><bold>E</bold></td>
+<td>0806 → 0706</td>
+<td>27</td>
+<td><bold>C</bold></td>
+<td>0503 → 0403</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>It might be worth pausing and reflecting on the magnitude of this problem. Ten units in the game, 68 hexes on the map, 68 basic events in an entire game. STRIKE FORCE ONE is an extremely simple wargame, and a normal game may perhaps have a few thousand locations and a few hundred units, and might go on for a few tens of turns, involving many thousands of basic actions, but these are still not very intimidating numbers, for a modern personal computer.</p>
+<p>In current computer wargames, of course, this notion of a basic game-event has no great significance, as the graphical movements of symbols on the screen may or may not correspond to changes in the game state, and because how and when the game state changes is, as we have already noted, typically revealed to the user only indirectly. For example, the game may have artillery units that can fire a distance or, in other words, make attacks against nonadjacent hexes. Additionally, they may be able to execute “opportunity fire” against enemy actions, such as attacks against other friendly units. The exact details of how all this affects the game state will then typically not be explained in the manual: whether the opportunity attacks are similar to normal artillery attacks, or more, or less, effective; whether they consume the same amount of ammunition; and so on. Implementation-wise, the opportunity attacks may be coded as part of the (enemy) actions they are triggered by, or they may be executed by the same code as normal artillery fire. This may not be of great interest to players, but for any kind of serious analysis of the gaming, the details must be available.<sup><xref ref-type="fn" rid="fn15-1046878110388239">15</xref></sup></p>
+</sec>
+<sec id="section6-1046878110388239">
+<title>Formalization</title>
+<p>In board wargames, the rules are written in human language, which the computer cannot understand, and in computer wargames, they are directly expressed in computer code, which most human players would probably find hard to read and make use of, even if they had access to it. The obvious way to bring these together and solve the problem of “black box” opaqueness is to design a formal language for writing rules. The analogy between rules writing and computer programming has been noted (<xref ref-type="bibr" rid="bibr4-1046878110388239">Berg et al., 1977</xref>).</p>
+<p><disp-quote>
+<p>[Wargame] rules are not exactly light reading—the number of concepts and procedures to be explained in detail can hardly be dealt with in a few easy paragraphs of colloquial English. The closest analog to a set of rules would be a set of computer program statements. (p. 77)</p>
+<p>Another problem with games is that the designer is trying to create, in written form, a mathematical relationship—an algorithm—which is what the rules and Victory Conditions are about. (p. 103)</p>
+</disp-quote></p>
+<p>The rule language we need differs from a programming language, however, in that the formal specification of a game, written in it, is not just an intermediate stage in the production of executable computer code but a logical object that can also be read by human players to, for example, understand the detailed workings of the rules or resolve any conflicts rooted in different interpretations of their expression in English. As noted earlier, the aspect of intellectual competition, which is what many people seek in these types of games, can be most fully realized only if all the players have equal access to the rules.</p>
+</sec>
+<sec id="section7-1046878110388239">
+<title>A Concrete Suggestion</title>
+<p>In the rest of the article, a concrete suggestion for such a formalism is described. It is a first prototype and is only expressive enough to handle the example game STRIKE FORCE ONE, but it seems to indicate that the idea is practical. The two main factors that constrain this wargame rules formalism are the expressiveness and the ease of implementation. It must be possible to express all the game-play (Figure 1), and it should not be possible to say too many other things, because that would just make the implementation more complicated for no benefit. It is perhaps convenient to think of this wargames formalism as a programming language, and <xref ref-type="bibr" rid="bibr38-1046878110388239">Perlis (1967)</xref> makes a relevant observation.</p>
+<p><disp-quote>
+<p>A programming language has a syntax and a set of evaluation rules. They are connected through the representation of programs as data to which the evaluation rules apply. This data structure is the internal or evaluation directed syntax of the language. We compose programs in the external syntax which, for the purposes of human communication, we fix. (p. 13)</p>
+</disp-quote></p>
+<p>This means that what is needed is an “external” syntax that is human readable (concise and mnemonic) and an “internal” one that is meant for the machine to read, which is to say it should be canonical and as limited as possible in expressiveness.</p>
+<p>The external syntax is used to write the rules of the game, to encode the game-play. When playing the game, we eventually end up with a sequence of basic actions that constitute the concrete history of the game (cf. <xref ref-type="table" rid="table1-1046878110388239">Table 1</xref>). Between these two things lies the internal representation of the game-play, which we want to be as simple as possible. Two clear paradigms are available in the history of computing: finite automata<sup><xref ref-type="fn" rid="fn16-1046878110388239">16</xref></sup> and flowcharts.<sup><xref ref-type="fn" rid="fn17-1046878110388239">17</xref></sup> The latter are perhaps closer to what we are looking for, but the former uses a more attractive terminology. <xref ref-type="fig" rid="fig3-1046878110388239">Figure 3</xref> shows the conceptual relationships. Given a sequence of player interactions and a source of random numbers, processing of the game-play automaton produces the basic actions that constitute the state history of the game. Since this automaton includes the mapboard and playing pieces in the game, execution of a basic action will typically involve modifications of the automaton.</p>
+<fig id="fig3-1046878110388239" position="float">
+<label>Figure 3.</label>
+<caption><p>Conceptual structure of the game as a data object</p></caption>
+<graphic xlink:href="10.1177_1046878110388239-fig3.tif"/></fig>
+</sec>
+<sec id="section8-1046878110388239">
+<title>The Flow of Control</title>
+<p>Game-playing software is normally driven by user-interface events, so in terms of control flow, the system will be spending most of the time in the upper right corner of <xref ref-type="fig" rid="fig3-1046878110388239">Figure 3</xref>. When the user clicks a button, or performs some other interface manipulation, to finish the current phase, the game-play automaton is processed until the next point that requires user input, and then it stops until the user responds again. The double-headed arrows do not simply represent queries and responses but rather turn-taking of initiative. In a wargame, the player who is active in the phase can normally move any number of units, subject to various constraints on which terrain can be entered and how much it will cost, as well as maximum distance for each unit. This means that the active player passes an arbitrary number of interaction commands back to the automaton, before he or she relinquishes control. The form of representation used for the internal syntax, or game-play automaton, will be discussed further, but first we need to consider the external syntax.</p>
+</sec>
+</sec>
+<sec id="section9-1046878110388239">
+<title>External Representation</title>
+<p>The various types of information that the external formalism must support are those shown in <xref ref-type="fig" rid="fig1-1046878110388239">Figure 1</xref>: map, units, player actions, sequence of play, and victory conditions. It should also be easy to work with, to try out different methods:</p>
+<p><disp-quote>
+<p>This is how most development work is accomplished; constant working and reworking to see what happens. Try to visualize the game as a modular set of rules, rules that you can take out and replace with another set to see whether it is that particular section that is at fault. In such a way the developer can see what portions of his game are working and what sections are not. (<xref ref-type="bibr" rid="bibr4-1046878110388239">Berg et al., 1977</xref>, p. 53)<sup><xref ref-type="fn" rid="fn18-1046878110388239">18</xref></sup></p>
+</disp-quote></p>
+<p>Because this formalism only has a single purpose, to encode the game-play, it makes sense to include explicit support for various concepts and techniques that are common in wargame rules but are not normally used in computer programming. Examples of this are a special table syntax for “combat result tables” and “terrain effects charts,” shown later in this section. As to the actual syntax, many different paradigms are available to choose from. The format used here, without any further motivation, is inspired by Algol-60 (<xref ref-type="bibr" rid="bibr32-1046878110388239">Naur, 1963</xref>) and is characterized by sections delimited by the keywords “begin” and “end,” and statements generally ending with a semi-colon. <xref ref-type="fig" rid="fig4-1046878110388239">Figure 4</xref> shows the map of the example game, in its printed form above and formlized below.<sup><xref ref-type="fn" rid="fn19-1046878110388239">19</xref></sup> Because we are only considering a single example, some details have been omitted. A grid of hexagons has straight lines of hexes running in three different directions, and only one of them can be aligned with the edges of the paper. In <xref ref-type="fig" rid="fig4-1046878110388239">Figure 4</xref>, one straight line is vertical and two are slanted. Other games have a straight line running horizontally instead. For the numbering of the hexagons, several different systems are used, and we would naturally want the formalism to support all of them so that the formalization of any game can be as near as possible to the printed version. None of the commands and declarations that are needed for these things have been included in the examples here, but they are shown in the <xref ref-type="app" rid="app1-1046878110388239">appendix</xref>. The other major component of wargames, besides the map, is the units. <xref ref-type="fig" rid="fig5-1046878110388239">Figure 5</xref> shows the ones in STRIKE FORCE ONE, in the initial deployment.<sup><xref ref-type="fn" rid="fn20-1046878110388239">20</xref></sup></p>
+<fig id="fig4-1046878110388239" position="float">
+<label>Figure 4.</label>
+<caption><p>The hexagonal map of STRIKE FORCE ONE</p></caption>
+<graphic xlink:href="10.1177_1046878110388239-fig4.tif"/>
+</fig>
+<fig id="fig5-1046878110388239" position="float">
+<label>Figure 5.</label>
+<caption><p>The units and their deployment (STRIKE FORCE ONE)</p></caption>
+<graphic xlink:href="10.1177_1046878110388239-fig5.tif"/>
+</fig>
+<p>As is commonly the case in computer programming, the same result can be achieved in multiple ways. In the example shown here (<xref ref-type="fig" rid="fig5-1046878110388239">Figure 5</xref>), the link between a unit and its location on the map is a relation. It would also be possible to use an attribute. Either the units could have a “location” attribute or the map hexes an “occupant” attribute. STRIKE FORCE ONE has no unit locations other than the map hexes, so attributes would work equally well, but some wargames have special boxes to represent things such as off-map areas, or units that are being transported by ship, and in that case a relation would seem more convenient.</p>
+<p>A commonly used device in board wargame rules are tables, typically showing die roll results along one dimension. STRIKE FORCE ONE contains one such table, the “Combat Results Table,” shown in <xref ref-type="fig" rid="fig6-1046878110388239">Figure 6</xref>, together with the formalization of it in our system. Having a special table syntax, instead of, for instance, encoding the same information as conditional statements, or as a set of simpler statements as one presumably would if some type of predicate logic was used, makes the rule writing much easier at the comparatively slight cost of some additional work when creating the tools. The table works like a function: two input values are provided and one output value is returned.<sup><xref ref-type="fn" rid="fn21-1046878110388239">21</xref></sup> This table syntax was inspired by the similar feature in the RAND-ABEL programming language (<xref ref-type="bibr" rid="bibr1-1046878110388239">P. D. Allen, 1987</xref>, pp. 18-20; <xref ref-type="bibr" rid="bibr10-1046878110388239">Davis, 1990</xref>, p. 21f).</p>
+<fig id="fig6-1046878110388239" position="float">
+<label>Figure 6.</label>
+<caption><p>The “Combat Results Table” of STRIKE FORCE ONE</p></caption>
+<graphic xlink:href="10.1177_1046878110388239-fig6.tif"/>
+</fig>
+<p>Of the game-play components in <xref ref-type="fig" rid="fig1-1046878110388239">Figure 1</xref>, we have now covered the map and units plus some aspect of combat resolution and movement. What remains are defining the actions and the sequence of play, including the victory conditions. The sequence of play of STRIKE FORCE ONE (sect. 3.0 in the manual) is shown in <xref ref-type="fig" rid="fig7-1046878110388239">Figure 7</xref> (printed) and <xref ref-type="fig" rid="fig8-1046878110388239">Figure 8</xref> (formalized). The reason for defining “actions” separately instead of as part of the “sequence of play” loop is, apart from good programming practice, to make it possible for software tools, such as the graphical-user interface, to display appropriate graphics and to easily find all points in the game where user input is required.</p>
+<fig id="fig7-1046878110388239" position="float">
+<label>Figure 7.</label>
+<caption><p>The “Sequence of Play” in STRIKE FORCE ONE</p></caption>
+<graphic xlink:href="10.1177_1046878110388239-fig7.tif"/>
+</fig>
+<fig id="fig8-1046878110388239" position="float">
+<label>Figure 8.</label>
+<caption><p>The formalized “Sequence of Play” (STRIKE FORCE ONE)</p></caption>
+<graphic xlink:href="10.1177_1046878110388239-fig8.tif"/>
+</fig>
+<p>Relations have their own syntax, using the operator “&lt;-&gt;.” The commands <bold>“assert”</bold> and <bold>“retract”</bold> are used to add and delete individual relation instances (cf. <xref ref-type="fig" rid="fig8-1046878110388239">Figure 8</xref>). What is mainly missing from the formalism, compared with the discussion above, is control of the information that is given to the players (cf. “fog of war,” p. 4). The example game STRIKE FORCE ONE, like most board wargames, makes all the information available to all the players. This is not always a satisfactory solution, and with computational help many other options are available, but this is not discussed further here.</p>
+</sec>
+<sec id="section10-1046878110388239">
+<title>Internal Representation</title>
+<p>The external representation of the game-play is primarily meant as a medium of game development and secondarily as unambiguous game documentation, but the internal representation, or “game-play automaton” (<xref ref-type="fig" rid="fig3-1046878110388239">Figure 3</xref>), is for machine rather than human consumption. This means that instead of conciseness and close analogy to traditional wargame rules, as with the external syntax, the major desiderata of the internal syntax are appropriate expressiveness (enough, but not too much) and simplicity.</p>
+<p>As mentioned above, the closest analogy in the computational literature is probably the “flow diagrams” (<xref ref-type="bibr" rid="bibr20-1046878110388239">Goldstine &amp; von Neumann, 1963</xref>, pp. 84ff) that were popular in the early days of computing. <xref ref-type="bibr" rid="bibr18-1046878110388239">Goldstine (1972)</xref> explains:</p>
+<p><disp-quote>
+<p>The purpose of the flow diagram is to give a picture of the motion of the control organ as it moves through the memory picking up and executing the instructions it finds there. The flow diagram also shows the states of the variables at various key points in the course of the computation. (p. 267)</p>
+</disp-quote></p>
+<p>Formally, the flowchart is a directed graph, with nodes representing various types of operations and edges indicating the flow of control. Traditionally, four types of nodes are used: operation, alternative, start/exit, and join of control flow (<xref ref-type="bibr" rid="bibr15-1046878110388239">Floyd, 1967</xref>, p. 23; <xref ref-type="bibr" rid="bibr20-1046878110388239">Goldstine &amp; von Neumann, 1963</xref>, pp. 87-89; <xref ref-type="bibr" rid="bibr42-1046878110388239">Scott, 1967</xref>, p. 188). For the purposes of the wargaming formalism, it seems expedient to slightly modify the first two, as follows:</p>
+<list id="list2-1046878110388239" list-type="bullet">
+<list-item><p><italic>Operation node.</italic> Has one input and one output edge. Any changes to variables happen here. Shown as a rectangle.</p></list-item>
+<list-item><p><italic>User action node.</italic> Similar to operation node, but involves user interaction. Needs to be distinct to allow automatic processing tools (e.g., user interfaces) to find it easily.</p></list-item>
+<list-item><p><italic>Alternative node.</italic> Encodes the control structure. If two outgoing edges, shown as diamond. If more than two, shown as oval.</p></list-item></list>
+<p>In addition to these, we need entry and exit points (circles) and joins (points). <xref ref-type="fig" rid="fig9-1046878110388239">Figure 9</xref> shows the top-level<sup><xref ref-type="fn" rid="fn22-1046878110388239">22</xref></sup> of the flowchart of the example game STRIKE FORCE ONE, automatically generated from the external representation, which is partially shown in <xref ref-type="fig" rid="fig4-1046878110388239">Figures 4</xref>, <xref ref-type="fig" rid="fig5-1046878110388239">5</xref>, <xref ref-type="fig" rid="fig6-1046878110388239">6</xref>, and <xref ref-type="fig" rid="fig8-1046878110388239">8</xref> and completely listed in the <xref ref-type="app" rid="app1-1046878110388239">appendix</xref>. At any time during the playing of the game, exactly one of the nodes in this graph is “active.” This node, together with the values of the variables and the instances of the relations, defines the state of the game. Playing the game means moving through the graph. At an operation node, computations are made and data values updated; at an action node, user input is received; at an alternative node, one of the available paths is selected.</p>
+<fig id="fig9-1046878110388239" position="float">
+<label>Figure 9.</label>
+<caption><p>Auto-generated game graph (STRIKE FORCE ONE, top-level only)</p></caption>
+<graphic xlink:href="10.1177_1046878110388239-fig9.tif"/>
+</fig>
+<p>It is worth noting that the game graph (<xref ref-type="fig" rid="fig9-1046878110388239">Figure 9</xref>) is not merely a “visual model” of some aspects of the program code, as is used in various modern software engineering systems (see <xref ref-type="bibr" rid="bibr3-1046878110388239">Anderson, Bankes, Davis, Hall, &amp; Shapiro, 1993</xref>, p. 18; <xref ref-type="bibr" rid="bibr13-1046878110388239">Davis &amp; Anderson, 2003</xref>, p. 57). The game graph, by itself, is the complete formalization of the game-play, in the machine-friendly internal representation. The graph is (partially) shown in <xref ref-type="fig" rid="fig9-1046878110388239">Figure 9</xref> only for illustration. When playing a game the graph exists as a data structure not as a visual representation. However, having this type of data structure means, among other things, that general wargaming software can be written, to handle any game, however complex, as long as it is written in the external formalism described in this article.</p>
+</sec>
+<sec id="section11-1046878110388239">
+<title>Related Work and Future Directions</title>
+<p>Existing software tools for creating wargames or military simulations fall mainly into two categories: either complete applications where certain aspects are configurable<sup><xref ref-type="fn" rid="fn23-1046878110388239">23</xref></sup> or extensions of general purpose programming languages.<sup><xref ref-type="fn" rid="fn24-1046878110388239">24</xref></sup> Those in the first category suffer from being limited in which aspects of the game can be modified (typically only the “scenario” part of the game-play; see <xref ref-type="fig" rid="fig1-1046878110388239">Figure 1</xref>) and from being tied to the specific application used to create them. Those in the second category, programming language extensions, has none of those drawbacks but are instead too general to be used as data objects in the way described earlier for the internal formalism proposed in this article and too complicated to be used by game designers who are not also computer programmers.<sup><xref ref-type="fn" rid="fn25-1046878110388239">25</xref></sup></p>
+<sec id="section12-1046878110388239">
+<title>Game-Play in General</title>
+<p>In the field of computer gaming generally, the problem of specifying the game-play independently of any particular implementation is receiving increasing attention. <xref ref-type="bibr" rid="bibr29-1046878110388239">Morgan (2009</xref>, p. 705), for example, seeks “a language capable of describing interaction” but seems to suggest that existing protocols for commercial transactions over a network could be a solution, which appears unlikely in the general case. <xref ref-type="bibr" rid="bibr54-1046878110388239">Zhu and Morgan (2008</xref>, pp. 4-5) describe another approach, more similar to the one advocated in the present article. An existing financial “rule engine” is used to implement a simple game (TIC TAC TOE). It seems improbable, though, that adopting a tool from another domain has any benefits, apart from cost, over creating a new tool specifically designed for the task at hand. Another solution, scripting, is discussed by <xref ref-type="bibr" rid="bibr50-1046878110388239">White, Koch, Gehrke, and Demers (2008)</xref>, who say that “one of the major problems with traditional scripting languages is that the programmer must be explicitly aware of low-level processing issues that have little to do with gameplay” (p. 21) and then suggest some partial solutions. It is probably fair to say that all these contributions, as well as the present article, strive toward the same distant goal, a formalism specifically designed for describing game-play and nothing else.<sup><xref ref-type="fn" rid="fn26-1046878110388239">26</xref></sup></p>
+</sec>
+<sec id="section13-1046878110388239">
+<title>Managing Complexity</title>
+<p>Perhaps inevitably, both military simulations and commercial computer wargames seem to have followed a monotonic trajectory toward greater complexity. While, for example, <xref ref-type="bibr" rid="bibr45-1046878110388239">Smith (2010</xref>, pp. 6-7) apparently considers this an undoubted improvement, more thoughtful observers have pointed out that the increasing sophistication mainly concentrates on physical factors that can be measured or counted, while ignoring or marginalizing other factors such as training, morale, and surprise, which are equally, or more, relevant (<xref ref-type="bibr" rid="bibr13-1046878110388239">Davis &amp; Anderson, 2003</xref>, pp. 26-27; <xref ref-type="bibr" rid="bibr11-1046878110388239">Davis &amp; Blumenthal, 1991</xref>, p. 8; <xref ref-type="bibr" rid="bibr44-1046878110388239">Shubik, 2009</xref>, pp. 588, 590; cf. <xref ref-type="bibr" rid="bibr41-1046878110388239">Sabin, 2007</xref>, pp. 19, 24-25). An interesting side note is that “hobby” board wargames have always included these “soft” factors (<xref ref-type="bibr" rid="bibr1-1046878110388239">P. D. Allen, 1987</xref>, p. 5) to a greater extent.<sup><xref ref-type="fn" rid="fn27-1046878110388239">27</xref></sup></p>
+<p>Another problem is that increasing complexity is likely to mean that the workings of the games or simulations are harder to understand. Related to this is that they will also be harder to create, in accordance with specifications. This issue was noted long ago<sup><xref ref-type="fn" rid="fn28-1046878110388239">28</xref></sup> and it seems that it has not yet been solved to full satisfaction (<xref ref-type="bibr" rid="bibr3-1046878110388239">Anderson et al., 1993</xref>, pp. 11-12; <xref ref-type="bibr" rid="bibr12-1046878110388239">Davis, 1992</xref>, pp. 14, 35; <xref ref-type="bibr" rid="bibr13-1046878110388239">Davis &amp; Anderson, 2003</xref>, pp. 55-56). Although these problems are probably less of a worry for commercial gaming, it could be that they contribute to the continuing popularity of table-top games, which are often less complex (see also Note 27).</p>
+<p>By creating a formalism that is expressive enough to encode the game-play in existing table-top hobby wargames, but not more, the approach followed in this article goes some way toward solving this particular problem once and for all. Since the formalism is known to work for at least some games, it is safe to use that as a starting point, and the task has then become limited to those particular extensions that are needed for the game at hand. Using a wargame-specific formalism rather than a general programming language also eliminates many possible mistakes, simply because a much more limited set of possible instruction sequences is available.</p>
+</sec>
+<sec id="section14-1046878110388239">
+<title>Other Benefits of the Approach</title>
+<p>As mentioned above, the external specification of the game-play is meant not only as input to game-playing software but also as the ultimate documentation of the rules of the game. This can then be seen as a realization of the dictum of <xref ref-type="bibr" rid="bibr11-1046878110388239">Davis and Blumenthal (1991</xref>, pp. 14, 22) and <xref ref-type="bibr" rid="bibr13-1046878110388239">Davis and Anderson (2003</xref>, p. 39n) that a major function of games/models is embodiment of knowledge. In the normal situation today, the game or simulation exists as a piece of software and associated documentation. Having a complete formalization in a wargame-specific formalism is better because there cannot be any discrepancy between the human-readable version and the one that is processed when executing the software, as they are the same.</p>
+<p>A further possibility is improved computer opponents, or “wargame AI.” Since the complete formalization of the game can be easily read and processed by these pieces of software, and a separate “automaton” can be instantiated with, for example, only a subset of the mapboard and units, they can use this to evaluate hypothetical situations, such as an attack or defense with more or less units than are in fact in that location on the actual game map. This kind of thing is not so easily done with the traditional type of system architecture, where the game rules are directly encoded in the software.</p>
+</sec>
+<sec id="section15-1046878110388239">
+<title>Software Tools for the Suggested Formalism</title>
+<p>The external game definition format is meant for writing the game formalization. Even though this formalism is very simple and limited compared with general programming languages, the idea conflicts, to some extent, with the principle that game design and game programming be kept separate (cf. Note 25). A possible solution to this problem would be to create tools that generate game definitions from some less technical specification. For the mapboards and unit locations, a graphical editor is the obvious choice. The rest of the game definition is mainly the actions and the sequence of play. In some cases, concepts that are fairly clear and well defined in traditional board game rules would seem to require a more complicated expression in the formalism. One example of this is “zone of control” (<xref ref-type="bibr" rid="bibr4-1046878110388239">Berg et al., 1977</xref>, p. 177; <xref ref-type="bibr" rid="bibr34-1046878110388239">Palmer, 1977</xref>, p. 31).<sup><xref ref-type="fn" rid="fn29-1046878110388239">29</xref></sup> By cataloging such concepts and their implementation, game definition “wizards” can be created to simplify the process of encoding the game rules.</p>
+<p>Another purpose for mechanical processing of the game definition might be to determine, for example, the maximum rates of movement and combat for various units under different circumstances. Limited examples of this type of analysis, done by hand, has appeared in the literature, but an automatic solution will be easier and more reliable.</p>
+</sec>
+</sec>
+<sec id="section16-1046878110388239">
+<title>Summary</title>
+<p>A formal language for describing the game-play makes the game definition an entity that is separate from any particular tools, which means that games can survive through generations of software products. It also allows the game rules to be publicly examined and discussed in detail, something that is common with board wargames, but almost unheard of for computational ones. In addition, specific game situations can be described, as well as stored and reproduced, independently of any particular software implementation, and perhaps most important, it provides an accessible, unambiguous, definition of the rules of the game so that all players, human and mechanical, can have an equal, complete understanding of them.</p>
+<p>This article proposes such a game-play definition formalism<sup><xref ref-type="fn" rid="fn30-1046878110388239">30</xref></sup> and gives an example of how to use it to describe a simple board wargame. The formalism is similar to computer programming languages but limited to those features that are needed for game definitions. Some special facilities, such as simple ways to enter map and table data, are included that are not common in general programming languages.</p>
+</sec>
+</body>
+<back>
+<app-group>
+<app id="app1-1046878110388239">
+<title>Appendix</title>
+<sec id="section17-1046878110388239">
+<title>Complete Formal Rules for the Board Wargame STRIKE FORCE ONE</title>
+<graphic xlink:href="10.1177_1046878110388239-img1.tif"/>
+</sec>
+</app>
+</app-group>
+<ack><p>Paul K. Davis (RAND corporation), Philip Sabin (King’s College London), and one anonymous reviewer gave helpful comments.</p></ack>
+<fn-group>
+<fn fn-type="conflict"><p>The author declared no conflicts of interest with respect to the authorship and/or publication of this article.</p></fn>
+<fn fn-type="financial-disclosure"><p>The author received no financial support for the research and/or authorship of this article.</p></fn>
+</fn-group>
+<notes>
+<fn-group>
+<fn fn-type="other" id="fn1-1046878110388239">
+<label>1.</label>
+<p>CHESS evolved from an Indian game called CHATURANGA, a Sanskrit word for “army” (<xref ref-type="bibr" rid="bibr30-1046878110388239">Murray, 1913</xref>, p. 42). This game dates back to at least the 7th century AD (<xref ref-type="bibr" rid="bibr30-1046878110388239">Murray, 1913</xref>, p. 32). The game GO is first mentioned in the 6th century BC (<xref ref-type="bibr" rid="bibr35-1046878110388239">Parlett, 1999</xref>, p. 168). The oldest board wargames for which solid evidence exists are apparently from third millenium BC Egypt (<xref ref-type="bibr" rid="bibr31-1046878110388239">Murray, 1951</xref>, pp. 13-14, 229).</p></fn>
+<fn fn-type="other" id="fn2-1046878110388239">
+<label>2.</label>
+<p><xref ref-type="bibr" rid="bibr52-1046878110388239">Young (1955</xref>, p. 6); <xref ref-type="bibr" rid="bibr49-1046878110388239">Weiner (1959</xref>, p. 6), <xref ref-type="bibr" rid="bibr48-1046878110388239">Thomas (1961</xref>, p. 426), <xref ref-type="bibr" rid="bibr28-1046878110388239">McHugh (1966</xref>, pp. 1-3, 2-6), <xref ref-type="bibr" rid="bibr51-1046878110388239">Wilson (1970</xref>, p. 17), and <xref ref-type="bibr" rid="bibr23-1046878110388239">Hausrath (1971</xref>, p. 5).</p></fn>
+<fn fn-type="other" id="fn3-1046878110388239">
+<label>3.</label>
+<p>Cf. “War Gaming is amazingly effective for teaching obvious ideas that people have resisted because they run counter to doctrine, or are unpleasant e.g., if one’s airforce is exposed to destruction, the enemy may destroy it” (<xref ref-type="bibr" rid="bibr25-1046878110388239">Kahn &amp; Mann, 1957</xref>, p. 5).</p></fn>
+<fn fn-type="other" id="fn4-1046878110388239">
+<label>4.</label>
+<p>For example, “Writing and teaching, together with wargaming, seem to have played an important part not only in the dissemination but also in the evolution of Guderian’s military thought.” From the foreword (p. 10) of <xref ref-type="bibr" rid="bibr21-1046878110388239">Guderian (1992)</xref>.</p></fn>
+<fn fn-type="other" id="fn5-1046878110388239">
+<label>5.</label>
+<p>Hexagons are preferred because distances are more equal in all directions (<xref ref-type="bibr" rid="bibr24-1046878110388239">Helmer, 1960</xref>, p. 8; <xref ref-type="bibr" rid="bibr28-1046878110388239">McHugh, 1966</xref>, p. 4-27; <xref ref-type="bibr" rid="bibr33-1046878110388239">Page, 1952</xref>, p. 85). According to <xref ref-type="bibr" rid="bibr4-1046878110388239">Berg Patrick, Simonsen, Isby, and Dunnigan, (1977</xref>, p. 12), <xref ref-type="bibr" rid="bibr16-1046878110388239">Freeman (1980</xref>, p. 15), <xref ref-type="bibr" rid="bibr22-1046878110388239">Gush and Finch (1980</xref>, p. 30), and <xref ref-type="bibr" rid="bibr37-1046878110388239">Perla (1990</xref>, p. 116), the hobby wargames industry copied this from the RAND Corporation sometime between 1953 and 1958. <xref ref-type="bibr" rid="bibr2-1046878110388239">T. B. Allen (1987</xref>, p. 96) thinks it was the other way around, which seems less likely. The originator may have been George Gamow, whose game TIN SOLDIER, created in 1951 at the Operations Research Office at the Johns Hopkins University, used a hexagonal grid (<xref ref-type="bibr" rid="bibr23-1046878110388239">Hausrath, 1971</xref>, p. 65; <xref ref-type="bibr" rid="bibr33-1046878110388239">Page, 1952</xref>). Apparently, this game was initially played on a square grid (<xref ref-type="bibr" rid="bibr17-1046878110388239">Gamow, 1970</xref>, p. 151).</p></fn>
+<fn fn-type="other" id="fn6-1046878110388239">
+<label>6.</label>
+<p>For example, in the wargaming magazine <italic>The General</italic> (<ext-link ext-link-type="uri" xlink:href="http://www.ahgeneral.org">http://www.ahgeneral.org</ext-link>), published 1964-1998 (<xref ref-type="bibr" rid="bibr37-1046878110388239">Perla, 1990</xref>, p.167). <xref ref-type="bibr" rid="bibr14-1046878110388239">Dunnigan (2000</xref>, pp. 12-33) describes two turns of an example game, illustrated by pictures of the map with playing pieces at different points in the game. <xref ref-type="bibr" rid="bibr34-1046878110388239">Palmer (1977</xref>) includes concrete discussions, with pictures, of several games. <xref ref-type="bibr" rid="bibr41-1046878110388239">Sabin (2007)</xref> uses a similar approach as background to a historical discussion of ancient battles. See also <xref ref-type="fig" rid="fig2-1046878110388239">Figure 2</xref>.</p></fn>
+<fn fn-type="other" id="fn7-1046878110388239">
+<label>7.</label>
+<p>The similarity in the nature of the challenge offered by these ancient wargames and the modern ones has been noted by, for example, <xref ref-type="bibr" rid="bibr34-1046878110388239">Palmer (1977</xref>, p. 14), <xref ref-type="bibr" rid="bibr22-1046878110388239">Gush and Finch (1980</xref>, p. 13), and <xref ref-type="bibr" rid="bibr39-1046878110388239">Prados (1987</xref>, p. ix).</p></fn>
+<fn fn-type="other" id="fn8-1046878110388239">
+<label>8.</label>
+<p>According to noted military combat theorist Trevor Dupuy, quoted in <xref ref-type="bibr" rid="bibr2-1046878110388239">T. B. Allen (1987)</xref>, “the terms models, wargaming, simulation are used synonymously” (p. 64). <xref ref-type="bibr" rid="bibr6-1046878110388239">Brewer and Shubik (1979)</xref> use the term “<italic>MSG</italic>” throughout, standing for “model, simulation, and game” (p. 3).</p></fn>
+<fn fn-type="other" id="fn9-1046878110388239">
+<label>9.</label>
+<p>The example game STRIKE FORCE ONE, described elsewhere in this article, which is probably one of the simplest manual hobby wargames, has 26 numbered rules, taking up three pages of print. Some games published in books (<xref ref-type="bibr" rid="bibr14-1046878110388239">Dunnigan, 2000</xref>, pp. 174-189; <xref ref-type="bibr" rid="bibr16-1046878110388239">Freeman, 1980</xref>, pp. 50-61; <xref ref-type="bibr" rid="bibr39-1046878110388239">Prados, 1987</xref>, pp. 65-75) are around a dozen pages. The complete rules of the game ASL (<ext-link ext-link-type="uri" xlink:href="http://www.advancedsquadleader.net">http://www.advancedsquadleader.net</ext-link>) require approximately 200 pages.</p></fn>
+<fn fn-type="other" id="fn10-1046878110388239">
+<label>10.</label>
+<p>This term is from Carl <xref ref-type="bibr" rid="bibr7-1046878110388239">von Clausewitz (1993)</xref>: “War is the realm of uncertainty; three quarters of the factors on which action in war is based are wrapped in a fog of greater or lesser uncertainty” (p. 117).</p></fn>
+<fn fn-type="other" id="fn11-1046878110388239">
+<label>11.</label>
+<p>Methods that have been tried include duplicate mapboards separated by a screen (<xref ref-type="bibr" rid="bibr37-1046878110388239">Perla, 1990</xref>, p. 143; <xref ref-type="bibr" rid="bibr43-1046878110388239">Setear, 1989</xref>, pp. 6-8) and inverted counters (<xref ref-type="bibr" rid="bibr4-1046878110388239">Berg et al., 1977</xref>, pp. 50-51, 114-115; <xref ref-type="bibr" rid="bibr16-1046878110388239">Freeman, 1980</xref>, p. 43; <xref ref-type="bibr" rid="bibr43-1046878110388239">Setear, 1989</xref>, p. 9).</p></fn>
+<fn fn-type="other" id="fn12-1046878110388239">
+<label>12.</label>
+<p>For example,</p>
+<p><disp-quote>
+<p>“The complicated program and the large computing machine have taken on quasi-religious overtones. Offerings are put into the black box by acolytes who are never sure what is going to come out; those who come to worship are often not sure what has happened either. (<xref ref-type="bibr" rid="bibr6-1046878110388239">Brewer &amp; Shubik, 1979</xref>, p. 25)”</p>
+</disp-quote></p>
+<p><xref ref-type="bibr" rid="bibr14-1046878110388239">Dunnigan (2000</xref>) puts it more succinctly: “The computer does some mumbo jumbo inside the box and gives you an answer based on who knows what” (p. 108). See also <xref ref-type="bibr" rid="bibr11-1046878110388239">Davis and Blumenthal (1991</xref>, p. 6n) and <xref ref-type="bibr" rid="bibr13-1046878110388239">Davis and Anderson (2003</xref>, pp. 69, 106-107).</p></fn>
+<fn fn-type="other" id="fn13-1046878110388239">
+<label>13.</label>
+<p><disp-quote>
+<p>“All [wargames] share one feature in common: competition. The free competition between Red and Blue exposes weak points in an argument, vague points in a plan . . . The essential element in any war game is free competition—the intelligent and obnoxious opponent.” (<xref ref-type="bibr" rid="bibr46-1046878110388239">Specht, 1957</xref>, p. 17)</p>
+<p>“A war game is a model of military reality set up by a judicious process of selection and aggregation, yielding the results of <italic>the interactions of opponents with conflicting objectives</italic> as these results are developed under more or less definite rules.” (<xref ref-type="bibr" rid="bibr36-1046878110388239">Paxson, 1963</xref>, p. 1)</p>
+<p>“The gaming technique, first and most fully developed in war gaming, establishes an environment that challenges and motivates a responsible participant. He must bring all past learning and his most mature judgment to bear on analyzing the situation confronting him and then employ the best possible approach in meeting that situation. Moreover, he knows that he is matched against a competent and resourceful opponent.” (<xref ref-type="bibr" rid="bibr23-1046878110388239">Hausrath, 1971</xref>, p. 11)</p>
+</disp-quote></p></fn>
+<fn fn-type="other" id="fn14-1046878110388239">
+<label>14.</label>
+<p><xref ref-type="bibr" rid="bibr4-1046878110388239">Berg et al. (1977)</xref> contains an offer of a free copy of this game, sent by mail. The producers, Simulations Publications Inc., went bankrupt in 1982. The game has been reprinted and is available from <ext-link ext-link-type="uri" xlink:href="http://victorypointgames.com/">http://victorypointgames.com/</ext-link>.</p></fn>
+<fn fn-type="other" id="fn15-1046878110388239">
+<label>15.</label>
+<p>The difficulty of analyzing the game-play of computer games generally is cited by <xref ref-type="bibr" rid="bibr53-1046878110388239">Zagal, Rick, and Hsi (2006)</xref> as the reason to study board games instead. “Computer games represent closed systems that are highly complex as well as opaque to in-depth analysis,” whereas “the nature of board games implies a transparency regarding the core mechanisms of the game and the way they are interrelated” (p. 26). <xref ref-type="bibr" rid="bibr29-1046878110388239">Morgan (2009)</xref> points out that “realizing the ramifications on game rules even the smallest change to implementation may cause is difficult to judge” (p. 690). This is a strong argument for the type of formalism suggested in the present article.</p></fn>
+<fn fn-type="other" id="fn16-1046878110388239">
+<label>16.</label>
+<p>The origin of finite automata theory is traditionally considered to be <xref ref-type="bibr" rid="bibr27-1046878110388239">McCulloch and Pitts (1943)</xref>. Modern work is more directly based on <xref ref-type="bibr" rid="bibr26-1046878110388239">Kleene (1956)</xref>.</p></fn>
+<fn fn-type="other" id="fn17-1046878110388239">
+<label>17.</label>
+<p>Flowcharts were apparently used earlier in electrical engineering and business analysis, but their first application to computer programming was by <xref ref-type="bibr" rid="bibr19-1046878110388239">Goldstine and von Neumann (1947)</xref>, more readily available as <xref ref-type="bibr" rid="bibr20-1046878110388239">Goldstine and von Neumann (1963)</xref>.</p></fn>
+<fn fn-type="other" id="fn18-1046878110388239">
+<label>18.</label>
+<p>Also: “Rule-making brings its devotees so many fascinating problems of history, of mathematics and probabilities, definition, tabulation and clarity, that it could almost stand as a hobby on its own” (<xref ref-type="bibr" rid="bibr22-1046878110388239">Gush &amp; Finch, 1980</xref>, p. 19).</p></fn>
+<fn fn-type="other" id="fn19-1046878110388239">
+<label>19.</label>
+<p>In <xref ref-type="fig" rid="fig4-1046878110388239">Figure 4</xref>, <italic><bold>“begin map”</bold></italic> and <italic><bold>“end map”</bold></italic> surround the map definition, <italic><bold>“sf1”</bold></italic> is the name of the map, and the <italic><bold>“terrain”</bold></italic> statement defines the terrain types. The words <italic><bold>“clear”</bold></italic>, <italic><bold>“town”</bold></italic>, and <italic><bold>“woods”</bold></italic> are not predefined, but introduced by the terrain statement. The words within round brackets are just names of the locations and have no function in the game-play.</p></fn>
+<fn fn-type="other" id="fn20-1046878110388239">
+<label>20.</label>
+<p>In <xref ref-type="fig" rid="fig5-1046878110388239">Figure 5</xref> the only predefined words are <italic><bold>“define”</bold></italic> and <italic><bold>“relation”</bold></italic>. The words <italic><bold>“unit”</bold></italic> and <italic><bold>“location”</bold></italic> are defined and then used in the other statements. The single-letter names are the units, which are placed on the map by the <italic>location</italic> statements. Technically, relations are declared to exist between each unit and the hex location.</p></fn>
+<fn fn-type="other" id="fn21-1046878110388239">
+<label>21.</label>
+<p>The function is used in the <italic><bold>“combat”</bold></italic> action in <xref ref-type="fig" rid="fig8-1046878110388239">Figure 8</xref>, where the meanings of the <italic>result</italic> values are defined.</p></fn>
+<fn fn-type="other" id="fn22-1046878110388239">
+<label>22.</label>
+<p>In total, the game-play graph for STRIKE FORCE ONE has about 300 nodes.</p></fn>
+<fn fn-type="other" id="fn23-1046878110388239">
+<label>23.</label>
+<p>For example, ADC (<ext-link ext-link-type="uri" xlink:href="http://www.hpssims.com">http://www.hpssims.com</ext-link>) and the editors that come with many computer wargames. More limited tools are also available that only display the map and units for human–human play over a network.</p></fn>
+<fn fn-type="other" id="fn24-1046878110388239">
+<label>24.</label>
+<p>Such as the RAND-ABEL programming language (<xref ref-type="bibr" rid="bibr10-1046878110388239">Davis, 1990</xref>).</p></fn>
+<fn fn-type="other" id="fn25-1046878110388239">
+<label>25.</label>
+<p><xref ref-type="bibr" rid="bibr14-1046878110388239">Dunnigan (2000</xref>, pp. 354, 380) suggests that a board wargame should be used as prototype for a computer implementation and warns against letting the game be designed by “the programmer” (pp. 251-252). <xref ref-type="bibr" rid="bibr8-1046878110388239">Crawford (2003)</xref> says that “game development shares nothing with game programming; they are completely separate fields of endeavor” (p. 2). <xref ref-type="bibr" rid="bibr12-1046878110388239">Davis (1992</xref>, p. 35f) also advocates a separation between model design and programming.</p></fn>
+<fn fn-type="other" id="fn26-1046878110388239">
+<label>26.</label>
+<p><xref ref-type="bibr" rid="bibr8-1046878110388239">Crawford (2003)</xref> should perhaps also be added to the list, although he is somewhat more ambitious. Talking about adventure games, or in modern parlance, “interactive storytelling,” he says that “verbs don’t fall into some simple pattern or system that makes it possible to put them in a simple database” so “the big parts, like level maps and weapons characteristics, are all table-driven, while the verbs, being few in number, are always handled with code.” What is needed then, he thinks, is “a database manager for verbs with an embedded programming language for interactive storytelling” (pp. 166-167). <xref ref-type="bibr" rid="bibr13-1046878110388239">Davis and Anderson (2003)</xref> say that “among the cutting-edge issues” for developing “composable systems describing modern military operations” [is creating] a “rigorous language for describing models, simulations, and many of the subtleties therein” (p. 55).</p></fn>
+<fn fn-type="other" id="fn27-1046878110388239">
+<label>27.</label>
+<p><xref ref-type="bibr" rid="bibr13-1046878110388239">Davis and Anderson (2003)</xref> even say that “forward-looking warfighters have often ignored [Modeling &amp; Simulation]-based work while using old-fashioned tabletop games to conceive and think about new concepts” (p. 59).</p></fn>
+<fn fn-type="other" id="fn28-1046878110388239">
+<label>28.</label>
+<p>“I feel that the real limitation of the (computer) war game [i.e., what we would call “simulation”] is the difficulty of translating the intention of the model to the computer.” (<xref ref-type="bibr" rid="bibr48-1046878110388239">Thomas, 1961</xref>, p. 443; quoted in <xref ref-type="bibr" rid="bibr28-1046878110388239">McHugh, 1966</xref>, pp. 6-28).</p></fn>
+<fn fn-type="other" id="fn29-1046878110388239">
+<label>29.</label>
+<p>The “zone of control” rules are implemented by the function <italic><bold>“zoc”</bold></italic>, which is used in the <italic><bold>“move”</bold></italic> action (<xref ref-type="fig" rid="fig8-1046878110388239">Figure 8</xref>) and the <italic><bold>“retreat”</bold></italic> procedure.</p></fn>
+<fn fn-type="other" id="fn30-1046878110388239">
+<label>30.</label>
+<p>Additional information about this formalism, tentatively christened “G-code,” can be found at <ext-link ext-link-type="uri" xlink:href="http://www.basun.net/software/gcode/">http://www.basun.net/software/gcode/</ext-link>.</p></fn>
+</fn-group>
+</notes>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Allen</surname><given-names>P. D.</given-names></name>
+</person-group> (<year>1987</year>). <source>The secondary land theater model</source> (<comment>RAND Note N-2625-NA</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr2-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Allen</surname><given-names>T. B.</given-names></name>
+</person-group> (<year>1987</year>). <source>War games</source>. <publisher-loc>London, England</publisher-loc>: <publisher-name>William Heinemann</publisher-name>.</citation>
+</ref>
+<ref id="bibr3-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Anderson</surname><given-names>R. H.</given-names></name>
+<name><surname>Bankes</surname><given-names>S. C.</given-names></name>
+<name><surname>Davis</surname><given-names>P. K.</given-names></name>
+<name><surname>Hall</surname><given-names>H. E.</given-names></name>
+<name><surname>Shapiro</surname><given-names>N.</given-names></name>
+</person-group> (<year>1993</year>). <source>Toward a comprehensive environment for computer modeling, simulation, and analysis</source> (<comment>RAND Note N-3554-RC</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr4-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Berg</surname><given-names>R.</given-names></name>
+<name><surname>Patrick</surname><given-names>S. B.</given-names></name>
+<name><surname>Simonsen</surname><given-names>R. A.</given-names></name>
+<name><surname>Isby</surname><given-names>D. C.</given-names></name>
+<name><surname>Dunnigan</surname><given-names>J. F.</given-names></name>
+</person-group> (<year>1977</year>). <source>Wargame design. The history, production and use of conflict simulation games</source>. <publisher-loc>New York, NY</publisher-loc>: <publisher-name>Simulations Publications</publisher-name>.</citation>
+</ref>
+<ref id="bibr5-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Bowen</surname><given-names>K.</given-names></name>
+</person-group> (<year>1978</year>). <source>Research games</source>. <publisher-loc>London, UK</publisher-loc>: <publisher-name>Taylor &amp; Francis</publisher-name>.</citation>
+</ref>
+<ref id="bibr6-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Brewer</surname><given-names>G. D.</given-names></name>
+<name><surname>Shubik</surname><given-names>M.</given-names></name>
+</person-group> (<year>1979</year>). <source>The war game: A critique of military problem solving</source>. <publisher-loc>Cambridge, MA</publisher-loc>: <publisher-name>Harvard University Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr7-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>von Clausewitz</surname><given-names>C.</given-names></name>
+</person-group> (<year>1993</year>). <source>On war</source>. <publisher-loc>London, England</publisher-loc>: <publisher-name>David Campbell</publisher-name>.</citation>
+</ref>
+<ref id="bibr8-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Crawford</surname><given-names>C.</given-names></name>
+</person-group> (<year>2003</year>). <source>Chris Crawford on game design</source>. <publisher-loc>Indianapolis, IN</publisher-loc>: <publisher-name>New Rider</publisher-name>.</citation>
+</ref>
+<ref id="bibr9-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Darby</surname><given-names>J.</given-names></name>
+</person-group> (<year>2009</year>). <source>Going to war: Creating computer war games</source>. <publisher-loc>Boston, MA</publisher-loc>: <publisher-name>Course Technology</publisher-name>.</citation>
+</ref>
+<ref id="bibr10-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Davis</surname><given-names>P. K.</given-names></name>
+</person-group> (<year>1990</year>). <source>An analyst’s primer for the RAND/ABEL programming language</source> (<comment>RAND Note N-3042-NA</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr11-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Davis</surname><given-names>P. K.</given-names></name>
+<name><surname>Blumenthal</surname><given-names>D.</given-names></name>
+</person-group> (<year>1991</year>). <source>The base of sand problem</source> (<comment>RAND Note N-3148-OSD/DARPA</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr12-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Davis</surname><given-names>P. K.</given-names></name>
+</person-group> (<year>1992</year>). <source>Generalizing concepts and methods of verification, validation, and accreditation (VV&amp;A) for military simulations</source> (<comment>RAND Report R-4249-ACQ</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr13-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Davis</surname><given-names>P. K.</given-names></name>
+<name><surname>Anderson</surname><given-names>R. H.</given-names></name>
+</person-group> (<year>2003</year>). <source>Improving the composability of department of defense models and simulations</source> (<comment>RAND Monograph MG-101-OSD</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr14-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Dunnigan</surname><given-names>J. F.</given-names></name>
+</person-group> (<year>2000</year>). <source>Wargames handbook</source> (<edition>3rd ed.</edition>). <publisher-loc>Lincoln, NE</publisher-loc>: <publisher-name>Writers Club Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr15-1046878110388239">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Floyd</surname><given-names>R. W.</given-names></name>
+</person-group> (<year>1967</year>). <article-title>Assigning meanings to programs</article-title>. In <person-group person-group-type="editor">
+<name><surname>Schwartz</surname><given-names>J.</given-names></name>
+</person-group> (Ed.), <conf-name>Proceedings of symposium on applied mathematics</conf-name> (<volume>Vol. 19</volume>, pp. <fpage>19</fpage>-<lpage>32</lpage>). <publisher-loc>Providence, RI</publisher-loc>: <publisher-name>American Mathematical Society</publisher-name>.</citation>
+</ref>
+<ref id="bibr16-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Freeman</surname><given-names>J.</given-names></name>
+</person-group> (<year>1980</year>). <source>The complete book of wargames</source>. <publisher-loc>New York, NY</publisher-loc>: <publisher-name>Simon &amp; Schuster</publisher-name>.</citation>
+</ref>
+<ref id="bibr17-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Gamow</surname><given-names>G.</given-names></name>
+</person-group> (<year>1970</year>). <source>My world line</source>. <publisher-loc>New York, NY</publisher-loc>: <publisher-name>Viking Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr18-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Goldstine</surname><given-names>H. H.</given-names></name>
+</person-group> (<year>1972</year>). <source>The computer from Pascal to von Neumann</source>. <publisher-loc>Princeton, NJ</publisher-loc>: <publisher-name>Princeton University Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr19-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Goldstine</surname><given-names>H. H.</given-names></name>
+<name><surname>von Neumann</surname><given-names>J.</given-names></name>
+</person-group> (<year>1947</year>). <source>Planning and coding problems for an electronic computing instrument</source> (<comment>Tech. Rep.</comment>). <publisher-loc>Princeton, NJ</publisher-loc>: <publisher-name>Institute for Advanced Study</publisher-name>.</citation>
+</ref>
+<ref id="bibr20-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Goldstine</surname><given-names>H. H.</given-names></name>
+<name><surname>von Neumann</surname><given-names>J.</given-names></name>
+</person-group> (<year>1963</year>). <article-title>Planning and coding problems for an electronic computing instrument</article-title>. In <person-group person-group-type="editor">
+<name><surname>Taub</surname><given-names>A. A.</given-names></name>
+</person-group> (Ed.), <source>von Neumann, J., collected works</source> (pp. <fpage>80</fpage>-<lpage>151</lpage>). <publisher-loc>Oxford, England</publisher-loc>: <publisher-name>Pergamon</publisher-name>.</citation>
+</ref>
+<ref id="bibr21-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Guderian</surname><given-names>H.</given-names></name>
+</person-group> (<year>1992</year>). <source>Achtung—Panzer!</source> <publisher-loc>London, England</publisher-loc>: <publisher-name>Arms &amp; Armour Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr22-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Gush</surname><given-names>G.</given-names></name>
+<name><surname>Finch</surname><given-names>A.</given-names></name>
+</person-group> (<year>1980</year>). <source>A guide to wargaming</source>. <publisher-loc>London, England</publisher-loc>: <publisher-name>Croom Helm</publisher-name>.</citation>
+</ref>
+<ref id="bibr23-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Hausrath</surname><given-names>A. H.</given-names></name>
+</person-group> (<year>1971</year>). <source>Venture simulation in war, business, and politics</source>. <publisher-loc>New York, NY</publisher-loc>: <publisher-name>McGraw-Hill</publisher-name>.</citation>
+</ref>
+<ref id="bibr24-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Helmer</surname><given-names>O.</given-names></name>
+</person-group> (<year>1960</year>). <source>Strategic gaming</source> (<comment>Paper P-1902</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr25-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Kahn</surname><given-names>H.</given-names></name>
+<name><surname>Mann</surname><given-names>I.</given-names></name>
+</person-group> (<year>1957</year>). <source>War gaming</source> (<comment>Paper P-1167</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr26-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Kleene</surname><given-names>S. C.</given-names></name>
+</person-group> (<year>1956</year>). <article-title>Representation of events in nerve nets and finite automata</article-title>. In <person-group person-group-type="editor">
+<name><surname>Shannon</surname><given-names>C. E.</given-names></name>
+<name><surname>McCarthy</surname><given-names>J.</given-names></name>
+</person-group> (Eds.), <source>Automata studies</source> (pp. <fpage>3</fpage>-<lpage>41</lpage>) <publisher-loc>Princeton, NJ</publisher-loc>: <publisher-name>Princeton University Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr27-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>McCulloch</surname><given-names>W. S.</given-names></name>
+<name><surname>Pitts</surname><given-names>W.</given-names></name>
+</person-group> (<year>1943</year>). <article-title>A logical calculus of the ideas immanent in nervous activity</article-title>. <source>Bulletin of Medical Biophysics</source>, <volume>5</volume>, <fpage>115</fpage>-<lpage>133</lpage>.</citation>
+</ref>
+<ref id="bibr28-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>McHugh</surname><given-names>F. J.</given-names></name>
+</person-group> (<year>1966</year>). <source>Fundamentals of war gaming</source> (<comment>Technical Report Z801686</comment>). <publisher-loc>Newport, RI</publisher-loc>: <publisher-name>Naval War College</publisher-name>.</citation>
+</ref>
+<ref id="bibr29-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Morgan</surname><given-names>G.</given-names></name>
+</person-group> (<year>2009</year>). <article-title>Challenges of online game development: A review</article-title>. <source>Simulation &amp; Gaming</source>, <volume>40</volume>, <fpage>688</fpage>-<lpage>710</lpage>.</citation>
+</ref>
+<ref id="bibr30-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Murray</surname><given-names>H.</given-names></name>
+</person-group> (<year>1913</year>). <source>A history of chess</source>. <publisher-loc>Oxford, England</publisher-loc>: <publisher-name>Oxford University Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr31-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Murray</surname><given-names>H.</given-names></name>
+</person-group> (<year>1951</year>). <source>A history of board-games other than chess</source>. <publisher-loc>Oxford, England</publisher-loc>: <publisher-name>Oxford University Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr32-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Naur</surname><given-names>P.</given-names></name>
+</person-group> (<year>1963</year>). <article-title>Revised report on the algorithmic language Algol 60</article-title>. <source>Computer Journal</source>, <volume>5</volume>, <fpage>349</fpage>-<lpage>367</lpage>.</citation>
+</ref>
+<ref id="bibr33-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Page</surname><given-names>T. L.</given-names></name>
+</person-group> (<year>1952</year>). <article-title>A tank battle game</article-title>. <source>Journal of the Operations Research Society of America</source>, <volume>1</volume>, <fpage>85</fpage>-<lpage>86</lpage>.</citation>
+</ref>
+<ref id="bibr34-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Palmer</surname><given-names>N.</given-names></name>
+</person-group> (<year>1977</year>). <source>The comprehensive guide to board wargaming</source>. <publisher-loc>New York, NY</publisher-loc>: <publisher-name>McGraw-Hill</publisher-name>.</citation>
+</ref>
+<ref id="bibr35-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Parlett</surname><given-names>D.</given-names></name>
+</person-group> (<year>1999</year>). <source>The oxford history of board games</source>. <publisher-loc>Oxford, England</publisher-loc>: <publisher-name>Oxford University Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr36-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Paxson</surname><given-names>E. W.</given-names></name>
+</person-group> (<year>1963</year>). <source>War gaming</source> (<comment>Research Memorandum RM-3489-PR</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr37-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Perla</surname><given-names>P. P.</given-names></name>
+</person-group> (<year>1990</year>). <source>The art of wargaming</source>. <publisher-loc>Annapolis, MD</publisher-loc>: <publisher-name>Naval Institute Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr38-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Perlis</surname><given-names>A. J.</given-names></name>
+</person-group> (<year>1967</year>). <article-title>The synthesis of algorithmic systems</article-title>. <source>Journal of the ACM</source>, <volume>14</volume>, <fpage>1</fpage>-<lpage>9</lpage>.</citation>
+</ref>
+<ref id="bibr39-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Prados</surname><given-names>J.</given-names></name>
+</person-group> (<year>1987</year>). <source>Pentagon games: Wargames and the American military</source>. <publisher-loc>New York, NY</publisher-loc>: <publisher-name>Harper &amp; Row</publisher-name>.</citation>
+</ref>
+<ref id="bibr40-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Sabin</surname><given-names>P.</given-names></name>
+</person-group> (<year>2002</year>). <article-title>Playing at war: The modern hobby of wargaming</article-title>. In <person-group person-group-type="editor">
+<name><surname>Cornell</surname><given-names>T. J.</given-names></name>
+<name><surname>Allen</surname><given-names>T. B.</given-names></name>
+</person-group> (Eds.), <source>War and games</source> (pp. <fpage>193</fpage>-<lpage>222</lpage>). <publisher-loc>Suffolk, England</publisher-loc>: <publisher-name>Boydell Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr41-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Sabin</surname><given-names>P.</given-names></name>
+</person-group> (<year>2007</year>). <source>Lost battles</source>. <publisher-loc>London, England</publisher-loc>: <publisher-name>Hambledon Continuum</publisher-name>.</citation>
+</ref>
+<ref id="bibr42-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Scott</surname><given-names>D. S.</given-names></name>
+</person-group> (<year>1967</year>). <article-title>Some definitional suggestions for automata theory</article-title>. <source>Journal of Computer and System Sciences</source>, <volume>1</volume>, <fpage>187</fpage>-<lpage>212</lpage>.</citation>
+</ref>
+<ref id="bibr43-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Setear</surname><given-names>J. K.</given-names></name>
+</person-group> (<year>1989</year>). <source>Simulating the Fog of War</source> (<comment>Paper P-7511</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr44-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Shubik</surname><given-names>M.</given-names></name>
+</person-group> (<year>2009</year>). <article-title>It is not just a game!</article-title> <source>Simulation &amp; Gaming</source>, <volume>40</volume>, <fpage>587</fpage>-<lpage>601</lpage>.</citation>
+</ref>
+<ref id="bibr45-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Smith</surname><given-names>R.</given-names></name>
+</person-group> (<year>2010</year>). <article-title>The long history of gaming in military training</article-title>. <source>Simulation &amp; Gaming</source>, <volume>41</volume>, <fpage>6</fpage>-<lpage>19</lpage>.</citation>
+</ref>
+<ref id="bibr46-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Specht</surname><given-names>R. D.</given-names></name>
+</person-group> (<year>1957</year>). <source>War games</source> (<comment>Paper P-1041</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr47-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Simonsen</surname><given-names>R.</given-names></name>
+<name><surname>Dunnigan</surname><given-names>J.</given-names></name>
+</person-group> (<year>1975</year>). <source>STRIKE FORCE ONE. A conflict simulation introductory game</source>. <publisher-loc>New York, NY</publisher-loc>: <publisher-name>Simulations Publications</publisher-name>.</citation>
+</ref>
+<ref id="bibr48-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Thomas</surname><given-names>C. J.</given-names></name>
+</person-group> (<year>1961</year>). <article-title>Military gaming</article-title>. In <person-group person-group-type="editor">
+<name><surname>Ackoff</surname><given-names>R. L.</given-names></name>
+</person-group> (Ed.), <source>Progress in operations research</source> (<volume>Vol. I</volume>, pp. <fpage>421</fpage>-<lpage>463</lpage>). <publisher-loc>New York, NY</publisher-loc>: <publisher-name>John Wiley</publisher-name>.</citation>
+</ref>
+<ref id="bibr49-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Weiner</surname><given-names>M. G.</given-names></name>
+</person-group> (<year>1959</year>). <source>An introduction to war games</source> (<comment>Paper P-1773</comment>). <publisher-loc>Santa Monica, CA</publisher-loc>: <publisher-name>RAND Corporation</publisher-name>.</citation>
+</ref>
+<ref id="bibr50-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>White</surname><given-names>W.</given-names></name>
+<name><surname>Koch</surname><given-names>C.</given-names></name>
+<name><surname>Gehrke</surname><given-names>J.</given-names></name>
+<name><surname>Demers</surname><given-names>A.</given-names></name>
+</person-group> (<year>2008</year>). <article-title>Better scripts, better games</article-title>. <source>ACM Queue—Game Development</source>, <volume>6</volume>, <fpage>18</fpage>-<lpage>25</lpage>.</citation>
+</ref>
+<ref id="bibr51-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Wilson</surname><given-names>A.</given-names></name>
+</person-group> (<year>1970</year>). <source>War Gaming</source>. <publisher-loc>Middlesex, England</publisher-loc>: <publisher-name>Penguin Books</publisher-name>.</citation>
+</ref>
+<ref id="bibr52-1046878110388239">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Young</surname><given-names>J. P.</given-names></name>
+</person-group> (<year>1955</year>). <source>A brief history of war gaming</source> (<comment>Staff Memorandum 41</comment>). <publisher-loc>Fort Monroe, VA</publisher-loc>: <publisher-name>Combat Operations Research Group</publisher-name>.</citation>
+</ref>
+<ref id="bibr53-1046878110388239">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zagal</surname><given-names>J. P.</given-names></name>
+<name><surname>Rick</surname><given-names>J.</given-names></name>
+<name><surname>Hsi</surname><given-names>I.</given-names></name>
+</person-group> (<year>2006</year>). <article-title>Collaborative games: Lessons learned from board games</article-title>. <source>Simulation &amp; Gaming</source>, <volume>37</volume>, <fpage>24</fpage>-<lpage>40</lpage>.</citation>
+</ref>
+<ref id="bibr54-1046878110388239">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zhu</surname><given-names>L.</given-names></name>
+<name><surname>Morgan</surname><given-names>G.</given-names></name>
+</person-group> (<year>2008</year>). <source>Runtime evolution for online gaming: A case study using JBoss and Drools</source>. <conf-name>Paper presented at the proceedings of the Sixth International Conference on Game Design and Technology</conf-name>, <conf-loc>Liverpool, England</conf-loc>.</citation>
+</ref>
+</ref-list>
+<bio>
+<title>Bio</title>
+<p><bold>Tomas By</bold> is a computer science researcher with degrees from Gothenburg, Sweden and Sheffield, England.Contact: <email>tomas.by@in.tum.de</email>.</p>
+</bio>
+</back>
+</article>

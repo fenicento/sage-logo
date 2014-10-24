@@ -1,0 +1,1080 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PIG</journal-id>
+<journal-id journal-id-type="hwp">sppig</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part G: Journal of Aerospace Engineering</journal-title>
+<issn pub-type="ppub">0954-4100</issn>
+<issn pub-type="epub">2041-3025</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0954410011427107</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0954410011427107</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Computation of global trajectories of commercial transport aircraft</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Rivas</surname><given-names>Damián</given-names></name>
+<xref ref-type="corresp" rid="corresp1-0954410011427107"/>
+<xref ref-type="corresp" rid="corresp1-0954410011427107"/>
+<xref ref-type="corresp" rid="corresp1-0954410011427107"/>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Valenzuela</surname><given-names>Alfonso</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>de Augusto</surname><given-names>José L</given-names></name>
+</contrib>
+</contrib-group>
+<aff id="aff1-0954410011427107">Department of Aerospace Engineering, Universidad de Sevilla, Spain</aff>
+<author-notes>
+<corresp id="corresp1-0954410011427107">Damián Rivas, Departamento de Ingeniería Aeroespacial, Escuela Superior de Ingenieros, Camino de los Descubrimientos, 41092 Sevilla, Spain. Email: <email>drivas@us.es</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>1</month>
+<year>2013</year>
+</pub-date>
+<volume>227</volume>
+<issue>1</issue>
+<fpage>142</fpage>
+<lpage>158</lpage>
+<history>
+<date date-type="received"><day>2</day><month>6</month><year>2011</year></date>
+<date date-type="accepted"><day>28</day><month>9</month><year>2011</year></date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>A trajectory computation tool designed to compute global trajectories (from take off to landing) of commercial transport aircraft is presented. The global trajectory is defined by a general flight intent, considering flight segments usually flown by transport aircraft, including standard airline procedures, and air traffic control regulations. The computation is based on a trajectory computation solver designed for a general aircraft performance model (general drag polar and general engine model); the formulation takes into account wind effects and temperature corrections for a non-standard atmosphere. In the computation of the global trajectory, the top-of-descent point is determined iteratively, using the actual aircraft weight computed along the flight. Global properties such as total fuel consumption and flight time are computed; the influence of the actual take-off weight is analysed, as well as the effects of wind and non-standard temperatures. The computation tool provides a quantitative evaluation of these effects. Results are presented for a medium-range global trajectory and a model of a typical twin-engine, wide-body and, transport aircraft.</p>
+</abstract>
+<kwd-group>
+<kwd>Commercial aircraft</kwd>
+<kwd>global trajectories</kwd>
+<kwd>trajectory computation tool</kwd>
+<kwd>wind effects</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="sec1-0954410011427107" sec-type="intro"><title>Introduction</title>
+<p>The computation of aircraft global trajectories (from take off to landing) is an important problem, both, locally, in the design of efficient trajectories, and, globally, in the management of air traffic. However, in the open literature, most of the computation efforts are not devoted to this global problem. Slattery and Zhao<sup><xref ref-type="bibr" rid="bibr1-0954410011427107">1</xref></sup> synthesise cruise–descent trajectories for air traffic automation. Jackson et al.<sup><xref ref-type="bibr" rid="bibr2-0954410011427107">2</xref></sup> compute descent profiles (formed by five segments) to study the sensitivity of trajectory prediction. Coppenbarger <sup><xref ref-type="bibr" rid="bibr3-0954410011427107">3</xref></sup> presents a trajectory predictor based on the information provided by the airline flight plan, but only for the climb segment. Coppenbarger et al.<sup><xref ref-type="bibr" rid="bibr4-0954410011427107">4</xref></sup> describe the En-route Descent Advisor, a Center-TRACON Automation System tool that solves the meet-time problem, involving the cruise and descent phases. Global trajectories are considered in the following works. Barman and Erzberger optimise<sup><xref ref-type="bibr" rid="bibr5-0954410011427107">5</xref></sup> fixed-range trajectories for short-haul aircraft, considering the global trajectory as formed by only three flight segments (a very simplified case, although appropriate for complex optimisation problems). Gill and Maddock <sup><xref ref-type="bibr" rid="bibr6-0954410011427107">6</xref></sup> use predefined strategies to meet time and altitude constraints within the PHARE programme. Gallo et al.<sup><xref ref-type="bibr" rid="bibr7-0954410011427107">7</xref></sup> present a bidimensional trajectory computation infrastructure (simplified by neglecting the acceleration normal to the trajectory), intended to analyse all the BADA 4.0 capabilities.</p>
+<p>In this article, a computation tool is presented that computes the <italic>global trajectory</italic> as actually defined by the flight intent. This tool has been designed to be numerically efficient, in terms of computational cost, to be used for example at the core of trajectory optimisation solvers, which in general, implement iterative procedures that require calling the trajectory computation tool many times. For this reason, the tool is simplified by modelling the heading, the path angle, and the engine rating changes as instantaneous. With these simplifications, the number of flight segments to be computed is greatly reduced.</p>
+<p>However, the tool is quite general otherwise. First, it considers a general flight intent, defined by flight segments usually flown by transport aircraft, including standard airline procedures (Standard Instrument Departure, SID and Standard arrival, STAR) and air traffic control (ATC) regulations. Second, the trajectory computation solver is designed for a general aircraft performance model (APM), that is, general drag polar and general engine model. And, third, the formulation takes into account along-track wind effects (crosswind effects are not considered) and temperature corrections for a non-standard atmosphere.</p>
+<p>One of the important characteristics of computing global trajectories is that it is a global problem, since boundary conditions are set both at the beginning (departure) and at the end (arrival) of the flight. In practice, this means that the beginning of the descent phase (top of descent, TOD) must be determined iteratively, as it is done in this article using the actual aircraft weight computed along the flight. (In other works, as reported by Williams and Green,<sup><xref ref-type="bibr" rid="bibr8-0954410011427107">8</xref></sup> the global trajectory is computed integrating backwards from the landing runway.)</p>
+<p>The trajectory computation tool includes a trajectory computation solver which computes each flight segment (defined by the corresponding flight constraints), with given initial and stopping conditions. This solver is based on the reduction of the system of differential--algebraic equations for each flight segment to a system of ordinary differential equations (ODEs), which is solved by standard numerical procedures.</p>
+<p>Results are presented for an APM that models a typical twin-engine, wide-body and, transport aircraft, in the category of the Boeing 767-300ER. An application is made for a flight Madrid–Frankfurt, in which the trajectory is formed by 66 flight segments. Global properties of the trajectory, such as total fuel consumption (trip fuel) and flight time are computed. The influence of the take-off weight is discussed, and the effects of wind and non-standard temperatures are analysed.</p>
+<sec id="sec2-0954410011427107"><title>Global trajectories</title>
+<p>A global trajectory is composed of flight segments, which in turn define the different flight phases: take-off, climb, cruise, descent, approach, and landing.</p>
+<p>In this article, as already indicated, to simplify the trajectory computation tool, heading, path angle and engine rating changes are instantaneously performed. This means that the global trajectory presents discontinuities in heading, path angle and thrust. Also, as a consequence of having instantaneous heading changes, all segments considered in this study are flown in a vertical plane, with constant heading (loxodromic route).</p>
+<p>Since there are parts of the global trajectory in which turns are important, such as the approach phase, the relative effect of the assumption of instantaneous heading changes will depend on the length of the trajectory. (In this article, an application is made for a medium-range flight, so as to minimise this effect.)</p>
+<p>The global trajectory is defined by horizontal profile and vertical profile, as follows.</p>
+</sec>
+<sec id="sec3-0954410011427107"><title>Horizontal profile</title>
+<p>The horizontal profile of the global trajectory describes the horizontal path followed by the aircraft, that is, the path followed on the surface of the Earth (which in this article is considered spherical). This profile is determined by the following elements:
+<list id="list1-0954410011427107" list-type="alpha-lower">
+<list-item><p>departure airport (with the corresponding SID procedure),</p></list-item>
+<list-item><p>route, and</p></list-item>
+<list-item><p>arrival airport (with the corresponding STAR and approach procedures).</p></list-item>
+</list>The actual path is defined by waypoints, each one given by its geodetic coordinates on the Earth surface (λ, φ). Hence, the nominal horizontal distance between two consecutive waypoints, as well as the total horizontal distance between take-off and landing runways (distances measured along the surface of the Earth), can be computed in advance. The heading angle required to fly from one waypoint to the next can be also computed in advance, from the known geodetic coordinates as shown in <xref ref-type="sec" rid="sec4-0954410011427107">section ‘Computation of global trajectories’</xref>.</p>
+</sec>
+<sec id="sec4-0954410011427107"><title>Vertical profile</title>
+<p>The vertical profile of the global trajectory describes how the different flight phases are flown, according to the flight intent. In this article, the flight intents considered are defined by the following general flight segments (based on standard airline operational practice):
+<list id="list2-0954410011427107" list-type="alpha-lower">
+<list-item><p>take-off run;</p></list-item>
+<list-item><p>initial climb at constant path angle and take-off engine rating (TO);</p></list-item>
+<list-item><p>CAS/Mach climb at maximum climb engine rating (MCLB);</p></list-item>
+<list-item><p>horizontal accelerations at maximum climb engine rating;</p></list-item>
+<list-item><p>cruise at constant pressure altitude (<italic>h</italic><sub><italic>p</italic></sub>) and constant Mach;</p></list-item>
+<list-item><p>cruise step climb at constant Mach and maximum climb engine rating;</p></list-item>
+<list-item><p>Mach/CAS descent at idle engine rating (IDLE);</p></list-item>
+<list-item><p>horizontal decelerations at idle engine rating;</p></list-item>
+<list-item><p>glide path at constant ground path angle and constant CAS;</p></list-item>
+<list-item><p>landing run.</p></list-item>
+</list></p>
+<p>These flight segments require some parameters to be properly defined; for instance, the cruise at constant pressure altitude and constant Mach requires these two constant values, which must be defined by the airline, according to ATC regulations and its own operational procedures, so that the flight is optimised, for example according to a given cost index. In this article, all these parameters are supposed given. (The trajectory computation tool presented in this study does not perform any such optimisation, but computes the trajectory for the given parameters.)</p>
+<p>The pressure QFE (of both airports) is also needed to fix the corresponding local altimeter settings.</p>
+<p>This vertical profile is quite similar to the flight profile used in the experimental flight management system of the PHARE programme.<sup><xref ref-type="bibr" rid="bibr6-0954410011427107">6</xref></sup></p>
+</sec>
+</sec>
+<sec id="sec5-0954410011427107"><title>Equations of motion</title>
+<p>The model adopted to describe the aircraft motion is that of a point mass with three degrees of freedom, commonly used for trajectory prediction;<sup><xref ref-type="bibr" rid="bibr1-0954410011427107">1</xref></sup> the equations then describe the motion of the aircraft centre of mass, considered as a mass-varying body.</p>
+<p>As already stated, the segments to be computed are such that the flight during each segment takes place with constant heading angle, say χ = χ<sub><italic>A</italic></sub>.</p>
+<p>In this article, the case of steady horizontal winds, contained in the flight plane, dependent only on altitude is considered.</p>
+<p>The scalar equations of motion are formulated based on the following general assumptions:
+<list id="list3-0954410011427107" list-type="alpha-lower">
+<list-item><p>spherical, non-rotating Earth;</p></list-item>
+<list-item><p>rigid and symmetric aircraft;</p></list-item>
+<list-item><p>symmetric flight;</p></list-item>
+<list-item><p>thrust parallel to the aircraft aerodynamic velocity.</p></list-item>
+</list>These assumptions are appropriate for subsonic, transport aircraft. Hence, the scalar equations of motion are<sup><xref ref-type="bibr" rid="bibr9-0954410011427107">9</xref>,<xref ref-type="bibr" rid="bibr10-0954410011427107">10</xref></sup>
+<disp-formula id="disp-formula1-0954410011427107"><label>(1)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math1-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>V</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mi>T</mml:mi><mml:mo>-</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>L</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>-</mml:mo><mml:mi>mg</mml:mi><mml:mi>sin</mml:mi><mml:mi>γ</mml:mi><mml:mo>-</mml:mo><mml:mi>m</mml:mi><mml:mi>V</mml:mi><mml:mtext>d</mml:mtext><mml:mi>w</mml:mi><mml:mtext>d</mml:mtext><mml:mi>h</mml:mi><mml:mi>sin</mml:mi><mml:mi>γ</mml:mi><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>mV</mml:mi><mml:mtext>d</mml:mtext><mml:mi>γ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mi>L</mml:mi><mml:mo>-</mml:mo><mml:mi>mg</mml:mi><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo>+</mml:mo><mml:mi>m</mml:mi><mml:mi>V</mml:mi><mml:mtext>d</mml:mtext><mml:mi>w</mml:mi><mml:mtext>d</mml:mtext><mml:mi>h</mml:mi><mml:mi>sin</mml:mi><mml:msup><mml:mi/><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>γ</mml:mi></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>d</mml:mtext><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo>-</mml:mo><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>m</mml:mi></mml:mrow><mml:mi>·</mml:mi></mml:mover></mml:mrow><mml:mrow><mml:mi>F</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>T</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>λ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>sin</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>d</mml:mtext><mml:mi>h</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mi>V</mml:mi><mml:mi>sin</mml:mi><mml:mi>γ</mml:mi></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula1-0954410011427107" xlink:href="10.1177_0954410011427107-eq1.tif"/></disp-formula>
+where <italic>V</italic>, γ, and χ<sub><italic>A</italic></sub> are the aerodynamic velocity modulus, path angle, and heading angle, φ, λ, and <italic>h</italic> the geodetic coordinates of the aircraft centre of mass (latitude, longitude, and altitude), <italic>t</italic> the time, <italic>T</italic> the thrust, <italic>L</italic> the lift, <italic>D</italic> the aerodynamic drag and <inline-formula id="ilm1-0954410011427107"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math1-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>m</mml:mi></mml:mrow><mml:mi>·</mml:mi></mml:mover></mml:mrow><mml:mrow><mml:mi>F</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> the fuel consumption rate, <italic>R</italic><sub><italic>E</italic></sub> is the Earth radius, and <italic>w</italic>(<italic>h</italic>) the known horizontal wind speed (in the flight plane).</p>
+<p>To solve the problem, <italic>T</italic> and <italic>L</italic> must be given (these are the control variables; note that the bank angle is zero), or, equivalently, two conditions (constraints) that close the mathematical problem. The constraints can be control (for example, given engine rating) and/or motion constraints (for example, constant altitude, constant Mach number, etc.). These <italic>flight constraints</italic> have, in general, the following form
+<disp-formula id="disp-formula2-0954410011427107"><label>(2)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math2-0954410011427107"><mml:mrow><mml:mi>f</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:mi>m</mml:mi><mml:mo>,</mml:mo><mml:mi>ϕ</mml:mi><mml:mo>,</mml:mo><mml:mi>λ</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>T</mml:mi><mml:mo>,</mml:mo><mml:mi>L</mml:mi><mml:mo>,</mml:mo><mml:mi>t</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mn>0</mml:mn></mml:mrow></mml:math><graphic alternate-form-of="disp-formula2-0954410011427107" xlink:href="10.1177_0954410011427107-eq2.tif"/></disp-formula>
+The imposed constraints must be compatible and physically meaningful, that is, they must indeed close the mathematical problem. López et al.<sup><xref ref-type="bibr" rid="bibr11-0954410011427107">11</xref></sup> give a complete description of the different constraints that are meaningful in the ATM context.</p>
+<p>Additionally, proper initial conditions must be given, that must be compatible with the flight constraints. The equations of motion (<xref ref-type="disp-formula" rid="disp-formula1-0954410011427107">1</xref>) plus the constraints (<xref ref-type="disp-formula" rid="disp-formula2-0954410011427107">2</xref>) form a system of differential–algebraic equations (DAEs).<sup><xref ref-type="bibr" rid="bibr12-0954410011427107">12</xref></sup> The resolution of the DAE systems for the different flight segments is described in <xref ref-type="sec" rid="sec12-0954410011427107">section ‘Trajectory computation solver’</xref>.</p>
+<sec id="sec6-0954410011427107"><title>Supplementary models</title>
+<p>To solve the problem, some supplementary models are needed. The <italic>Earth Model</italic> adopted has the following characteristics:
+<list id="list4-0954410011427107" list-type="alpha-lower">
+<list-item><p>Earth radius <italic>R</italic><sub><italic>E</italic></sub> = 6356.766 km;</p></list-item>
+<list-item><p>constant gravity <italic>g</italic> = 9.80665 m/s<sup>2</sup>;</p></list-item>
+<list-item><p>air, a perfect gas defined by a ratio of specific heats κ = 1.4 and a gas constant <italic>R</italic><sub><italic>a</italic></sub> = 287.053 J/(kgK);</p></list-item>
+<list-item><p>atmosphere model ISA+ΔΘ, that is, standard atmosphere model corrected for non-standard days by a temperature deviation ΔΘ at sea level, as described in <xref ref-type="sec" rid="sec9-0954410011427107">Appendix 2</xref>; it defines temperature Θ, pressure <italic>p</italic> and density ρ, as functions of <italic>h</italic>.</p></list-item>
+</list></p>
+<p>The <italic>Wind Model</italic> provides the function <italic>w</italic>(<italic>h</italic>). The particular function used in the applications is described in <xref ref-type="sec" rid="sec27-0954410011427107">section ‘Wind effects’</xref>. Positive values of <italic>w</italic> correspond to tailwinds and negative values to headwinds.</p>
+<p>The APM provides the required performance characteristics, both aerodynamic and propulsive. The <italic>Aerodynamic Model</italic> defines the drag polar
+<disp-formula id="disp-formula3-0954410011427107"><label>(3)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math3-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>D</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>D</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:mi>M</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula3-0954410011427107" xlink:href="10.1177_0954410011427107-eq3.tif"/></disp-formula>
+that gives the drag coefficient as a function of the lift coefficient <italic>C</italic><sub><italic>L</italic></sub> and the Mach number <italic>M</italic>. The lift and drag coefficients are defined by <inline-formula id="ilm2-0954410011427107"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math2-0954410011427107"><mml:mrow><mml:mi>L</mml:mi><mml:mo>=</mml:mo><mml:mn>1 2</mml:mn><mml:mi>ρ</mml:mi><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm3-0954410011427107"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math3-0954410011427107"><mml:mrow><mml:mi>D</mml:mi><mml:mo>=</mml:mo><mml:mn>1 2</mml:mn><mml:mi>ρ</mml:mi><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>D</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula>, respectively, where <italic>S</italic> is the reference wing surface area. The drag polar must take into account the aerodynamic configuration (clean, high-lift devices, landing gear, spoilers). The model is described in <xref ref-type="sec" rid="sec10-0954410011427107">Appendix 3</xref>.</p>
+<p>The <italic>Propulsion Model</italic> defines the thrust available and the fuel consumption. In this article, the following model is considered for the fuel consumption
+<disp-formula id="disp-formula4-0954410011427107"><label>(4)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math4-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>m</mml:mi></mml:mrow><mml:mi>·</mml:mi></mml:mover></mml:mrow><mml:mrow><mml:mi>F</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mi>c</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>T</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula4-0954410011427107" xlink:href="10.1177_0954410011427107-eq4.tif"/></disp-formula>
+where <italic>c</italic> is the specific fuel consumption. The models for the available thrust (for a given engine rating) and the specific fuel consumption can be expressed as
+<disp-formula id="disp-formula5-0954410011427107"><label>(5)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math5-0954410011427107"><mml:mrow><mml:mi>T</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>T</mml:mi></mml:mrow><mml:mrow><mml:mi>RATE</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula5-0954410011427107" xlink:href="10.1177_0954410011427107-eq5.tif"/></disp-formula>
+<disp-formula id="disp-formula6-0954410011427107"><label>(6)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math6-0954410011427107"><mml:mrow><mml:mi>c</mml:mi><mml:mo>=</mml:mo><mml:mi>c</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula6-0954410011427107" xlink:href="10.1177_0954410011427107-eq6.tif"/></disp-formula>
+both dependent on Mach number and altitude; they are described in <xref ref-type="sec" rid="sec10-0954410011427107">Appendix 3</xref>.</p>
+<p>In this article, the formulation is made for the general drag polar (equation (<xref ref-type="disp-formula" rid="disp-formula3-0954410011427107">3</xref>)), the general thrust model for a given engine rating (equation (<xref ref-type="disp-formula" rid="disp-formula5-0954410011427107">5</xref>)), and the general specific fuel consumption model given by equation (<xref ref-type="disp-formula" rid="disp-formula6-0954410011427107">6</xref>).</p>
+</sec>
+</sec>
+<sec id="sec7-0954410011427107"><title>Computation of global trajectories</title>
+<p>To compute the global trajectories, all the flight segments must be computed successively. Each flight segment is defined by the appropriate flight constraints, and its computation starts with the corresponding initial conditions and ends when the appropriate stopping condition is reached.</p>
+<sec id="sec8-0954410011427107"><title>Flight constraints</title>
+<p>In this article, all the flight segments considered are defined by means of seven flight constraints, which are analysed as follows.
+<list id="list5-0954410011427107" list-type="order">
+<list-item><p>Constant γ. This constraint sets the value of the state variable γ.</p></list-item>
+<list-item><p>Given <italic>T</italic><sub><italic>RATE</italic></sub>. In cases where the engine rating is given, this constraint defines the thrust law: <italic>T</italic> = <italic>T</italic><sub><italic>TO</italic></sub>(<italic>M</italic>, <italic>h</italic>) for take-off, <italic>T</italic><sub><italic>MCLB</italic></sub>(<italic>M</italic>, <italic>h</italic>) for maximum climb or <italic>T</italic><sub><italic>IDLE</italic></sub>(<italic>M</italic>, <italic>h</italic>) for idle.</p></list-item>
+<list-item><p>Constant <italic>M</italic>. When the Mach number is constant, say <italic>M</italic><sub><italic>A</italic></sub>, this constraint defines a known speed law <italic>V</italic>(<italic>h</italic>), say <italic>V</italic> = <italic>V</italic><sub><italic>M</italic></sub>(<italic>h</italic>), given by
+<disp-formula id="disp-formula7-0954410011427107"><label>(7)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math7-0954410011427107"><mml:mrow><mml:mi>      </mml:mi><mml:mi>V</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:msqrt><mml:mrow><mml:mi>κ</mml:mi><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>a</mml:mi></mml:mrow></mml:msub><mml:mi>Θ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:msqrt></mml:mrow></mml:math><graphic alternate-form-of="disp-formula7-0954410011427107" xlink:href="10.1177_0954410011427107-eq7.tif"/></disp-formula>
+</p></list-item>
+<list-item><p>Constant <italic>CAS</italic>. When the calibrated air speed (CAS) is constant, say <italic>CAS</italic><sub><italic>A</italic></sub>, this constraint defines another known speed law <italic>V</italic>(<italic>h</italic>), say <italic>V</italic> = <italic>V</italic><sub><italic>C</italic></sub>(<italic>h</italic>), given by<sup><xref ref-type="bibr" rid="bibr13-0954410011427107">13</xref></sup>
+<disp-formula id="disp-formula8-0954410011427107"><label>(8)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math8-0954410011427107"><mml:mrow><mml:mi>V</mml:mi><mml:mo>=</mml:mo><mml:msqrt><mml:mrow><mml:mn>2</mml:mn><mml:mi>k</mml:mi><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>a</mml:mi></mml:mrow></mml:msub><mml:mi>Θ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">[</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo mathvariant="bold">+</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">p</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">SL</mml:mtext></mml:mrow></mml:msub><mml:mtext mathvariant="bold">p</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">[</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo mathvariant="bold">+</mml:mo><mml:mtext mathvariant="bold">k</mml:mtext><mml:mn>2</mml:mn><mml:msub><mml:mrow><mml:mi mathvariant="bold">ρ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">SL</mml:mtext></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mtext mathvariant="bold">p</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">SL</mml:mtext></mml:mrow></mml:msub><mml:msubsup><mml:mrow><mml:mtext mathvariant="bold">CAS</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">A</mml:mtext></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mn>1</mml:mn><mml:mo mathvariant="bold">/</mml:mo><mml:mtext mathvariant="bold">k</mml:mtext></mml:mrow></mml:msup><mml:mo mathvariant="bold">-</mml:mo><mml:mn>1</mml:mn><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">]</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext mathvariant="bold">k</mml:mtext></mml:mrow></mml:msup><mml:mo mathvariant="bold">-</mml:mo><mml:mn>1</mml:mn><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">]</mml:mo></mml:mrow></mml:msqrt></mml:mrow></mml:math><graphic alternate-form-of="disp-formula8-0954410011427107" xlink:href="10.1177_0954410011427107-eq8.tif"/></disp-formula>
+where <italic>k</italic> = (κ − 1)/κ and ρ<sub><italic>SL</italic></sub> the reference sea-level density given by the International Standard Atmosphere (ISA) model.</p></list-item>
+<list-item><p>Constant <italic>h</italic><sub><italic>p</italic></sub>. Case of constant pressure altitude, say <italic>h</italic><sub><italic>pA</italic></sub>, that is, a given flight level. This constraint defines a constant altitude, namely, the altitude at which in the ISA+ΔΘ model, one has the same pressure as in the ISA model at pressure altitude <italic>h</italic><sub><italic>pA</italic></sub>. The constant altitude depends on ΔΘ, say <italic>h</italic><sub><italic>A</italic></sub>(ΔΘ). One has the following expressions (according to the atmosphere model described in <xref ref-type="sec" rid="sec9-0954410011427107">Appendix 2</xref>): for flight in the troposphere
+<disp-formula id="disp-formula9-0954410011427107"><label>(9)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math9-0954410011427107"><mml:mrow><mml:mi>      </mml:mi><mml:msub><mml:mrow><mml:mi>th</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>Δ</mml:mi><mml:mi>Θ</mml:mi><mml:msub><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>pA</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math><graphic alternate-form-of="disp-formula9-0954410011427107" xlink:href="10.1177_0954410011427107-eq9.tif"/></disp-formula>
+and for flight in the stratosphere
+<disp-formula id="disp-formula10-0954410011427107"><label>(10)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math10-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msup><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msup><mml:mo>+</mml:mo><mml:msup><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msup><mml:msubsup><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mi>ISA</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msubsup><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>pA</mml:mi></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:msup><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msup><mml:mo stretchy="false">)</mml:mo><mml:mo>+</mml:mo><mml:msup><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msup><mml:msub><mml:mrow><mml:mi>α</mml:mi></mml:mrow><mml:mrow><mml:mi>T</mml:mi></mml:mrow></mml:msub><mml:mi>ln</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">[</mml:mo><mml:msup><mml:mrow><mml:mi mathvariant="bold">Θ</mml:mi></mml:mrow><mml:mrow><mml:mo mathvariant="bold">*</mml:mo></mml:mrow></mml:msup><mml:msubsup><mml:mrow><mml:mi mathvariant="bold">Θ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">ISA</mml:mtext></mml:mrow><mml:mrow><mml:mo mathvariant="bold">*</mml:mo></mml:mrow></mml:msubsup><mml:msub><mml:mrow><mml:mi mathvariant="bold">Θ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">SL</mml:mtext></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi mathvariant="bold">Θ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">SL</mml:mtext></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:mi mathvariant="bold">Δ</mml:mi><mml:mi mathvariant="bold">Θ</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">]</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula10-0954410011427107" xlink:href="10.1177_0954410011427107-eq10.tif"/></disp-formula>
+where <italic>h</italic><sup>*</sup> is the tropopause altitude and Θ<sup>*</sup> and <inline-formula id="ilm4-0954410011427107"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math4-0954410011427107"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mi>ISA</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> the temperature and the ISA temperature at the tropopause, respectively. When the ISA model applies (case ΔΘ = 0), altitude and pressure altitude coincide by definition.</p></list-item>
+<list-item><p>Constant <italic>h</italic><sub><italic>AGL</italic></sub>. Case of constant height above ground level (AGL), say <italic>h</italic><sub><italic>AGL</italic>,<italic>A</italic></sub> (which applies in segments near the airports, below the transition altitude). This constraint defines a constant altitude as well, which depends on the airport pressure QFE (QFE can be determined, if not given, from the pressure level QNH and the airport elevation). The pressure altitude that corresponds to the airport is (<xref ref-type="sec" rid="sec9-0954410011427107">Appendix 2</xref>)
+<disp-formula id="disp-formula11-0954410011427107"><label>(11)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math11-0954410011427107"><mml:mrow><mml:mi>      </mml:mi><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>p</mml:mi><mml:mo>,</mml:mo><mml:mi>AP</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>α</mml:mi></mml:mrow><mml:mrow><mml:mi>T</mml:mi></mml:mrow></mml:msub><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">[</mml:mo><mml:mn>1</mml:mn><mml:mo mathvariant="bold">-</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">QFE</mml:mtext><mml:msub><mml:mrow><mml:mtext mathvariant="bold">p</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">SL</mml:mtext></mml:mrow></mml:msub><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow/></mml:msup><mml:msub><mml:mrow><mml:mi mathvariant="bold">α</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">T</mml:mtext></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mtext mathvariant="bold">R</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">a</mml:mtext></mml:mrow></mml:msub><mml:mtext mathvariant="bold">gg</mml:mtext><mml:mo stretchy="false">]</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula11-0954410011427107" xlink:href="10.1177_0954410011427107-eq11.tif"/></disp-formula>
+the pressure altitude that corresponds to the given height AGL is
+<disp-formula id="disp-formula12-0954410011427107"><label>(12)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math12-0954410011427107"><mml:mrow><mml:mi>      </mml:mi><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>p</mml:mi><mml:mo>,</mml:mo><mml:mi>AGL</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>AGL</mml:mi><mml:mo>,</mml:mo><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>p</mml:mi><mml:mo>,</mml:mo><mml:mi>AP</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math><graphic alternate-form-of="disp-formula12-0954410011427107" xlink:href="10.1177_0954410011427107-eq12.tif"/></disp-formula>
+and the altitude that corresponds to this pressure altitude is given by equation (<xref ref-type="disp-formula" rid="disp-formula9-0954410011427107">9</xref>).</p></list-item>
+<list-item><p>Constant γ<sub><italic>g</italic></sub>. For the case of constant <italic>ground</italic> path angle, say γ<sub><italic>g</italic>,<italic>A</italic></sub>, one has a known aerodynamic path angle law γ = γ<sub><italic>A</italic></sub>(<italic>V</italic>, <italic>h</italic>) defined by
+<disp-formula id="disp-formula13-0954410011427107"><label>(13)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math13-0954410011427107"><mml:mrow><mml:mi>      </mml:mi><mml:mi>tan</mml:mi><mml:msub><mml:mrow><mml:mi>γ</mml:mi></mml:mrow><mml:mrow><mml:mi>g</mml:mi><mml:mo>,</mml:mo><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mi>V</mml:mi><mml:mi>sin</mml:mi><mml:mi>γ</mml:mi><mml:mi>V</mml:mi><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula13-0954410011427107" xlink:href="10.1177_0954410011427107-eq13.tif"/></disp-formula>
+</p></list-item>
+</list></p>
+</sec>
+<sec id="sec9-0954410011427107"><title>Initial conditions</title>
+<p>The initial conditions of the first segment are the initial conditions of the global trajectory, which are given data. For any other segment, the initial conditions are the final conditions of the previous segment, except for the aerodynamic path angle, since this variable may be discontinuous (as discussed in <xref ref-type="sec" rid="sec2-0954410011427107">section ‘Global trajectories’</xref>). In climb/descent segments, the initial value of γ is estimated using the following approximation, obtained from equations (<xref ref-type="disp-formula" rid="disp-formula34-0954410011427107">34</xref>) after neglecting the term <inline-formula id="ilm5-0954410011427107"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math5-0954410011427107"><mml:mrow><mml:mtext>d</mml:mtext><mml:mi>γ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi></mml:mrow></mml:math></inline-formula><disp-formula id="disp-formula14-0954410011427107"><label>(14)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math14-0954410011427107"><mml:mrow><mml:mi>L</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>m</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>-</mml:mo><mml:mi>mg</mml:mi><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo>+</mml:mo><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>w</mml:mi><mml:mtext>d</mml:mtext><mml:mi>h</mml:mi><mml:mi>V</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>sin</mml:mi><mml:msup><mml:mi/><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>γ</mml:mi><mml:mo>=</mml:mo><mml:mn>0</mml:mn></mml:mrow></mml:math><graphic alternate-form-of="disp-formula14-0954410011427107" xlink:href="10.1177_0954410011427107-eq14.tif"/></disp-formula>
+</p>
+</sec>
+<sec id="sec10-0954410011427107"><title>Stopping conditions</title>
+<p>A total of four stopping conditions are considered in this article, which are analysed now.
+<list id="list6-0954410011427107" list-type="order">
+<list-item><p>Reach a given Mach or CAS. In this case, from the computed values of <italic>V</italic> and <italic>h</italic>, the corresponding value of Mach or CAS, defined by equations (<xref ref-type="disp-formula" rid="disp-formula7-0954410011427107">7</xref>) and (<xref ref-type="disp-formula" rid="disp-formula8-0954410011427107">8</xref>), must be monitored during the integration, to determine when the event is reached.</p></list-item>
+<list-item><p>Reach a given pressure altitude or height AGL. Now, this condition is equivalent to reaching a given altitude (<xref ref-type="sec" rid="sec8-0954410011427107">see section on ‘Flight constraints’</xref>), which is a computed variable that must be monitored.</p></list-item>
+<list-item><p>Reach a given horizontal distance (along the Earth surface). The horizontal distance travelled by the aircraft along the surface of the Earth, <italic>r</italic>, is defined by
+<disp-formula id="disp-formula15-0954410011427107"><label>(15)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math15-0954410011427107"><mml:mrow><mml:mi>      </mml:mi><mml:mtext>d</mml:mtext><mml:mi>r</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula15-0954410011427107" xlink:href="10.1177_0954410011427107-eq15.tif"/></disp-formula>
+Thus, this equation must be integrated along the trajectory, and the variable <italic>r</italic> must be monitored.</p></list-item>
+<list-item><p>Reach a given waypoint. Reaching a waypoint usually defines a heading change in the horizontal profile. Since the waypoint is defined by its geodetic coordinates (φ, λ), one could use these two variables as the stopping criterion; however, in the trajectory computation tool presented in this article, the horizontal distance travelled from the previous waypoint is used (note that the distances between waypoints are known in advance). Thus, the horizontal distance between two waypoints defined by the nominal coordinates (φ<sub>1</sub>, λ<sub>1</sub>) and (φ<sub>2</sub>, λ<sub>2</sub>) is given by (except for the trivial case χ<sub><italic>A</italic></sub> = ±π/2, where the route is an Earth parallel)
+<disp-formula id="disp-formula16-0954410011427107"><label>(16)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math16-0954410011427107"><mml:mrow><mml:mi>      </mml:mi><mml:msub><mml:mrow><mml:mi>r</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>ϕ</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:msub><mml:mrow><mml:mi>ϕ</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mi>cos</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math><graphic alternate-form-of="disp-formula16-0954410011427107" xlink:href="10.1177_0954410011427107-eq16.tif"/></disp-formula>
+where the heading defined by the two waypoints is given by
+<disp-formula id="disp-formula17-0954410011427107"><label>(17)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math17-0954410011427107"><mml:mrow><mml:mi>      </mml:mi><mml:mi>tan</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>λ</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:msub><mml:mrow><mml:mi>λ</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mi>ln</mml:mi><mml:mi>tan</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>π</mml:mi><mml:mn>4</mml:mn><mml:mo>+</mml:mo><mml:msub><mml:mrow><mml:mi>ϕ</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msub><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo><mml:mo>-</mml:mo><mml:mi>ln</mml:mi><mml:mi>tan</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>π</mml:mi><mml:mn>4</mml:mn><mml:mo>+</mml:mo><mml:msub><mml:mrow><mml:mi>ϕ</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mn>2</mml:mn><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula17-0954410011427107" xlink:href="10.1177_0954410011427107-eq17.tif"/></disp-formula>
+</p></list-item>
+</list></p>
+<p>Once the waypoint is reached, the new heading to the next waypoint is set for the computation of the next segment.</p>
+</sec>
+<sec id="sec11-0954410011427107"><title>Top of descent</title>
+<p>As indicated in <xref ref-type="sec" rid="sec1-0954410011427107">section ‘Introduction’</xref>, the TOD point must be iteratively determined. In this article, the cruise speed reduction (CSR) point is defined as the beginning of the last segment of the cruise phase. This segment is a deceleration at cruise altitude that ends at the TOD point (when the descent Mach number is reached). In the iteration procedure, the CSR point (instead of the TOD point) is iteratively determined, and, then, the TOD point is just the end of the segment.</p>
+<p>The iteration task is performed when the aircraft reaches a specified point: the <italic>iteration point</italic>. In this study, the iteration point is located at a distance of 200 nmi from the destination airport. Once the iteration point is reached, the computed part of the trajectory is saved and the iteration process starts. In this process, the final part of the flight, from the iteration point to the touch down (TD) point, is computed for different approximations of the CSR point until the TD point coincides with the runway location (at each step, the computation starts at the fixed and known iteration point).</p>
+</sec>
+<sec id="sec12-0954410011427107"><title>Trajectory computation solver</title>
+<p>The trajectory computation solver computes each flight segment, which requires solving the corresponding DAE system. In the solver presented in this article, the control variables (<italic>T</italic>, <italic>L</italic>) are explicitly determined and the DAE system is reduced to an ODE system, that can be solved using standard numerical procedures, such as a Runge–Kutta method. A general analysis of the different flight segments can be found in Miele.<sup><xref ref-type="bibr" rid="bibr14-0954410011427107">14</xref></sup> According to the flight constraints needed in this article to define the global trajectory, there are six types of flight segments to be considered, which are described by the following paragraph. The corresponding ODE system to be solved (obtained from equations (<xref ref-type="disp-formula" rid="disp-formula1-0954410011427107">1</xref>)) are summarised in <xref ref-type="sec" rid="sec11-0954410011427107">Appendix 4</xref>.
+<list id="list7-0954410011427107" list-type="order">
+<list-item><p><italic>Initial climb segment</italic>. Defined by the two constraints:
+<list id="list8-0954410011427107" list-type="alpha-lower">
+<list-item><p>constant path angle γ = γ<sub><italic>A</italic></sub>;</p></list-item>
+<list-item><p>take-off rating, that is, known thrust law <italic>T</italic> = <italic>T</italic><sub><italic>TO</italic></sub>(<italic>M</italic>, <italic>h</italic>).</p></list-item>
+</list></p></list-item>
+<list-item><p><italic>CAS/Mach climb/descent</italic>. Defined by the two constraints:
+<list id="list9-0954410011427107" list-type="alpha-lower">
+<list-item><p>constant Mach <italic>M</italic> = <italic>M</italic><sub><italic>A</italic></sub> or constant CAS <italic>CAS</italic> = <italic>CAS</italic><sub><italic>A</italic></sub>, that is, known speed law <italic>V</italic> = <italic>V</italic><sub><italic>M</italic></sub>(<italic>h</italic>) or <italic>V</italic> = <italic>V</italic><sub><italic>C</italic></sub>(<italic>h</italic>); respectively,</p></list-item>
+<list-item><p>given engine rating, maximum climb <italic>T</italic> = <italic>T</italic><sub><italic>MCLB</italic></sub>(<italic>M</italic>, <italic>h</italic>) or idle <italic>T</italic> = <italic>T</italic><sub><italic>IDLE</italic></sub>(<italic>M</italic>, <italic>h</italic>).</p></list-item>
+</list>In general, in this segment one has known functions <italic>V</italic>(<italic>h</italic>) and <italic>T</italic>(<italic>M</italic>, <italic>h</italic>).</p></list-item>
+<list-item><p><italic>Horizontal acceleration/deceleration</italic>. Defined by the two constraints:
+<list id="list10-0954410011427107" list-type="alpha-lower">
+<list-item><p>constant height AGL (<italic>h</italic><sub><italic>AGL</italic>,<italic>A</italic></sub>) or constant pressure altitude (<italic>h</italic><sub><italic>pA</italic></sub>), that is, a constant altitude <italic>h</italic> = <italic>h</italic><sub><italic>A</italic></sub>;</p></list-item>
+<list-item><p>given engine rating, maximum climb <italic>T</italic> = <italic>T</italic><sub><italic>MCLB</italic></sub>(<italic>M</italic>, <italic>h</italic>) or idle <italic>T</italic> = <italic>T</italic><sub><italic>IDLE</italic></sub>(<italic>M</italic>, <italic>h</italic>), that is, a known function <italic>T</italic>(<italic>M</italic>, <italic>h</italic>).</p></list-item>
+</list></p></list-item>
+<list-item><p><italic>Cruise</italic>. Defined by the two constraints:
+<list id="list11-0954410011427107" list-type="alpha-lower">
+<list-item><p>constant pressure altitude <italic>h</italic><sub><italic>p</italic></sub> = <italic>h</italic><sub><italic>pA</italic></sub>, that is, a constant altitude <italic>h</italic> = <italic>h</italic><sub><italic>A</italic></sub>;</p></list-item>
+<list-item><p>constant Mach <italic>M</italic> = <italic>M</italic><sub><italic>A</italic></sub>, that is, known speed law <italic>V</italic> = <italic>V</italic><sub><italic>M</italic></sub>(<italic>h</italic>).</p></list-item>
+</list>In this segment, since <italic>h</italic> = <italic>const</italic>, one has <italic>V</italic> = <italic>const</italic>, say <italic>V</italic> = <italic>V</italic><sub><italic>M</italic></sub>(<italic>h</italic><sub><italic>A</italic></sub>) ≡ <italic>V</italic><sub><italic>A</italic></sub>.</p></list-item>
+<list-item><p><italic>Glide path</italic>. Defined by the two constraints:
+<list id="list12-0954410011427107" list-type="alpha-lower">
+<list-item><p>constant ground path angle γ<sub><italic>g</italic></sub> = γ<sub><italic>g</italic>,<italic>A</italic></sub> (defined by the instrument landing system (ILS)), that is, known path angle law γ = γ(<italic>V</italic>, <italic>h</italic>);</p></list-item>
+<list-item><p>constant CAS <italic>CAS</italic> = <italic>CAS</italic><sub><italic>A</italic></sub> (in practice, the approach speed), that is, known speed law <italic>V</italic> = <italic>V</italic><sub><italic>C</italic></sub>(<italic>h</italic>). In this segment, since <italic>V</italic>(<italic>h</italic>) is given, one has a known path-angle law γ = γ(<italic>h</italic>).</p></list-item>
+</list></p></list-item>
+<list-item><p><italic>Take-off/landing</italic>. Since only rectilinear segments are considered in this article, flare arcs during take-off and landing are not considered either. Thus, considering horizontal runways, the take-off and landing runs are particular cases of horizontal acceleration/deceleration segments, except that the ground reactions must be added to the dynamic equation of motion (<xref ref-type="disp-formula" rid="disp-formula37-0954410011427107">37</xref>).</p></list-item>
+</list></p>
+<p>To simplify the analysis, in accordance with the simplifications already considered, the take-off run is supposed to be formed by only one segment, defined by the following conditions:
+<list id="list13-0954410011427107" list-type="alpha-lower">
+<list-item><p>all the wheels on the ground;</p></list-item>
+<list-item><p>constant pitch angle (which requires instantaneous rotation at lift off);</p></list-item>
+<list-item><p>take-off engine rating, <italic>T</italic> = <italic>T</italic><sub><italic>TO</italic></sub>(<italic>M</italic>, <italic>h</italic>);</p></list-item>
+<list-item><p>ground effect not considered.</p></list-item>
+</list></p>
+<p>The horizontal reaction force that must be added to the dynamic equation (<xref ref-type="disp-formula" rid="disp-formula37-0954410011427107">37</xref>) is
+<disp-formula id="disp-formula18-0954410011427107"><label>(18)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math18-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>TO</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mo>-</mml:mo><mml:msub><mml:mrow><mml:mi>μ</mml:mi></mml:mrow><mml:mrow><mml:mi>r</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>mg</mml:mi><mml:mo>-</mml:mo><mml:mn>1 2</mml:mn><mml:msub><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi><mml:mo>,</mml:mo><mml:mi>TO</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula18-0954410011427107" xlink:href="10.1177_0954410011427107-eq18.tif"/></disp-formula>
+where μ<sub><italic>r</italic></sub> is the rolling friction coefficient (in this article, μ<sub><italic>r</italic></sub> = 0.02), and <italic>C</italic><sub><italic>L</italic>,<italic>TO</italic></sub> is known. In this segment, the aircraft accelerates from rest to the lift off speed <italic>V</italic><sub><italic>LOF</italic></sub>.</p>
+<p>The landing ground run can be formed by various segments, depending on the instants when spoilers, brakes, and reverse thrust are applied. To simplify the analysis, only one segment is considered, defined by the following conditions:
+<list id="list14-0954410011427107" list-type="alpha-lower">
+<list-item><p>all the wheels on the ground;</p></list-item>
+<list-item><p>constant pitch angle (instantaneous rotation at TD);</p></list-item>
+<list-item><p>brakes and spoilers applied during the whole run;</p></list-item>
+<list-item><p>idle engine rating, <italic>T</italic> = <italic>T</italic><sub><italic>IDLE</italic></sub>(<italic>M</italic>, <italic>h</italic>) (no reverse);</p></list-item>
+<list-item><p>ground effect not considered.</p></list-item>
+</list></p>
+<p>Now, the horizontal reaction force that must be added to dynamic equation (<xref ref-type="disp-formula" rid="disp-formula37-0954410011427107">37</xref>) is
+<disp-formula id="disp-formula19-0954410011427107"><label>(19)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math19-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>LD</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mo>-</mml:mo><mml:msubsup><mml:mrow><mml:mi>μ</mml:mi></mml:mrow><mml:mrow><mml:mi>r</mml:mi></mml:mrow><mml:mrow><mml:mo>'</mml:mo></mml:mrow></mml:msubsup><mml:mo stretchy="false">(</mml:mo><mml:mi>mg</mml:mi><mml:mo>-</mml:mo><mml:mn>1 2</mml:mn><mml:msub><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi><mml:mo>,</mml:mo><mml:mi>LD</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula19-0954410011427107" xlink:href="10.1177_0954410011427107-eq19.tif"/></disp-formula>
+where <inline-formula id="ilm6-0954410011427107"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math6-0954410011427107"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>μ</mml:mi></mml:mrow><mml:mrow><mml:mi>r</mml:mi></mml:mrow><mml:mrow><mml:mo>'</mml:mo></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> is now the friction coefficient with brakes applied (in this article, <inline-formula id="ilm7-0954410011427107"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math7-0954410011427107"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>μ</mml:mi></mml:mrow><mml:mrow><mml:mi>r</mml:mi></mml:mrow><mml:mrow><mml:mo>'</mml:mo></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> = 0.3), and <italic>C</italic><sub><italic>L</italic>,<italic>LD</italic></sub> is known. In this segment, the aircraft decelerates from the approach speed <italic>V</italic><sub><italic>app</italic></sub> to rest.</p>
+</sec>
+</sec>
+<sec id="sec13-0954410011427107"><title>Application</title>
+<p>In the following sections, the global trajectory Madrid–Frankfurt is considered. The flight intent and the flight segments are defined in this section, and the computed results obtained for the global trajectory are presented in <xref ref-type="sec" rid="sec6-0954410011427107">section ‘Results’</xref>. A model of a typical twin-engine, wide-body and, transport aircraft, partly based on B767-300ER data, is used, which is described in <xref ref-type="sec" rid="sec10-0954410011427107">Appendix 3</xref>. In this application, a nominal take-off weight <italic>W</italic><sub><italic>TO</italic></sub> = 150,000 kg is considered (the effect of <italic>W</italic><sub><italic>TO</italic></sub> is analysed in <xref ref-type="sec" rid="sec26-0954410011427107">section ‘Influence of take-off weight’</xref>).</p>
+<sec id="sec14-0954410011427107"><title>Flight intent</title>
+<sec id="sec15-0954410011427107"><title>Horizontal profile</title>
+<sec id="sec16-0954410011427107"><title>Departure airport</title>
+<p>Madrid (LEMD): Runway 36R; elevation <italic>h</italic><sub><italic>AP</italic></sub> = 1942 ft; QFE = 944.1 mbar (value corresponding to the ISA atmosphere; non-standard atmospheres are considered in section ‘Influence of △Θ’).</p>
+</sec>
+<sec id="sec17-0954410011427107"><title>SID</title>
+<p>The first course change must be performed when the aircraft reaches a horizontal distance of 5.8 nmi from BRA DVOR/DME (following ATC regulations, this first course change must not be performed before reaching a height AGL of 400 ft). This requirement defines the first waypoint (WPT 1). The procedure defines two more waypoints:
+<list id="list15-0954410011427107" list-type="alpha-lower">
+<list-item><p>RBO (WPT 2);</p></list-item>
+<list-item><p>PINAR (WPT 3).</p></list-item>
+</list></p>
+</sec>
+<sec id="sec18-0954410011427107"><title>Route</title>
+<p>In this article, the route is defined by the 36 waypoints given by the route generator RouteFinder (<ext-link ext-link-type="uri" xlink:href="http://rfinder.asalink.net/free/">http://rfinder.asalink.net/free/</ext-link>); they are the following: BAN, LARDA, LATEK, OBUTO, GONUP, TOU, GAI, MAKIL, GONIM, MEN, MEZIN, LATAM, ETREK, LUXAN, ARKOX, LTP, GIPNO, SOPLO, OMASI, MOLUS, SOSAL, TELNO, KORED, KONOL, BERSU, SUREP, DITON, KUDES, SONOM, LADOL, NELLI, KOVAN, SUNEG, ABUKA, RIDSU and ROLIS (the geodetic coordinates of these points are also given by the route generator RouteFinder).. The route is represented in <xref ref-type="fig" rid="fig1-0954410011427107">Figure 1</xref>.
+<fig id="fig1-0954410011427107" position="float"><label>Figure 1.</label><caption><p>Horizontal profile.</p></caption><graphic xlink:href="10.1177_0954410011427107-fig1.tif"/>
+</fig></p>
+</sec>
+<sec id="sec19-0954410011427107"><title>Arrival airport</title>
+<p>Frankfurt (EDDF): Runway 25R; elevation <italic>h</italic><sub><italic>AP</italic></sub> = 364 ft; QFE = 1000.0 mbar (value corresponding to the ISA atmosphere; non-standard atmospheres are considered in section ‘Influence of △Θ’).</p>
+</sec>
+<sec id="sec20-0954410011427107"><title>Standard arrival STAR</title>
+<p>This procedure defines the following waypoints:
+<list id="list16-0954410011427107" list-type="alpha-lower">
+<list-item><p>ROLIS (it is the last route waypoint);</p></list-item>
+<list-item><p>ETARU (WPT 40);</p></list-item>
+<list-item><p>FFM (Frankfurt Main, WPT 41);</p></list-item>
+<list-item><p>MTR (IAF, WPT 42).</p></list-item>
+</list></p>
+</sec>
+<sec id="sec21-0954410011427107"><title>Instrument approach</title>
+<p>After MTR (IAF), an additional waypoint (WPT 43) is needed, in order to follow the runway course. The following geodetic coordinates are taken for this last waypoint: N 50° 07′ 30″ and E 08° 55′ 45″.</p>
+</sec>
+</sec>
+<sec id="sec22-0954410011427107"><title>Vertical profile</title>
+<p>The following flight intent defines the flight procedure to be followed. It is not a complete description of the vertical profile, in the sense that, in general, many trajectories may comply with it; the actual flight segments to be flown are defined in the section ‘Flight segments’
+<list id="list17-0954410011427107" list-type="alpha-lower">
+<list-item><p>initial climb at γ = 3°;</p></list-item>
+<list-item><p>MCLB rating at <italic>h</italic><sub><italic>AGL</italic></sub> = 1500 ft;</p></list-item>
+<list-item><p>acceleration at <italic>h</italic><sub><italic>AGL</italic></sub> = 3000 ft;</p></list-item>
+<list-item><p>climb at <italic>CAS</italic> = 250 kt;</p></list-item>
+<list-item><p>acceleration at <italic>h</italic><sub><italic>p</italic></sub> = 10,000 ft;</p></list-item>
+<list-item><p>climb CAS/Mach 290 kt/0.78;</p></list-item>
+<list-item><p>cruise at <italic>h</italic><sub><italic>p</italic></sub> = 33,000 ft and <italic>M</italic> = 0.80;</p></list-item>
+<list-item><p>descent with IDLE rating;</p></list-item>
+<list-item><p>descent Mach/CAS 0.78/290 kt;</p></list-item>
+<list-item><p>deceleration at <italic>h</italic><sub><italic>p</italic></sub> = 10,000 ft;</p></list-item>
+<list-item><p>descent at <italic>CAS</italic> = 250 kt;</p></list-item>
+<list-item><p>deceleration at <italic>h</italic><sub><italic>AGL</italic></sub> = 4000 ft;</p></list-item>
+<list-item><p>final descent at γ<sub><italic>g</italic></sub> = −3°.</p></list-item>
+</list></p>
+<p>It has been decided to cruise at a fixed altitude. Nevertheless, a stepped cruise climb could be also considered, to approximate the optimal cruise climb, as done in operational practice, just by adding a climb segment for each step.</p>
+</sec>
+</sec>
+<sec id="sec23-0954410011427107"><title>Flight segments</title>
+<p>The flight Madrid–Frankfurt is composed of a total of 66 segments, which are defined in <xref ref-type="table" rid="table1-0954410011427107">Table 1</xref>. In this table, the following data are presented: constraints defining the segment, estimated initial condition for γ (in segments where this is not the final value of the previous segment), stopping condition and additional parameters required to compute the segment (χ<sub><italic>A</italic></sub>, Δ<italic>C</italic><sub><italic>D</italic></sub>,…). Other parameters could be the wind speed and ΔΘ during the segment, but in <xref ref-type="table" rid="table1-0954410011427107">Table 1</xref>, the case of no wind and ISA atmosphere is considered (wind effects are analysed in section ‘Wind effects’ and non-standard atmospheres in section ‘Influence of △Θ’. Note that, for conciseness purposes, segments 17–49 are not included in the table, since they correspond to the cruise phase and the only parameters that change are χ<sub><italic>A</italic></sub> and the corresponding stopping condition.
+<table-wrap id="table1-0954410011427107" position="float"><label>Table 1.</label><caption><p>Flight segments.</p></caption>
+<graphic alternate-form-of="table1-0954410011427107" xlink:href="10.1177_0954410011427107-table1.tif"/>
+<table frame="hsides"><thead>
+<tr><th rowspan="2">Segment numbers</th>
+<th rowspan="2">Constraint 1</th>
+<th rowspan="2">Constraint 2</th>
+<th rowspan="2">Initial condition γ (degrees)</th>
+<th rowspan="2">Stopping condition</th>
+<th colspan="2">Parameters</th>
+</tr>
+<tr><th>χ<sub><italic>A</italic></sub> (degrees)</th>
+<th>Δ<italic>C</italic><sub><italic>D</italic></sub></th>
+</tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td colspan="2">TAKE-OFF</td>
+<td>0.00</td>
+<td><italic>CAS</italic> = 146.4 kt</td>
+<td>360.00</td>
+<td>0.028</td>
+</tr>
+<tr>
+<td>2</td>
+<td>TO</td>
+<td>γ = 3°</td>
+<td>3.00</td>
+<td><italic>CAS</italic> = 161.4 kt</td>
+<td>360.00</td>
+<td>0.028</td>
+</tr>
+<tr>
+<td>3</td>
+<td>TO</td>
+<td><italic>CAS</italic> = 161.4 kt</td>
+<td>9.75</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 1500 ft</td>
+<td>360.00</td>
+<td>0.010</td>
+</tr>
+<tr>
+<td>4</td>
+<td>MCLB</td>
+<td><italic>CAS</italic> = 161.4 kt</td>
+<td>8.40</td>
+<td>WPT 1</td>
+<td>360.00</td>
+<td>0.010</td>
+</tr>
+<tr>
+<td>5</td>
+<td>MCLB</td>
+<td><italic>CAS</italic> = 161.4 kt</td>
+<td>–</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 3000 ft</td>
+<td>39.45</td>
+<td>0.010</td>
+</tr>
+<tr>
+<td>6</td>
+<td>MCLB</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 3000 ft</td>
+<td>0.00</td>
+<td><italic>CAS</italic> = 181.2 kt</td>
+<td>39.45</td>
+<td>0.010</td>
+</tr>
+<tr>
+<td>7</td>
+<td>MCLB</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 3000 ft</td>
+<td>–</td>
+<td><italic>CAS</italic> = 250.0 kt</td>
+<td>39.45</td>
+<td>0</td>
+</tr>
+<tr>
+<td>8</td>
+<td>MCLB</td>
+<td><italic>CAS</italic> = 250.0 kt</td>
+<td>9.08</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 10,000 ft</td>
+<td>39.45</td>
+<td>0</td>
+</tr>
+<tr>
+<td>9</td>
+<td>MCLB</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 10,000 ft</td>
+<td>0.00</td>
+<td><italic>CAS</italic> = 290.0 kt</td>
+<td>39.45</td>
+<td>0</td>
+</tr>
+<tr>
+<td>10</td>
+<td>MCLB</td>
+<td><italic>CAS</italic> = 290.0 kt</td>
+<td>7.05</td>
+<td>WPT 2</td>
+<td>39.45</td>
+<td>0</td>
+</tr>
+<tr>
+<td>11</td>
+<td>MCLB</td>
+<td><italic>CAS</italic> = 290.0 kt</td>
+<td>–</td>
+<td>WPT 3</td>
+<td>75.51</td>
+<td>0</td>
+</tr>
+<tr>
+<td>12</td>
+<td>MCLB</td>
+<td><italic>CAS</italic> = 290.0 kt</td>
+<td>–</td>
+<td><italic>M</italic> = 0.78</td>
+<td>356.16</td>
+<td>0</td>
+</tr>
+<tr>
+<td>13</td>
+<td>MCLB</td>
+<td><italic>M</italic> = 0.78</td>
+<td>3.09</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 33 000 ft</td>
+<td>356.16</td>
+<td>0</td>
+</tr>
+<tr>
+<td>14</td>
+<td>MCLB</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 33,000 ft</td>
+<td>0.00</td>
+<td><italic>M</italic> = 0.80</td>
+<td>356.16</td>
+<td>0</td>
+</tr>
+<tr>
+<td>15</td>
+<td><italic>M</italic> = 0.80</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 33,000 ft</td>
+<td>–</td>
+<td>WPT 4</td>
+<td>356.16</td>
+<td>0</td>
+</tr>
+<tr>
+<td>16</td>
+<td><italic>M</italic> = 0.80</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 33,000 ft</td>
+<td>–</td>
+<td>WPT 5</td>
+<td>49.50</td>
+<td>0</td>
+</tr>
+<tr>
+<td>⋮</td>
+<td>⋮</td>
+<td>⋮</td>
+<td>⋮</td>
+<td>⋮</td>
+<td>⋮</td>
+<td>⋮</td>
+</tr>
+<tr>
+<td>50</td>
+<td><italic>M</italic> = 0.80</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 33,000 ft</td>
+<td>–</td>
+<td>CSR</td>
+<td>335.53</td>
+<td>0</td>
+</tr>
+<tr>
+<td>51</td>
+<td>IDLE</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 33,000 ft</td>
+<td>–</td>
+<td><italic>M</italic> = 0.78</td>
+<td>335.53</td>
+<td>0</td>
+</tr>
+<tr>
+<td>52</td>
+<td>IDLE</td>
+<td><italic>M</italic> = 0.78</td>
+<td>−3.28</td>
+<td>WPT 38</td>
+<td>335.53</td>
+<td>0</td>
+</tr>
+<tr>
+<td>53</td>
+<td>IDLE</td>
+<td><italic>M</italic> = 0.78</td>
+<td>–</td>
+<td><italic>CAS</italic> = 290.0 kt</td>
+<td>328.53</td>
+<td>0</td>
+</tr>
+<tr>
+<td>54</td>
+<td>IDLE</td>
+<td><italic>CAS</italic> = 290.0 kt</td>
+<td>−2.34</td>
+<td>WPT 39</td>
+<td>328.53</td>
+<td>0</td>
+</tr>
+<tr>
+<td>55</td>
+<td>IDLE</td>
+<td><italic>CAS</italic> = 290.0 kt</td>
+<td>–</td>
+<td>WPT 40</td>
+<td>129.23</td>
+<td>0</td>
+</tr>
+<tr>
+<td>56</td>
+<td>IDLE</td>
+<td><italic>CAS</italic> = 290.0 kt</td>
+<td>–</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 10,000 ft</td>
+<td>124.59</td>
+<td>0</td>
+</tr>
+<tr>
+<td>57</td>
+<td>IDLE</td>
+<td><italic>h</italic><sub><italic>p</italic></sub> = 10,000 ft</td>
+<td>0.00</td>
+<td><italic>CAS</italic> = 250.0 kt</td>
+<td>124.59</td>
+<td>0</td>
+</tr>
+<tr>
+<td>58</td>
+<td>IDLE</td>
+<td><italic>CAS</italic> = 250.0 kt</td>
+<td>−2.45</td>
+<td>WPT 41</td>
+<td>124.59</td>
+<td>0</td>
+</tr>
+<tr>
+<td>59</td>
+<td>IDLE</td>
+<td><italic>CAS</italic> = 250.0 kt</td>
+<td>–</td>
+<td>WPT 42</td>
+<td>31.34</td>
+<td>0</td>
+</tr>
+<tr>
+<td>60</td>
+<td>IDLE</td>
+<td><italic>CAS</italic> = 250.0 kt</td>
+<td>–</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 4000 ft</td>
+<td>161.16</td>
+<td>0</td>
+</tr>
+<tr>
+<td>61</td>
+<td>IDLE</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 4000 ft</td>
+<td>0.00</td>
+<td><italic>CAS</italic> = 175.5 kt</td>
+<td>161.16</td>
+<td>0</td>
+</tr>
+<tr>
+<td>62</td>
+<td>IDLE</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 4000 ft</td>
+<td>–</td>
+<td>WPT 43</td>
+<td>161.16</td>
+<td>0.021</td>
+</tr>
+<tr>
+<td>63</td>
+<td>IDLE</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 4000 ft</td>
+<td>–</td>
+<td><italic>CAS</italic> = 125.7 kt</td>
+<td>250.00</td>
+<td>0.021</td>
+</tr>
+<tr>
+<td>64</td>
+<td><italic>CAS</italic> = 125.7 kt</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 4000 ft</td>
+<td>–</td>
+<td>ILS</td>
+<td>250.00</td>
+<td>0.061</td>
+</tr>
+<tr>
+<td>65</td>
+<td><italic>CAS</italic> = 125.7 kt</td>
+<td>γ<sub><italic>g</italic></sub> = − 3°</td>
+<td>−3.00</td>
+<td><italic>h</italic><sub><italic>AGL</italic></sub> = 0 ft</td>
+<td>250.00</td>
+<td>0.061</td>
+</tr>
+<tr>
+<td>66</td>
+<td colspan="2">LANDING</td>
+<td>0.00</td>
+<td><italic>CAS</italic> = 0 kt</td>
+<td>250.00</td>
+<td>0.079</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-0954410011427107"><p>CAS: calibrated air speed; MCLB: maximum climb engine rating; WPT: waypoint; CSR: cruise speed reduction; ILS: instrument landing system.</p></fn></table-wrap-foot>
+</table-wrap></p>
+<p>In the definition of this flight, the following operational speeds (CAS) are considered, for the nominal <italic>W</italic><sub><italic>TO</italic></sub> (obtained from BADA<sup><xref ref-type="bibr" rid="bibr15-0954410011427107">15</xref></sup>):
+<list id="list18-0954410011427107" list-type="alpha-lower">
+<list-item><p>lift off, <italic>V</italic><sub><italic>LOF</italic></sub> = 146.4 kt;</p></list-item>
+<list-item><p>initial climb, <italic>V</italic>2 + 15 = 161.4 kt;</p></list-item>
+<list-item><p>approach, <italic>V</italic><sub><italic>app</italic></sub> = 125.7 kt (obtained during the computation, for the actual weight).</p></list-item>
+</list></p>
+<p>After take-off, the landing gear is retracted at the end of segment 2 (at a speed <italic>CAS</italic> = 161.4 kt), and the flaps (15°) at the end of segment 6 (at <italic>CAS</italic> = 181.2 kt). Before landing, the flaps are extended (25°) at the beginning of segment 62 (at <italic>CAS</italic> = 175.5 kt), and they are extended further (30°) along with the landing gear at the beginning of segment 64 (at <italic>CAS</italic> = 125.7 kt). The corresponding changes in the drag polar appear in the last column of <xref ref-type="table" rid="table1-0954410011427107">Table 1</xref>. Segment 50 is stopped by the condition of reaching the CSR point, which is iteratively obtained, and segment 64 by the condition of intercepting the glide path. The TOD point is the end of segment 51.</p>
+</sec>
+</sec>
+<sec id="sec24-0954410011427107" sec-type="results"><title>Results</title>
+<p>The global trajectory Madrid–Frankfurt is now computed, using the trajectory computation solver presented in section ‘Trajectory computation solver’. The equations defining each flight segment are solved using Matlab's ODE solvers.</p>
+<sec id="sec25-0954410011427107"><title>Global trajectory</title>
+<p>In this section, the global trajectory is computed for the nominal take-off weight <italic>W</italic><sub><italic>TO</italic></sub> = 150,000 kg, with no wind and ISA atmosphere. The horizontal profile is depicted in <xref ref-type="fig" rid="fig1-0954410011427107">Figure 1</xref>, and the vertical profile in <xref ref-type="fig" rid="fig2-0954410011427107">Figure 2</xref>, where the marks correspond to the different waypoints.
+<fig id="fig2-0954410011427107" position="float"><label>Figure 2.</label><caption><p>Vertical profile. TOD: top of descent; TOC: top of climb.</p></caption><graphic xlink:href="10.1177_0954410011427107-fig2.tif"/>
+</fig></p>
+<p>The main global results of the trajectory, fuel consumption (<italic>m</italic><sub><italic>F</italic></sub>) and flight time (<italic>t</italic><sub><italic>f</italic></sub>) are listed in <xref ref-type="table" rid="table2-0954410011427107">Table 2</xref> (also shown are results for take-off weights varying −20 per cent and +20 per cent, 120,000 and 180,000 kg, respectively). Other parameters listed are the following points: top of climb (distance from lift off), top of descent (distance to TD), and CSR (distance to TD).
+<table-wrap id="table2-0954410011427107" position="float"><label>Table 2.</label><caption><p>Global parameters.</p></caption>
+<graphic alternate-form-of="table2-0954410011427107" xlink:href="10.1177_0954410011427107-table2.tif"/>
+<table frame="hsides"><thead>
+<tr><th><italic>W</italic><sub><italic>TO</italic></sub> (kg)</th>
+<th><italic>m</italic><sub><italic>F</italic></sub> (kg)</th>
+<th><italic>t</italic><sub><italic>f</italic></sub> (s)</th>
+<th>TOC (nmi)</th>
+<th>CSR (nmi)</th>
+<th>TOD (nmi)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>120 000</td>
+<td>8442.5</td>
+<td>8262.1</td>
+<td>50.37</td>
+<td>128.31</td>
+<td>126.90</td>
+</tr>
+<tr>
+<td>150,000</td>
+<td>10,220.4</td>
+<td>8262.9</td>
+<td>69.72</td>
+<td>133.81</td>
+<td>132.35</td>
+</tr>
+<tr>
+<td>180,000</td>
+<td>12,580.6</td>
+<td>8277.7</td>
+<td>97.65</td>
+<td>133.65</td>
+<td>132.24</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn2-0954410011427107"><p>TOD: top of descent; CSR: cruise speed reduction; TOC: top of climb.</p></fn></table-wrap-foot>
+</table-wrap></p>
+</sec>
+<sec id="sec26-0954410011427107"><title>Influence of take-off weight</title>
+<p>As indicated by Coppenbarger,<sup><xref ref-type="bibr" rid="bibr3-0954410011427107">3</xref></sup> the take-off weight can vary largely from a mean value (for instance, in a range as wide as −23 per cent to +37 per cent for B757 aircraft). The effect of <italic>W</italic><sub><italic>TO</italic></sub> on the global trajectory is analysed.</p>
+<p>The effect on the vertical profile is presented in <xref ref-type="fig" rid="fig3-0954410011427107">Figure 3</xref>, for the climb and descent phases. As <italic>W</italic><sub><italic>TO</italic></sub> increases, the horizontal distance travelled during climb sharply increases. The variation of the TOC point with <italic>W</italic><sub><italic>TO</italic></sub> is shown in <xref ref-type="fig" rid="fig4-0954410011427107">Figure 4</xref>. As listed in <xref ref-type="table" rid="table2-0954410011427107">Table 2</xref>, the TOC point goes from 50.4 nmi for <italic>W</italic><sub><italic>TO</italic></sub> = 120,000 kg to 97.7 nmi for <italic>W</italic><sub><italic>TO</italic></sub> = 180,000 kg (it almost doubles); see also <xref ref-type="fig" rid="fig3-0954410011427107">Figure 3</xref>. The effect of <italic>W</italic><sub><italic>TO</italic></sub> on the CRS and TOD points is much weaker, as shown in <xref ref-type="fig" rid="fig3-0954410011427107">Figures 3</xref> and <xref ref-type="fig" rid="fig4-0954410011427107">4</xref>.
+<fig id="fig3-0954410011427107" position="float"><label>Figure 3.</label><caption><p> Effect of take-off weight on the vertical profile (climb and descent).</p></caption><graphic xlink:href="10.1177_0954410011427107-fig3.tif"/>
+</fig>
+<fig id="fig4-0954410011427107" position="float"><label>Figure 4.</label><caption><p>Effect of take-off weight on TOD, CSR, and top of climb. TOD: top of descent; CSR: cruise speed reduction; TOC: top of climb.</p></caption><graphic xlink:href="10.1177_0954410011427107-fig4.tif"/>
+</fig></p>
+<p>The fuel consumption is very sensitive to changes in <italic>W</italic><sub><italic>TO</italic></sub>, as shown in <xref ref-type="fig" rid="fig5-0954410011427107">Figure 5</xref>. As listed in <xref ref-type="table" rid="table2-0954410011427107">Table 2</xref>, <italic>m</italic><sub><italic>F</italic></sub> goes from 8442.5 kg for <italic>W</italic><sub><italic>TO</italic></sub> = 120,000 to 125 80.6 kg for <italic>W</italic><sub><italic>TO</italic></sub> = 180,000 kg (a difference of about 4138 kg of fuel, with respect to a nominal fuel consumption of 10 220.4 kg).
+<fig id="fig5-0954410011427107" position="float"><label>Figure 5.</label><caption><p>Effect of take-off weight on fuel consumption and flight time.</p></caption><graphic xlink:href="10.1177_0954410011427107-fig5.tif"/>
+</fig></p>
+<p>The effect of <italic>W</italic><sub><italic>TO</italic></sub> on the flight time is, however, very weak, as shown in <xref ref-type="fig" rid="fig5-0954410011427107">Figure 5</xref> and <xref ref-type="table" rid="table2-0954410011427107">Table 2</xref>. When <italic>W</italic><sub><italic>TO</italic></sub> increases from 120,000 to 180,000 kg, <italic>t</italic><sub><italic>f</italic></sub> increases from 8262 to 8278 s (a difference of just 16 s, with respect to a nominal flight time of 8263 s).</p>
+<p>In conclusion, the effects of <italic>W</italic><sub><italic>TO</italic></sub> on the climb vertical profile and the global fuel consumption are quite strong, whereas the effects on the descent vertical profile and the global flight time are very weak. As indicated by Coppenbarger,<sup><xref ref-type="bibr" rid="bibr3-0954410011427107">3</xref></sup> in the analysis of climb trajectories, ATM decision support tools must consider the actual take-off weight (ATOW) (accurately defined), rather than applying an average <italic>W</italic><sub><italic>TO</italic></sub> to all aircraft of a given type, especially with regard to the important issue of fuel consumption, as it has been shown in this section.</p>
+</sec>
+<sec id="sec27-0954410011427107"><title>Wind effects</title>
+<p>The winds considered in this section are defined by a constant direction (φ<sub><italic>w</italic></sub>) on the whole flight, and an altitude-dependent modulus (<italic>V</italic><sub><italic>w</italic></sub>(<italic>h</italic>)) given by the following function<sup><xref ref-type="bibr" rid="bibr16-0954410011427107">16</xref></sup>
+<disp-formula id="disp-formula20-0954410011427107"><label>(20)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math20-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>w</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>v</mml:mi></mml:mrow><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mn>40 33</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn><mml:mi>h</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula20-0954410011427107" xlink:href="10.1177_0954410011427107-eq20.tif"/></disp-formula>
+where <italic>v</italic><sub>0</sub> and <italic>V</italic><sub><italic>w</italic></sub> are expressed in knots and <italic>h</italic> in feet. In the application, two cases of wind direction are considered: NE (φ<sub><italic>w</italic></sub> = 45°) and SW (φ<sub><italic>w</italic></sub> = 225°), giving headwinds and tailwinds, respectively, in most part of the flight, and the wind speed at sea level, <italic>v</italic><sub>0</sub>, ranges from 0 to 30 kt. The take-off weight, in this section, is the nominal value <italic>W</italic><sub><italic>TO</italic></sub> = 150,000 kg, and the atmosphere model is ISA.</p>
+<p>To maintain the segment course in the presence of crosswinds, the aircraft heading must be changed. These heading changes (which affect the ground speed) are not taken into account in this study. The effects of this simplification will depend on the strength of the crosswinds. (In this article, an application is made for winds roughly aligned with the overall flight direction, so as to minimize this effect.)</p>
+<p>In each flight segment, the component of the wind velocity contained in the plane of flight (<italic>w</italic> in equation (<xref ref-type="disp-formula" rid="disp-formula1-0954410011427107">1</xref>)) must be determined, which depends on the segment heading, χ<sub><italic>A</italic></sub>, as well as on the wind direction, φ<sub><italic>w</italic></sub>. Thus, one has
+<disp-formula id="disp-formula21-0954410011427107"><label>(21)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math21-0954410011427107"><mml:mrow><mml:mi>w</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mo>-</mml:mo><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>w</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:msub><mml:mrow><mml:mi>ϕ</mml:mi></mml:mrow><mml:mrow><mml:mi>w</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula21-0954410011427107" xlink:href="10.1177_0954410011427107-eq21.tif"/></disp-formula>
+</p>
+<p>The effect of wind on the vertical profile is shown in <xref ref-type="fig" rid="fig6-0954410011427107">Figure 6</xref>, for the climb and descent phases. In this figure, profiles for <italic>v</italic><sub>0</sub> =  0, 10, 20, and 30 kt are shown for each wind direction, along with the nominal profile for the case of no wind. One can see that headwinds, case φ<sub><italic>w</italic></sub> = 45° (NE), decrease the TOC and TOD, and tailwinds, case φ<sub><italic>w</italic></sub> = 225° (SW), increase them. Some numerical results are given in <xref ref-type="table" rid="table3-0954410011427107">Table 3</xref>. For the case of <italic>v</italic><sub>0</sub> = 30 kt, the difference in TOC between headwind and tailwind is 21.6 nmi, and the difference in TOD, in the same case, is 10.4 nmi.
+<table-wrap id="table3-0954410011427107" position="float"><label>Table 3.</label><caption><p>Wind effect on global parameters.</p></caption>
+<graphic alternate-form-of="table3-0954410011427107" xlink:href="10.1177_0954410011427107-table3.tif"/>
+<table frame="hsides"><thead>
+<tr><th><italic>v</italic><sub>0</sub> (kt)</th>
+<th><italic>m</italic><sub><italic>F</italic></sub> (kg)</th>
+<th><italic>t</italic><sub><italic>f</italic></sub> (s)</th>
+<th>TOC (nmi)</th>
+<th>TOD (nmi)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>No wind</td>
+<td>10,220.4</td>
+<td>8262.9</td>
+<td>69.72</td>
+<td>132.35</td>
+</tr>
+<tr>
+<td>0 NE</td>
+<td>10,824.6</td>
+<td>8798.6</td>
+<td>64.16</td>
+<td>129.64</td>
+</tr>
+<tr>
+<td>10 NE</td>
+<td>10,961.9</td>
+<td>8937.5</td>
+<td>62.43</td>
+<td>128.77</td>
+</tr>
+<tr>
+<td>20 NE</td>
+<td>11,114.5</td>
+<td>9086.9</td>
+<td>60.67</td>
+<td>127.87</td>
+</tr>
+<tr>
+<td>30 NE</td>
+<td>11,280.7</td>
+<td>9246.5</td>
+<td>58.90</td>
+<td>126.91</td>
+</tr>
+<tr>
+<td>0 SW</td>
+<td>9710.7</td>
+<td>7808.6</td>
+<td>75.25</td>
+<td>135.08</td>
+</tr>
+<tr>
+<td>10 SW</td>
+<td>9640.3</td>
+<td>7722.5</td>
+<td>76.95</td>
+<td>135.86</td>
+</tr>
+<tr>
+<td>20 SW</td>
+<td>9585.6</td>
+<td>7645.2</td>
+<td>78.71</td>
+<td>136.60</td>
+</tr>
+<tr>
+<td>30 SW</td>
+<td>9548.6</td>
+<td>7577.9</td>
+<td>80.47</td>
+<td>137.30</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn3-0954410011427107"><p>TOC: top of climb; TOD: top of descent.</p></fn></table-wrap-foot>
+</table-wrap>
+<fig id="fig6-0954410011427107" position="float"><label>Figure 6.</label><caption><p>Wind effect on the vertical profile (climb and descent).</p></caption><graphic xlink:href="10.1177_0954410011427107-fig6.tif"/>
+</fig></p>
+<p>The fuel consumption and flight time are shown in <xref ref-type="fig" rid="fig7-0954410011427107">Figure 7</xref> as a function of <italic>v</italic><sub>0</sub>, for each wind direction, along with the result for the case of no wind. As expected, both global parameters increase with headwinds (NE) and decrease with tailwinds (SW). Some numerical results are given in <xref ref-type="table" rid="table3-0954410011427107">Table 3</xref>. For the case of <italic>v</italic><sub>0</sub> = 30 kt, the difference between headwind and tailwind is as large as 1732 kg in fuel consumption and 1669 s (almost 28 min) in flight time.
+<fig id="fig7-0954410011427107" position="float"><label>Figure 7.</label><caption><p>Wind effect on fuel consumption and flight time.</p></caption><graphic xlink:href="10.1177_0954410011427107-fig7.tif"/>
+</fig></p>
+<p>As shown, wind effects can be very large. The computation tool developed in this article allows one to quantify these effects (provided the wind is known).</p>
+</sec>
+<sec id="sec28-0954410011427107"><title>Influence of ΔΘ</title>
+<p>The effect of non-standard days on the global trajectory is analysed in this section. The take-off weight is the nominal value <italic>W</italic><sub><italic>TO</italic></sub> = 150,000 kg, and the case of no wind is considered. To simplify the analysis, a constant value of ΔΘ is taken for the whole flight.</p>
+<p>The effect of ΔΘ on the vertical profile is shown in <xref ref-type="fig" rid="fig8-0954410011427107">Figure 8</xref>, for the climb and descent phases. In this figure, profiles for ΔΘ = −20, −10, 0, 10, and 20 K are shown (the nominal profile for the ISA model corresponds to ΔΘ =  0). One can see that hot days increase the TOC and TOD, and cold days decrease them (notice the change in cruise altitude corresponding to the given cruise pressure altitude). Some numerical results are given in <xref ref-type="table" rid="table4-0954410011427107">Table 4</xref>. For the cases of ΔΘ = −20 and 20 K, the difference in TOC between hot and cold days is 26.0 nmi, and the difference in TOD, in the same cases, is 17.4 nmi.
+<table-wrap id="table4-0954410011427107" position="float"><label>Table 4.</label><caption><p>Effect of ΔΘ on global parameters.</p></caption>
+<graphic alternate-form-of="table4-0954410011427107" xlink:href="10.1177_0954410011427107-table4.tif"/>
+<table frame="hsides"><thead>
+<tr><th>ΔΘ (K)</th>
+<th><italic>m</italic><sub><italic>F</italic></sub> (kg)</th>
+<th><italic>t</italic><sub><italic>f</italic></sub> (s)</th>
+<th>TOC (nmi)</th>
+<th>TOD (nmi)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>−20</td>
+<td>10,182.6</td>
+<td>8504.8</td>
+<td>57.66</td>
+<td>123.64</td>
+</tr>
+<tr>
+<td>−10</td>
+<td>10,200.9</td>
+<td>8379.9</td>
+<td>63.47</td>
+<td>128.00</td>
+</tr>
+<tr>
+<td>0</td>
+<td>10,220.4</td>
+<td>8262.9</td>
+<td>69.72</td>
+<td>132.35</td>
+</tr>
+<tr>
+<td>10</td>
+<td>10,241.1</td>
+<td>8153.1</td>
+<td>76.45</td>
+<td>136.69</td>
+</tr>
+<tr>
+<td>20</td>
+<td>10,263.1</td>
+<td>8049.9</td>
+<td>83.69</td>
+<td>141.03</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn4-0954410011427107"><p>TOC: top of climb; TOD: top of descent.</p></fn></table-wrap-foot>
+</table-wrap>
+<fig id="fig8-0954410011427107" position="float"><label>Figure 8.</label><caption><p>Effect of ΔΘ on the vertical profile (climb and descent).</p></caption><graphic xlink:href="10.1177_0954410011427107-fig8.tif"/>
+</fig></p>
+<p>The fuel consumption and flight time are shown in <xref ref-type="fig" rid="fig9-0954410011427107">Figure 9</xref> as a function of ΔΘ. Flight time decreases for hot days and increases for cold days (notice that, since the cruise Mach number is constant, the cruise airspeed increases in hot days and decreases in cold days). The influence of ΔΘ on fuel consumption is very small, increasing for hot days and decreasing for cold days. Some numerical results are given in <xref ref-type="table" rid="table4-0954410011427107">Table 4</xref>. For the cases of ΔΘ = −20 and 20 K, the difference between hot and cold days is just 80.5 kg (increase) in fuel consumption and 455 s (decrease) in flight time. This effect is not as important as wind effects however, it must be taken into account.
+<fig id="fig9-0954410011427107" position="float"><label>Figure 9.</label><caption><p>Effect of ΔΘ on fuel consumption and flight time.</p></caption><graphic xlink:href="10.1177_0954410011427107-fig9.tif"/>
+</fig></p>
+</sec>
+</sec>
+<sec id="sec29-0954410011427107" sec-type="conclusions"><title>Conclusions</title>
+<p>In this study, a trajectory computation tool has been presented and designed to compute the global trajectories in quite general scenarios, for commercial transport aircraft, including actual flight intents, a general APM, wind, and a non-standard atmosphere. The tool is based on a kinetic modelling approach, which is flexible and transparent. To reduce the computational cost, some simplifications have been made, although the tool is robust enough to be useful in the computation of global properties such as total fuel consumption and flight time, and in quantifying the effects of wind and non-standard days on them.</p>
+<p>As an application, a flight Madrid–Frankfurt has been analysed. The results show the strong effect of take-off weight on the climb vertical profile and on the global fuel consumption, which leads to the conclusion that the weight sensitivity is high and, therefore, the actual take-off weight (ATOW) must be accurately defined in order to have a reliable computed trajectory. Wind effects have been shown to be quite important; given a known wind, the trajectory computation tool allows one to quantify these effects. The effects of a non-standard atmosphere on the global trajectory have been shown to be relatively small, as compared to the other effects analysed.</p>
+<p>To assess the accuracy of the tool, comparison with real flight data should be made, which would require recording the following data from the flight: ATOW, final weight, flight time, atmospheric temperature, wind profile, aerodynamic configuration along the trajectory and actual path followed by the aircraft as defined by ATC. With this information, once the trajectory is modelled, the final weight and flight time can be computed and compared with the real ones. If it is considered that the real data have no errors, then the differences can be analysed and attributed to inaccuracies in the trajectory modelling (e.g. definition of segments or assumptions in the equations of motion), inaccuracies in the aerodynamic and propulsive models or inaccuracies in the atmosphere model.</p>
+<p>An application foreseen for the tool is the optimisation of global trajectories (that is, optimisation of the main parameters that define them, for instance, fuel consumption and flight time) in terms of key operational parameters, such as the climb/descent speeds, the cruise altitude, and so on. Clearly, this tool can be also applied in the optimisation of parts of the trajectory, such as the cruise and the descent; in particular, in the optimisation of continuous descent approaches, in which the start of the approach is not known in advance, but must be iteratively determined. This study is under way.</p>
+<p>Another future application is the analysis of the sensitivity of trajectory prediction to uncertainties in input parameters such as weight, wind, and speed profile, among others.</p>
+<p>In other applications, such as the analysis of convergent traffic in the TMA, including the problem of conflict detection and resolution, where the turns are an important part of the trajectory, a different tool which includes turning segments should be used to compute the trajectories with the required accuracy. These segments add new levels of complexity, with variations in wind direction along the path, and additional iterative loops. Also, in the computation of short-range trajectories, in which the relative effect of turning segments can be important, the use of such an advanced tool is required. The development of such a tool is left for future study. This advanced tool will also take into account the effects of crosswinds.</p>
+</sec>
+</body>
+<back>
+<sec id="sec30-0954410011427107"><title>Funding</title>
+<p>This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.</p>
+</sec>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0954410011427107"><label>1</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Slattery</surname><given-names>RA</given-names></name><name><surname>Zhao</surname><given-names>Y</given-names></name></person-group>. <article-title>Trajectory synthesis for air traffic automation</article-title>. <source>J Guid Control Dyn</source> <year>1997</year>; <volume>20</volume>(<issue>2</issue>): <fpage>232</fpage>–<lpage>238</lpage>.</citation></ref>
+<ref id="bibr2-0954410011427107"><label>2</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Jackson</surname><given-names>MR</given-names></name><name><surname>Zhao</surname><given-names>Y</given-names></name><name><surname>Slattery</surname><given-names>RA</given-names></name></person-group>. <article-title>Sensitivity of trajectory prediction in air traffic management</article-title>. <source>J Guid Control Dyn</source> <year>1999</year>; <volume>22</volume>(<issue>2</issue>): <fpage>219</fpage>–<lpage>228</lpage>.</citation></ref>
+<ref id="bibr3-0954410011427107"><label>3</label><citation citation-type="other"><person-group person-group-type="author"><name><surname>Coppenbarger</surname><given-names>RA</given-names></name></person-group>. <source>Climb trajectory prediction enhancement using airline flight-planning information</source><comment>AIAA paper 99-4147, 1999</comment>.</citation></ref>
+<ref id="bibr4-0954410011427107"><label>4</label><citation citation-type="other"><comment>Coppenbarger RA, Lanier R, Sweet D, et al. Design and development of the en route descent advisor (EDA) for conflict-free arrival metering. AIAA paper 2004-4875, 2004</comment>.</citation></ref>
+<ref id="bibr5-0954410011427107"><label>5</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Barman</surname><given-names>JF</given-names></name><name><surname>Erzberger</surname><given-names>H</given-names></name></person-group>. <article-title>Fixed-range optimum trajectories for short-haul aircraft</article-title>. <source>J Aircr</source> <year>1976</year>; <volume>13</volume>: <fpage>748</fpage>–<lpage>754</lpage>.</citation></ref>
+<ref id="bibr6-0954410011427107"><label>6</label><citation citation-type="other"><person-group person-group-type="author"><name><surname>Gill</surname><given-names>W</given-names></name><name><surname>Maddock</surname><given-names>R</given-names></name></person-group>. <source>EFMS prediction of optimal 4D trajectories in the presence of time and altitude constraints.</source><comment>PHARE DOC 97-70-09, EUROCONTROL, 1997</comment>.</citation></ref>
+<ref id="bibr7-0954410011427107"><label>7</label><citation citation-type="other"><comment>Gallo E, López-Leonés J, Vilaplana MA, et al. Trajectory computation infrastructure based on BADA aircraft performance model. In: <italic>Proceedings of the 26th digital avionics systems conference</italic>, Dallas, TX, 21–25 October 2007, IEEE, pp.1.C.4-1–1.C.4-13</comment>.</citation></ref>
+<ref id="bibr8-0954410011427107"><label>8</label><citation citation-type="other"><comment>Williams D.H Green SM Airborne four-dimensional flight management in a time-based air traffic control environment. Washington, DC: NASA, TM-4249, March 1991</comment>.</citation></ref>
+<ref id="bibr9-0954410011427107"><label>9</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Vinh</surname><given-names>NX</given-names></name></person-group>. <source>Flight mechanics of high-performance aircraft</source>. <publisher-loc>Cambridge, MA</publisher-loc>: <publisher-name>Cambridge University Press</publisher-name>, <year>1993</year>, pp.<fpage>18</fpage>–<lpage>20</lpage>.</citation></ref>
+<ref id="bibr10-0954410011427107"><label>10</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Mulgund</surname><given-names>SS</given-names></name><name><surname>Stengel</surname><given-names>RF</given-names></name></person-group>. <article-title>Optimal nonlinear estimation for aircraft flight control in wind shear</article-title>. <source>Automatica</source> <year>1996</year>; <volume>32</volume>: <fpage>3</fpage>–<lpage>13</lpage>.</citation></ref>
+<ref id="bibr11-0954410011427107"><label>11</label><citation citation-type="other"> <comment>López J, Vilaplana MA, Gallo E, Navarro FA and Querejeta C. The aircraft intent description language: a key enabler for air-ground synchronization in trajectory-based operations. In: <italic>Proceedings of the 26th digital avionics systems conference</italic>, Dallas, TX, 21–25 October 2007, IEEE, pp.1.D.4-1–1.D.4-12</comment>.</citation></ref>
+<ref id="bibr12-0954410011427107"><label>12</label><citation citation-type="other"><person-group person-group-type="author"><name><surname>Brenan</surname><given-names>KE</given-names></name><name><surname>Campbell</surname><given-names>SL</given-names></name><name><surname>Petzold</surname><given-names>LR</given-names></name></person-group>. <source>Numerical solutions of initial-value problems in differential-algebraic equations</source><comment>Philadelphia, PA: SIAM, 1996, p. 157</comment>.</citation></ref>
+<ref id="bibr13-0954410011427107"><label>13</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Asselin</surname><given-names>M</given-names></name></person-group>. <source>An introduction to aircraft performance</source>. <publisher-loc>Reston, VA</publisher-loc>: <publisher-name>AIAA Education Series: AIAA</publisher-name>, <year>1997</year>, p.<fpage>323</fpage>–<lpage>323</lpage>.</citation></ref>
+<ref id="bibr14-0954410011427107"><label>14</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Miele</surname><given-names>A</given-names></name></person-group>. <source>Flight mechanics</source>. <publisher-loc>Reading, MA</publisher-loc>: <publisher-name>Addison-Wesley Publishing Company</publisher-name>, <year>1962</year>, pp.<fpage>107, 149</fpage>–<lpage>107, 149</lpage>.</citation></ref>
+<ref id="bibr15-0954410011427107"><label>15</label><citation citation-type="other"><comment>Base of Aircraft Data (BADA) - Revision 3.6, EUROCONTROL, 2004</comment>.</citation></ref>
+<ref id="bibr16-0954410011427107"><label>16</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Oseguera</surname><given-names>RM</given-names></name><name><surname>Williams</surname><given-names>DH</given-names></name></person-group>. <article-title>Flight evaluation of the CTAS descent advisor trajectory prediction. In: <italic>Proceedings of the American control conference</italic></article-title>, <comment>Seattle WA, 21–23 June 1995, IEEE, pp.3435–3439</comment>.</citation></ref>
+<ref id="bibr17-0954410011427107"><label>17</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Cavcar</surname><given-names>A</given-names></name><name><surname>Cavcar</surname><given-names>M</given-names></name></person-group>. <article-title>Approximate solutions of range for constant altitude-constant high subsonic speed flight of transport aircraft</article-title>. <source>Aerosp Sci Technol</source> <year>2004</year>; <volume>8</volume>: <fpage>557</fpage>–<lpage>567</lpage>.</citation></ref>
+<ref id="bibr18-0954410011427107"><label>18</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Torenbeek</surname><given-names>E</given-names></name></person-group>. <article-title>Cruise performance and range prediction reconsidered</article-title>. <source>Prog Aerosp Sci</source> <year>1997</year>; <volume>33</volume>: <fpage>285</fpage>–<lpage>321</lpage>.</citation></ref>
+<ref id="bibr19-0954410011427107"><label>19</label><citation citation-type="other"><comment>Mattingly JD, Heiser WH, Pratt DT. <italic>Aircraft engine design</italic>, 2nd ed. Reston, VA: AIAA. AIAA Education Series, 2002, pp.38–71</comment>.</citation></ref>
+</ref-list><app-group><app>
+<title/>
+<sec>
+<title>Appendix 1</title>
+<sec id="sec31-0954410011427107"><title>Notation</title>
+<p><def-list><def-item><term><italic>a</italic></term><def>
+<p>speed of sound</p></def></def-item><def-item><term><italic>c</italic></term><def>
+<p>specific fuel consumption</p></def></def-item><def-item><term><italic>CAS</italic></term><def>
+<p>calibrated air speed</p></def></def-item><def-item><term><italic>C</italic><sub><italic>C</italic></sub></term><def>
+<p>specific fuel consumption coefficient</p></def></def-item><def-item><term><italic>C</italic><sub><italic>D</italic></sub></term><def>
+<p>drag coefficient</p></def></def-item><def-item><term><italic>C</italic><sub><italic>L</italic></sub></term><def>
+<p>lift coefficient</p></def></def-item><def-item><term><italic>C</italic><sub><italic>T</italic></sub></term><def>
+<p>thrust coefficient</p></def></def-item><def-item><term><italic>D</italic></term><def>
+<p>drag</p></def></def-item><def-item><term><italic>g</italic></term><def>
+<p>gravity acceleration</p></def></def-item><def-item><term><italic>h</italic></term><def>
+<p>altitude</p></def></def-item><def-item><term><italic>h</italic><sub><italic>p</italic></sub></term><def>
+<p>pressure altitude</p></def></def-item><def-item><term><italic>L</italic></term><def>
+<p>lift</p></def></def-item><def-item><term><italic>m</italic></term><def>
+<p>aircraft mass</p></def></def-item><def-item><term><italic>m</italic><sub><italic>F</italic></sub></term><def>
+<p>fuel mass</p></def></def-item><def-item><term><inline-formula id="ilm8-0954410011427107"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math8-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>m</mml:mi></mml:mrow><mml:mi>·</mml:mi></mml:mover></mml:mrow><mml:mrow><mml:mi>F</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula></term><def>
+<p>fuel consumption rate</p></def></def-item><def-item><term><italic>M</italic></term><def>
+<p>Mach number</p></def></def-item><def-item><term><italic>p</italic></term><def>
+<p>pressure</p></def></def-item><def-item><term><italic>r</italic></term><def>
+<p>horizontal distance</p></def></def-item><def-item><term><italic>R</italic><sub><italic>a</italic></sub></term><def>
+<p>air gas constant</p></def></def-item><def-item><term><italic>R</italic><sub><italic>E</italic></sub></term><def>
+<p>Earth radius</p></def></def-item><def-item><term><italic>S</italic></term><def>
+<p>reference wing surface area</p></def></def-item><def-item><term><italic>t</italic></term><def>
+<p>time</p></def></def-item><def-item><term><italic>t</italic><sub><italic>f</italic></sub></term><def>
+<p>flight time</p></def></def-item><def-item><term><italic>T</italic></term><def>
+<p>thrust</p></def></def-item><def-item><term><italic>V</italic></term><def>
+<p>aerodynamic speed</p></def></def-item><def-item><term><italic>w</italic></term><def>
+<p>wind speed</p></def></def-item><def-item><term><italic>W</italic></term><def>
+<p>aircraft weight</p></def></def-item><def-item><term><italic>W</italic><sub><italic>TO</italic></sub></term><def>
+<p>take-off weight</p></def></def-item><def-item><term>γ</term><def>
+<p>flight-path angle</p></def></def-item><def-item><term>δ</term><def>
+<p>pressure ratio</p></def></def-item><def-item><term>θ</term><def>
+<p>temperature ratio</p></def></def-item><def-item><term>Θ</term><def>
+<p>temperature</p></def></def-item><def-item><term>κ</term><def>
+<p>ratio of specific heats</p></def></def-item><def-item><term>λ</term><def>
+<p>geodetic longitude</p></def></def-item><def-item><term>μ<sub><italic>r</italic></sub></term><def>
+<p>friction coefficient</p></def></def-item><def-item><term>ρ</term><def>
+<p>density</p></def></def-item><def-item><term>φ</term><def>
+<p>geodetic latitude</p></def></def-item><def-item><term>χ</term><def>
+<p>heading angle</p></def></def-item></def-list></p></sec>
+<sec id="sec32-0954410011427107"><title>Subscripts</title>
+<p><def-list><def-item><term><italic>A</italic></term><def>
+<p>given value</p></def></def-item><def-item><term><italic>AGL</italic></term><def>
+<p>above ground level</p></def></def-item><def-item><term><italic>app</italic></term><def>
+<p>approach</p></def></def-item><def-item><term><italic>IDLE</italic></term><def>
+<p>idle engine rating</p></def></def-item><def-item><term><italic>LD</italic></term><def>
+<p>landing</p></def></def-item><def-item><term><italic>LOF</italic></term><def>
+<p>lift off</p></def></def-item><def-item><term><italic>MCLB</italic></term><def>
+<p>maximum-climb engine rating</p></def></def-item><def-item><term><italic>SL</italic></term><def>
+<p>sea level (ISA model)</p></def></def-item><def-item><term><italic>TO</italic></term><def>
+<p>take-off engine rating</p></def></def-item></def-list></p>
+</sec>
+</sec>
+</app>
+<app>
+<title/>
+<sec>
+<title>Appendix 2</title>
+<sec id="sec33-0954410011427107"><title>Atmosphere model</title>
+<p>The atmosphere model considers a temperature deviation ΔΘ with respect to the ISA model. It is a simple model defined by a constant ΔΘ value for the whole atmosphere layer analysed (troposphere and the first part of the stratosphere), and by a constant altitude for the tropopause. This model establishes the following relationships of air temperature, pressure, and density with altitude.</p>
+<p><italic>Troposphere</italic>.
+<disp-formula id="disp-formula22-0954410011427107"><label>(22)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math22-0954410011427107"><mml:mrow><mml:mi>Θ</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>Δ</mml:mi><mml:mi>Θ</mml:mi><mml:mo>-</mml:mo><mml:msub><mml:mrow><mml:mi>α</mml:mi></mml:mrow><mml:mrow><mml:mi>T</mml:mi></mml:mrow></mml:msub><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>p</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>p</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo mathvariant="bold">-</mml:mo><mml:msub><mml:mrow><mml:mi mathvariant="bold">α</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">T</mml:mtext></mml:mrow></mml:msub><mml:mtext mathvariant="bold">h</mml:mtext><mml:msub><mml:mrow><mml:mi mathvariant="bold">Θ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">SL</mml:mtext></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:mi mathvariant="bold">Δ</mml:mi><mml:mi mathvariant="bold">Θ</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext mathvariant="bold">g</mml:mtext><mml:msub><mml:mrow><mml:mtext mathvariant="bold">R</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">a</mml:mtext></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi mathvariant="bold">α</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">T</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:msup></mml:mrow></mml:math><graphic alternate-form-of="disp-formula22-0954410011427107" xlink:href="10.1177_0954410011427107-eq22.tif"/></disp-formula>
+<disp-formula id="disp-formula23-0954410011427107"><label>(23)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math23-0954410011427107"><mml:mrow><mml:mi>ρ</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo mathvariant="bold">-</mml:mo><mml:msub><mml:mrow><mml:mi mathvariant="bold">α</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">T</mml:mtext></mml:mrow></mml:msub><mml:mtext mathvariant="bold">h</mml:mtext><mml:msub><mml:mrow><mml:mi mathvariant="bold">Θ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">SL</mml:mtext></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:mi mathvariant="bold">Δ</mml:mi><mml:mi mathvariant="bold">Θ</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mtext mathvariant="bold">g</mml:mtext><mml:msub><mml:mrow><mml:mtext mathvariant="bold">R</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">a</mml:mtext></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi mathvariant="bold">α</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">T</mml:mtext></mml:mrow></mml:msub><mml:mo mathvariant="bold">-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:msub><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>Δ</mml:mi><mml:mi>Θ</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula23-0954410011427107" xlink:href="10.1177_0954410011427107-eq23.tif"/></disp-formula>
+<italic>Stratosphere</italic>.
+<disp-formula id="disp-formula24-0954410011427107"><label>(24)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math24-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>Θ</mml:mi><mml:mo>=</mml:mo><mml:msup><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msup><mml:mo>,</mml:mo><mml:mi>p</mml:mi><mml:mo>=</mml:mo><mml:msup><mml:mrow><mml:mi>p</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msup><mml:mi>exp</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mo mathvariant="bold">-</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo mathvariant="bold">-</mml:mo><mml:msup><mml:mrow><mml:mtext mathvariant="bold">h</mml:mtext></mml:mrow><mml:mrow><mml:mo mathvariant="bold">*</mml:mo></mml:mrow></mml:msup><mml:mo stretchy="false">)</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">R</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">a</mml:mtext></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mi mathvariant="bold">Θ</mml:mi></mml:mrow><mml:mrow><mml:mo mathvariant="bold">*</mml:mo></mml:mrow></mml:msup><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mo>,</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>ρ</mml:mi><mml:mo>=</mml:mo><mml:msup><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msup><mml:mi>exp</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mo mathvariant="bold">-</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo mathvariant="bold">-</mml:mo><mml:msup><mml:mrow><mml:mtext mathvariant="bold">h</mml:mtext></mml:mrow><mml:mrow><mml:mo mathvariant="bold">*</mml:mo></mml:mrow></mml:msup><mml:mo stretchy="false">)</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">R</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">a</mml:mtext></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mi mathvariant="bold">Θ</mml:mi></mml:mrow><mml:mrow><mml:mo mathvariant="bold">*</mml:mo></mml:mrow></mml:msup><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula24-0954410011427107" xlink:href="10.1177_0954410011427107-eq24.tif"/></disp-formula>
+where at sea level Θ<sub><italic>SL</italic></sub> = 288.15 K, <italic>p</italic><sub><italic>SL</italic></sub> = 101.325 kN/m<sup>2</sup>, and ρ<sub><italic>SL</italic></sub> = 1.225 kg/m<sup>3</sup>; at the tropopause Θ<sup>*</sup>, <italic>p</italic><sup>*</sup>, and ρ<sup>*</sup> follow from the expressions above for the troposphere particularised for the tropopause altitude <italic>h</italic><sup>*</sup> = 11,000 m; and α<sub><italic>T</italic></sub> = 6.5 10<sup>−3</sup> K/m.</p>
+</sec></sec></app>
+<app>
+<title/>
+<sec>
+<title>Appendix 3</title>
+<sec id="sec34-0954410011427107"><title>Aircraft model</title>
+<p>The aircraft model used in the computations, partly based on B767-300ER data, is described as follows. The model has wing surface area 283.3 m<sup>2</sup> and maximum take-off weight 1,832,666 N.</p>
+<p>The drag polar defined by Cavcar and Cavcar <sup><xref ref-type="bibr" rid="bibr17-0954410011427107">17</xref></sup> is considered; it is given by
+<disp-formula id="disp-formula25-0954410011427107"><label>(25)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math25-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>D</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">C</mml:mtext></mml:mrow><mml:mrow><mml:msub><mml:mrow><mml:mtext mathvariant="bold">D</mml:mtext></mml:mrow><mml:mrow><mml:mn>0</mml:mn><mml:mo mathvariant="bold">,</mml:mo><mml:mtext mathvariant="bold">i</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:munderover><mml:mo>∑</mml:mo><mml:mrow><mml:mtext mathvariant="bold">j</mml:mtext><mml:mo mathvariant="bold">=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>5</mml:mn></mml:mrow></mml:munderover><mml:msub><mml:mrow><mml:mtext mathvariant="bold">k</mml:mtext></mml:mrow><mml:mrow><mml:mn>0</mml:mn><mml:mtext mathvariant="bold">j</mml:mtext></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mtext mathvariant="bold">K</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">j</mml:mtext></mml:mrow></mml:msup><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">Mg</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mo mathvariant="bold">+</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">C</mml:mtext></mml:mrow><mml:mrow><mml:msub><mml:mrow><mml:mtext mathvariant="bold">D</mml:mtext></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo mathvariant="bold">,</mml:mo><mml:mtext mathvariant="bold">i</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:munderover><mml:mo>∑</mml:mo><mml:mrow><mml:mtext mathvariant="bold">j</mml:mtext><mml:mo mathvariant="bold">=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>5</mml:mn></mml:mrow></mml:munderover><mml:msub><mml:mrow><mml:mtext mathvariant="bold">k</mml:mtext></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mtext mathvariant="bold">j</mml:mtext></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mtext mathvariant="bold">K</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">j</mml:mtext></mml:mrow></mml:msup><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">Mg</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">C</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">L</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi mathvariant="bold">   </mml:mi><mml:mo mathvariant="bold">+</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">C</mml:mtext></mml:mrow><mml:mrow><mml:msub><mml:mrow><mml:mtext mathvariant="bold">D</mml:mtext></mml:mrow><mml:mrow><mml:mn>2</mml:mn><mml:mo mathvariant="bold">,</mml:mo><mml:mtext mathvariant="bold">i</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:munderover><mml:mo>∑</mml:mo><mml:mrow><mml:mtext mathvariant="bold">j</mml:mtext><mml:mo mathvariant="bold">=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mn>5</mml:mn></mml:mrow></mml:munderover><mml:msub><mml:mrow><mml:mtext mathvariant="bold">k</mml:mtext></mml:mrow><mml:mrow><mml:mn>2</mml:mn><mml:mtext mathvariant="bold">j</mml:mtext></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mtext mathvariant="bold">K</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">j</mml:mtext></mml:mrow></mml:msup><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">Mg</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:msubsup><mml:mrow><mml:mtext mathvariant="bold">C</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">L</mml:mtext></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula25-0954410011427107" xlink:href="10.1177_0954410011427107-eq25.tif"/></disp-formula>
+where
+<disp-formula id="disp-formula26-0954410011427107"><label>(26)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math26-0954410011427107"><mml:mrow><mml:mi>K</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">Mg</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mo mathvariant="bold">=</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">M</mml:mtext><mml:mo mathvariant="bold">-</mml:mo><mml:mn>0</mml:mn><mml:mo mathvariant="bold">.</mml:mo><mml:mn>4</mml:mn><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:msup><mml:mi/><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:msqrt><mml:mrow><mml:mn>1</mml:mn><mml:mo mathvariant="bold">-</mml:mo><mml:msup><mml:mrow><mml:mtext mathvariant="bold">M</mml:mtext></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup></mml:mrow></mml:msqrt></mml:mrow></mml:math><graphic alternate-form-of="disp-formula26-0954410011427107" xlink:href="10.1177_0954410011427107-eq26.tif"/></disp-formula>
+The incompressible drag polar coefficients are <italic>C</italic><sub><italic>D</italic><sub>0<italic>i</italic></sub></sub> = 0.01322, and <italic>C</italic><sub><italic>D</italic><sub>1<italic>i</italic></sub></sub> = –0.00610 and <italic>C</italic><sub><italic>D</italic><sub>2<italic>i</italic></sub></sub> = 0.06000, and the compressible coefficients are given in <xref ref-type="table" rid="table5-0954410011427107">Table 5</xref>. This polar is valid for <italic>M</italic> ⩾ 0.4; for <italic>M</italic> ⩽ 0.4, the incompressible drag polar applies (obtained by setting <italic>K</italic> = 0 in equation (<xref ref-type="disp-formula" rid="disp-formula25-0954410011427107">25</xref>)).
+<table-wrap id="table5-0954410011427107" position="float"><label>Table 5.</label><caption>
+<p>Compressible drag-polar coefficients for the model aircraft.</p></caption><graphic alternate-form-of="table5-0954410011427107" xlink:href="10.1177_0954410011427107-table5.tif"/>
+<table frame="hsides" rules="groups"><thead>
+<tr><th><italic>j</italic></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><italic>k</italic><sub>0<italic>j</italic></sub></td>
+<td>0.0067</td>
+<td>−0.1861</td>
+<td>2.2420</td>
+<td>−6.4350</td>
+<td>6.3428</td>
+</tr>
+<tr>
+<td><italic>k</italic><sub>1<italic>j</italic></sub></td>
+<td>0.0962</td>
+<td>−0.7602</td>
+<td>−1.2870</td>
+<td>3.7925</td>
+<td>−2.7672</td>
+</tr>
+<tr>
+<td><italic>k</italic><sub>2<italic>j</italic></sub></td>
+<td>−0.1317</td>
+<td>1.3427</td>
+<td>−1.2839</td>
+<td>5.0164</td>
+<td>0.0000</td>
+</tr>
+</tbody>
+</table>
+</table-wrap></p>
+<p>For non-clean configurations, the following <italic>C</italic><sub><italic>D</italic></sub> increments are considered: Δ<italic>C</italic><sub><italic>D</italic></sub> = 0.010, 0.021, and 0.043 for flaps deflections 15°, 25°, and 30°, Δ<italic>C</italic><sub><italic>D</italic></sub> = 0.018 for the landing gear and Δ<italic>C</italic><sub><italic>D</italic></sub> = 0.018 for the spoilers. For the take-off and landing runs, the values of lift coefficient considered are <italic>C</italic><sub><italic>L</italic>,<italic>TO</italic></sub> = 1.4 and <italic>C</italic><sub><italic>L</italic>,<italic>LD</italic></sub> = 1.7.</p>
+<p>For the available thrust, the following general model is considered<sup><xref ref-type="bibr" rid="bibr18-0954410011427107">18</xref></sup>
+<disp-formula id="disp-formula27-0954410011427107"><label>(27)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math27-0954410011427107"><mml:mrow><mml:mi>T</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>W</mml:mi></mml:mrow><mml:mrow><mml:mi>TO</mml:mi></mml:mrow></mml:msub><mml:mi>δ</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>T</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>N</mml:mi></mml:mrow><mml:mrow><mml:mi>c</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula27-0954410011427107" xlink:href="10.1177_0954410011427107-eq27.tif"/></disp-formula>
+where <italic>W</italic><sub><italic>TO</italic></sub> is the reference take-off weight, δ = <italic>p</italic>/<italic>p</italic><sub><italic>SL</italic></sub> the pressure ratio and <italic>C</italic><sub><italic>T</italic></sub> the thrust coefficient, which in general is a function of the Mach number and the engine control parameter, <italic>N</italic><sub><italic>c</italic></sub>. For a given <italic>engine rating</italic> (take-off, maximum climb or idle), the control parameter is a function of Mach number and altitude (<italic>N</italic><sub><italic>c</italic></sub>(<italic>M</italic>, <italic>h</italic>)); therefore, one can also write the model as <italic>T</italic> = <italic>T</italic><sub><italic>RATE</italic></sub>(<italic>M</italic>, <italic>h</italic>), that is, thrust dependent both on Mach number and altitude.</p>
+<p>Although different functional dependencies should be used for the various engine ratings, in this article, for simplicity, the following single model is considered for the thrust coefficient<sup><xref ref-type="bibr" rid="bibr5-0954410011427107">5</xref>,<xref ref-type="bibr" rid="bibr19-0954410011427107">19</xref></sup>)
+<disp-formula id="disp-formula28-0954410011427107"><label>(28)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math28-0954410011427107"><mml:mrow><mml:mn>90</mml:mn><mml:mi>%</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>T</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>T</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi><mml:mo>,</mml:mo><mml:mi>RATE</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>W</mml:mi></mml:mrow><mml:mrow><mml:mi>TO</mml:mi></mml:mrow></mml:msub><mml:mrow><mml:mo/><mml:mo>(</mml:mo></mml:mrow><mml:mn>1</mml:mn><mml:mo>+</mml:mo><mml:mi>κ</mml:mi><mml:mo>-</mml:mo><mml:mn>1 2</mml:mn><mml:msup><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:msup><mml:mrow><mml:mo/><mml:mo>)</mml:mo></mml:mrow><mml:mrow><mml:mi>κ</mml:mi><mml:mi>κ</mml:mi><mml:mo>-</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:msup><mml:mrow><mml:mo/><mml:mo>(</mml:mo></mml:mrow><mml:mn>1</mml:mn><mml:mo>-</mml:mo><mml:mn>0</mml:mn><mml:mo>.</mml:mo><mml:mn>49</mml:mn><mml:msqrt><mml:mrow><mml:mi>M</mml:mi></mml:mrow></mml:msqrt><mml:mrow><mml:mo/><mml:mo>)</mml:mo></mml:mrow><mml:mn>1</mml:mn><mml:mi>θ</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula28-0954410011427107" xlink:href="10.1177_0954410011427107-eq28.tif"/></disp-formula>
+where <italic>T</italic><sub><italic>SL</italic>,<italic>RATE</italic></sub> is the thrust at sea level and for <italic>M</italic> = 0 for the given engine rating, having the following values for the engine of the model aircraft: <italic>T</italic><sub><italic>SL</italic>,<italic>TO</italic></sub> = 5.15 × 10<sup>5</sup> N, <italic>T</italic><sub><italic>SL</italic>,<italic>MCLB</italic></sub> = 4.89 × 10<sup>5</sup> N, and <italic>T</italic><sub><italic>SL</italic>,<italic>IDLE</italic></sub> = 0.073 × 10<sup>5</sup> N.</p>
+<p>For the specific fuel consumption, the following general model is considered<sup><xref ref-type="bibr" rid="bibr18-0954410011427107">18</xref></sup>
+<disp-formula id="disp-formula29-0954410011427107"><label>(29)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math29-0954410011427107"><mml:mrow><mml:mi>c</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>a</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:msqrt><mml:mrow><mml:mi>θ</mml:mi></mml:mrow></mml:msqrt><mml:msub><mml:mrow><mml:mi>L</mml:mi></mml:mrow><mml:mrow><mml:mi>H</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>C</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula29-0954410011427107" xlink:href="10.1177_0954410011427107-eq29.tif"/></disp-formula>
+where <inline-formula id="ilm9-0954410011427107"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml-math9-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>a</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msqrt><mml:mrow><mml:mi>κ</mml:mi><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>a</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>Θ</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:msqrt></mml:mrow></mml:math></inline-formula> the speed of sound at sea level, θ = Θ/Θ<sub><italic>SL</italic></sub> the temperature ratio, <italic>L</italic><sub><italic>H</italic></sub> the fuel latent heat and <italic>C</italic><sub><italic>C</italic></sub> the specific fuel consumption coefficient.</p>
+<p>For the specific fuel consumption coefficient, the linear model defined by Mattingly et al.<sup><xref ref-type="bibr" rid="bibr19-0954410011427107">19</xref></sup> (and approximately depicted by Miele<sup><xref ref-type="bibr" rid="bibr14-0954410011427107">14</xref></sup>) is considered; it is given by
+<disp-formula id="disp-formula30-0954410011427107"><label>(30)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math30-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>C</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>c</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>L</mml:mi></mml:mrow><mml:mrow><mml:mi>H</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mrow><mml:mi>a</mml:mi></mml:mrow><mml:mrow><mml:mi>SL</mml:mi></mml:mrow></mml:msub><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo mathvariant="bold">.</mml:mo><mml:mn>0</mml:mn><mml:mo mathvariant="bold">+</mml:mo><mml:mn>1</mml:mn><mml:mo mathvariant="bold">.</mml:mo><mml:mn>2</mml:mn><mml:mtext mathvariant="bold">Mg</mml:mtext><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula30-0954410011427107" xlink:href="10.1177_0954410011427107-eq30.tif"/></disp-formula>
+where <italic>c</italic><sub><italic>SL</italic></sub> is the specific fuel consumption at sea level and for <italic>M</italic> = 0, whose value for the engine of the model aircraft is <italic>c</italic><sub><italic>SL</italic></sub> = 9.01 × 10<sup>−6</sup> kg/(s N). For the fuel latent heat, one has <italic>L</italic><sub><italic>H</italic></sub> = 43 × 10<sup>6</sup> J/kg. In general, <italic>C</italic><sub><italic>C</italic></sub> is a function of <italic>M</italic> and the thrust coefficient <italic>C</italic><sub><italic>T</italic></sub> however, the dependence of <italic>C</italic><sub><italic>C</italic></sub> with <italic>C</italic><sub><italic>T</italic></sub> is in practice very weak and can be neglected.<sup><xref ref-type="bibr" rid="bibr18-0954410011427107">18</xref></sup></p>
+</sec></sec></app>
+<app>
+<title/>
+<sec>
+<title>Appendix 4</title>
+<sec id="sec35-0954410011427107"><title>Flight segment computation</title>
+<sec id="sec36-0954410011427107"><title>Initial climb segment</title>
+<p>The equations of motion (<xref ref-type="disp-formula" rid="disp-formula1-0954410011427107">1</xref>) reduce to
+<disp-formula id="disp-formula31-0954410011427107"><label>(31)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math31-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>V</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>T</mml:mi></mml:mrow><mml:mrow><mml:mi>TO</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>-</mml:mo><mml:mn>1 2</mml:mn><mml:mi>ρ</mml:mi><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>D</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mi>   </mml:mi><mml:mi>   </mml:mi><mml:mo>-</mml:mo><mml:mi>m</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo mathvariant="bold">+</mml:mo><mml:mtext mathvariant="bold">V dw dhcos</mml:mtext><mml:msub><mml:mrow><mml:mi mathvariant="bold">γ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">A</mml:mtext></mml:mrow></mml:msub><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">sin</mml:mtext><mml:msub><mml:mrow><mml:mi mathvariant="bold">γ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">A</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>dm dt</mml:mtext><mml:mo mathvariant="bold">=</mml:mo><mml:mo mathvariant="bold">-</mml:mo><mml:mtext mathvariant="bold">c</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">M</mml:mtext><mml:mo mathvariant="bold">,</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">T</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">TO</mml:mtext></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">M</mml:mtext><mml:mo mathvariant="bold">,</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">R</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">E</mml:mtext></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi mathvariant="bold">ϕ</mml:mi><mml:mtext>dt</mml:mtext><mml:mo mathvariant="bold">=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">Vcos</mml:mtext><mml:msub><mml:mrow><mml:mi mathvariant="bold">γ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">A</mml:mtext></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:mtext mathvariant="bold">w</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">cos</mml:mtext><mml:msub><mml:mrow><mml:mi mathvariant="bold">χ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">A</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">R</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">E</mml:mtext></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">cos</mml:mtext><mml:mi mathvariant="bold">ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi mathvariant="bold">λ</mml:mi><mml:mtext>dt</mml:mtext><mml:mo mathvariant="bold">=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">Vcos</mml:mtext><mml:msub><mml:mrow><mml:mi mathvariant="bold">γ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">A</mml:mtext></mml:mrow></mml:msub><mml:mo mathvariant="bold">+</mml:mo><mml:mtext mathvariant="bold">w</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">sin</mml:mtext><mml:msub><mml:mrow><mml:mi mathvariant="bold">χ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">A</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>dh dt</mml:mtext><mml:mo mathvariant="bold">=</mml:mo><mml:mtext mathvariant="bold">Vsin</mml:mtext><mml:msub><mml:mrow><mml:mi mathvariant="bold">γ</mml:mi></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">A</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula31-0954410011427107" xlink:href="10.1177_0954410011427107-eq31.tif"/></disp-formula>
+where the lift coefficient <italic>C</italic><sub><italic>L</italic></sub>(<italic>V</italic>, <italic>h</italic>, <italic>m</italic>) is given by
+<disp-formula id="disp-formula32-0954410011427107"><label>(32)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math32-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mn>2</mml:mn><mml:mi>L</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>m</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>ρ</mml:mi><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>S</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula32-0954410011427107" xlink:href="10.1177_0954410011427107-eq32.tif"/></disp-formula>
+with
+<disp-formula id="disp-formula33-0954410011427107"><label>(33)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math33-0954410011427107"><mml:mrow><mml:mi>L</mml:mi><mml:mo>=</mml:mo><mml:mi>mg</mml:mi><mml:mi>cos</mml:mi><mml:msub><mml:mrow><mml:mi>γ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>-</mml:mo><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>w</mml:mi><mml:mtext>d</mml:mtext><mml:mi>h</mml:mi><mml:mi>V</mml:mi><mml:mi>sin</mml:mi><mml:msup><mml:mi/><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:msub><mml:mrow><mml:mi>γ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math><graphic alternate-form-of="disp-formula33-0954410011427107" xlink:href="10.1177_0954410011427107-eq33.tif"/></disp-formula>
+</p>
+</sec>
+<sec id="sec37-0954410011427107"><title>CAS/Mach climb/descent</title>
+<p>The equations of motion (<xref ref-type="disp-formula" rid="disp-formula1-0954410011427107">1</xref>) reduce to
+<disp-formula id="disp-formula34-0954410011427107"><label>(34)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math34-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>mV</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi>γ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mi>L</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>m</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>-</mml:mo><mml:mi>mg</mml:mi><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo>+</mml:mo><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>w</mml:mi><mml:mtext>d</mml:mtext><mml:mi>h</mml:mi><mml:mi>V</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>sin</mml:mi><mml:msup><mml:mi/><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>γ</mml:mi></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>d</mml:mtext><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo>-</mml:mo><mml:mi>c</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>T</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>λ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>sin</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>d</mml:mtext><mml:mi>h</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mi>V</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>sin</mml:mi><mml:mi>γ</mml:mi></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula34-0954410011427107" xlink:href="10.1177_0954410011427107-eq34.tif"/></disp-formula>
+where the lift <italic>L</italic>(<italic>m</italic>, <italic>h</italic>, γ) is given by
+<disp-formula id="disp-formula35-0954410011427107"><label>(35)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math35-0954410011427107"><mml:mrow><mml:mi>L</mml:mi><mml:mo>=</mml:mo><mml:mn>1 2</mml:mn><mml:mi>ρ</mml:mi><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>m</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>γ</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula35-0954410011427107" xlink:href="10.1177_0954410011427107-eq35.tif"/></disp-formula>
+and the lift coefficient <italic>C</italic><sub><italic>L</italic></sub>(<italic>m</italic>, <italic>h</italic>, γ) is the solution of
+<disp-formula id="disp-formula36-0954410011427107"><label>(36)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math36-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mn>1 2</mml:mn><mml:mi>ρ</mml:mi><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>D</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mi>T</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>-</mml:mo><mml:mi>m</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">[</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo mathvariant="bold">+</mml:mo><mml:mtext mathvariant="bold">V</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext>dV dh</mml:mtext><mml:mo mathvariant="bold">+</mml:mo><mml:mtext>dw dhcos</mml:mtext><mml:mi mathvariant="bold">γ</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">]</mml:mo><mml:mtext mathvariant="bold">sin</mml:mtext><mml:mi mathvariant="bold">γ</mml:mi></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula36-0954410011427107" xlink:href="10.1177_0954410011427107-eq36.tif"/></disp-formula>
+which depends on the drag polar model considered.</p>
+</sec>
+<sec id="sec38-0954410011427107"><title>Horizontal acceleration/deceleration</title>
+<p>The equations of motion (<xref ref-type="disp-formula" rid="disp-formula1-0954410011427107">1</xref>) reduce to
+<disp-formula id="disp-formula37-0954410011427107"><label>(37)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math37-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>V</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mi>T</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo>-</mml:mo><mml:mn>1 2</mml:mn><mml:msub><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>D</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>d</mml:mtext><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo>-</mml:mo><mml:mi>c</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mi>T</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>λ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mi>V</mml:mi><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>sin</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula37-0954410011427107" xlink:href="10.1177_0954410011427107-eq37.tif"/></disp-formula>
+where the lift coefficient <italic>C</italic><sub><italic>L</italic></sub>(<italic>V</italic>, <italic>m</italic>) is given by
+<disp-formula id="disp-formula38-0954410011427107"><label>(38)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math38-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mn>2</mml:mn><mml:mi>mg</mml:mi><mml:msub><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup><mml:mi>S</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula38-0954410011427107" xlink:href="10.1177_0954410011427107-eq38.tif"/></disp-formula>
+</p>
+<p>In this segment, one has <italic>L</italic> = <italic>mg</italic> and γ = 0.</p>
+</sec>
+<sec id="sec39-0954410011427107"><title>Cruise</title>
+<p>Equation (<xref ref-type="disp-formula" rid="disp-formula1-0954410011427107">1</xref>) reduce to
+<disp-formula id="disp-formula39-0954410011427107"><label>(39)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math39-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>d</mml:mtext><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo>-</mml:mo><mml:mi>c</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mi>T</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>m</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mrow><mml:mi>h</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>λ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>sin</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula39-0954410011427107" xlink:href="10.1177_0954410011427107-eq39.tif"/></disp-formula>
+where the required thrust <italic>T</italic>(<italic>m</italic>) is given by
+<disp-formula id="disp-formula40-0954410011427107"><label>(40)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math40-0954410011427107"><mml:mrow><mml:mi>T</mml:mi><mml:mo>=</mml:mo><mml:mn>1 2</mml:mn><mml:msub><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:msubsup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>D</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math><graphic alternate-form-of="disp-formula40-0954410011427107" xlink:href="10.1177_0954410011427107-eq40.tif"/></disp-formula>
+with
+<disp-formula id="disp-formula41-0954410011427107"><label>(41)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math41-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mn>2</mml:mn><mml:mi>mg</mml:mi><mml:msub><mml:mrow><mml:mi>ρ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub><mml:msubsup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup><mml:mi>S</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula41-0954410011427107" xlink:href="10.1177_0954410011427107-eq41.tif"/></disp-formula>
+</p>
+<p>In this segment, one has <italic>L</italic> = <italic>mg</italic> and γ = 0.</p>
+</sec>
+<sec id="sec40-0954410011427107"><title>Glide path</title>
+<p>Equations (<xref ref-type="disp-formula" rid="disp-formula1-0954410011427107">1</xref>) reduce to
+<disp-formula id="disp-formula42-0954410011427107"><label>(42)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math42-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>d</mml:mtext><mml:mi>m</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo>-</mml:mo><mml:mi>c</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>T</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>m</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>C</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mi>E</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>ϕ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>λ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>C</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>+</mml:mo><mml:mi>w</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>sin</mml:mi><mml:msub><mml:mrow><mml:mi>χ</mml:mi></mml:mrow><mml:mrow><mml:mi>A</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mtext>d</mml:mtext><mml:mi>h</mml:mi><mml:mtext>d</mml:mtext><mml:mi>t</mml:mi><mml:mo>=</mml:mo><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>C</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>sin</mml:mi><mml:mi>γ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula42-0954410011427107" xlink:href="10.1177_0954410011427107-eq42.tif"/></disp-formula>
+where the required thrust <italic>T</italic>(<italic>h</italic>, <italic>m</italic>) is given by
+<disp-formula id="disp-formula43-0954410011427107"><label>(43)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math43-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>T</mml:mi><mml:mo>=</mml:mo><mml:mn>1 2</mml:mn><mml:mi>ρ</mml:mi><mml:msubsup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>S</mml:mi><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>D</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>M</mml:mi><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>   </mml:mi><mml:mi>   </mml:mi><mml:mo>+</mml:mo><mml:mi>m</mml:mi><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">[</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo mathvariant="bold">+</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">V</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">C</mml:mtext></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">(</mml:mo><mml:mtext>d</mml:mtext><mml:msub><mml:mrow><mml:mtext mathvariant="bold">V</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">C</mml:mtext></mml:mrow></mml:msub><mml:mtext>dh</mml:mtext><mml:mo mathvariant="bold">+</mml:mo><mml:mtext>dw dhcos</mml:mtext><mml:mi mathvariant="bold">γ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">]</mml:mo><mml:mtext mathvariant="bold">sin</mml:mtext><mml:mi mathvariant="bold">γ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula43-0954410011427107" xlink:href="10.1177_0954410011427107-eq43.tif"/></disp-formula>
+with
+<disp-formula id="disp-formula44-0954410011427107"><label>(44)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math44-0954410011427107"><mml:mrow><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mi>L</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mn>2</mml:mn><mml:mi>L</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo>,</mml:mo><mml:mi>m</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>ρ</mml:mi><mml:msubsup><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msubsup><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mi>S</mml:mi></mml:mrow></mml:math><graphic alternate-form-of="disp-formula44-0954410011427107" xlink:href="10.1177_0954410011427107-eq44.tif"/></disp-formula>
+and
+<disp-formula id="disp-formula45-0954410011427107"><label>(45)</label><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="math45-0954410011427107"><mml:mrow><mml:mtable align="right"><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>L</mml:mi><mml:mo>=</mml:mo><mml:mi>mg</mml:mi><mml:mi>cos</mml:mi><mml:mi>γ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>+</mml:mo><mml:msub><mml:mrow><mml:mi>mV</mml:mi></mml:mrow><mml:mrow><mml:mi>C</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:mtd></mml:mtr><mml:mtr><mml:mtd columnalign="right" columnspan="1"><mml:mrow><mml:mi>      </mml:mi><mml:mo>×</mml:mo><mml:mi>sin</mml:mi><mml:mi>γ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">[</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">V</mml:mtext></mml:mrow><mml:mrow><mml:mtext mathvariant="bold">C</mml:mtext></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext>d</mml:mtext><mml:mi mathvariant="bold">γ</mml:mi><mml:mtext>dh</mml:mtext><mml:mo mathvariant="bold">-</mml:mo><mml:mtext>dw dhsin</mml:mtext><mml:mi mathvariant="bold">γ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mtext mathvariant="bold">h</mml:mtext><mml:mo stretchy="false">)</mml:mo><mml:mtext mathvariant="bold">g</mml:mtext><mml:mo stretchy="false">]</mml:mo></mml:mrow></mml:mtd></mml:mtr></mml:mtable></mml:mrow></mml:math><graphic alternate-form-of="disp-formula45-0954410011427107" xlink:href="10.1177_0954410011427107-eq45.tif"/></disp-formula>
+</p>
+</sec>
+</sec>
+</sec></app></app-group>
+</back>
+</article>

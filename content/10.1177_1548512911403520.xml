@@ -1,0 +1,898 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">DMS</journal-id>
+<journal-id journal-id-type="hwp">spdms</journal-id>
+<journal-title>The Journal of Defense Modeling and Simulation: Applications, Methodology, Technology</journal-title>
+<issn pub-type="ppub">1548-5129</issn>
+<issn pub-type="epub">1557-380X</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1548512911403520</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1548512911403520</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Outlier detection in hyperspectral imagery using closest distance to center with ellipsoidal multivariate trimming</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Caulk</surname><given-names>Ryan F</given-names></name>
+<xref ref-type="aff" rid="aff1-1548512911403520">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Reyes</surname><given-names>Kevin B</given-names></name>
+<xref ref-type="aff" rid="aff1-1548512911403520">1</xref>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Bauer</surname><given-names>Kenneth W</given-names><suffix>Jr</suffix></name>
+<xref ref-type="aff" rid="aff2-1548512911403520">2</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-1548512911403520"><label>1</label>Randolf AFB, 151 J St East, TX 78150, USA</aff>
+<aff id="aff2-1548512911403520"><label>2</label>Air Force Institute of Technology, Wright-Patterson AFB, 2950 Hobson Way, OH 45433, USA</aff>
+<author-notes>
+<corresp id="corresp1-1548512911403520">Kenneth W Bauer Jr, Air Force Institute of Technology, Wright-Patterson AFB, 2950 Hobson Way, OH 45433, USA Email:<email>kenneth.bauer@afit.edu</email></corresp>
+<fn fn-type="other" id="bio1-1548512911403520">
+<p>Captain Ryan F Caulk is a 2007 graduate of the Masters of Science in Operations Research degree program at the Air Force Institute of Technology, Wright-Patterson Air Force Base (AFB), Ohio, USA. He is currently assigned to the Studies and Analysis Squadron, Randolph AFB.</p>
+</fn>
+<fn fn-type="other" id="bio2-1548512911403520">
+<p>Captain Kevin B Reyes is a 2007 graduate of the Masters of Science in Operations Research degree program at the Air Force Institute of Technology, Wright-Patterson AFB, Ohio, USA. Upon graduation from that program he was assigned to the Defense Threat Reduction Agency in Alexandria, Virginnia, USA.</p>
+</fn>
+<fn fn-type="other" id="bio3-1548512911403520">
+<p>Kenneth W Bauer Jr is a Professor of Operations Research at the Air Force Institute of Technology, Wright-Patterson AFB, Ohio, USA. where he teaches classes in applied statistics and pattern recognition. His research interests lie in the areas of automatic target recognition and multivariate statistics.</p>
+</fn>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2012</year>
+</pub-date>
+<volume>9</volume>
+<issue>2</issue>
+<issue-title>Special Issue: Resuability, Interoperability and Composability in Air Warfare Simulations</issue-title>
+<fpage>163</fpage>
+<lpage>172</lpage>
+<permissions>
+<copyright-statement>© 2012 The Society for Modeling and Simulation International</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">The Society for Modeling and Simulation International</copyright-holder>
+</permissions>
+<abstract>
+<p>In this paper we examine the efficacy of using the closest distance to center algorithm in conjunction with ellipsoidal multivariate trimming (MVT) to find outliers in a hyperspectral image. MVT is applied here as a global anomaly detector on images that are pre-processed into clusters using a technique called X-means. Under the assumption that there are no more than 5% outliers in any given cluster set, we develop a method, based upon principal component analysis pre-processing, to create a flexible threshold for determining the percentage of data to retain with MVT. Using a retention percentage that more adequately reflects the actual number of outlier-free observations allows one to form estimates of the mean and covariance matrix that more effectively decrease the effects of swamping and masking as compared to using a set percentile for retention. These ideas are tested against real and synthetically generated hyperspectral imagery.</p>
+</abstract>
+<kwd-group>
+<kwd>blocked adaptive computationally efficient outlier nominators (BACON)</kwd>
+<kwd>closest distance to center</kwd>
+<kwd>clustering</kwd>
+<kwd>ellipsoidal multivariate trimming</kwd>
+<kwd>hyperspectral imagery</kwd>
+<kwd>outlier detection</kwd>
+<kwd>principal component analysis</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1548512911403520">
+<title>1. Background</title>
+<p>This paper deals with the military application of hyperspectral imagery (HSI). A succinct, well-written summary of the military utility of HSI is found at GlobalSecurity.org.<sup><xref ref-type="bibr" rid="bibr1-1548512911403520">1</xref></sup> An excerpt follows:</p>
+<p><disp-quote>
+<p>Hyperspectral imaging technology uses hundreds of very narrow wavelength bands to ‘see’ reflected energy from objects on the ground. This energy appears in the form of ‘spectral fingerprints’ across the light spectrum and enables collection of much more detailed data and produce a much higher spectral resolution of a scene than possible using other remote sensing technologies.</p>
+<p>Once these fingerprints are detected, special algorithms—repetitive, problem-solving mathematical calculations—then assess them to differentiate various natural and manmade substances from one another. ‘Signature’ libraries may also be used to identify specific materials—e.g., rooftops, parking lots, grass, or mud—by comparing a library’s pre-existing reference catalogs with freshly taken hyperspectral images of the battlefield from space.</p>
+<p>Image processing equipment then portrays the various types of terrain and objects upon it in different colors forming a ‘color cube,’ each based on the wavelength of the reflected energy captured by the image. These colors are subsequently ‘translated’ into maps that correspond to certain types of material or objects to detect or identify military targets such as a tank or a mobile missile launcher. Algorithms can also categorize types of terrain and vegetation (useful, for example, in counter-narcotic operations), detecting features such as disturbed soil, stressed vegetation, and whether the ground will support the movement of military vehicles.</p>
+<p>Once this technology is mature, theater commanders can use mobile ground stations to process in real-time information transmitted by the satellite, critical to theater commanders for them to keep pace with rapidly changing conditions.</p>
+</disp-quote></p>
+<p>More detailed discussions are found in Ardouin et al.<sup><xref ref-type="bibr" rid="bibr2-1548512911403520">2</xref></sup> and Briottet et al.<sup><xref ref-type="bibr" rid="bibr3-1548512911403520">3</xref></sup> The background material given above reflects a general application area known as signature matching.<sup><xref ref-type="bibr" rid="bibr4-1548512911403520">4</xref></sup> The application of such algorithms is complicated by the need to convert the collected sensor data into the spectra of the material of interest. The sensor collects what is known as spectral radiance. Radiance is modulated by atmospheric effects, such as the absorption of the energy of certain spectral bands and the superposition of solar energy scattered by the atmosphere on to the light reflected by an object. The spectra of the material of interest are measured in terms of what is called emissivity or reflectance. It can be thought of as the spectral signature of the material as collected under laboratory conditions where the effects of the atmosphere have been factored out. The application of signature-matching algorithms requires the conversion of the radiance into reflectance. This process is known as atmospheric calibration. Now, if the complications due to weather are compounded with the interest in several different objects, each of which may be associated with multiple signatures, there may be a desire to apply what are known as anomaly detectors. These seek to find observations that are different from typical background materials without using specific target signatures.<sup><xref ref-type="bibr" rid="bibr4-1548512911403520">4</xref></sup></p>
+<p>In this paper, we propose a new anomaly detector. The method can be described as a global version of the localized RX algorithm.<sup><xref ref-type="bibr" rid="bibr5-1548512911403520">5</xref>,<xref ref-type="bibr" rid="bibr6-1548512911403520">6</xref></sup> The new method incorporates robust estimates of the filter’s parameters. Where the RX algorithm involves the movement of a window through the pixels of an image while computing localized statistics, the proposed method computes its scores relative to a robust parameter set computed for clusters of pixels within the image. Related work can be found in Taitano et al.<sup><xref ref-type="bibr" rid="bibr7-1548512911403520">7</xref></sup> In Section 2, a little more background is given for readers unfamiliar with hyperspectral imaging.</p>
+</sec>
+<sec id="section2-1548512911403520" sec-type="intro">
+<title>2. Introduction</title>
+<p>Digital photographs taken from aircraft or satellites can be used for a wide range of military and civilian applications, such as locating a tank in a field or establishing the presence of a certain type of foliage. Several methods exist to locate anomalies in an image; for instance, highly trained individuals view the photograph with the human eye, or data from the image is analyzed using either local or global anomaly detectors. The first method can prove to be very difficult, especially in a highly cluttered area. It can also be extremely time consuming, because the area of interest has to be photographed and sent to an imagery expert, who then manually analyzes the image to determine if there are anomalies. The second, and possibly more effective method, is to analyze the data from the image using an image-processing algorithm known as an anomaly detector.</p>
+<p>A hyperspectral image is similar to a photograph taken from an ordinary digital camera; however, a hyperspectral image may contain data from more than 250 wavelength bands from the electromagnetic (EM) spectrum, which includes some non-visible bands, whereas a standard digital camera collects data from only three bands in the visible spectrum, that the human eye sees as red, green, and blue. These images are made by specialized cameras placed on, say, an aircraft within the Earth’s atmosphere or on a satellite in space. The image is divided up into pixels and the magnitude of the signal for each band is recorded for each pixel. The number of pixels in an image depends on the resolution of the camera. An image that captures fewer than 20 bands of the spectrum referred to as a multispectral image, and an image with 20 or more bands is called a hyperspectral image. All of this data is then stored in a three-dimensional <italic>hypermatrix</italic>,<sup><xref ref-type="bibr" rid="bibr8-1548512911403520">8</xref></sup> referred to as a data cube, with the first two dimensions of the hypermatrix, <italic>x</italic> and <italic>y</italic>, being the location of the pixel in the image, and the third dimension, <italic>z</italic>, being the magnitude at each of the recorded EM bands. The image can be thought of as a series of vectors, one for each pixel location, that contains the wavelength magnitudes for each of the bands.</p>
+<p>Consequently, HSI data can be analyzed using standard multivariate statistical techniques, and anomalies may be found by locating outliers within the data. Certain techniques specific to locating anomalies in an image, such as global anomaly detectors, work most efficiently when applied to homogenous datasets. Therefore, if data are being analyzed for the presence of anomalies in an image containing more than one main feature, such as a field with a road running through it, cluster analysis must be accomplished prior to using a global anomaly detector, or the detector may determine the road is the anomaly in the image, and true anomalies may be overlooked. When performed properly, cluster analysis splits the data into the requested number of subsets, known as clusters, allowing global anomaly detectors to analyze each cluster individually to produce the best results. In this paper, we will propose the use of the closest distance to center (CDC) algorithm<sup><xref ref-type="bibr" rid="bibr9-1548512911403520">9</xref></sup> in conjunction with the ellipsoidal multivariate trimming (MVT) algorithm<sup><xref ref-type="bibr" rid="bibr10-1548512911403520">10</xref></sup> as a method for finding anomalies in hyperspectral images. We call this new method ‘screened MVT’. The purpose of this paper is to demonstrate that some standard tools used in process control can be readily adapted to a new problem area.</p>
+<p>The paper is organized as follows. Firstly, we present a brief overview of the area of HSI. Next, we discuss the need for dimensionality reduction and begin the development of a CDC/MVT anomaly detector, screened MVT. The proposed method is tested on a set of hyperspectral images, and the paper is closed with a summary.</p>
+</sec>
+<sec id="section3-1548512911403520">
+<title>3. Hyperspectral imagery</title>
+<p>To gain a basic understanding of HSI, we can begin with a discussion of the common digital camera that has become ubiquitous in modern society. Conceptually, when we use a digital camera to take a color photograph, the camera divides the imaged scene into a two-dimensional grid of pixels. For each pixel, three pieces of information are collected. These are, respectively, the amount of energy emanating from the pixel in the red, green, and blue portions of the EM spectrum. This information is stored in three separate two-dimensional arrays. For any given pixel, combining its respective red, green, and blue information produces the true color of the pixel. Of course, viewing the array of colored pixels on a computer screen or in its printed form reveals the scene originally photographed.</p>
+<p>If we image a scene for the purpose of identifying different objects that it may contain, a simple color image produced by a digital camera may suffice; however, a true-color image has its limitations. For example, vegetation and camouflage nets may both appear green, making it very difficult for the human eye – or worse, for the computer – to discriminate one from the other. As seen in <xref ref-type="fig" rid="fig1-1548512911403520">Figure 1</xref>, it is important to note that the visible spectrum of light is only a small fraction of the total EM spectrum that may be detected.</p>
+<fig id="fig1-1548512911403520" position="float">
+<label>Figure 1.</label>
+<caption><p>Example of the bands of the electromagnetic spectrum used in hyperspectral imagery.<sup><xref ref-type="bibr" rid="bibr11-1548512911403520">11</xref></sup></p></caption>
+<graphic xlink:href="10.1177_1548512911403520-fig1.tif"/>
+</fig>
+<p>To address this limitation of true-color imagery, hyperspectral sensors collect information beyond the visible region of the EM spectrum. Just as a digital camera produces three images for wavelength bands corresponding to red, green, and blue light, a hyperspectral sensor produces images for many different contiguous wavelength bands, typically spanning the visible to near-infrared regions of the EM spectrum. The number of image bands collected by a sensor can range from 20 to over 500.</p>
+<p>Consider the <italic>M</italic> × <italic>N</italic> pixelated scene of <xref ref-type="fig" rid="fig2-1548512911403520">Figure 2</xref>. The hyperspectral sensor can be thought of as producing <italic>P</italic> different images, one for each band it collects. This collection of pixel-by-band information is often called an ‘image cube’. For <italic>m</italic> = 1, …, <italic>M</italic> and <italic>n</italic> = 1, …, <italic>N</italic> the pixel in row <italic>m</italic>, column <italic>n</italic> of band 1 refers to the same spatial location of the scene as the pixels in row <italic>m</italic>, column <italic>n</italic> of every other band in the image cube. The sensor reading for a pixel in row <italic>m</italic>, column <italic>n</italic>, and band λ = 1, …, <italic>P</italic>, can be referred to by the variable <italic>x<sub>mnλ</sub></italic>. For a given pixel address (<italic>m</italic>, <italic>n</italic>), we can form the vector</p>
+<fig id="fig2-1548512911403520" position="float">
+<label>Figure 2.</label>
+<caption><p>The basic hyperspectral imaging process and data representation.</p></caption>
+<graphic xlink:href="10.1177_1548512911403520-fig2.tif"/>
+</fig>
+<p><disp-formula id="disp-formula1-1548512911403520">
+<label>(1)</label>
+<mml:math display="block" id="math1-1548512911403520">
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>⋮</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>.</mml:mo>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1548512911403520" xlink:href="10.1177_1548512911403520-eq1.tif"/>
+</disp-formula></p>
+<p>This vector is often referred to as a pixel vector. If we take the transpose of all the pixel vectors in the image and place them in an (<italic>M</italic> × <italic>N)</italic> × <italic>P</italic> array, we form the data matrix, <bold>X</bold>, which is commonly used in multivariate statistical analysis.</p>
+<p>Using <bold>X</bold>, we are free to analyze the image data using multivariate analysis methods such as principal component analysis (PCA), cluster analysis, maximum likelihood classification, discriminant analysis, and others.</p>
+<p>In this paper, all <italic>real</italic> test images are taken from the COMPact Airborne Spectral Sensor (COMPASS) and Hyperspectral Digital Imagery Collection Equipment (HYDICE) sensors. The COMPASS sensor is able to receive data on an area at 255 different wavelengths of light across the EM spectrum. Synthetic images were also employed in this research. They are described in a subsequent section.</p>
+</sec>
+<sec id="section4-1548512911403520">
+<title>4. Decreasing the dimensionality of the dataset</title>
+<p>Since HSI is characterized by large volumes of data (over 28,800 pixels taken at over 200 wavelengths in the smallest example used in this paper), it is of practical necessity to decrease the dimensionality of the dataset. This is accomplished by PCA.<sup><xref ref-type="bibr" rid="bibr11-1548512911403520">11</xref>,<xref ref-type="bibr" rid="bibr12-1548512911403520">12</xref></sup> Other compression methods, such as the use of wavelets, have been proposed.<sup><xref ref-type="bibr" rid="bibr13-1548512911403520">13</xref>,<xref ref-type="bibr" rid="bibr14-1548512911403520">14</xref></sup> Here, PCA is employed since it is relatively simple to apply and, arguably, it is the standard compression method used in practice. It is well known that PCA can decrease the dimension of the data significantly while still maintaining the ability to explain variability in the dataset.<sup><xref ref-type="bibr" rid="bibr15-1548512911403520">15</xref></sup> PC scores are found by projecting the data onto eigenvectors of their correlation/covariance matrix. For the purposes of this paper, we determined the number of PC components to retain by using Kaiser’s criteria<sup><xref ref-type="bibr" rid="bibr15-1548512911403520">15</xref></sup> on all images so that each set that was originally of dimension (<italic>M</italic> × <italic>N)</italic> × <italic>P</italic> was decreased to dimension (<italic>M</italic> × <italic>N)</italic> × <italic>r</italic>, where <italic>r</italic> &lt;&lt; <italic>P</italic>. The use of PCA for finding outliers in multivariate data is surveyed by Gnanadesikan and Kettenring<sup><xref ref-type="bibr" rid="bibr16-1548512911403520">16</xref></sup> and Rao.<sup><xref ref-type="bibr" rid="bibr17-1548512911403520">17</xref></sup></p>
+<p>As alluded to earlier, rather than attempting to find anomalies across entire images, the images were first clustered into homogeneous spectral groups using an algorithm called X-means.<sup><xref ref-type="bibr" rid="bibr18-1548512911403520">18</xref></sup> X-means is a clustering technique that uses an iterative scheme to find the proper number of clusters and in turn perform the cluster binning based upon Bayesian information criterion (BIC) scores.<sup><xref ref-type="bibr" rid="bibr19-1548512911403520">19</xref></sup></p>
+</sec>
+<sec id="section5-1548512911403520">
+<title>5. Outlier detection overview</title>
+<p>Certain outlier detection methods, such as MVT are known to be unreliable due to their use of the Mahalanobis distance in determining an initial mean vector and covariance matrix estimate.<sup><xref ref-type="bibr" rid="bibr9-1548512911403520">9</xref>,<xref ref-type="bibr" rid="bibr10-1548512911403520">10</xref></sup> The CDC algorithm has been employed to alleviate this problem by determining a more robust initial starting point for mean vector and covariance estimation;<sup><xref ref-type="bibr" rid="bibr9-1548512911403520">9</xref></sup> the starting point being more compatible to the set of good data (without the outliers present) and with the object being to use these estimates to begin MVT. Applying MVT with the CDC algorithm as an initial starting point should perform significantly better than simply using MVT when there are multiple outliers in the data.<sup><xref ref-type="bibr" rid="bibr9-1548512911403520">9</xref></sup> CDC/MVT seeks to trim out the bad data points to obtain more robust estimates of the covariance matrix and the mean vector. Such a procedure provides a more accurate Mahalanobis distance measurement that can be used to advantage to spot outlying observations.</p>
+</sec>
+<sec id="section6-1548512911403520">
+<title>6. The CDC/MVT algorithm</title>
+<p>Herein the data have been pre-processed using PCA and a transformed dataset of significantly lower dimensionality is generated. The initial starting point for MVT is found by performing the CDC algorithm on the transformed dataset to find ‘good’ estimates for the mean and the covariance. These estimates are rendered by finding the <italic>n</italic>/2 observations that are closest to the median vector using either Euclidean distance (2-norm) or the largest component absolute value difference from the centroid (max norm) and determining the mean and covariance from this subset.<sup><xref ref-type="bibr" rid="bibr9-1548512911403520">9</xref></sup> Once these estimates are found we then begin MVT.</p>
+<p>MVT is an iterative process that based upon a percentile (50% for Chiang’s algorithm<sup><xref ref-type="bibr" rid="bibr9-1548512911403520">9</xref></sup>) of the smallest observations of Mahalonobis distance within a sample. These observations are used to determine a new mean vector and covariance matrix. This process is repeated using the most-recent mean vector and covariance matrix until the mean vector and covariance matrix have stabilized. Once the iterations are complete, the resulting Mahalanobis distance for each data point is then used for outlier determination.<sup><xref ref-type="bibr" rid="bibr9-1548512911403520">9</xref></sup> The literature varies slightly in one regard during this process. While Chiang et al.<sup><xref ref-type="bibr" rid="bibr9-1548512911403520">9</xref></sup> state that the mean vector and covariance matrix must stabilize, Delvin et al.<sup><xref ref-type="bibr" rid="bibr20-1548512911403520">20</xref></sup> recommend using the stabilization of only the correlation matrix as the stopping criterion. In addition, Delvin et al.<sup><xref ref-type="bibr" rid="bibr20-1548512911403520">20</xref></sup> recommend using a difference of 10<sup>−3</sup> as the stabilization criteria within the correlation matrix or a maximum of 25 total iterations. Now, the 50th percentile for retention used in MVT is due to the low breakdown point of 50% outliers for the algorithm. Devlin et al.<sup><xref ref-type="bibr" rid="bibr20-1548512911403520">20</xref></sup> propose a different value for retention in MVT in which the percentile is equal to 100 × (1−1/(<italic>p</italic>+1))%, where <italic>p</italic> is equal to the dimensionality of the dataset. In this paper, we also propose using a higher percentile for retention in MVT based upon the assumption that there are significantly fewer outliers than background pixels in any given hyperspectral image cluster. We call this procedure <italic>screened MVT</italic>. The percentage to retain is based upon first taking the Mahalanobis distances found after the CDC algorithm and computing a conservative percentile from a fitted gamma distribution (maximum likelihood parameter estimates)<sup><xref ref-type="bibr" rid="bibr21-1548512911403520">21</xref></sup> with α<sub>retain</sub> = 10<sup>−1</sup>. Next, the <italic>percentage</italic> to retain in MVT is determined by the number of observations that fell beyond this percentile.</p>
+<p>The CDC/MVT algorithm is very similar to the blocked adaptive computationally efficient outlier nominators (BACON) algorithm described by Billor et al.<sup><xref ref-type="bibr" rid="bibr22-1548512911403520">22</xref></sup> and adapted for hyperspectral image processing by Smetek and Bauer<sup><xref ref-type="bibr" rid="bibr23-1548512911403520">23</xref></sup> in that its overall goal is to trim the dataset so that the true covariance structure of the data can be determined. Observations that are outliers will subsequently have much larger distance estimates and should be found easily in outlier determination after iterative estimates have stabilized. The CDC algorithm and our ‘screened MVT’ algorithm are detailed below.</p>
+<sec id="section7-1548512911403520">
+<title>6.1 The CDC algorithm</title>
+<list id="list1-1548512911403520" list-type="simple">
+<list-item><p><italic>Input</italic>: An <italic>n</italic> × <italic>r</italic> matrix <bold>X</bold> of PC scores from hyperspectral data.</p></list-item>
+<list-item><p><italic>Output</italic>: An initial estimate of the mean, µ<sub>0</sub>, and covariance, Σ<sub>0</sub>, of the cluster set based upon the closest <italic>n</italic>/2 observations to the median.</p></list-item>
+<list-item><p><bold><underline>Step 1</underline></bold>: The median vector of the data is obtained.</p></list-item>
+<list-item><p><bold><underline>Step 2</underline></bold>: Determine the <italic>n</italic>/2 observations that are closest to this median vector using either Euclidean distance or the max norm distance, where <italic>n</italic> is equal to the size of the dataset.</p></list-item>
+<list-item><p><bold><underline>Step 3</underline></bold>: From the <italic>n</italic>/2 observations find estimates for the mean vector, µ<sub><italic>c</italic></sub>, and covariance matrix, Σ<sub><italic>c</italic></sub> The mean vector and covariance matrix are then used as a starting point for MVT.</p>
+</list-item>
+</list>
+</sec>
+<sec id="section8-1548512911403520">
+<title>6.2 The screened MVT algorithm</title>
+<list id="list2-1548512911403520" list-type="simple">
+<list-item><p><italic>Input</italic>: An <italic>n</italic> × <italic>r</italic> matrix <bold>X</bold> of PC scores from hyperspectral data and initial estimates of µ and Σ from CDC.</p></list-item>
+<list-item><p><italic>Output</italic>: Mahalanobis distance calculations for the corresponding <italic>n</italic> data points in the cluster set.</p></list-item>
+<list-item><p><bold><underline>Step 1</underline></bold>: Determine the µ and Σ for the dataset via CDC (as shown above). These are µ<sub><italic>c</italic></sub> and Σ<sub><italic>c</italic></sub>, respectively.</p></list-item>
+<list-item><p><bold><underline>Step 2</underline></bold>: Compute Mahalanobis distances for each observation, <italic>x</italic><sub><italic>i</italic></sub>, <italic>i</italic> = 1, …, <italic>n</italic>, using µ<sub><italic>c</italic></sub> and Σ<sub><italic>c</italic></sub>:</p>
+<p><disp-formula id="disp-formula2-1548512911403520">
+<mml:math display="block" id="math2-1548512911403520">
+<mml:msub>
+<mml:mi>d</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mo>∑</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>μ</mml:mi>
+<mml:mi>c</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mtext>T</mml:mtext>
+</mml:msup>
+<mml:msubsup>
+<mml:mo>∑</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>x</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>μ</mml:mi>
+<mml:mi>c</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msqrt>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-1548512911403520" xlink:href="10.1177_1548512911403520-eq2.tif"/>
+</disp-formula></p>
+</list-item>
+<list-item><p><bold><underline>Step 3</underline></bold>: Determine the percentage to retain in MVT by:</p>
+<p>[A] fitting a Gamma distribution to the <italic>d</italic><sub><italic>i</italic></sub> (µ, Σ) Let</p>
+<p><italic>F</italic>(<italic>z</italic>) = Pr{<italic>d</italic><sub><italic>i</italic></sub> (µ, Σ) ≤ <italic>z</italic>} for all real <italic>z</italic></p>
+<p>denote the Gamma c.d.f. that is fitted to the{<italic>d</italic><sub><italic>i</italic></sub> (µ, Σ): 1 = 1, …, <italic>n</italic>} of Mahalanobis distances;</p>
+<p>[B] find the quantile, <inline-formula id="inline-formula1-1548512911403520">
+<mml:math display="inline" id="math3-1548512911403520">
+<mml:msubsup>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>retain</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:math>
+</inline-formula>, associated with a conservative</p>
+<p>α<sub>retain</sub> = 10<sup>−1</sup>, that is,</p>
+<p><inline-formula id="inline-formula2-1548512911403520">
+<mml:math display="inline" id="math4-1548512911403520">
+<mml:msubsup>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>retain</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mi>F</mml:mi>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mi>α</mml:mi>
+<mml:mrow>
+<mml:mtext>retain</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>;</mml:mo>
+</mml:math>
+</inline-formula></p>
+<p>[C] let <inline-formula id="inline-formula3-1548512911403520">
+<mml:math display="inline" id="math5-1548512911403520">
+<mml:mfrac bevelled="true">
+<mml:mi>m</mml:mi>
+<mml:mi>n</mml:mi>
+</mml:mfrac>
+</mml:math>
+</inline-formula> be the percentage to retain in MVT where <italic>m</italic> is the number of <inline-formula id="inline-formula4-1548512911403520">
+<mml:math display="inline" id="math6-1548512911403520">
+<mml:msub>
+<mml:mi>d</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mo>∑</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:msubsup>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>retain</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>.</mml:mo>
+</mml:math>
+</inline-formula></p></list-item>
+<list-item><p><bold><underline>Step 4</underline></bold>: Take the corresponding observations that fall below the retention percentile, <inline-formula id="inline-formula5-1548512911403520">
+<mml:math display="inline" id="math7-1548512911403520">
+<mml:msubsup>
+<mml:mi>d</mml:mi>
+<mml:mi>α</mml:mi>
+<mml:mrow>
+<mml:mtext>retain</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:math>
+</inline-formula>, as determined in Step 3 for computation of new estimates for µ and Σ.</p></list-item>
+<list-item><p><bold><underline>Step 5</underline></bold>: Compare the new estimates for µ and Σ to that of the previous iteration. Return to Step 4 if the maximum absolute difference between estimates is above a user-defined threshold and MVT has iterated fewer than 25 times. Else, proceed to Step 6.</p></list-item>
+<list-item><p><bold><underline>Step 6</underline></bold>: Declare observations as outliers by comparing distances to an empirical distribution function of testing data. The cutoff α<sub>outlier</sub> is typically chosen to be of the order 10<sup>−6</sup> or, as will be seen in subsequent results, α<sub>outlier</sub> can be varied to produce operating characteristic (OC) curves.</p></list-item>
+</list>
+<p>In application, these algorithms are processed sequentially and for each cluster set within an image.</p>
+</sec>
+</sec>
+<sec id="section9-1548512911403520">
+<title>7. Application to anomaly detection in hyperspectral imagery</title>
+<p>In this research, we are looking for anomalies in a hyperspectral image. The assumption is that these anomalies are manmade and constitute spectral outliers in a statistical sense. To this end, we are not concerned with natural anomalies that may appear to be outliers when compared to their surroundings/clusters. As seen in the synthetic hyperspectral image (<xref ref-type="fig" rid="fig3-1548512911403520">Figure 3</xref>), there are many observations that may be considered outliers in the picture (e.g. trees in a grass field).</p>
+<fig id="fig3-1548512911403520" position="float">
+<label>Figure 3.</label>
+<caption><p>Synthetic image using only red (dark grey), green (light grey), and blue (black) wavelengths.</p></caption>
+<graphic xlink:href="10.1177_1548512911403520-fig3.tif"/>
+</fig>
+<p>To alleviate the problem of having many natural outliers dispersed throughout the image, the images are first clustered using X-means.<sup><xref ref-type="bibr" rid="bibr18-1548512911403520">18</xref></sup> Once the image has been clustered, we are in a position to look for outliers within relatively homogenous datasets. As seen in <xref ref-type="fig" rid="fig4-1548512911403520">Figure 4</xref>, the outliers in the image are shown in green (black) with a yellow (white) border.</p>
+<fig id="fig4-1548512911403520" position="float">
+<label>Figure 4.</label>
+<caption><p>Synthetic image target outlier location mask.</p></caption>
+<graphic xlink:href="10.1177_1548512911403520-fig4.tif"/>
+</fig>
+<p>The task is to identify as many of the green target pixels as possible (true positives), while minimizing the identification of non-target pixels as targets (false positives).</p>
+</sec>
+<sec id="section10-1548512911403520" sec-type="results">
+<title>8. Testing results and analysis</title>
+<p>We compared the results for 21 different hyperspectral images using three forms of MVT retention (detailed below). The results from these three algorithms were compared to output for the BACON algorithm<sup><xref ref-type="bibr" rid="bibr22-1548512911403520">22</xref>,<xref ref-type="bibr" rid="bibr23-1548512911403520">23</xref></sup> for the same images to determine the efficacy of each MVT algorithm against a robust baseline algorithm.</p>
+<p>The images used for testing were taken from the Air Force’s Airborne Remote Sensing Program (ARES), and synthetic images created using the Digital Imaging and Remote Sensing Image Generation (DIRSIG) program.<sup><xref ref-type="bibr" rid="bibr24-1548512911403520">24</xref></sup> The ARES images were acquired through testing of the HYDICE sensor during the Forest Radiance I and Desert Radiance II data collection efforts. The images consist of manmade objects such as vehicles, panels, camouflage nets, and tables. For all real images, the locations of objects of interest were determined during collection. The synthetic images employed here were created at the same hypothetical geographical location with differences in time of day, sensor view angle, visibility, and target size. The reason for using synthetic images in our testing is that currently there are not a great number of ‘truthed’ hyperspectral images available to the general research community. The DIRSIG program is able to produce hyperspectral images that are representative of real-world images, and afford the advantage of allowing the user to specify the exact nature and location of all the anomalies in the image. The synthetic images used were all different variations of <xref ref-type="fig" rid="fig3-1548512911403520">Figure 3</xref>.</p>
+<p>OC curves were found by processing the resulting Mahalanobis distances and plotting the estimates for the true positive rate (at the pixel level) against the false positive rate. An additional measure was taken as the area underneath the OC curve. An example OC curve for the Air Force image is given in <xref ref-type="fig" rid="fig5-1548512911403520">Figure 5</xref>.</p>
+<fig id="fig5-1548512911403520" position="float">
+<label>Figure 5.</label>
+<caption><p>Operating characteristic curve example for Air Force image. MVT: ellipsoidal multivariate trimming, BACON: blocked adaptive computationally efficient outlier nominators.</p></caption>
+<graphic xlink:href="10.1177_1548512911403520-fig5.tif"/>
+</fig>
+<p>In <xref ref-type="fig" rid="fig5-1548512911403520">Figure 5</xref>, screened MVT has the largest area under the OC curve (AUC). The AUCs for all algorithms are given in <xref ref-type="table" rid="table1-1548512911403520">Table 1</xref>.</p>
+<table-wrap id="table1-1548512911403520" position="float">
+<label>Table 1.</label>
+<caption><p>Area under the operating characteristic curve (AUC) values from <xref ref-type="fig" rid="fig5-1548512911403520">Figure 5</xref></p></caption>
+<graphic alternate-form-of="table1-1548512911403520" xlink:href="10.1177_1548512911403520-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="center" colspan="4">Area under the OC curve</th>
+</tr>
+<tr>
+<th align="left">Screened MVT</th>
+<th align="left">50% MVT retention</th>
+<th align="left">100 x (1 − 1/(<italic>p</italic> + 1))% retention</th>
+<th align="left">BACON</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.8646</td>
+<td>0.7685</td>
+<td>0.8351</td>
+<td>0.7792</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-1548512911403520">
+<p>MVT: ellipsoidal multivariate trimming, BACON: blocked adaptive computationally efficient outlier nominators</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>The OC curves were obtained by varying α<sub>outlier</sub>. Each OC curve was only considered up to a false positive rate of 0.05, since rates higher than 0.05 would render target detection worthless based upon the preponderance of background pixels in any given image.</p>
+<p>A repeated measures analysis of variance (ANOVA) procedure, supplemented by the Holm–Sidak test for multiple comparisons was conducted for each of four datasets.<sup><xref ref-type="bibr" rid="bibr25-1548512911403520">25</xref></sup> There were two distinct types of imagery (synthetic and real) and two performance measures of interest: AUC and computation time (in seconds with all processing on the same physical system). The four treatments are the algorithms as numbered below:</p>
+<list id="list3-1548512911403520" list-type="order">
+<list-item><p>Screened MVT;</p></list-item>
+<list-item><p>MVT with Chiang’s 50% retention;</p></list-item>
+<list-item><p>MVT with 100 × (1−1/(<italic>p</italic>+1))% retention;</p></list-item>
+<list-item><p>BACON.</p></list-item>
+</list>
+<p>The subjects are the images. There were 15 synthetic images and six real images. <xref ref-type="table" rid="table2-1548512911403520">Table 2</xref> summarizes the analysis.</p>
+<table-wrap id="table2-1548512911403520" position="float">
+<label>Table 2.</label>
+<caption><p>Summary of the repeated measures analysis of variance procedure with the Holm–Sidak test for multiple comparisons</p></caption>
+<graphic alternate-form-of="table2-1548512911403520" xlink:href="10.1177_1548512911403520-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Image type by performance measure</th>
+<th align="left">Significant treatments?</th>
+<th align="left">Significant contrasts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Real/AUC</td>
+<td>No</td>
+<td/>
+</tr>
+<tr>
+<td>Real/Time</td>
+<td>Yes</td>
+<td>1–2/2–4/2–3</td>
+</tr>
+<tr>
+<td>Synthetic/AUC</td>
+<td>Yes</td>
+<td>1–3/1–2/1–4</td>
+</tr>
+<tr>
+<td>Synthetic/Time</td>
+<td>Yes</td>
+<td>1–2/2–3/2–4/1–4</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn2-1548512911403520">
+<p>AUC: area under the operating characteristic curve</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>As is evident from <xref ref-type="table" rid="table2-1548512911403520">Table 2</xref>, the methods, as applied to the real imagery, showed significant differences due to the treatments only where time was concerned. Examination of <xref ref-type="fig" rid="fig6-1548512911403520">Figure 6</xref> shows, as expected, that using a more flexible percentile for retention within MVT, in general, resulted in a larger AUC. As seen in <xref ref-type="fig" rid="fig6-1548512911403520">Figure 6</xref>, screened MVT performed the best for three of the six real images. It was also observed that in most cases it took less time to complete the algorithm. Average responses are recorded in <xref ref-type="table" rid="table3-1548512911403520">Table 3</xref>.</p>
+<fig id="fig6-1548512911403520" position="float">
+<label>Figure 6.</label>
+<caption><p>Area under the operating characteristic curve output for real images using four algorithms.</p>
+<p>MVT: ellipsoidal multivariate trimming, BACON: blocked adaptive computationally efficient outlier nominators.</p></caption>
+<graphic xlink:href="10.1177_1548512911403520-fig6.tif"/>
+</fig>
+<table-wrap id="table3-1548512911403520" position="float">
+<label>Table 3.</label>
+<caption><p>Mean performance of the procedures for the real images</p></caption>
+<graphic alternate-form-of="table3-1548512911403520" xlink:href="10.1177_1548512911403520-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Treatment</th>
+<th align="left">Average AUC</th>
+<th align="left">Average time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Screened MVT</td>
+<td>0.76</td>
+<td>63</td>
+</tr>
+<tr>
+<td>MVT with Chiang’s 50% retention</td>
+<td>0.62</td>
+<td>150</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula6-1548512911403520">
+<mml:math display="inline" id="math8-1548512911403520">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>MVT</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>100</mml:mn>
+<mml:mo>×</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>%</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> retention</td>
+<td>0.74</td>
+<td>72</td>
+</tr>
+<tr>
+<td>BACON</td>
+<td>0.74</td>
+<td>64</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn3-1548512911403520">
+<p>AUC: area under the operating characteristic curve, MVT: ellipsoidal multivariate trimming, BACON: blocked adaptive computationally efficient outlier nominators</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>A more distinct separation of algorithms was observed for the synthetic images. As depicted in <xref ref-type="fig" rid="fig7-1548512911403520">Figure 7</xref>, screened MVT performed the best for 11 of the 15 images tested. It must be noted that the procedures performed poorly, in general, across the synthetic images. This was largely due to the presence of many natural anomalies in the image that were not clustered into their own cluster set. Although these observations were outliers within their cluster set, they were not the anomalies of interest.</p>
+<fig id="fig7-1548512911403520" position="float">
+<label>Figure 7.</label>
+<caption><p>Area under the operating characteristic curve output for real images using the four algorithms.</p>
+<p>MVT: ellipsoidal multivariate trimming, BACON: blocked adaptive computationally efficient outlier nominators.</p></caption>
+<graphic xlink:href="10.1177_1548512911403520-fig7.tif"/>
+</fig>
+<p>Significant contrasts were noted for screened MVT versus the other procedures in terms of AUC (<xref ref-type="table" rid="table2-1548512911403520">Tables 2</xref> and <xref ref-type="table" rid="table4-1548512911403520">4</xref>). Significant differences in processing times were also found, as indicated in <xref ref-type="table" rid="table2-1548512911403520">Table 2</xref>.</p>
+<table-wrap id="table4-1548512911403520" position="float">
+<label>Table 4.</label>
+<caption><p>Mean performance of the procedures for the real images</p></caption>
+<graphic alternate-form-of="table4-1548512911403520" xlink:href="10.1177_1548512911403520-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Treatment</th>
+<th align="left">Average AUC</th>
+<th align="left">Average time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Screened MVT</td>
+<td>0.34</td>
+<td>67</td>
+</tr>
+<tr>
+<td>MVT with Chiang’s 50% retention</td>
+<td>0.16</td>
+<td>197</td>
+</tr>
+<tr>
+<td><inline-formula id="inline-formula7-1548512911403520">
+<mml:math display="inline" id="math9-1548512911403520">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>MVT</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>100</mml:mn>
+<mml:mo>×</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mn>1</mml:mn>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>%</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula> retention</td>
+<td>0.15</td>
+<td>93</td>
+</tr>
+<tr>
+<td>BACON</td>
+<td>0.23</td>
+<td>116</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn4-1548512911403520">
+<p>AUC: area under the operating characteristic curve, MVT: ellipsoidal multivariate trimming, BACON: blocked adaptive computationally efficient outlier nominators</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+</sec>
+<sec id="section11-1548512911403520">
+<title>9. Summary</title>
+<p>By utilizing a more flexible estimate for MVT retention via PCA screening we were able to improve upon the algorithms that use the standard set retention percentiles of 50% and 100 × (1−1/(<italic>p</italic>+1))% within MVT. This was accomplished while maintaining an analysis approach that was relatively ‘hands off’. We believe the approach is promising largely because no two images are alike in all aspects. By maintaining a more flexible trimming percentage, we were able to avoid some of the swamping and masking effects that were present in the rigid MVT settings that use fewer of the available ‘good’ observations for MVT retention.</p>
+<p>There were many natural anomalies in the DIRSIG-created images that resulted in a fairly significant swamping effect for both the BACON and MVT algorithms. The BACON algorithm suffered more from the presence of these anomalies, though, due to the trimming process used. This is because these natural anomalous observations were not included in the estimates of the mean and covariance in the trimming process since they were considered outliers for the clusters in which they were located. Even though these observations should have been trimmed since they do not fit into the clusters, they are not targets of interest. Furthermore, not including these observations in the dataset tended to tighten the estimates for the covariance and the mean so that their Mahalanobis distances were inflated and, thus, they tended to have distance estimates that looked like targets.</p>
+<p>In this paper we examine the efficacy of using the CDC algorithm in conjunction with MVT to find outliers in a hyperspectral image. A method is advanced to create a flexible retention percentage that more adequately reflects the actual number of outlier-free observations, thereby allowing one to form robust estimates of the mean and covariance matrix that may more effectively decrease the effects of swamping and masking as compared to using a set percentile for retention. The effectiveness of these ideas is demonstrated against real and synthetically generated HSI.</p>
+</sec>
+</body>
+<back>
+<ack><p>Special thanks to Mr Chuck Sadowski, ACC/A8SP, for his continuing support of our research. We are also indebted to four anonymous reviewers for their helpful comments.</p></ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<p>This work was supported by ACC/A8SP and AFRL/RYZT.</p>
+</fn>
+<fn fn-type="conflict">
+<p>None declared.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1548512911403520">
+<label>1.</label>
+<citation citation-type="web">
+<collab>GlobalSecurity.Org</collab>. <article-title>‘300 N’, Washington St. Arlington VA</article-title>, <comment><ext-link ext-link-type="uri" xlink:href="http://www.globalsecurity.org/intell/library/imint/hyper.htm">http://www.globalsecurity.org/intell/library/imint/hyper.htm</ext-link></comment>. <access-date>Accessed: 17/9/2010</access-date></citation>
+</ref>
+<ref id="bibr2-1548512911403520">
+<label>2.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Ardouin</surname><given-names>J-P</given-names></name>
+<name><surname>Levesque</surname><given-names>J</given-names></name>
+<name><surname>Rea</surname><given-names>TA</given-names></name>
+</person-group>. <article-title>A demonstration of hyperspectral image exploitation for military applications</article-title>. In: <conf-name>Proceedings of the 10th Conference on Information Fusion</conf-name>, <conf-loc>Quebec</conf-loc>, <conf-date>9–12 July 2007</conf-date> pp.<fpage>1</fpage>–<lpage>8</lpage>.</citation>
+</ref>
+<ref id="bibr3-1548512911403520">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Briottet</surname><given-names>X</given-names></name>
+<name><surname>Boucher</surname><given-names>Y</given-names></name>
+<name><surname>Dimmeler</surname><given-names>A</given-names></name>
+<name><surname>Malaplate</surname><given-names>A</given-names></name>
+<name><surname>Cini</surname><given-names>A</given-names></name>
+<name><surname>Diani</surname><given-names>M</given-names></name>
+<etal/>
+</person-group>. <article-title>Military applications of hyperspectral imagery, targets and backgrounds XII: characterization and representation</article-title>. <source>Proc SPIE</source> <year>2006</year>; <volume>6239</volume>: <fpage>62390B</fpage>.</citation>
+</ref>
+<ref id="bibr4-1548512911403520">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Stein</surname><given-names>DWJ</given-names></name>
+<name><surname>Beaven</surname><given-names>SG</given-names></name>
+<name><surname>Hoff</surname><given-names>LE</given-names></name>
+<name><surname>Winter</surname><given-names>EM</given-names></name>
+<name><surname>Schaum</surname><given-names>AP</given-names></name>
+<name><surname>Stocker</surname><given-names>AD</given-names></name>
+</person-group>. <article-title>Anomaly detection from hyperspectral imagery</article-title>. <source>IEEE Signal Process Mag</source> <year>2002</year>; <volume>19</volume>: <fpage>58</fpage>–<lpage>69</lpage>.</citation>
+</ref>
+<ref id="bibr5-1548512911403520">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Reed</surname><given-names>IS</given-names></name>
+<name><surname>Yu</surname><given-names>X</given-names></name>
+</person-group>. <article-title>Adaptive multiple-band CFAR detection of an optical pattern with unknown spectral distribution</article-title>. <source>IEEE Trans Acoust Speech Signal Process</source> <year>1990</year>; <volume>38</volume>: <fpage>1760</fpage>–<lpage>1770</lpage>.</citation>
+</ref>
+<ref id="bibr6-1548512911403520">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Yu</surname><given-names>X</given-names></name>
+<name><surname>Hoff</surname><given-names>LE</given-names></name>
+<name><surname>Reed</surname><given-names>IS</given-names></name>
+<name><surname>Chen</surname><given-names>AM</given-names></name>
+<name><surname>Stotts</surname><given-names>LB</given-names></name>
+</person-group>. <article-title>Automatic target detection and recognition in multiband imagery: a unified ML detection and estimation approach</article-title>. <source>IEEE Trans Image Process</source> <year>1997</year>; <volume>6</volume>: <fpage>143</fpage>–<lpage>156</lpage>.</citation>
+</ref>
+<ref id="bibr7-1548512911403520">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Taitano</surname><given-names>YP</given-names></name>
+<name><surname>Geier</surname><given-names>BA</given-names></name>
+<name><surname>Bauer</surname><given-names>KW</given-names><suffix>Jr</suffix></name>
+</person-group>. <article-title>A locally adaptable iterative RX detector</article-title>. <source>EURASIP J Adv Signal Process</source> <year>2010</year>; <comment>Article ID 341908</comment>.</citation>
+</ref>
+<ref id="bibr8-1548512911403520">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wilson</surname><given-names>JR</given-names></name>
+</person-group>. <article-title>Antithetic sampling with multivariate inputs</article-title>. <source>Am J Math Manage Sci</source> <year>1983</year>; <volume>3</volume>: <fpage>121</fpage>–<lpage>144</lpage>.</citation>
+</ref>
+<ref id="bibr9-1548512911403520">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chiang</surname><given-names>LH</given-names></name>
+<name><surname>Pell</surname><given-names>RJ</given-names></name>
+<name><surname>Seasholtz</surname><given-names>MB</given-names></name>
+</person-group>. <article-title>Exploring process data with the use of robust outlier detection algorithms</article-title>. <source>J Process Contr</source> <year>2003</year>; <volume>13</volume>: <fpage>437</fpage>–<lpage>449</lpage>.</citation>
+</ref>
+<ref id="bibr10-1548512911403520">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Egan</surname><given-names>WJ</given-names></name>
+<name><surname>Morgan</surname><given-names>SL</given-names></name>
+</person-group>. <article-title>Outlier detection in multivariate analytical chemical data</article-title>. <source>Anal Chem</source> <year>1998</year>; <volume>77</volume>: <fpage>2372</fpage>–<lpage>2379</lpage>.</citation>
+</ref>
+<ref id="bibr11-1548512911403520">
+<label>11.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Landgrebe</surname><given-names>DA</given-names></name>
+</person-group>. <source>Signal theory methods in multispectral remote sensing</source>. <publisher-loc>Hoboken, NJ</publisher-loc>: <publisher-name>John Wiley &amp; Sons</publisher-name>, <year>2003</year>.</citation>
+</ref>
+<ref id="bibr12-1548512911403520">
+<label>12.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Richards</surname><given-names>JA</given-names></name>
+<name><surname>Jia</surname><given-names>X</given-names></name>
+</person-group>. <source>Remote Sensing Digital Image Analysis: An Introduction</source>. <publisher-loc>Berlin</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>1999</year>, p. <fpage>363</fpage>.</citation>
+</ref>
+<ref id="bibr13-1548512911403520">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bruce</surname><given-names>LM</given-names></name>
+<name><surname>Koger</surname><given-names>CH</given-names></name>
+<name><surname>Li</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Dimensionality reduction of hyperspectral data using discrete wavelet transform feature extraction</article-title>. <source>IEEE Trans Geosci Remote Sens</source> <year>2002</year>; <volume>40</volume>: <fpage>2331</fpage>–<lpage>2338</lpage>.</citation>
+</ref>
+<ref id="bibr14-1548512911403520">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kaewpijit</surname><given-names>S</given-names></name>
+<name><surname>Le Moigne</surname><given-names>J</given-names></name>
+<name><surname>El-Ghazawi</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Automatic reduction of hyperspectral imagery using wavelet spectral analysis</article-title>. <source>IEEE Trans Geosci Remote Sens</source> <year>2003</year>; <volume>41</volume>:<fpage>863</fpage>–<lpage>871</lpage>.</citation>
+</ref>
+<ref id="bibr15-1548512911403520">
+<label>15.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Dillon</surname><given-names>WR</given-names></name>
+<name><surname>Goldstein</surname><given-names>M</given-names></name>
+</person-group>. <source>Multivariate analysis: methods and applications</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>John Wiley &amp; Sons, Inc</publisher-name>., <year>1984</year>.</citation>
+</ref>
+<ref id="bibr16-1548512911403520">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Gnanadesikan</surname><given-names>R</given-names></name>
+<name><surname>Kettenring</surname><given-names>JR</given-names></name>
+</person-group>. <article-title>Robust estimates, residuals, and outlier detection with multiresponse data</article-title>. <source>Biometrics</source> <year>1972</year>; <volume>28</volume>: <fpage>81</fpage>–<lpage>124</lpage>.</citation>
+</ref>
+<ref id="bibr17-1548512911403520">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Rao</surname><given-names>CR</given-names></name>
+</person-group>. <article-title>The use and interpretation of principal component analysis in applied research</article-title>. <source>Sankhya A</source> <year>1964</year>; <volume>26</volume>: <fpage>329</fpage>–<lpage>358</lpage>.</citation>
+</ref>
+<ref id="bibr18-1548512911403520">
+<label>18.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Williams</surname><given-names>JP</given-names></name>
+</person-group>. <article-title>Robustness of multiple clustering algorithms on hyperspectral images</article-title>. <comment>MS thesis</comment>, <publisher-name>School of Operation Sciences, Air Force Institute of Technology (AU)</publisher-name>, <publisher-loc>Wright-Patterson AFB, OH</publisher-loc>, <month>March</month> <year>2007</year>.</citation>
+</ref>
+<ref id="bibr19-1548512911403520">
+<label>19.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pelleg</surname><given-names>D</given-names></name>
+<name><surname>Moore</surname><given-names>A</given-names></name>
+</person-group>. <article-title>X-means: extended K-means with efficient estimation of the number of clusters</article-title>. In: <source>Proceedings of the 17th International Conference on Machine Learning</source>, <year>2000</year>, pp.<fpage>727</fpage>–<lpage>734</lpage>.</citation>
+</ref>
+<ref id="bibr20-1548512911403520">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Devlin</surname><given-names>SJ</given-names></name>
+<name><surname>Gnandesikan</surname><given-names>R</given-names></name>
+<name><surname>Kettenring</surname><given-names>JR</given-names></name>
+</person-group>. <article-title>Robust estimation of dispersion matrices and principal components</article-title>. <source>J Am Stat Assoc</source> <year>1981</year>; <volume>76</volume>: <fpage>354</fpage>–<lpage>362</lpage>.</citation>
+</ref>
+<ref id="bibr21-1548512911403520">
+<label>21.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Caulk</surname><given-names>RF</given-names></name>
+</person-group>. <article-title>Outlier detection in hyperspectral imagery using closest distance to center with ellipsoidal multivariate trimming</article-title>. <comment>MS thesis</comment>, <publisher-name>School of Operation Sciences, Air Force Institute of Technology (AU)</publisher-name>, <publisher-loc>Wright-Patterson AFB, OH</publisher-loc>, <month>March</month> <year>2007</year>.</citation>
+</ref>
+<ref id="bibr22-1548512911403520">
+<label>22.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Billor</surname><given-names>N</given-names></name>
+<name><surname>Hadi</surname><given-names>AS</given-names></name>
+<name><surname>Velleman</surname><given-names>PF</given-names></name>
+</person-group>. <article-title>BACON: blocked adaptive computationally efficient outlier nominators</article-title>. <source>Comput Stat Data Anal</source> <year>2000</year>; <volume>34</volume>: <fpage>279</fpage>–<lpage>298</lpage>.</citation>
+</ref>
+<ref id="bibr23-1548512911403520">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Smetek</surname><given-names>TE</given-names></name>
+<name><surname>Bauer</surname><given-names>KW</given-names></name>
+</person-group>. <article-title>A comparison of multivariate outlier detection methods for finding hyperspectral anomalies</article-title>. <source>Mil Oper Res</source> <year>2008</year>; <volume>13</volume>: <fpage>19</fpage>–<lpage>44</lpage>.</citation>
+</ref>
+<ref id="bibr24-1548512911403520">
+<label>24.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bellucci</surname><given-names>JP</given-names></name>
+<name><surname>Smetek</surname><given-names>TE</given-names></name>
+<name><surname>Bauer</surname><given-names>KW</given-names></name>
+</person-group>. <article-title>Improved hyperspectral image processing algorithm testing using synthetic imagery and factorial designed experiments</article-title>. <source>IEEE Trans Geosci Remote Sens</source> <year>2010</year>; <volume>48</volume>: <fpage>1211</fpage>–<lpage>1223</lpage>.</citation>
+</ref>
+<ref id="bibr25-1548512911403520">
+<label>25.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Cardillo</surname><given-names>G</given-names></name>
+</person-group>. <article-title>‘Anovarep: Compute the Anova for Repeated Measures and Holm–Sidak Test for Multiple Comparisons if Anova is Positive’</article-title>, <comment><ext-link ext-link-type="uri" xlink:href="http://www.mathworks.com/matlabcentral/fileexchange/18746">http://www.mathworks.com/matlabcentral/fileexchange/18746</ext-link></comment> (<year>2008</year>). <access-date>Access dates: 17/9/2010</access-date></citation>
+</ref>
+</ref-list>
+</back>
+</article>

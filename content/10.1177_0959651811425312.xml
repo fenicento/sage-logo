@@ -1,0 +1,2684 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PII</journal-id>
+<journal-id journal-id-type="hwp">sppii</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part I: Journal of Systems and Control Engineering</journal-title>
+<issn pub-type="ppub">0959-6518</issn>
+<issn pub-type="epub">2041-3041</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0959651811425312</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0959651811425312</article-id>
+<title-group>
+<article-title>Automatic design of control systems for robot manipulators using the bees algorithm</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Fahmy</surname><given-names>A A</given-names></name>
+<xref ref-type="aff" rid="aff1-0959651811425312">1</xref>
+<xref ref-type="corresp" rid="corresp1-0959651811425312">*</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Kalyoncu</surname><given-names>M</given-names></name>
+<xref ref-type="aff" rid="aff2-0959651811425312">2</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Castellani</surname><given-names>M</given-names></name>
+<xref ref-type="aff" rid="aff3-0959651811425312">3</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-0959651811425312"><label>1</label>Institute of Mechanical and Manufacturing Engineering, Cardiff School of Engineering, Cardiff University, Cardiff, UK</aff>
+<aff id="aff2-0959651811425312"><label>2</label>Department of Mechanical Engineering, Faculty of Engineering and Architecture, University of Selçuk, Konya, Turkey</aff>
+<aff id="aff3-0959651811425312"><label>3</label>Department of Biology, University of Bergen, Bergen, Norway</aff>
+<author-notes>
+<corresp id="corresp1-0959651811425312"><label>*</label>Institute of Mechanical and Manufacturing Engineering, Cardiff School of Engineering, Cardiff University, Queen’s Building, The Parade, Cardiff CF24 3AA, UK. email: <email>fahmyaa@cf.ac.uk</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>4</issue>
+<fpage>497</fpage>
+<lpage>508</lpage>
+<history>
+<date date-type="received">
+<day>10</day>
+<month>6</month>
+<year>2011</year>
+</date>
+<date date-type="accepted">
+<day>12</day>
+<month>9</month>
+<year>2011</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© Authors 2011</copyright-statement>
+<copyright-year>2011</copyright-year>
+<copyright-holder content-type="sage">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>This paper proves the capability of the bees algorithm to solve complex parameter optimization problems for robot manipulator control. Two applications are presented. The first case considers the modelling of the inverse kinematics of an articulated robot arm using neural networks. The weights of the connections between the nodes need to be set so as to minimize the difference between the neural network model and the desired behaviour. In the proposed example, the bees algorithm is used to train three multilayer perceptrons to learn the inverse kinematics of the joints of a three-link manipulator. The second case considers the design of a hierarchical proportional–integral–derivative (PID) controller for a flexible single-link robot manipulator. The six gains of the PID controller need to be optimized so as to minimize positional inaccuracies and vibrations. Experimental tests demonstrated the validity of the proposed approach. In the first case, the bees algorithm proved very effective at optimizing the neural network models. Compared with the results obtained employing the standard back-propagation rule and an evolutionary algorithm, the bees algorithm obtained superior results in terms of training accuracy and robustness. In the second case, the proposed method demonstrated remarkable efficiency and consistency in the tuning of the PID controller parameters. In 50 independent optimization trials, the PID controllers designed using the bees algorithm consistently outperformed a robot controller designed using a standard manual technique.</p>
+</abstract>
+<kwd-group>
+<kwd>bees algorithm</kwd>
+<kwd>robot control</kwd>
+<kwd>optimization</kwd>
+<kwd>inverse kinematics modelling</kwd>
+<kwd>neural networks</kwd>
+<kwd>hierarchical proportional–integral–derivative robot control</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0959651811425312" sec-type="intro">
+<title>1 Introduction</title>
+<p>Robotic manipulators are usually composed of a multi-link ‘arm’ and an end effector. The desired position of the end effector is achieved through the control of the angles of the robot joints. A multi-link robot manipulator can be regarded as a multi-input multi-output (MIMO) system. Conventional control methods for MIMO systems require the exact knowledge of the plant mathematical model. For robot manipulators, it is almost impossible to identify precisely the system model and its parameters. For this reason, a popular solution for the control of multi-link robotic arms is to use approximate inverse model control techniques. The inverse kinematics of the robot joints are often modelled through parametric equations that are fitted to experimental input/output (end effector positions/joint angles) data pairs.</p>
+<p>Alternatively, one-link robotic arms are employed. The main advantage of such manipulators is their inherent simplicity. One-link manipulators are usually controlled via proportional–integral–derivative (PID) methods [<xref ref-type="bibr" rid="bibr1-0959651811425312">1</xref>–<xref ref-type="bibr" rid="bibr7-0959651811425312">7</xref>]. The main challenge in this case is to tune the controller parameters. Flexible-link robot manipulators are a special kind of one-link manipulators. The main advantage of using a flexible link is that it allows one to build lightweight robots capable of moving large payloads at high speeds and with high precision [<xref ref-type="bibr" rid="bibr8-0959651811425312">8</xref>]. Unfortunately, the dynamics of flexible-link manipulators are far more complex than those of rigid manipulators [<xref ref-type="bibr" rid="bibr9-0959651811425312">9</xref>–<xref ref-type="bibr" rid="bibr16-0959651811425312">16</xref>] and this makes the tuning of the PID controller difficult.</p>
+<p>Approximate inverse model and PID algorithms are two popular solutions to the problem of controlling robotic end effectors in industrial applications. They are instances of the two possible approaches to Cartesian manipulator positioning and control, respectively model-based and model-free control. Both approaches entail a parameter optimization task. In the case of a one-link robot arm, the optimal PID parameters are to be found. In the case of a multi-link robot arm, the inverse model parameters need to be fitted (i.e. optimized) to the experimental data. The present paper investigates the application of the bees algorithm to solve these two parameter optimization tasks. The aim of the work is to demonstrate the effectiveness of the bees algorithm as a tool for the optimization of complex robot control systems, including both model-based and model-free approaches.</p>
+<p>A three-link robot manipulator is first considered. The inverse kinematics of the robot joints are modelled using three multilayer perceptron (MLP) neural networks (NNs) [<xref ref-type="bibr" rid="bibr17-0959651811425312">17</xref>]. Each NN is trained to reproduce the inverse kinematics of one of the three manipulator joints from a set of input/output data pairs. The bees algorithm is used to train the three NNs [<xref ref-type="bibr" rid="bibr18-0959651811425312">18</xref>, <xref ref-type="bibr" rid="bibr19-0959651811425312">19</xref>]. The MLP training results obtained using the proposed algorithm are compared with the training results obtained using the standard back-propagation (BP) rule [<xref ref-type="bibr" rid="bibr17-0959651811425312">17</xref>] and an evolutionary algorithm (EA) [<xref ref-type="bibr" rid="bibr20-0959651811425312">20</xref>].</p>
+<p>The optimization of a hierarchical PID controller for a flexible-link robot is then considered. The bees algorithm is employed to optimize the six gains of the hierarchical PID controller in order to achieve maximum link position accuracy with minimum vibration. The results obtained using the bees algorithm are compared with the results obtained using a manual tuning technique based on trial and error [<xref ref-type="bibr" rid="bibr21-0959651811425312">21</xref>].</p>
+<p>The paper is organized as follows. Section 2 describes the NN modelling of the inverse three-link manipulator kinematics. Section 3 outlines the three MLP training algorithms used in the approximate inverse modelling trials. Section 4 presents the results of the inverse modelling trials. Section 5 describes the hierarchical PID robotic link controller and presents the optimization results. Section 6 concludes the paper.</p>
+</sec>
+<sec id="section2-0959651811425312">
+<title>2 Modelling The Inverse Kinematics Of A Three-Link Manipulator</title>
+<p>A robotic arm manipulator represents a very complex and non-linear system. Parameter variations, different arm configurations, un-modelled friction, and backlashes usually make it difficult to identify precisely the forward and inverse dynamics and the inverse kinematics of the robot system.</p>
+<p>Given a general MIMO system with input <inline-formula id="inline-formula1-0959651811425312"><mml:math display="inline" id="math1-0959651811425312"><mml:mrow><mml:mi>u</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">{</mml:mo><mml:msub><mml:mrow><mml:mi>u</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mi>u</mml:mi></mml:mrow><mml:mrow><mml:mi>n</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula> and output <inline-formula id="inline-formula2-0959651811425312"><mml:math display="inline" id="math2-0959651811425312"><mml:mrow><mml:mi>y</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">{</mml:mo><mml:msub><mml:mrow><mml:mi>y</mml:mi></mml:mrow><mml:mrow><mml:mn>1</mml:mn></mml:mrow></mml:msub><mml:mo>,</mml:mo><mml:mo>…</mml:mo><mml:msub><mml:mrow><mml:mi>y</mml:mi></mml:mrow><mml:mrow><mml:mi>n</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">}</mml:mo></mml:mrow></mml:math></inline-formula>, and a discrete time sampling, the system output at time interval <italic>k</italic> can be expressed as follows</p>
+<p><disp-formula id="disp-formula1-0959651811425312">
+<label>(1)</label>
+<mml:math display="block" id="math3-0959651811425312">
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>f</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>u</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>u</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0959651811425312" xlink:href="10.1177_0959651811425312-eq1.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>m</italic> &lt; <italic>k</italic> and <italic>n</italic> &lt; <italic>k</italic> are discrete time intervals.</p>
+<p>Given a set of input/output data samples, the goal of the model identification task is to express the non-linear input/output relationship <italic>f</italic>, and the <italic>n</italic> and <italic>m</italic> time constants. If <italic>n</italic> and <italic>m</italic> are given, the only task is to identify the function <italic>f</italic>. For time-invariant systems, <italic>f</italic> does not change with time.</p>
+<p>Since a robot manipulator can be regarded as bounded-input bounded-output stable system, <xref ref-type="disp-formula" rid="disp-formula1-0959651811425312">equation (1)</xref> can be used to obtain the inverse model. For trajectory tracking purposes, the inverse kinematic model of an articulated robot arm can be expressed for each joint angle in the following approximate format</p>
+<p><disp-formula id="disp-formula2-0959651811425312">
+<label>(2)</label>
+<mml:math display="block" id="math4-0959651811425312">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≅</mml:mo>
+<mml:mi>f</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0959651811425312" xlink:href="10.1177_0959651811425312-eq2.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>k</italic> is the sampling interval, <inline-formula id="inline-formula3-0959651811425312"><mml:math display="inline" id="math5-0959651811425312"><mml:mrow><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">(</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>2</mml:mn><mml:mo>,</mml:mo><mml:mi>n</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula> is the manipulator link, (<italic>x</italic>, <italic>y</italic>, <italic>z</italic>) is the end effectors’ Cartesian position, <italic>n</italic> is the number of joints, and <italic>θ<sub>i</sub></italic> is the <italic>i</italic>th joint angle. In this study, a three-link robot arm is considered. In this case, the inverse kinematic model corresponds to a six-input three-output functional mapping. This three-output system can be decomposed into three single-output systems. In order to control the position of the end effector in a Cartesian reference space, each of the three joint functions needs to be identified.</p>
+<p>The MLP is known to be capable to approximate with arbitrary precision any complex non-linear functional relationship [<xref ref-type="bibr" rid="bibr22-0959651811425312">22</xref>]. The non-linear mapping capability makes this type of NN an ideal candidate to model functions of the kind of <xref ref-type="disp-formula" rid="disp-formula1-0959651811425312">equation (1)</xref> [<xref ref-type="bibr" rid="bibr23-0959651811425312">23</xref>, <xref ref-type="bibr" rid="bibr24-0959651811425312">24</xref>].</p>
+<p>The MLP is characterized by a feedforward processing architecture; that is, each unit takes as input the weighted sum of the outputs of the nodes of the previous layer. The input layer is composed of a number of units equal to the number of input variables, and usually acts as a buffer. One or more layers of non-linear processing nodes are cascaded (hidden layers). The non-linear functional mapping of the hidden layer elements is usually implemented through the hyperbolic tangent function. The output layer is composed of a number of elements that is equal to the number of output variables. Each output layer node takes as input the weighted sum of the output of the last hidden layer units. This sum is mapped to the node output via the sigmoidal function.</p>
+<p>The mapping of an MLP can be modified by changing the weights of the connections between the units. In this way, the NN can be brought (trained) to reproduce any desired function. NN training is performed through inductive learning procedures. A set of input/output data pairs is sampled from the desired function and the connection weights are tuned so as to fit the NN response to the training data. MLP training is essentially a parameter learning procedure, where the goal is to minimize the error between the NN response and the desired output. In the case of the proposed three-joint manipulator, one MLP was trained to model the inverse kinematics for the each of the three robot joints. For each robot joint, 13 580 input/output data pairs of end effector positions/joint angles were generated from the robot arm model. Each joint angle <italic>θ<sub>i</sub></italic> ranged in the interval {30°, 330°}. Eighty per cent of the data pairs (training set) were randomly picked to train the MLPs to reproduce the inverse kinematics of the robot joints, the remaining 20 per cent (test set) was used for model validation.</p>
+</sec>
+<sec id="section3-0959651811425312">
+<title>3 Mlp Weight Training Algorithms</title>
+<p>Customarily, MLPs are trained using the BP algorithm [<xref ref-type="bibr" rid="bibr23-0959651811425312">23</xref>]. This procedure modifies the NN weights based on gradient descent of the error landscape [<xref ref-type="bibr" rid="bibr17-0959651811425312">17</xref>, <xref ref-type="bibr" rid="bibr23-0959651811425312">23</xref>]. Unfortunately, due to the high complexity and multimodal nature of the MLP error surface, greedy search techniques like the BP rule are prone to get stuck into flat regions and local error minima. Global population-based search techniques such as EAs [<xref ref-type="bibr" rid="bibr20-0959651811425312">20</xref>] produce more reliable results when searching complex and multimodal solution spaces. In this study, the bees algorithm is used to train the MLPs and its performance is compared with that of BP and an EA.</p>
+<sec id="section4-0959651811425312">
+<title>3.1 Back-propagation rule</title>
+<p>The MLP was trained using the BP rule with momentum term [<xref ref-type="bibr" rid="bibr17-0959651811425312">17</xref>, <xref ref-type="bibr" rid="bibr23-0959651811425312">23</xref>]. The learning procedure was run for a fixed number of iterations on the training set of examples. The results of the learning trials were used as a baseline for assessing the efficacy of the more complex population-based algorithms.</p>
+</sec>
+<sec id="section5-0959651811425312">
+<title>3.2 Evolutionary algorithm</title>
+<p>The flowchart of the EA is shown in <xref ref-type="fig" rid="fig1-0959651811425312">Fig. 1</xref>. Fitness ranking with elitism [<xref ref-type="bibr" rid="bibr20-0959651811425312">20</xref>] was used to select the reproducing individuals. At each learning cycle, a new population was produced through mutation and BP of the reproducing individuals. New solutions replaced old ones via generational replacement [<xref ref-type="bibr" rid="bibr20-0959651811425312">20</xref>]. The procedure was repeated until a predefined number of iterations had elapsed and the fittest solution of the last generation was picked. Genetic mutations slightly modified the weights of the nodes of a solution. For each weight, the perturbation was randomly sampled with uniform probability from an interval of predefined width. The BP rule was introduced as a deterministic mutation operator with the purpose of speeding up the learning process. Because of the real-valued encoding of the weight settings and the lack of genetic crossover, the weight optimization procedure was conceptually akin to evolutionary programming [<xref ref-type="bibr" rid="bibr20-0959651811425312">20</xref>]. This paradigm allows the candidate solutions to be represented in a compact format and avoids the problems stemming from the use of crossover [<xref ref-type="bibr" rid="bibr20-0959651811425312">20</xref>, <xref ref-type="bibr" rid="bibr25-0959651811425312">25</xref>].</p>
+<fig id="fig1-0959651811425312" position="float">
+<label>Fig. 1</label>
+<caption>
+<p>Flowchart of the EA</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig1.tif"/>
+</fig>
+</sec>
+<sec id="section6-0959651811425312">
+<title>3.3 Bees algorithm</title>
+<p>The flowchart of the bees algorithm is given in <xref ref-type="fig" rid="fig2-0959651811425312">Fig. 2</xref>. The bees algorithm mimics the foraging behaviour of honey bees [<xref ref-type="bibr" rid="bibr26-0959651811425312">26</xref>]. At the start of the procedure, <italic>n</italic> scout bees are randomly distributed with uniform probability across the environment (i.e. the solution space). Each bee evaluates the fitness of the site (i.e. solution) where it landed. The main bees algorithm procedure consists of the following sequence of steps.</p>
+<fig id="fig2-0959651811425312" position="float">
+<label>Fig. 2</label>
+<caption>
+<p>Flowchart of the bees algorithm</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig2.tif"/>
+</fig>
+<p>The sites discovered by the scouts are ranked in decreasing order of fitness. The fittest <italic>m</italic> locations (<italic>best</italic>) are selected for the local search phase. In the local search phase, the neighbourhood of the selected sites is further searched. That is, the scouts that found the top (<italic>elite</italic>) <italic>e</italic>≤<italic>m</italic> sites recruit each <italic>nep</italic>‘forager’ bees. The scouts that landed on the remaining <inline-formula id="inline-formula4-0959651811425312"><mml:math display="inline" id="math6-0959651811425312"><mml:mrow><mml:mi>m</mml:mi><mml:mo>−</mml:mo><mml:mi>e</mml:mi></mml:mrow></mml:math></inline-formula> selected locations recruit each <italic>nsp</italic>≤<italic>nep</italic> foragers. The recruiting procedure simulates the mechanism of the waggle dance [<xref ref-type="bibr" rid="bibr27-0959651811425312">27</xref>] in nature. Each forager is placed within a square of side <italic>ngh</italic> centred on the selected location. If a forager lands in a position of higher fitness than the scout, that forager becomes the new scout and will compete to recruit bees for further local exploration in the next iteration.</p>
+<p>If no forager finds a candidate solution of higher fitness than the scout, the size of the neighbourhood is shrunk (<italic>neighbourhood shrinking</italic> procedure). The purpose of the neighbourhood shrinking procedure is to make the search increasingly focused around the selected sites.</p>
+<p>If the local search procedure fails to bring any improvement of fitness for a given number <italic>lim</italic> of iterations, the search is deemed to have found a local peak of performance and the scout is randomly re-initialized (<italic>site abandonment</italic> procedure). If the location being abandoned is the fittest so far, it is stored in memory. If no better solution is found during the remainder of the search, the saved best fitness location is taken as the final solution.</p>
+<p>The global search phase follows. In this phase, <inline-formula id="inline-formula5-0959651811425312"><mml:math display="inline" id="math7-0959651811425312"><mml:mrow><mml:mi>n</mml:mi><mml:mo>−</mml:mo><mml:mi>m</mml:mi></mml:mrow></mml:math></inline-formula> scout bees are randomly placed on the solution space. The aim of the global search procedure is to look for new areas of high fitness.</p>
+<p>At the end of one cycle of the bees algorithm, the <italic>m</italic> scouts resulting from the local search procedure and the <inline-formula id="inline-formula6-0959651811425312"><mml:math display="inline" id="math8-0959651811425312"><mml:mrow><mml:mi>n</mml:mi><mml:mo>−</mml:mo><mml:mi>m</mml:mi></mml:mrow></mml:math></inline-formula> scouts resulting from the global search procedure are kept for the next iteration.</p>
+<p>For a more detailed description of the bees algorithm, the reader is referred to reference [<xref ref-type="bibr" rid="bibr28-0959651811425312">28</xref>].</p>
+</sec>
+</sec>
+<sec id="section7-0959651811425312">
+<title>4 Neural Network Training Results</title>
+<p>To simplify the training of the individuals, input data were normalized according to the mean-variance procedure. A sampling procedure was used to reduce the computational overheads and the running time of the algorithms. The method randomly selected a subset of the training set, at each learning cycle, and used this sample instead of the full training set. The size of the subset was 5 per cent of the training examples. The large number of instances guarantees a sufficient representativeness of the sampled subsets. The structure of the MLPs was optimized by trial and error.</p>
+<p>The MLP training results obtained using the bees algorithm were compared with those obtained using the BP rule and an EA. Each algorithm was run for a number of cycles that was sufficient for it to converge (i.e. the learning curve becomes flat).</p>
+<p>The modelling accuracy (root-mean-square (r.m.s.) error) of the trained MLP was estimated on the test set of examples. This procedure was repeated ten times with different random initializations. The modelling accuracy of each algorithm was estimated as the average test accuracy of the ten MLPs solutions. <xref ref-type="table" rid="table1-0959651811425312">Table 1</xref> describes the MLP structure, and the parameter settings for the BP algorithm and the EA, while <xref ref-type="table" rid="table2-0959651811425312">Table 2</xref> lists the parameter settings for the bees algorithm.</p>
+<table-wrap id="table1-0959651811425312" position="float">
+<label>Table 1</label>
+<caption>
+<p>Parameter settings for the different algorithms</p>
+</caption>
+<graphic alternate-form-of="table1-0959651811425312" xlink:href="10.1177_0959651811425312-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">MLP settings</th>
+<th/>
+<th/>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input nodes</td>
+<td colspan="2">6</td>
+</tr>
+<tr>
+<td>Output nodes</td>
+<td colspan="2">1</td>
+</tr>
+<tr>
+<td>Hidden layers</td>
+<td colspan="2">2</td>
+</tr>
+<tr>
+<td>Hidden nodes</td>
+<td colspan="2">5 per layer</td>
+</tr>
+<tr>
+<td>Activation function of hidden nodes</td>
+<td colspan="2">Hyper-tangent</td>
+</tr>
+<tr>
+<td>Activation function of output nodes</td>
+<td colspan="2">Sigmoidal</td>
+</tr>
+<tr>
+<th align="left">Learning algorithms settings</th>
+<th align="left">BP</th>
+<th align="left">EA</th>
+</tr>
+<tr>
+<td>Learning coefficient</td>
+<td>0.1</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>Momentum term</td>
+<td>0.01</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>Initial range for MLP weights</td>
+<td>[–0.05, 0.05]</td>
+<td>[–0.05, 0.05]</td>
+</tr>
+<tr>
+<td>Trials</td>
+<td>10</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Generations</td>
+<td>50 000</td>
+<td>10 000</td>
+</tr>
+<tr>
+<td>Population size</td>
+<td>n.a.</td>
+<td>100</td>
+</tr>
+<tr>
+<td>MLP weights mutation rate</td>
+<td>n.a.</td>
+<td>0.3</td>
+</tr>
+<tr>
+<td>Amplitude MLP weights mutation</td>
+<td>n.a.</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Back-propagation mutation rate</td>
+<td>n.a.</td>
+<td>0.4</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-0959651811425312">
+<p>n.a., not applicable.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<table-wrap id="table2-0959651811425312" position="float">
+<label>Table 2</label>
+<caption>
+<p>Parameter settings for the bees algorithm</p>
+</caption>
+<graphic alternate-form-of="table2-0959651811425312" xlink:href="10.1177_0959651811425312-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Symbol</th>
+<th align="left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Learning cycles</td>
+<td><italic>lc</italic></td>
+<td>50 000</td>
+</tr>
+<tr>
+<td>Scout bees</td>
+<td><italic>n</italic></td>
+<td>15</td>
+</tr>
+<tr>
+<td>Elite sites</td>
+<td><italic>e</italic></td>
+<td>2</td>
+</tr>
+<tr>
+<td>Best sites</td>
+<td><italic>m</italic></td>
+<td>13</td>
+</tr>
+<tr>
+<td>Recruited elite</td>
+<td><italic>nep</italic></td>
+<td>50</td>
+</tr>
+<tr>
+<td>Recruited best</td>
+<td><italic>nsp</italic></td>
+<td>20</td>
+</tr>
+<tr>
+<td>Neighbourhood</td>
+<td><italic>ngh</italic></td>
+<td>0.2</td>
+</tr>
+<tr>
+<td>Stagnation limit</td>
+<td><italic>lim</italic></td>
+<td>5</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p><xref ref-type="fig" rid="fig3-0959651811425312">Figure 3</xref> shows the MLP predictions (i.e. the MLP outputs) of the joint-1 angle positions <italic>θ</italic><sub>1</sub>(<italic>t</italic>+1) (measured in degrees) for the 2715 input data samples, i.e. end effector positions <italic>x</italic><sub>1,2,3</sub>(<italic>t</italic>+1) and current angle positions <italic>θ</italic><sub>1,2,3</sub>(<italic>t</italic>), of the test set. The actual joint angle positions are included in the plot for reference. The plot refers to the MLP trained using the bees algorithm. <xref ref-type="table" rid="table3-0959651811425312">Table 3</xref> compares the accuracy results obtained using the bees algorithm with the results obtained using BP and the EA for the prediction of joint-1 angle. For each algorithm, <xref ref-type="table" rid="table3-0959651811425312">Table 3</xref> reports the average r.m.s. accuracy <italic>μ</italic> of ten independent learning trials, the standard deviation <italic>σ</italic> of the learning results, and gives the upper and lower bounds of the 95 per cent confidence interval.</p>
+<fig id="fig3-0959651811425312" position="float">
+<label>Fig. 3</label>
+<caption>
+<p>Modelling results for joint-1 angle</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig3.tif"/>
+</fig>
+<table-wrap id="table3-0959651811425312" position="float">
+<label>Table 3</label>
+<caption>
+<p>Joint-1 accuracy and <italic>t</italic>-test results for the different algorithms</p>
+</caption>
+<graphic alternate-form-of="table3-0959651811425312" xlink:href="10.1177_0959651811425312-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Accuracy results</th>
+<th align="left">Bees algorithm</th>
+<th align="left">BP</th>
+<th align="left">EA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>µ</td>
+<td>1.3210</td>
+<td>1.5059</td>
+<td>1.4504</td>
+</tr>
+<tr>
+<td>σ</td>
+<td>0.0511</td>
+<td>0.0623</td>
+<td>0.0665</td>
+</tr>
+<tr>
+<td>Upper bound</td>
+<td>1.3575</td>
+<td>1.5505</td>
+<td>1.4980</td>
+</tr>
+<tr>
+<td>Lower bound</td>
+<td>1.2844</td>
+<td>1.4613</td>
+<td>1.4028</td>
+</tr>
+<tr>
+<th align="left">t-Test results</th>
+<th/>
+<th align="left">Bees algorithm – BP</th>
+<th align="left">Bees algorithm – EA</th>
+</tr>
+<tr>
+<td>t(0.025)</td>
+<td>—</td>
+<td>2.2622</td>
+<td>2.2622</td>
+</tr>
+<tr>
+<td>t-Test statistic</td>
+<td>—</td>
+<td>7.260 704</td>
+<td>4.883 06</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The statistical significance of the differences between the results obtained by the bees algorithm and the results obtained using BP and the EA is evaluated using Student’s <italic>t</italic>-tests. For each comparison, <xref ref-type="table" rid="table3-0959651811425312">Table 3</xref> contrasts the critical value for a 5 per cent level of significance <italic>t</italic>(0.025) with the <italic>t</italic>-test statistics. <xref ref-type="table" rid="table3-0959651811425312">Table 3</xref> confirms that for joint-1 angle prediction task, the results produced by the bees algorithm are statistically significantly better than the results produced by the BP algorithm and the EA.</p>
+<p><xref ref-type="fig" rid="fig4-0959651811425312">Figure 4</xref> shows the actual joint angle position (degrees) and the MLP model predictions (degrees) for the 2715 data samples of the test set for joint-2 angle, <italic>θ</italic><sub>2</sub>. The plot refers to the MLP trained using the bees algorithm. <xref ref-type="table" rid="table4-0959651811425312">Table 4</xref> compares the accuracy results obtained using the bees algorithm with those obtained using BP and the EA for joint-2 angle. The statistical significance between the results of the three algorithms is evaluated using Student’s <italic>t</italic>-tests.</p>
+<fig id="fig4-0959651811425312" position="float">
+<label>Fig. 4</label>
+<caption>
+<p>Modelling results for joint-2 angle</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig4.tif"/>
+</fig>
+<table-wrap id="table4-0959651811425312" position="float">
+<label>Table 4</label>
+<caption>
+<p>Joint-2 accuracy and <italic>t</italic>-test results for the different algorithms</p>
+</caption>
+<graphic alternate-form-of="table4-0959651811425312" xlink:href="10.1177_0959651811425312-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Accuracy results</th>
+<th align="left">Bees algorithm</th>
+<th align="left">BP</th>
+<th align="left">EA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>µ</td>
+<td>1.7785</td>
+<td>1.9250</td>
+<td>1.7961</td>
+</tr>
+<tr>
+<td>σ</td>
+<td>0.0708</td>
+<td>0.1651</td>
+<td>0.0413</td>
+</tr>
+<tr>
+<td>Upper bound</td>
+<td>1.8291</td>
+<td>2.0432</td>
+<td>1.8256</td>
+</tr>
+<tr>
+<td>Lower bound</td>
+<td>1.7279</td>
+<td>1.8069</td>
+<td>1.7666</td>
+</tr>
+<tr>
+<th align="left">t-Test results</th>
+<th/>
+<th align="left">Bees algorithm – BP</th>
+<th align="left">Bees algorithm – EA</th>
+</tr>
+<tr>
+<td>t(0.025)</td>
+<td>—</td>
+<td>2.2622</td>
+<td>2.2622</td>
+</tr>
+<tr>
+<td>t-Test statistic</td>
+<td>—</td>
+<td>2.5792 94</td>
+<td>0.6787 71</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p><xref ref-type="table" rid="table4-0959651811425312">Table 4</xref> shows that for joint-2 angle prediction task, the results produced by the bees algorithm are statistically significantly better than the results produced using BP. For the joint-2 angle prediction task, the bees algorithm and the EA obtained results that are statistically comparable.</p>
+<p><xref ref-type="fig" rid="fig5-0959651811425312">Figure 5</xref> plots the actual joint angle position (degrees) and the MLP model predictions (degrees) for the 2715 data samples of the test set for joint-3 angle, <italic>θ</italic><sub>3</sub>. The plot refers to the MLP trained using the bees algorithm. <xref ref-type="table" rid="table5-0959651811425312">Table 5</xref> compares the accuracy results obtained using the bees algorithm with those obtained using BP and the EA for joint-3 angle. The statistical significance between the results of the three algorithms is evaluated through Student’s <italic>t</italic>-tests.</p>
+<fig id="fig5-0959651811425312" position="float">
+<label>Fig. 5</label>
+<caption>
+<p>Modelling results for joint-3 angle</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig5.tif"/>
+</fig>
+<table-wrap id="table5-0959651811425312" position="float">
+<label>Table 5</label>
+<caption>
+<p>Joint-3 accuracy and <italic>t</italic>-test results for the different algorithms</p>
+</caption>
+<graphic alternate-form-of="table5-0959651811425312" xlink:href="10.1177_0959651811425312-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Accuracy results</th>
+<th align="left">Bees algorithm</th>
+<th align="left">BP</th>
+<th align="left">EA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>µ</td>
+<td>3.1529</td>
+<td>3.1993</td>
+<td>3.1736</td>
+</tr>
+<tr>
+<td>σ</td>
+<td>0.1104</td>
+<td>0.1466</td>
+<td>0.1162</td>
+</tr>
+<tr>
+<td>Upper bound</td>
+<td>3.2318</td>
+<td>3.3041</td>
+<td>3.2567</td>
+</tr>
+<tr>
+<td>Lower bound</td>
+<td>3.0739</td>
+<td>3.0944</td>
+<td>3.0905</td>
+</tr>
+<tr>
+<th align="left">t-Test results</th>
+<th/>
+<th align="left">Bees algorithm – BP</th>
+<th align="left">Bees algorithm – EA</th>
+</tr>
+<tr>
+<td>t(0.025)</td>
+<td>—</td>
+<td>2.2622</td>
+<td>2.2622</td>
+</tr>
+<tr>
+<td>t-Test statistic</td>
+<td>—</td>
+<td>0.799 987</td>
+<td>0.409 388</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p><xref ref-type="table" rid="table5-0959651811425312">Table 5</xref> shows that for joint-3 angle prediction task, there are no statistically significant differences between the results produced by the three algorithms. In general, <xref ref-type="fig" rid="fig3-0959651811425312">Figs 3</xref> to <xref ref-type="fig" rid="fig5-0959651811425312">5</xref> show that the bees algorithm finds it most difficult to model the robot kinematics at the extremes of the angle span (30° and 330°) of the three joints. This is a common problem for all of the algorithms, and is due to the steep non-linearity at the transition boundaries.</p>
+</sec>
+<sec id="section8-0959651811425312">
+<title>5 PID Controller Design For Flexible-Link Manipulator</title>
+<sec id="section9-0959651811425312">
+<title>5.1 Hierarchical PID controller</title>
+<p>A schematic diagram of the flexible-link robot manipulator is given in <xref ref-type="fig" rid="fig6-0959651811425312">Fig. 6</xref>. The mass and elastic properties of the link are assumed to be distributed uniformly along the link. The flexible link is taken to be an Euler–Bernoulli beam. <italic>θ</italic> represents the angular position of the equivalent rigid link with respect to the fixed frame <italic>XY</italic>. <italic>D</italic> represents position of the tip with respect to the equivalent rigid link. Assuming small deflections of the link, an approximate linear time-invariant dynamic model is derived using Lagrangian formulation and the dynamic equation is represented in matrix form as</p>
+<fig id="fig6-0959651811425312" position="float">
+<label>Fig. 6</label>
+<caption>
+<p>Schematic diagram of the flexible-link robot manipulator</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig6.tif"/>
+</fig>
+<p><disp-formula id="disp-formula3-0959651811425312">
+<label>(3)</label>
+<mml:math display="block" id="math9-0959651811425312">
+<mml:mrow>
+<mml:mi mathvariant="bold">M</mml:mi>
+<mml:mover>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">q</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+<mml:mo>+</mml:mo>
+<mml:mi mathvariant="bold">C</mml:mi>
+<mml:mover>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>+</mml:mo>
+<mml:mi mathvariant="bold">K</mml:mi>
+<mml:mi mathvariant="bold-italic">q</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi mathvariant="bold-italic">F</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0959651811425312" xlink:href="10.1177_0959651811425312-eq3.tif"/>
+</disp-formula>
+</p>
+<p>where <bold><italic>q</italic></bold> is the vector of generalized coordinates, <inline-formula id="inline-formula7-0959651811425312"><mml:math display="inline" id="math10-0959651811425312"><mml:mrow><mml:mi mathvariant="bold-italic">q</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">[</mml:mo><mml:mi>θ</mml:mi><mml:mo>,</mml:mo><mml:mi>α</mml:mi><mml:msup><mml:mrow><mml:mo stretchy="false">]</mml:mo></mml:mrow><mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula>, <bold>M</bold> is the mass matrix, <bold>C</bold> is the damping matrix, <bold>K</bold> is the stiffness matrix, and <inline-formula id="inline-formula8-0959651811425312"><mml:math display="inline" id="math11-0959651811425312"><mml:mrow><mml:mi>F</mml:mi><mml:mo>=</mml:mo><mml:mo stretchy="false">[</mml:mo><mml:mtable align="left"><mml:mtr><mml:mtd columnalign="center"><mml:mrow><mml:mi>T</mml:mi></mml:mrow></mml:mtd><mml:mtd columnalign="center"><mml:mrow><mml:mn>0</mml:mn></mml:mrow></mml:mtd></mml:mtr></mml:mtable><mml:msup><mml:mrow><mml:mo stretchy="false">]</mml:mo></mml:mrow><mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula>. <italic>T</italic> is the input torque applied at the joint. The variable <italic>α</italic> (=<italic>D</italic>/<italic>L</italic>) represents the slope at the free end of the flexible link.</p>
+<p>The dynamic model can be represented in state-space form as</p>
+<p><disp-formula id="disp-formula4-0959651811425312">
+<mml:math display="block" id="math12-0959651811425312">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi mathvariant="bold">A</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mover>
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>+</mml:mo>
+<mml:mi mathvariant="bold">B</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi mathvariant="bold-italic">u</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0959651811425312" xlink:href="10.1177_0959651811425312-eq4.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula5-0959651811425312">
+<label>(4)</label>
+<mml:math display="block" id="math13-0959651811425312">
+<mml:mrow>
+<mml:mi mathvariant="bold-italic">y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi mathvariant="bold">C</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi mathvariant="bold-italic">x</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0959651811425312" xlink:href="10.1177_0959651811425312-eq5.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula9-0959651811425312"><mml:math display="inline" id="math14-0959651811425312"><mml:mrow><mml:mi>x</mml:mi><mml:mo>=</mml:mo><mml:msup><mml:mrow><mml:mo>[</mml:mo><mml:mtable align="left"><mml:mtr><mml:mtd columnalign="center"><mml:mrow><mml:mi>θ</mml:mi></mml:mrow></mml:mtd><mml:mtd columnalign="center"><mml:mrow><mml:mi>α</mml:mi></mml:mrow></mml:mtd><mml:mtd columnalign="center"><mml:mrow><mml:mover><mml:mrow><mml:mi>θ</mml:mi></mml:mrow><mml:mo>·</mml:mo></mml:mover></mml:mrow></mml:mtd><mml:mtd columnalign="center"><mml:mrow><mml:mover><mml:mrow><mml:mi>α</mml:mi></mml:mrow><mml:mo>·</mml:mo></mml:mover></mml:mrow></mml:mtd></mml:mtr></mml:mtable><mml:mo>]</mml:mo></mml:mrow><mml:mrow><mml:mtext>T</mml:mtext></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula> and the matrices <bold>A</bold>, <bold>B</bold>, and <bold>C</bold> are given by</p>
+<p><disp-formula id="disp-formula6-0959651811425312">
+<mml:math display="block" id="math15-0959651811425312">
+<mml:mrow>
+<mml:mi mathvariant="bold">A</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn mathvariant="bold">0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>×</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold">I</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>×</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold">M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mi mathvariant="bold">K</mml:mi>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold">M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mi mathvariant="bold">C</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0959651811425312" xlink:href="10.1177_0959651811425312-eq6.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula7-0959651811425312">
+<mml:math display="block" id="math16-0959651811425312">
+<mml:mrow>
+<mml:mi mathvariant="bold">B</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn mathvariant="bold">0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>×</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi mathvariant="bold">M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0959651811425312" xlink:href="10.1177_0959651811425312-eq7.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula8-0959651811425312">
+<label>(5)</label>
+<mml:math display="block" id="math17-0959651811425312">
+<mml:mrow>
+<mml:mi mathvariant="bold">C</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi mathvariant="bold">I</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>×</mml:mo>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0959651811425312" xlink:href="10.1177_0959651811425312-eq8.tif"/>
+</disp-formula>
+</p>
+<p>A closed-loop block diagram of the proposed hierarchical PID control system is illustrated in <xref ref-type="fig" rid="fig7-0959651811425312">Fig. 7</xref>. The controller has two subsystems. The ‘fast’ subsystem reduces the vibrations of the manipulator tip, and the ‘slow’ subsystem controls the attainment of the desired position. The hierarchical PID controller has six gains which need to be tuned. As can be seen in <xref ref-type="fig" rid="fig7-0959651811425312">Fig. 7</xref>, in the hierarchical PID controller, the error signal <italic>e</italic>(<italic>t</italic>) and tip deflection <italic>α</italic>(<italic>t</italic>) are employed to generate proportional, integral, and derivative actions. The resulting signals are summed to form the control signal <italic>u</italic>(<italic>t</italic>) that is applied to the plant model. The mathematical description of the hierarchical PID controller is</p>
+<fig id="fig7-0959651811425312" position="float">
+<label>Fig. 7</label>
+<caption>
+<p>Block diagram of the hierarchical PID controller</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig7.tif"/>
+</fig>
+<p><disp-formula id="disp-formula9-0959651811425312">
+<label>(6)</label>
+<mml:math display="block" id="math18-0959651811425312">
+<mml:mrow>
+<mml:mi>u</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>slow</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>⋅</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>slow</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>⋅</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mo>∫</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+<mml:mi>τ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>D</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>slow</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>⋅</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>fast</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>⋅</mml:mo>
+<mml:mi>α</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>fast</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>⋅</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mo>∫</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mi>α</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+<mml:mi>τ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>D</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>fast</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>⋅</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0959651811425312" xlink:href="10.1177_0959651811425312-eq9.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>u</italic>(<italic>t</italic>) is the input signal to the plant model, and <italic>K</italic><sub>P</sub>, <italic>K</italic><sub>I</sub>, and <italic>K</italic><sub>D</sub> are the proportional, integral, and derivative gains of the hierarchical PID controllers, respectively. The error signal <italic>e<sub>θ</sub></italic>(<italic>t</italic>) is defined as <inline-formula id="inline-formula10-0959651811425312"><mml:math display="inline" id="math19-0959651811425312"><mml:mrow><mml:msub><mml:mrow><mml:mi>e</mml:mi></mml:mrow><mml:mrow><mml:mi>θ</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:mi>t</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mi>r</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>t</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>−</mml:mo><mml:mi>θ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>t</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula>, and <italic>r</italic>(<italic>t</italic>) is the desired input signal.</p>
+<p>In order to achieve high performance control of the robotic arm, the hierarchical PID controller gains must be trained to achieve the best transient response of the robot. That is, the parameters (gains) of the hierarchical PID controller must be adjusted to optimize the robot transient response. In this paper, the bees algorithm was applied for tuning the hierarchical PID controller gains. The bees algorithm was programmed using MATLAB and run on an Intel P4 2.4 GHz personal computer with 1.0 GB memory.</p>
+</sec>
+<sec id="section10-0959651811425312">
+<title>5.2 Hierarchical PID controller experimental results</title>
+<p>The aim of this experiment was to test the hierarchical PID controller gains tuned using the bees algorithm and to assess the response of the system. The parameters of the bees algorithm were set as in <xref ref-type="table" rid="table6-0959651811425312">Table 6</xref>. The effectiveness of the proposed technique was compared with that of a trial-and-error technique [<xref ref-type="bibr" rid="bibr21-0959651811425312">21</xref>]. The PID gains of the manually tuned controller are given in <xref ref-type="table" rid="table7-0959651811425312">Table 7</xref>.</p>
+<table-wrap id="table6-0959651811425312" position="float">
+<label>Table 6</label>
+<caption>
+<p>Parameter settings for the bees algorithm</p>
+</caption>
+<graphic alternate-form-of="table6-0959651811425312" xlink:href="10.1177_0959651811425312-table6.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Symbol</th>
+<th align="left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Learning cycles</td>
+<td><italic>lc</italic></td>
+<td>1000</td>
+</tr>
+<tr>
+<td>Scout bees</td>
+<td><italic>n</italic></td>
+<td>20</td>
+</tr>
+<tr>
+<td>Elite sites</td>
+<td><italic>e</italic></td>
+<td>3</td>
+</tr>
+<tr>
+<td>Best sites</td>
+<td><italic>m</italic></td>
+<td>10</td>
+</tr>
+<tr>
+<td>Recruited elite</td>
+<td><italic>nep</italic></td>
+<td>20</td>
+</tr>
+<tr>
+<td>Recruited best</td>
+<td><italic>nsp</italic></td>
+<td>10</td>
+</tr>
+<tr>
+<td>neighbourhood</td>
+<td><italic>ngh</italic></td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>Stagnation limit</td>
+<td><italic>lim</italic></td>
+<td>not used</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table7-0959651811425312" position="float">
+<label>Table 7</label>
+<caption>
+<p>Gains of the manually tuned hierarchical PID controller</p>
+</caption>
+<graphic alternate-form-of="table7-0959651811425312" xlink:href="10.1177_0959651811425312-table7.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left"><inline-formula id="inline-formula11-0959651811425312">
+<mml:math display="inline" id="math20-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>slow</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><inline-formula id="inline-formula12-0959651811425312">
+<mml:math display="inline" id="math21-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>slow</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><inline-formula id="inline-formula13-0959651811425312">
+<mml:math display="inline" id="math22-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>D</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>slow</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><inline-formula id="inline-formula14-0959651811425312">
+<mml:math display="inline" id="math23-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>fast</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><inline-formula id="inline-formula15-0959651811425312">
+<mml:math display="inline" id="math24-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>fast</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><inline-formula id="inline-formula16-0959651811425312">
+<mml:math display="inline" id="math25-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>D</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>fast</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>15</td>
+<td>0.3</td>
+<td>5</td>
+<td>1.5</td>
+<td>0.3</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The results obtained by the bees algorithm were tested on a physical flexible single-link robot manipulator. A schematic diagram of the experimental system is given in <xref ref-type="fig" rid="fig8-0959651811425312">Fig. 8</xref>. The components of the manipulator are shown in <xref ref-type="fig" rid="fig9-0959651811425312">Fig. 9</xref>.</p>
+<fig id="fig8-0959651811425312" position="float">
+<label>Fig. 8</label>
+<caption>
+<p>Schematic diagram of the control system</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig8.tif"/>
+</fig>
+<fig id="fig9-0959651811425312" position="float">
+<label>Fig. 9</label>
+<caption>
+<p>Photograph of the single flexible-link robot manipulator experiment</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig9.tif"/>
+</fig>
+<p>The flexible link is a thin aluminium beam with strain gauges mounted on its base. The gauges were calibrated to produce 1 V per 25 mm of tip deflection. The flexible link was fixed at one end to the shaft of the d.c. servo motor. The motor was a voltage-driven Quanser SRV02-ET model equipped with angular speed and position sensors. Interaction with the controlled plant was provided by a Quanser UPM 2405 power module and a Quanser MultiQ PCI interface card. The WinCon software developed by Quanser allowed communication with SIMULINK. This made MATLAB control possible.</p>
+<p>The sampling rate was 100 Hz. The angular speed sensor is a tachometer calibrated to produce 1.5 mV per r/min, with a measurement range of ± 5 volt. The angular position sensor is an optic encoder of 0.08789 degree/count resolution.</p>
+<p>The physical parameters of the flexible arm are given in <xref ref-type="table" rid="table8-0959651811425312">Table 8</xref>. Substituting these parameters into the dynamic model <xref ref-type="disp-formula" rid="disp-formula8-0959651811425312">equation (5)</xref>, the state-space form of the manipulator can be obtained as</p>
+<table-wrap id="table8-0959651811425312" position="float">
+<label>Table 8</label>
+<caption>
+<p>Physical and geometric characteristics of the flexible robot manipulator</p>
+</caption>
+<graphic alternate-form-of="table8-0959651811425312" xlink:href="10.1177_0959651811425312-table8.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Parameter</th>
+<th align="left">Symbol</th>
+<th align="left">Value</th>
+<th align="left">Unit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Motor inertia</td>
+<td><italic>J</italic><sub>h</sub></td>
+<td>0.0020</td>
+<td>kgm<sup>2</sup></td>
+</tr>
+<tr>
+<td>Flexible link length</td>
+<td><italic>L</italic></td>
+<td>0.4500</td>
+<td>m</td>
+</tr>
+<tr>
+<td>Flexible link height</td>
+<td><italic>h</italic></td>
+<td>0.0200</td>
+<td>m</td>
+</tr>
+<tr>
+<td>Flexible link thickness</td>
+<td><italic>d</italic></td>
+<td>0.0008</td>
+<td>m</td>
+</tr>
+<tr>
+<td>Flexible link linear density</td>
+<td>ρ</td>
+<td>0.1333</td>
+<td>kg/m</td>
+</tr>
+<tr>
+<td>Flexible link flexural rigidity</td>
+<td><italic>EI</italic></td>
+<td>0.1621</td>
+<td>Nm<sup>2</sup></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p><disp-formula id="disp-formula10-0959651811425312">
+<label>(7)</label>
+<mml:math display="block" id="math26-0959651811425312">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>566</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>46</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>37</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>02</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>921</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>77</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>37</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>02</mml:mn>
+</mml:mrow>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>65</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>11</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>65</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>11</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>m</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0959651811425312" xlink:href="10.1177_0959651811425312-eq10.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>V</italic><sub>m</sub> is the servomotor voltage. The objective function of the controller system is</p>
+<p><disp-formula id="disp-formula11-0959651811425312">
+<label>(8)</label>
+<mml:math display="block" id="math27-0959651811425312">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>r</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>ss</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>6</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0959651811425312" xlink:href="10.1177_0959651811425312-eq11.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>w<sub>i</sub></italic> are weight factors, <italic>t</italic><sub>d</sub> is the delay time, <italic>t</italic><sub>r</sub> the rise time, <italic>t</italic><sub>p</sub> the peak time, <italic>M</italic> the maximum overshoot, <italic>e</italic><sub>ss</sub> the steady-state error, and <italic>A<sub>α</sub></italic> the amplitude of the tip deflection. The weight factors were chosen by trial and error, with the aim of minimizing in particular the maximum overshoot, the steady-state error, and the amplitude of the tip deflection. For this reason, <italic>w</italic><sub>4</sub> to <italic>w</italic><sub>6</sub> are much larger <italic>w</italic><sub>1</sub> to <italic>w</italic><sub>3</sub>. The weight vectors are given in <xref ref-type="table" rid="table9-0959651811425312">Table 9</xref>.</p>
+<table-wrap id="table9-0959651811425312" position="float">
+<label>Table 9</label>
+<caption>
+<p>Values of the weight factors</p>
+</caption>
+<graphic alternate-form-of="table9-0959651811425312" xlink:href="10.1177_0959651811425312-table9.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left"><italic>w</italic><sub>1</sub></th>
+<th align="left"><italic>w</italic><sub>2</sub></th>
+<th align="left"><italic>w</italic><sub>3</sub></th>
+<th align="left"><italic>w</italic><sub>4</sub></th>
+<th align="left"><italic>w</italic><sub>5</sub></th>
+<th align="left"><italic>w</italic><sub>6</sub></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>500.0</td>
+<td>500.0</td>
+<td>150.0</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>In the tests, the bees algorithm was used to optimize the gains of the hierarchical PID controller using the dynamic model of the single flexible-link robot manipulator. <xref ref-type="disp-formula" rid="disp-formula10-0959651811425312">Equations (7)</xref> and <xref ref-type="disp-formula" rid="disp-formula11-0959651811425312">(8)</xref> were employed to evaluate the candidate solutions for the gains of the hierarchical PID controller. Subsequently, the gains optimized using the bees algorithm were used on the experimental set-up.</p>
+<p>The PID gains obtained for 50 independent runs of the bees algorithm are given in <xref ref-type="table" rid="table10-0959651811425312">Table 10</xref>, which shows that the bees algorithm was able to produce several different solutions for the PID gains without significant variation of the controller performance. If needed, the bees algorithm can be used to generate a set of candidate solutions from which the final configuration is chosen according to specific parameters like delay time, rise time, peak time, maximum overshoot, steady-state error, or servo motor control voltage.</p>
+<table-wrap id="table10-0959651811425312" position="float">
+<label>Table 10</label>
+<caption>
+<p>Gains of the hierarchical PID controller</p>
+</caption>
+<graphic alternate-form-of="table10-0959651811425312" xlink:href="10.1177_0959651811425312-table10.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left"><inline-formula id="inline-formula17-0959651811425312">
+<mml:math display="inline" id="math28-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>slow</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th/>
+<th align="left"><inline-formula id="inline-formula18-0959651811425312">
+<mml:math display="inline" id="math29-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>D</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>slow</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><inline-formula id="inline-formula19-0959651811425312">
+<mml:math display="inline" id="math30-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>P</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>fast</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><inline-formula id="inline-formula20-0959651811425312">
+<mml:math display="inline" id="math31-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>I</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>fast</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><inline-formula id="inline-formula21-0959651811425312">
+<mml:math display="inline" id="math32-0959651811425312">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>D</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>fast</mml:mtext>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">Objective function value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3.4328</td>
+<td>0.0136</td>
+<td>0.0720</td>
+<td>0.9267</td>
+<td>1.8118</td>
+<td>0.1216</td>
+<td>20.1852</td>
+</tr>
+<tr>
+<td>2.9499</td>
+<td>0.0056</td>
+<td>0.0161</td>
+<td>1.0979</td>
+<td>1.9091</td>
+<td>0.1337</td>
+<td>20.2222</td>
+</tr>
+<tr>
+<td>3.6515</td>
+<td>0.0203</td>
+<td>0.1211</td>
+<td>2.0011</td>
+<td>0.8435</td>
+<td>0.0564</td>
+<td>20.6036</td>
+</tr>
+<tr>
+<td>2.8780</td>
+<td>0.0152</td>
+<td>0.0361</td>
+<td>2.4329</td>
+<td>0.7321</td>
+<td>0.1143</td>
+<td>20.1648</td>
+</tr>
+<tr>
+<td>3.0043</td>
+<td>0.0348</td>
+<td>0.0530</td>
+<td>1.8776</td>
+<td>1.4455</td>
+<td>0.0798</td>
+<td>20.0836</td>
+</tr>
+<tr>
+<td>2.9981</td>
+<td>0.0410</td>
+<td>0.0577</td>
+<td>1.9132</td>
+<td>1.5068</td>
+<td>0.0644</td>
+<td>20.0940</td>
+</tr>
+<tr>
+<td>3.5035</td>
+<td>0.0385</td>
+<td>0.1190</td>
+<td>1.8222</td>
+<td>0.5259</td>
+<td>0.0507</td>
+<td>20.5660</td>
+</tr>
+<tr>
+<td>2.4705</td>
+<td>0.0489</td>
+<td>0.0056</td>
+<td>2.1121</td>
+<td>1.7794</td>
+<td>0.0764</td>
+<td>19.9595</td>
+</tr>
+<tr>
+<td>3.5579</td>
+<td>0.0473</td>
+<td>0.1380</td>
+<td>2.6309</td>
+<td>0.7133</td>
+<td>0.0645</td>
+<td>20.3388</td>
+</tr>
+<tr>
+<td>3.9323</td>
+<td>0.0139</td>
+<td>0.1795</td>
+<td>0.8994</td>
+<td>0.0395</td>
+<td>0.1402</td>
+<td>20.4545</td>
+</tr>
+<tr>
+<td>4.3788</td>
+<td>0.0074</td>
+<td>0.2459</td>
+<td>2.5094</td>
+<td>0.4620</td>
+<td>0.1378</td>
+<td>20.0509</td>
+</tr>
+<tr>
+<td>3.0381</td>
+<td>0.0647</td>
+<td>0.0405</td>
+<td>0.9444</td>
+<td>1.9592</td>
+<td>0.1374</td>
+<td>20.5942</td>
+</tr>
+<tr>
+<td>3.2396</td>
+<td>0.0305</td>
+<td>0.1099</td>
+<td>1.9392</td>
+<td>0.1321</td>
+<td>0.0167</td>
+<td>19.5888</td>
+</tr>
+<tr>
+<td>3.8278</td>
+<td>0.0139</td>
+<td>0.1472</td>
+<td>2.0840</td>
+<td>0.7567</td>
+<td>0.1038</td>
+<td>19.7904</td>
+</tr>
+<tr>
+<td>3.2910</td>
+<td>0.0500</td>
+<td>0.1164</td>
+<td>2.6633</td>
+<td>1.9009</td>
+<td>0.0744</td>
+<td>20.0048</td>
+</tr>
+<tr>
+<td>2.4631</td>
+<td>0.0620</td>
+<td>0.0202</td>
+<td>1.7357</td>
+<td>1.0255</td>
+<td>0.0296</td>
+<td>20.7782</td>
+</tr>
+<tr>
+<td>3.3721</td>
+<td>0.0251</td>
+<td>0.1362</td>
+<td>2.3506</td>
+<td>0.6013</td>
+<td>0.0034</td>
+<td>19.6221</td>
+</tr>
+<tr>
+<td>2.7124</td>
+<td>0.0578</td>
+<td>0.0665</td>
+<td>2.5311</td>
+<td>1.4809</td>
+<td>0.0515</td>
+<td>19.8780</td>
+</tr>
+<tr>
+<td>3.2886</td>
+<td>0.0120</td>
+<td>0.0805</td>
+<td>0.6356</td>
+<td>1.8767</td>
+<td>0.0496</td>
+<td>19.8658</td>
+</tr>
+<tr>
+<td>2.4415</td>
+<td>0.0544</td>
+<td>0.0285</td>
+<td>1.5641</td>
+<td>0.9396</td>
+<td>0.0061</td>
+<td>20.4916</td>
+</tr>
+<tr>
+<td>3.7824</td>
+<td>0.0239</td>
+<td>0.1702</td>
+<td>2.8797</td>
+<td>1.0815</td>
+<td>0.0547</td>
+<td>20.1677</td>
+</tr>
+<tr>
+<td>4.2696</td>
+<td>0.0035</td>
+<td>0.2398</td>
+<td>2.3625</td>
+<td>0.4601</td>
+<td>0.1310</td>
+<td>20.0823</td>
+</tr>
+<tr>
+<td>2.2401</td>
+<td>0.0605</td>
+<td>0.0198</td>
+<td>2.7264</td>
+<td>0.4912</td>
+<td>0.0905</td>
+<td>19.7027</td>
+</tr>
+<tr>
+<td>3.6077</td>
+<td>0.0112</td>
+<td>0.1236</td>
+<td>1.5708</td>
+<td>0.1302</td>
+<td>0.1056</td>
+<td>19.7263</td>
+</tr>
+<tr>
+<td>3.1341</td>
+<td>0.0467</td>
+<td>0.0909</td>
+<td>2.0906</td>
+<td>1.6241</td>
+<td>0.1340</td>
+<td>19.6428</td>
+</tr>
+<tr>
+<td>2.9195</td>
+<td>0.0609</td>
+<td>0.0714</td>
+<td>1.7511</td>
+<td>0.2117</td>
+<td>0.1336</td>
+<td>20.2247</td>
+</tr>
+<tr>
+<td>3.4879</td>
+<td>0.0227</td>
+<td>0.1111</td>
+<td>1.3257</td>
+<td>1.6670</td>
+<td>0.1416</td>
+<td>19.7654</td>
+</tr>
+<tr>
+<td>2.1517</td>
+<td>0.0465</td>
+<td>0.0030</td>
+<td>1.5672</td>
+<td>0.1562</td>
+<td>0.0051</td>
+<td>19.7168</td>
+</tr>
+<tr>
+<td>3.3709</td>
+<td>0.0166</td>
+<td>0.0925</td>
+<td>0.8405</td>
+<td>0.3341</td>
+<td>0.0794</td>
+<td>20.2140</td>
+</tr>
+<tr>
+<td>2.9115</td>
+<td>0.0267</td>
+<td>0.0763</td>
+<td>1.2529</td>
+<td>0.8690</td>
+<td>0.0393</td>
+<td>19.3300</td>
+</tr>
+<tr>
+<td>2.6287</td>
+<td>0.0263</td>
+<td>0.0376</td>
+<td>0.5023</td>
+<td>0.8077</td>
+<td>0.0179</td>
+<td>19.4398</td>
+</tr>
+<tr>
+<td>3.0609</td>
+<td>0.0058</td>
+<td>0.0694</td>
+<td>0.6214</td>
+<td>1.1792</td>
+<td>0.0442</td>
+<td>19.0987</td>
+</tr>
+<tr>
+<td>2.4636</td>
+<td>0.0521</td>
+<td>0.0214</td>
+<td>1.1489</td>
+<td>1.1611</td>
+<td>0.1445</td>
+<td>19.5481</td>
+</tr>
+<tr>
+<td>3.0576</td>
+<td>0.0295</td>
+<td>0.1000</td>
+<td>1.8292</td>
+<td>1.6901</td>
+<td>0.0642</td>
+<td>19.5712</td>
+</tr>
+<tr>
+<td>2.8340</td>
+<td>0.0329</td>
+<td>0.0719</td>
+<td>1.4442</td>
+<td>1.9461</td>
+<td>0.0577</td>
+<td>19.2677</td>
+</tr>
+<tr>
+<td>3.4065</td>
+<td>0.0455</td>
+<td>0.1595</td>
+<td>2.9080</td>
+<td>1.8314</td>
+<td>0.1486</td>
+<td>19.7119</td>
+</tr>
+<tr>
+<td>3.1189</td>
+<td>0.0390</td>
+<td>0.1086</td>
+<td>1.7319</td>
+<td>0.1946</td>
+<td>0.1355</td>
+<td>19.4921</td>
+</tr>
+<tr>
+<td>3.0177</td>
+<td>0.0399</td>
+<td>0.1035</td>
+<td>1.9452</td>
+<td>0.6688</td>
+<td>0.1340</td>
+<td>19.3283</td>
+</tr>
+<tr>
+<td>2.0993</td>
+<td>0.0598</td>
+<td>0.0144</td>
+<td>2.8715</td>
+<td>0.4070</td>
+<td>0.1475</td>
+<td>19.5703</td>
+</tr>
+<tr>
+<td>3.7401</td>
+<td>0.0053</td>
+<td>0.1632</td>
+<td>2.6807</td>
+<td>0.3583</td>
+<td>0.0840</td>
+<td>19.5611</td>
+</tr>
+<tr>
+<td>3.3526</td>
+<td>0.0182</td>
+<td>0.1131</td>
+<td>1.5447</td>
+<td>0.9023</td>
+<td>0.1389</td>
+<td>19.3305</td>
+</tr>
+<tr>
+<td>2.6721</td>
+<td>0.0447</td>
+<td>0.0857</td>
+<td>2.4468</td>
+<td>1.9907</td>
+<td>0.0547</td>
+<td>19.3106</td>
+</tr>
+<tr>
+<td>2.1679</td>
+<td>0.0395</td>
+<td>0.0192</td>
+<td>1.9365</td>
+<td>1.5074</td>
+<td>0.0016</td>
+<td>19.2411</td>
+</tr>
+<tr>
+<td>3.2850</td>
+<td>0.0279</td>
+<td>0.1592</td>
+<td>2.9627</td>
+<td>0.7317</td>
+<td>0.0811</td>
+<td>19.2291</td>
+</tr>
+<tr>
+<td>2.7752</td>
+<td>0.0509</td>
+<td>0.0942</td>
+<td>1.9871</td>
+<td>0.6650</td>
+<td>0.1350</td>
+<td>19.6332</td>
+</tr>
+<tr>
+<td>3.0769</td>
+<td>0.0176</td>
+<td>0.0695</td>
+<td>0.0664</td>
+<td>1.7933</td>
+<td>0.1484</td>
+<td>19.3373</td>
+</tr>
+<tr>
+<td>3.3241</td>
+<td>0.0282</td>
+<td>0.1521</td>
+<td>2.6250</td>
+<td>1.7178</td>
+<td>0.1269</td>
+<td>19.0859</td>
+</tr>
+<tr>
+<td>2.6643</td>
+<td>0.0388</td>
+<td>0.0675</td>
+<td>1.2395</td>
+<td>0.7508</td>
+<td>0.1227</td>
+<td>19.2567</td>
+</tr>
+<tr>
+<td>2.5718</td>
+<td>0.0287</td>
+<td>0.0516</td>
+<td>1.0142</td>
+<td>1.6965</td>
+<td>0.0452</td>
+<td>19.1044</td>
+</tr>
+<tr>
+<td>2.7107</td>
+<td>0.0317</td>
+<td>0.0752</td>
+<td>1.1337</td>
+<td>0.0488</td>
+<td>0.0635</td>
+<td>19.2274</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>For the control of the physical manipulator, the gains obtained by the bees algorithm and the gains obtained using a trial-and-error technique [<xref ref-type="bibr" rid="bibr21-0959651811425312">21</xref>] were tested. The desired input signal for the rotation of the robot manipulator was assumed to be a step function and its final value was defined as 450. While the robot arm moved, the deflection of the tip of the arm must be close to zero degrees. <xref ref-type="fig" rid="fig10-0959651811425312">Figures 10</xref>, <xref ref-type="fig" rid="fig11-0959651811425312">11</xref>, and <xref ref-type="fig" rid="fig12-0959651811425312">12</xref> show the results obtained by the bees algorithm and the trial-and-error technique [<xref ref-type="bibr" rid="bibr21-0959651811425312">21</xref>] for angular displacement, tip deflection, and servo motor voltage, respectively, where the results of 50 trials of the bees algorithm are presented.</p>
+<fig id="fig10-0959651811425312" position="float">
+<label>Fig. 10</label>
+<caption>
+<p>Angular displacement control</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig10.tif"/>
+</fig>
+<fig id="fig11-0959651811425312" position="float">
+<label>Fig. 11</label>
+<caption>
+<p>Tip deflection control</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig11.tif"/>
+</fig>
+<fig id="fig12-0959651811425312" position="float">
+<label>Fig. 12</label>
+<caption>
+<p>Servo motor control voltages of the controllers</p>
+</caption>
+<graphic xlink:href="10.1177_0959651811425312-fig12.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig10-0959651811425312">Figure 10</xref> shows that with the bees algorithm, the flexible arm can move faster and more reliably compared with the trial-and-error technique. <xref ref-type="fig" rid="fig11-0959651811425312">Figure 11</xref> shows that the gains optimized using the bees algorithm produced less tip vibration than the trial-and-error technique. The servo motor voltages for the each PID controller are given in <xref ref-type="fig" rid="fig12-0959651811425312">Fig. 12</xref>. The controllers tuned by the bees algorithm have smaller and smoother control voltages than those from the trial-and-error technique. The objective function value (the cost) was given in reference [<xref ref-type="bibr" rid="bibr21-0959651811425312">21</xref>] as 28.1728. However, the mean objective value for 50 different runs of the bees algorithm was found to be 19.9496.</p>
+<p>The standard deviation of the mean objective value over the 50 runs was extremely modest (0.4540), which proves the reliability of the proposed algorithm. The similarity of the action of the 50 controllers generated using the bees algorithm (see <xref ref-type="fig" rid="fig10-0959651811425312">Figs 10</xref> to <xref ref-type="fig" rid="fig12-0959651811425312">12</xref>), and the small standard deviation (0.4540) of their fitness, suggest that the PID gains obtained using the proposed technique might possess a certain degree of robustness. Further tests are needed to investigate in full the robustness of the gain settings generated using the proposed approach.</p>
+</sec>
+</sec>
+<sec id="section11-0959651811425312" sec-type="conclusions">
+<title>6 Conclusions</title>
+<p>The bees algorithm was applied to two parameter optimization tasks for robot manipulator control. In the first application, the proposed algorithm was used to train three MLPs to model the inverse kinematics of the joints of a three-link robot manipulator. The bees algorithm produced accurate learning results for all three robot joints. The small standard deviation calculated on ten independent learning trials proved the high reliability of the proposed technique. The results obtained by the bees algorithm were compared with those obtained using the BP algorithm and an EA. In contrast to the BP rule, the bees algorithm produces better learning results on the modelling of two out of three robot joints, and comparable learning results on the modelling of the remaining joint. Compared with the EA, the bees algorithm attains superior learning results on the modelling of one of the robot joints, and comparable learning results on the modelling of the remaining two joints. Overall, the standard deviation of the learning results produced by the two population-based algorithms is smaller than the standard deviation of the learning results produced by the BP algorithm. This result confirms the better reliability of global population-based optimization algorithms compared with greedy steepest descent search.</p>
+<p>In the second application, the proposed algorithm was applied to tune the gains of a hierarchical PID controller for a flexible single-link robot manipulator with a distributed mass. The aim of the control action was to bring the free end of the robot manipulator to a desired position and minimize arm vibrations while in motion. The controller was composed of two modules, a fast subsystem and a slow subsystem. The fast subsystem reduced the vibrations of the manipulator, and the slow subsystem controlled the attainment of the desired position. The six gains of the hierarchical PID controller were tuned using the bees algorithm to minimize vibrations and positioning errors. Experimental results show that the hierarchical PID controller parameters tuned using the bees algorithm are efficient and robust.</p>
+<p>The proposed investigation addressed the problem of regulation control of the flexible-link manipulator. Further work should address the tracking control problem. In this case, a new objective function will have to be defined.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>The research described in this paper was performed as part of the Objective 1 SUPERMAN project, the EPSRC Innovative Manufacturing Research Centre Project, the EC FP6 Innovative Production Machines and Systems (I*PROMS) Network of Excellence, and TÜBİTAK (The Scientific and Technological Research Council of Turkey).</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<p>This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0959651811425312">
+<label>1</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Homaifar</surname><given-names>A.</given-names></name>
+<name><surname>Bikdash</surname><given-names>M.</given-names></name>
+<name><surname>Gopalan</surname><given-names>V.</given-names></name>
+</person-group> <article-title>Design using genetic algorithms of hierarchical hybrid fuzzy–PID controllers of two-link robotic arms</article-title>. <source>J. Robot. Syst.</source>, <year>1997</year>, <volume>14</volume>(<issue>6</issue>), <fpage>449</fpage>–<lpage>463</lpage>.</citation>
+</ref>
+<ref id="bibr2-0959651811425312">
+<label>2</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>C.</given-names></name>
+<name><surname>Lian</surname><given-names>J.</given-names></name>
+</person-group> <article-title>The application of immune genetic algorithm in PID parameter optimization for level control system</article-title>. In <conf-name>Proceedings of the IEEE International Conference on Automation and Logistics</conf-name>, <conf-loc>Jinan, China</conf-loc>, <conf-date>18–21 August 2007</conf-date>, pp. <fpage>782</fpage>–<lpage>786</lpage>.</citation>
+</ref>
+<ref id="bibr3-0959651811425312">
+<label>3</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Meng</surname><given-names>X.</given-names></name>
+<name><surname>Song</surname><given-names>B.</given-names></name>
+</person-group> <article-title>Fast genetic algorithms used for PID parameter optimization</article-title>. In <conf-name>Proceedings of the IEEE International Conference on Automation and Logistics</conf-name>, <conf-loc>Jinan, China</conf-loc>, <conf-date>18–21 August 2007</conf-date>, pp. <fpage>2144</fpage>–<lpage>2148</lpage>.</citation>
+</ref>
+<ref id="bibr4-0959651811425312">
+<label>4</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cheong</surname><given-names>J.</given-names></name>
+<name><surname>Lee</surname><given-names>S.</given-names></name>
+</person-group> <article-title>Linear PID composite controller and its tuning for flexible link robots</article-title>. <source>J. Vib. Contr.</source>, <year>2008</year>, <volume>14</volume>(<issue>3</issue>), <fpage>291</fpage>–<lpage>318</lpage>.</citation>
+</ref>
+<ref id="bibr5-0959651811425312">
+<label>5</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Ho</surname><given-names>M. T.</given-names></name>
+<name><surname>Tu</surname><given-names>Y. W.</given-names></name>
+</person-group> <article-title>PID controller design for a flexible-link manipulator</article-title>. In <conf-name>Proceedings of the 44th IEEE Conference on Decision and Control, and the European Control Conference</conf-name>, <conf-loc>Seville, Spain</conf-loc>, <conf-date>12–15 December 2005</conf-date>, pp. <fpage>6841</fpage>–<lpage>6846</lpage>.</citation>
+</ref>
+<ref id="bibr6-0959651811425312">
+<label>6</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Lin</surname><given-names>J.</given-names></name>
+<name><surname>Huang</surname><given-names>Z. Z.</given-names></name>
+</person-group> <article-title>Tuning the PID parameters for robot manipulators with compliant bases by using grey theory</article-title>. In <conf-name>Proceedings of the 2006 IEEE International Conference on Control Applications</conf-name>, <conf-loc>Munich, Germany</conf-loc>, <conf-date>4–6 October 2006</conf-date>, pp. <fpage>2522</fpage>–<lpage>2527</lpage>.</citation>
+</ref>
+<ref id="bibr7-0959651811425312">
+<label>7</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mansour</surname><given-names>T.</given-names></name>
+<name><surname>Konno</surname><given-names>A.</given-names></name>
+<name><surname>Uchiyama</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Modified PID control of a single-link flexible robot</article-title>. <source>Adv. Robot.</source>, <year>2008</year>, <volume>22</volume>(<issue>4</issue>), <fpage>433</fpage>–<lpage>449</lpage>.</citation>
+</ref>
+<ref id="bibr8-0959651811425312">
+<label>8</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cannon</surname><given-names>H.</given-names><suffix>Jr</suffix></name>
+<name><surname>Schmitz</surname><given-names>E.</given-names></name>
+</person-group> <article-title>Initial experiments on the end-point control of a flexible one-link robot</article-title>. <source>Int. J. Robot. Res.</source>, <year>1984</year>, <volume>3</volume>(<issue>3</issue>), <fpage>62</fpage>–<lpage>75</lpage>.</citation>
+</ref>
+<ref id="bibr9-0959651811425312">
+<label>9</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hernández-Guzmán</surname><given-names>M.</given-names></name>
+<name><surname>Santibáñez</surname><given-names>V.</given-names></name>
+<name><surname>Silva-Ortigoza</surname><given-names>R.</given-names></name>
+</person-group> <article-title>A new tuning procedure for PID control of rigid robots</article-title>. <source>Adv. Robot.</source>, <year>2008</year>, <volume>22</volume>(<issue>9</issue>), <fpage>1007</fpage>–<lpage>1023</lpage>.</citation>
+</ref>
+<ref id="bibr10-0959651811425312">
+<label>10</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kalyoncu</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Mathematical modelling and dynamic response of a multi-straight-line path tracing flexible robot manipulator with rotating-prismatic joint</article-title>. <source>Appl. Math. Model.</source>, <year>2008</year>, <volume>32</volume>(<issue>6</issue>), <fpage>1087</fpage>–<lpage>1098</lpage>.</citation>
+</ref>
+<ref id="bibr11-0959651811425312">
+<label>11</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Dwivedy</surname><given-names>K.</given-names></name>
+<name><surname>Eberhard</surname><given-names>P.</given-names></name>
+</person-group> <article-title>Dynamic analysis of flexible manipulators, a literature review</article-title>. <source>Mech. Machine Theor.</source>, <year>2006</year>, <volume>41</volume>(<issue>7</issue>), <fpage>749</fpage>–<lpage>777</lpage>.</citation>
+</ref>
+<ref id="bibr12-0959651811425312">
+<label>12</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Monje</surname><given-names>C. A.</given-names></name>
+<name><surname>Ramos</surname><given-names>F.</given-names></name>
+<name><surname>Feliu</surname><given-names>V.</given-names></name>
+<name><surname>Vinagre</surname><given-names>B. M.</given-names></name>
+</person-group> <article-title>Tip position control of a lightweight flexible manipulator using a fractional order controller</article-title>. <source>IET Contr. Theor. Applic.</source>, <year>2007</year>, <volume>1</volume>(<issue>5</issue>), <fpage>1451</fpage>–<lpage>1460</lpage>.</citation>
+</ref>
+<ref id="bibr13-0959651811425312">
+<label>13</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sanz</surname><given-names>A.</given-names></name>
+<name><surname>Etxebarria</surname><given-names>V.</given-names></name>
+</person-group> <article-title>Experimental control of a single-link flexible robot arm using energy shaping</article-title>. <source>Int. J. Syst. Sci.</source>, <year>2007</year>, <volume>38</volume>(<issue>1</issue>), <fpage>61</fpage>–<lpage>71</lpage>.</citation>
+</ref>
+<ref id="bibr14-0959651811425312">
+<label>14</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Karimi</surname><given-names>H. R.</given-names></name>
+<name><surname>Yazdanpanah</surname><given-names>M. J.</given-names></name>
+<name><surname>Patel</surname><given-names>R. V.</given-names></name>
+<name><surname>Khorasani</surname><given-names>K.</given-names></name>
+</person-group> <article-title>Modelling and control of linear two-time scale systems: applied to single-link flexible manipulator</article-title>. <source>J. Intell. Robot. Syst. Theor. Applic.</source>, <year>2006</year>, <volume>45</volume>(<issue>3</issue>), <fpage>235</fpage>–<lpage>265</lpage>.</citation>
+</ref>
+<ref id="bibr15-0959651811425312">
+<label>15</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lin</surname><given-names>J.</given-names></name>
+<name><surname>Huang</surname><given-names>Z. Z.</given-names></name>
+</person-group> <article-title>A hierarchical fuzzy approach to supervisory control of robot manipulators with oscillatory bases</article-title>. <source>Mechatronics</source>, <year>2007</year>, <volume>17</volume>(<issue>10</issue>), <fpage>589</fpage>–<lpage>600</lpage>.</citation>
+</ref>
+<ref id="bibr16-0959651811425312">
+<label>16</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kalyoncu</surname><given-names>M.</given-names></name>
+<name><surname>Tınkır</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Mathematical model for simulation and control of nonlinear vibration of a single flexible link</article-title>. In <conf-name>Proceedings of 5th International Symposium on Intelligent Manufacturing Systems (IMS’2006)</conf-name>, <conf-loc>Sakarya, Turkey</conf-loc>, <conf-date>29–31 May 2006</conf-date>, pp. <fpage>435</fpage>–<lpage>442</lpage>.</citation>
+</ref>
+<ref id="bibr17-0959651811425312">
+<label>17</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Pham</surname><given-names>D. T.</given-names></name>
+<name><surname>Liu</surname><given-names>X.</given-names></name>
+</person-group> <source>Neural networks for identification, prediction and control</source>, <year>1995</year> (<publisher-name>Springler-Verlag Ltd</publisher-name>, <publisher-loc>London</publisher-loc>).</citation>
+</ref>
+<ref id="bibr18-0959651811425312">
+<label>18</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pham</surname><given-names>D. T.</given-names></name>
+<name><surname>Ghanbarzadeh</surname><given-names>A.</given-names></name>
+<name><surname>Koc</surname><given-names>E.</given-names></name>
+<name><surname>Otri</surname><given-names>S.</given-names></name>
+<name><surname>Rahim</surname><given-names>S.</given-names></name>
+<name><surname>Zaidi</surname><given-names>M.</given-names></name>
+</person-group> <article-title>The bees algorithm, a novel tool for complex optimisation problems</article-title>. In <conf-name>Proceedings of the 2nd International Virtual Conference on Intelligent production machines and systems (IPROMS 2006)</conf-name>, <conf-date>3–14 July 2006</conf-date>, pp. <fpage>454</fpage>–<lpage>459</lpage> (<publisher-name>Elsevier</publisher-name>, <publisher-loc>Oxford, UK</publisher-loc>).</citation>
+</ref>
+<ref id="bibr19-0959651811425312">
+<label>19</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pham</surname><given-names>D. T.</given-names></name>
+<name><surname>Koç</surname><given-names>E.</given-names></name>
+<name><surname>Ghanbarzadeh</surname><given-names>A.</given-names></name>
+<name><surname>Otri</surname><given-names>S.</given-names></name>
+</person-group> <article-title>Optimisation of the weights of multi-layered perceptrons using the bees algorithm</article-title>. In <conf-name>Proceedings of the 5th International Symposium on Intelligent Manufacturing Systems (IMS’2006)</conf-name>, <conf-loc>Sakarya, Turkey</conf-loc>, <conf-date>29–31 May 2006</conf-date>, pp. <fpage>38</fpage>–<lpage>46</lpage>.</citation>
+</ref>
+<ref id="bibr20-0959651811425312">
+<label>20</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Fogel</surname><given-names>D. B.</given-names></name>
+</person-group> <source>Evolutionary computation: Toward a new philosophy of machine intelligence</source>, <edition>edition 2</edition>, <year>2000</year> (<publisher-name>IEEE Press</publisher-name>, <publisher-loc>New York</publisher-loc>).</citation>
+</ref>
+<ref id="bibr21-0959651811425312">
+<label>21</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kalyoncu</surname><given-names>M.</given-names></name>
+<name><surname>Tınkır</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Hierarchical adaptive network based fuzzy logic controller design for a single flexible link robot manipulator</article-title>. In <conf-name>Proceedings of the 13th International Power Electronics and Motion Control Conference (EPE-PEMC 2008)</conf-name>, <conf-loc>Poznań, Poland</conf-loc>, <conf-date>1–3 September 2008</conf-date>, pp. <fpage>989</fpage>–<lpage>996</lpage>.</citation>
+</ref>
+<ref id="bibr22-0959651811425312">
+<label>22</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hornik</surname><given-names>K.</given-names></name>
+<name><surname>Stinchcombe</surname><given-names>M.</given-names></name>
+<name><surname>White</surname><given-names>H.</given-names></name>
+</person-group> <article-title>Multilayer feedforward networks are universal approximators</article-title>. <source>Neural Networks</source>, <year>1989</year>, <volume>2</volume>(<issue>5</issue>), <fpage>359</fpage>–<lpage>366</lpage>.</citation>
+</ref>
+<ref id="bibr23-0959651811425312">
+<label>23</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lippmann</surname><given-names>R. P.</given-names></name>
+</person-group> <article-title>An introduction to computing with neural nets</article-title>. <source>IEEE ASSP Mag.</source>, <year>1987</year>, <volume>3</volume>(<issue>4</issue>): <fpage>4</fpage>–<lpage>22</lpage>.</citation>
+</ref>
+<ref id="bibr24-0959651811425312">
+<label>24</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Narendra</surname><given-names>K. S.</given-names></name>
+<name><surname>Parthasarathy</surname><given-names>K.</given-names></name>
+</person-group> <article-title>Identification and control of dynamical systems using neural networks</article-title>. <source>IEEE Trans. Neural Networks</source>, <year>1990</year>, <volume>1</volume>(<issue>1</issue>), <fpage>4</fpage>–<lpage>27</lpage>.</citation>
+</ref>
+<ref id="bibr25-0959651811425312">
+<label>25</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Thierens</surname><given-names>D.</given-names></name>
+<name><surname>Suykens</surname><given-names>J.</given-names></name>
+<name><surname>Vanderwalle</surname><given-names>J.</given-names></name>
+<name><surname>De Moor</surname><given-names>B.</given-names></name>
+</person-group> <article-title>Genetic weight optimisation of a feedforward neural network controller</article-title>. In <source>Artificial neural networks and genetic algorithms</source> (Eds <person-group person-group-type="editor">
+<name><surname>Albrecht</surname><given-names>R. F.</given-names></name><name>
+<surname>Reeves</surname><given-names>C. R.</given-names></name>
+<name><surname>Steele</surname><given-names>N. C.</given-names></name>
+</person-group>), editors, <year>1993</year>, pp. <fpage>658</fpage>–<lpage>663</lpage> (<publisher-name>Springler-Verlag</publisher-name>, <publisher-loc>Vienna</publisher-loc>).</citation>
+</ref>
+<ref id="bibr26-0959651811425312">
+<label>26</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tereshko</surname><given-names>V.</given-names></name>
+<name><surname>Loengarov</surname><given-names>A.</given-names></name>
+</person-group> <article-title>Collective decision-making in honey bee foraging dynamics</article-title>. <source>Comput. Inform. Syst. J.</source>, <year>2005</year>, <volume>9</volume>(<issue>3</issue>), <fpage>1</fpage>–<lpage>7</lpage>.</citation>
+</ref>
+<ref id="bibr27-0959651811425312">
+<label>27</label>
+<citation citation-type="book">
+<person-group person-group-type="editor">
+<name><surname>Von Frisch</surname><given-names>K.</given-names></name>
+</person-group> <source>Bees: Their vision chemical senses language revised edition, 1976</source> (<publisher-name>Cornell University Press</publisher-name>, <publisher-loc>Ithaca, New York</publisher-loc>).</citation>
+</ref>
+<ref id="bibr28-0959651811425312">
+<label>28</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Pham</surname><given-names>D. T.</given-names></name>
+<name><surname>Castellani</surname><given-names>M.</given-names></name>
+</person-group> <article-title>The bees algorithm – modelling foraging behaviour to solve continuous optimisation problems</article-title>. <source>Proc. IMechE, Part C: J. Mechanical Engineering Science</source>, <year>2009</year>, <volume>223</volume>(<issue>12</issue>), <fpage>2919</fpage>–<lpage>2938</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

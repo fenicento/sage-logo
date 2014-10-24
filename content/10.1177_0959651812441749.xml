@@ -1,0 +1,4767 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PII</journal-id>
+<journal-id journal-id-type="hwp">sppii</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part I: Journal of Systems and Control Engineering</journal-title>
+<issn pub-type="ppub">0959-6518</issn>
+<issn pub-type="epub">2041-3041</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0959651812441749</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0959651812441749</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Friction modelling and simulation at system level: a practical view for the designer</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Mare</surname><given-names>Jean-Charles</given-names></name>
+</contrib>
+<aff id="aff1-0959651812441749">INSA, Université de Toulouse, France</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0959651812441749">Jean-Charles Mare, INSA, Université de Toulouse, 135 Avenue de Rangueil, 31077 Toulouse, France. Email: <email>jean-charles.mare@insa-toulouse.fr</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>7</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>6</issue>
+<fpage>728</fpage>
+<lpage>741</lpage>
+<history>
+<date date-type="received">
+<day>2</day>
+<month>11</month>
+<year>2011</year>
+</date>
+<date date-type="accepted">
+<day>26</day>
+<month>1</month>
+<year>2012</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>The modelling and simulation of friction at the system level is addressed using a practical approach that aims at providing the developer of system level virtual prototypes with realistic modelling and numerically robust simulation of friction. In this attempt, the paper provides key knowledge for the efficient use, development or extension of friction model libraries for electromechanical and fluid power actuators. The first part is dedicated to the factors that may influence friction at component or equipment level. Besides the well documented effect of speed, the work focuses also on the effects of position, load, direction of power, temperature and time. The second part deals with friction modelling and its numerical implementation for simulation. Particular attention is paid to the transition between the sticking and the sliding modes. Accordingly, the candidate models are sorted into three generic types (static mass-free, dynamic mass-free and dynamic mass-integrated) in order to point out numerical issues as well as constraints that apply to the development and use of a friction model library. The models and their implementation are discussed from a practical point of view. Summary tables recapitulate the properties of the candidate friction models considering the reproduced effects, the numerical constraints and their availability in the most common one-dimensional simulation tools.</p>
+</abstract>
+<kwd-group>
+<kwd>Actuator</kwd>
+<kwd>electromechanical</kwd>
+<kwd>fluid power</kwd>
+<kwd>friction</kwd>
+<kwd>load</kwd>
+<kwd>modelling</kwd>
+<kwd>simulation</kwd>
+<kwd>system</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0959651812441749" sec-type="intro">
+<title>Introduction</title>
+<p>The modelling and simulation of friction has been draining huge scientific and industrial efforts for decades, addressing a large variety of applications and targets. The research activity dealing with friction is present in various scientific domains that are as different as materials shear and wear,<sup><xref ref-type="bibr" rid="bibr1-0959651812441749">1</xref></sup> dynamics,<sup><xref ref-type="bibr" rid="bibr2-0959651812441749">2</xref></sup> control,<sup><xref ref-type="bibr" rid="bibr3-0959651812441749">3</xref></sup> micro and nano physics,<sup><xref ref-type="bibr" rid="bibr4-0959651812441749">4</xref></sup> geophysics,<sup><xref ref-type="bibr" rid="bibr5-0959651812441749">5</xref></sup> contacts<sup><xref ref-type="bibr" rid="bibr6-0959651812441749">6</xref></sup> and even three-dimensional (3D) discretization schemes.<sup><xref ref-type="bibr" rid="bibr7-0959651812441749">7</xref></sup> Among them, model-based system design has also generated a lot of work that aimed to reproduce, by simulation, the effects of friction at the system level. In particular, hundreds of references have addressed friction modelling essentially for control purposes, including identification and compensation, e.g. for robotics in the 1980s.</p>
+<p>In practice, selecting or developing a realistic friction model associated with a robust simulation scheme must be consistent with the design need, balancing representativeness and complexity. This is a challenging task that is not simplified by the huge amount of published, but often incomplete information regarding the needs. On the basis of years of experience in aerospace actuation modelling and simulation, it has been observed that decision making was facilitated by the following questions.</p>
+<list id="list1-0959651812441749" list-type="order">
+<list-item><p><italic>What may occur in terms of friction during the system operation?</italic> Having in mind the candidate phenomenon induced by friction helps identifying the most relevant ones for the actual design activity.</p></list-item>
+<list-item><p><italic>How to model the effects that are selected as the main contributors to the system behaviour and performance, and how to identify the parameters involved by the selected model?</italic> When available, even simple measurements or datasheets can significantly support the identification of the friction model structure and parameters. However, as the model becomes more complex, the designer faces stronger difficulties to get the relevant numerical values for the parameters involved. From this point of view, choosing a friction model should balance the model accuracy and the ability to feed the model with realistic parameters.</p></list-item>
+<list-item><p><italic>How to adapt the models to the existing simulation software constraints?</italic> Implementing a friction model is constrained by the simulation tool. Either the friction model exists in the software library or the friction model implementation must adapt to the calculation schemes offered by the simulation software features (e.g. discontinuity handling). As the more sophisticated model is seldom the more suitable one, the selection of the relevant complexity level is the main contributor to success at project level.</p></list-item>
+</list>
+<p>In the present work, the modelling and simulation of friction at the system level is considered in order to provide structured answers to these three questions. It is important to notice that most of the time answers to questions 2 and 3 are closely coupled, as explained later. The present contribution has been, or is being, widely used by the author in the frame of various international and national research programmes that deal with power-by-wire actuation for aerospace applications.</p>
+<p>In the following, friction will be discussed according to the general one-dimensional (1D) translational model of <xref ref-type="fig" rid="fig1-0959651812441749">Figure 1</xref>. If necessary, the model can be extended to the rotational case without any difficulty, replacing forces by torques and linear velocity by angular velocity.</p>
+<fig id="fig1-0959651812441749" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Schematic, notations and Bond-graph for friction modelling.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig1.tif"/>
+</fig>
+<p>The longitudinal absolute position, velocity and acceleration of the solid under study (the mobile) are respectively <italic>X<sub>m</sub>, V<sub>m</sub></italic> and Γ<italic><sub>m</sub></italic>. On the longitudinal axis, the mobile is submitted to the net external force <italic>F<sub>e</sub></italic> and to the friction force <italic>F<sub>f</sub></italic> that is applied at the contact interface between the mobile and the base. The friction force <italic>F<sub>f</sub></italic> is influenced by the normal contact force <italic>F<sub>n</sub></italic> that balances the external normal force <italic>F<sub>ne</sub></italic>. The base position and velocity are denoted as <italic>X<sub>b</sub></italic> and <italic>V<sub>b</sub></italic>, respectively. The relative motion and velocity <italic>V<sub>r</sub></italic> are defined as</p>
+<p>
+<disp-formula id="disp-formula1-0959651812441749">
+<label>(1)</label>
+<mml:math display="block" id="math1-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0959651812441749" xlink:href="10.1177_0959651812441749-eq1.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula2-0959651812441749">
+<label>(2)</label>
+<mml:math display="block" id="math2-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0959651812441749" xlink:href="10.1177_0959651812441749-eq2.tif"/>
+</disp-formula>
+</p>
+<p>Newton’s second law applied to the mobile gives</p>
+<p>
+<disp-formula id="disp-formula3-0959651812441749">
+<label>(3)</label>
+<mml:math display="block" id="math3-0959651812441749">
+<mml:mrow>
+<mml:mi>M</mml:mi>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0959651812441749" xlink:href="10.1177_0959651812441749-eq3.tif"/>
+</disp-formula>
+</p>
+<p>Modelling and simulating the friction force <italic>F<sub>f</sub></italic> raises two main issues that will be developed in the next paragraphs. The first one is directly linked to questions 1 and 2 above, and concerns the factors influencing <italic>F<sub>f</sub></italic>: a realistic and detailed knowledge of the candidate physical effects and their mathematical representation is required to make decision on the friction model making. The second one is more associated with question 3 above: implementing the friction model with the right level of complexity and accuracy depends highly on the effects to be reproduced and the simulation software’s capabilities.</p>
+<p>Special attention must be paid to the calculus of acceleration in the case of a moving base where the absolute acceleration is not the time derivative of the relative velocity. This is not clarified in most the models from the literature that often assume implicitly a fixed based. Moreover, it is frequent that these models consider only one direction of motion or one quadrant of operation, which requires the designer to introduce sign or absolute value functions.</p>
+</sec>
+<sec id="section2-0959651812441749">
+<title>Factors influencing friction</title>
+<p>This section aims at giving the potential contributors to friction, as observed from experiments. Apart the effect of speed that is generally well documented, other effects like load, direction of power, time and temperature are presented because they are rarely taken into account although they can contribute very significantly to friction.</p>
+<sec id="section3-0959651812441749">
+<title>Speed and position</title>
+<p>The study of friction generally defines two major modes according to the sliding velocity at contacts between the base and the mobile: sticking (or locked) mode if null; and slipping (or sliding) mode if not.</p>
+<sec id="section4-0959651812441749">
+<title>Sticking mode</title>
+<p>In this mode, there is no sliding at contact zones between the asperities of the mobile and the base. Globally, if the mobile and the base are assumed to be rigid, the friction force <italic>F<sub>f</sub></italic> exactly balances the external forces <italic>F<sub>e</sub></italic>, while the relative velocity <italic>V<sub>r</sub></italic> remains null.</p>
+<p>A more detailed observation indicates that a relative motion can exist between the mobile and the base even without sliding at the contact level. This is mainly due to the compliance of the asperities in contact where adhesive forces are developed. Thus, the mobile has to be decomposed as displayed in <xref ref-type="fig" rid="fig2-0959651812441749">Figure 2</xref> into a rigid part and deformable contact asperities, introducing explicitly the contact strain <italic>l</italic> and the contact point location <italic>X<sub>c</sub></italic> with</p>
+<p>
+<disp-formula id="disp-formula4-0959651812441749">
+<label>(4)</label>
+<mml:math display="block" id="math4-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>l</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0959651812441749" xlink:href="10.1177_0959651812441749-eq4.tif"/>
+</disp-formula>
+</p>
+<fig id="fig2-0959651812441749" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Modified schematic including deformation at contact.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig2.tif"/>
+</fig>
+<p>In statics, the contact force appears essentially as a spring effect linking the friction force <italic>F<sub>f</sub></italic> and the asperities strain <italic>l</italic>. This is known as the pre-sliding effect.<sup><xref ref-type="bibr" rid="bibr8-0959651812441749">8</xref></sup> When the relative displacement increases, some contacts break and start slipping, introducing irreversible effects in the breakaway process.</p>
+<p>This spring effect is easily observed in <xref ref-type="fig" rid="fig3-0959651812441749">Figure 3</xref>, which displays the friction force generated by the seals of a shock absorber as a function of the rod-to-cylinder displacement for a low-frequency sinusoidal motion. In such a case of hydraulic equipment, it is due to the deformation of high-pressure seals; deformation that is typically a few tenths of a millimetre. The plot also clearly displays a dissipative hysteretic effect. For metal-to-metal contacts like in bearings or mechanical transmissions, the elastic deformation remains within a few micrometres. This effect can reduce significantly the accuracy of high-precision pointing or tracking systems (e.g. for satellite mirror actuators).</p>
+<fig id="fig3-0959651812441749" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Measured friction due to high-pressure seals in shock absorbers.<sup><xref ref-type="bibr" rid="bibr9-0959651812441749">9</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig3.tif"/>
+</fig>
+<p>It is important to notice that the wording ‘friction force’ is commonly employed even in stuck conditions where ‘contact force’ would be more appropriate because adhesive forces dominate. ‘Pre-sliding’ is to be preferred in stuck conditions with elastic contact effects where friction depends mainly on the relative position rather than on the relative speed.</p>
+</sec>
+<sec id="section5-0959651812441749">
+<title>Sliding mode</title>
+<p>When the friction force reaches the breakaway force, pure sliding occurs between the asperities in contact. As the relative velocity increases, the contact becomes less solid-to-solid as the lubricant medium (e.g. oil, grease or even air) starts to settle a fluid bearing between the two solids. Consequently, the friction force decreases as velocity increases. This is commonly called the Stribeck effect.<sup><xref ref-type="bibr" rid="bibr10-0959651812441749">10</xref></sup> It can be observed easily at low velocities in <xref ref-type="fig" rid="fig4-0959651812441749">Figure 4</xref>, which displays the measured friction torque under null-load conditions for the pitch axis actuator of a high-performance human centrifuge.<sup><xref ref-type="bibr" rid="bibr11-0959651812441749">11</xref></sup> Depending on the shape of the friction force versus relative velocity plot, Coulomb, viscous or quadratic effects can be identified. A significant Stribeck effect can also be observed in <xref ref-type="fig" rid="fig4-0959651812441749">Figure 4</xref> after breakaway.</p>
+<fig id="fig4-0959651812441749" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Measured friction torque as a function of speed for a non-loaded speed reducer.<sup><xref ref-type="bibr" rid="bibr11-0959651812441749">11</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig4.tif"/>
+</fig>
+<p>At higher velocities, the shear rate in the contact medium increases and becomes the major source of friction change. The friction force grows as a function of the relative speed, being a consequence of hydrodynamic lubrication. It is generally observed that this function is first linear then becomes quadratic, due to the change from laminar to turbulent flow conditions (windage) at the interface level. Only viscous friction is observed at the higher speeds of <xref ref-type="fig" rid="fig4-0959651812441749">Figure 4</xref>.</p>
+<p>In the field of actuation, friction may also be position dependent, due to gear meshing,<sup><xref ref-type="bibr" rid="bibr12-0959651812441749">12</xref></sup> imperfections in bearings’ and bodies’ positioning, or even the amount of travel since the start of the sliding mode. The latter is of particular importance for mobiles starting to move after a significant period of rest (e.g. secondary flight controls or landing gear actuators).</p>
+</sec>
+</sec>
+<sec id="section6-0959651812441749">
+<title>Load and direction of power</title>
+<p>Even if it is generally omitted in friction simulation, the effect of the normal load applied between the mobile and the base plays a major role in friction. The normal force at contacts is directly linked to the transmitted effort as a direct consequence of the principle of operation of the power transmission components. This concerns the contact forces between teeth in gear reducers or between threads in transmission screws, the axial or radial forces at bearings and the pressure-induced normal forces at dynamic seals in fluid power transmissions. <xref ref-type="fig" rid="fig5-0959651812441749">Figure 5</xref> illustrates this effect for a hydraulic single-vane rotary actuator where the load effect significantly influences the friction torque in a ratio of 1 to 4.<sup><xref ref-type="bibr" rid="bibr13-0959651812441749">13</xref></sup></p>
+<fig id="fig5-0959651812441749" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Measured bearing and sealing friction torque in a hydraulic rotary jack.<sup><xref ref-type="bibr" rid="bibr13-0959651812441749">13</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig5.tif"/>
+</fig>
+<p>
+<xref ref-type="fig" rid="fig5-0959651812441749">Figure 5</xref> also reveals the influence of the direction of power: for a given effort to the load, the friction effort depends not only on the direction of motion but also on the direction of power, the product of angular velocity and load torque. As can be observed in <xref ref-type="fig" rid="fig5-0959651812441749">Figure 5</xref>, this effect is significant and non-linear. It is also interesting to note that for any load, the significant Stribeck effect and the absence of friction due to hydrodynamic lubrication.</p>
+<p>In position-controlled actuators like flight controls, preloading the mechanical transmission is a common practice to remove backlash or to increase the transmission stiffness around the null transmitted effort. Unfortunately, preloading generates a significant amount of parasitic friction. It increases the breakaway force and often introduces a ‘negative’ Stribeck effect (friction increases versus speed at low velocities). The load and the preloading effects are clearly visible in <xref ref-type="fig" rid="fig6-0959651812441749">Figure 6</xref>, which displays the friction torque of an electromechanical actuator prototype combining a direct current brushless motor and an inverted roller screw.<sup><xref ref-type="bibr" rid="bibr14-0959651812441749">14</xref></sup> A 3 kN preloading was measured under null external load at very low velocity. It remains observable at 2.4 mm/s (2.5% of the rated speed). The friction torque increases asymptotically versus speed, up to a pure load-dependent value. The combined influence of speed and load modifies the friction force non-linearly and non-symmetrically, in a typical ratio of 1 to 3 for load as well as for speed.</p>
+<fig id="fig6-0959651812441749" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Measured friction force versus load for an inverted roller screw.<sup><xref ref-type="bibr" rid="bibr14-0959651812441749">14</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig6.tif"/>
+</fig>
+</sec>
+<sec id="section7-0959651812441749">
+<title>Temperature</title>
+<p>Temperature is also generally omitted in system-level modelling although it may influence the amount of friction a lot; in particular, for embedded systems that must meet the performance requirement for a wide range of temperature (e.g. −40 to +70 °C for commercial aerospace). The first effect comes from the decrease of fluid viscosity as temperature rises that lowers the shear force at the contact medium. The second effect comes from the dilatation of solids that can modify significantly the effect of preloading or breakaway force. A good illustration is found in the efficiency data provided by Harmonic Drive<sup>®</sup> reducers,<sup><xref ref-type="bibr" rid="bibr15-0959651812441749">15</xref></sup> which have been used in <xref ref-type="fig" rid="fig7-0959651812441749">Figure 7</xref>. The friction torque is displayed as a function of temperature for different velocities. For such reducers, the friction torque varies in a ratio of 1.8 (at 500 r/min) to 3.5 (at 3500 r/min) between −10 and +40 °C.</p>
+<fig id="fig7-0959651812441749" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Influence of temperature on friction torque; calculations made from datasheet.<sup><xref ref-type="bibr" rid="bibr15-0959651812441749">15</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig7.tif"/>
+</fig>
+</sec>
+<sec id="section8-0959651812441749">
+<title>Time</title>
+<p>Time also affects friction in different ways. Of course, running-in and ageing have a direct influence on friction: the running-in decreases the roughness of the contact surfaces during the first periods of operation while ageing makes wear that may reduce the preloading and increase the roughness. However, once the running-in has been completed, the amount of friction remains quite invariable for equivalent ambient conditions, especially for mechanical reducers. Besides that, two main effects of time can be observed.</p>
+<list id="list2-0959651812441749" list-type="order">
+<list-item>
+<p>The first comes from the duration of rest between two successive sliding modes. After stopping, the medium between the asperities in contact tends to disappear and to creep: the contact becomes progressively more solid-to-solid and friction increases significantly.</p>
+</list-item>
+<list-item>
+<p>The second is linked to the duration of the sliding mode. As sliding velocity increases, two more phenomena come into play: first, the temperatures of the bodies and the medium increase with time in response to the heat generated by friction, which has a direct influence on the viscosity and therefore on the friction factor; and second, the thickness of the medium film increases due to the hydrodynamic bearing.</p>
+</list-item>
+</list>
+<p>
+<?h-4?>This effect typically introduces a lag effect in the friction dependency to velocity and friction in sliding conditions. This is often called the frictional lag.</p>
+</sec>
+</sec>
+<sec id="section9-0959651812441749">
+<title>Friction modelling and simulation</title>
+<p>This section aims at reviewing the friction models, addressing as a whole their structure, implementation for simulation, simulated effects, parameterization, advantages and drawbacks.</p>
+<p>In basic mechanical engineering, friction is defined with two modes, sticking and sliding, that are respectively activated when start or stop conditions at met (<xref ref-type="fig" rid="fig8-0959651812441749">Figure 8</xref>, centre).</p>
+<fig id="fig8-0959651812441749" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Modes, transition and basic and associated Bond-graph.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig8.tif"/>
+</fig>
+<p>In the sticking mode, the friction force balances the external forces as far as the breakaway force <italic>F<sub>b</sub></italic> is not reached. Therefore, the friction force <italic>F<sub>fl</sub></italic> should be calculated from the other forces and the relative velocity <italic>V<sub>r</sub></italic> should remain null. Friction is equivalent to a source of null velocity. In the sliding mode, the friction force <italic>F<sub>fs</sub></italic> is a function of velocity, e.g. a pure Coulomb friction, equation (5). This time, the friction force is equivalent to a pure dissipative effect</p>
+<p>
+<disp-formula id="disp-formula5-0959651812441749">
+<label>(5)</label>
+<mml:math display="block" id="math5-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fs</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0959651812441749" xlink:href="10.1177_0959651812441749-eq5.tif"/>
+</disp-formula>
+</p>
+<p>In a more generic way, the stuck mode is described by equations (6) to (8)</p>
+<p>
+<disp-formula id="disp-formula6-0959651812441749">
+<label>(6)</label>
+<mml:math display="block" id="math6-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0959651812441749" xlink:href="10.1177_0959651812441749-eq6.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula7-0959651812441749">
+<label>(7)</label>
+<mml:math display="block" id="math7-0959651812441749">
+<mml:mrow>
+<mml:mtext>If</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext>then</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fl</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0959651812441749" xlink:href="10.1177_0959651812441749-eq7.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula8-0959651812441749">
+<label>(8)</label>
+<mml:math display="block" id="math8-0959651812441749">
+<mml:mrow>
+<mml:mtext>otherwise</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0959651812441749" xlink:href="10.1177_0959651812441749-eq8.tif"/>
+</disp-formula>
+</p>
+<p>while in dynamic conditions, the sliding mode is described by equation (9)</p>
+<p>
+<disp-formula id="disp-formula9-0959651812441749">
+<label>(9)</label>
+<mml:math display="block" id="math9-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fs</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>f</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0959651812441749" xlink:href="10.1177_0959651812441749-eq9.tif"/>
+</disp-formula>
+</p>
+<p>The main issue in the implementation of friction models comes from the change of causalities between the two modes, as demonstrated by the two Bond-graphs of <xref ref-type="fig" rid="fig8-0959651812441749">Figure 8</xref>, right and left. Moreover, the R of SF elements of the friction model can be modulated by external physical quantities such as the normal force <italic>F<sub>ne</sub></italic> or the temperature. In other words, the implementation of a friction model being robust around the null relative velocity becomes a cumbersome task most of the time for the model designer.</p>
+<p>Unfortunately, exact null relative velocity will never be obtained as a result of a numerical calculus if not forced by a particular calculation scheme. As a consequence, the sticking mode will never be activated. This problem has been solved in many different ways that makes it difficult for the designer to compare and select one. It is particularly interesting to notice how developing a more detailed friction model often provides ‘naturally’ a means to solve the numerical issue around the null velocity. From this point of view, advanced modelling and numerical implementation of the model become closely linked. Oppositely, simply selecting a more adequate numerical solver is sometimes the right option instead of developing a more complex friction model only to fix numerical issues.</p>
+<p>In order to support the model selection and implementation, it is proposed here to sort the candidate solutions into three types that are associated with the means to address the transition between the sticking and sliding modes.</p>
+<p>Mass-free models involve a single input (the relative velocity) and a single output (the friction force). In such a way, they can be easily developed as a pure friction model (single input, single output block) making part of a library of basic mechanical effects.</p>
+<list id="list3-0959651812441749" list-type="bullet">
+<list-item>
+<p>Type 1 models are static and mass-free. They replace the discontinuity generated by the sign function by an explicit algebraic continuous function that links the friction force to the relative velocity. The pre-sliding effect cannot be reproduced in type 1 models.</p>
+</list-item>
+<list-item>
+<p>Type 2 models are dynamic (state variable models) and mass-free. They replace the discontinuity by a time differential equation that produces a time-dependent relationship between the relative velocity and the friction force, covering both sticking and sliding modes. They often introduce naturally the Dahl effect. It is interesting to notice that these models are not exactly generated by physical considerations but rather by physical analogies: the model structure is a consequence of a more local description of the contact introducing equivalent elastoplastic effects.<sup><xref ref-type="bibr" rid="bibr16-0959651812441749">16</xref></sup></p>
+</list-item>
+<list-item>
+<p>Mass-integrated models make the last type 3. The friction model is intimately linked to a mass model and cannot be dissociated from its inertial effect, leading to a second-order differential equation. As a consequence, the friction force is also calculated from a second input: the other forces applied to the mobile. The friction model cannot be dissociated from the mass model.</p>
+</list-item>
+</list>
+<p>Types 1 and 2 typically provide friction models as single input (relative velocity)/single output (friction force) blocks. Being consistent with the general view of a pure dissipative effect in mechanics (R element in Bond-graph), they are well adapted to formal system-level analysis and control design. They can be included into a library of basic mechanical effects. On their side, type 3 models typically require the external forces applied to the mobile as a second input. This extra input allows easy introduction of load effects on friction. Due to the lack of knowledge, temperature is unfortunately never considered in system-level friction models.</p>
+<p>Most of the industrial simulation environments provide ready-to-use libraries with various friction models belonging to these three families (see <xref ref-type="table" rid="table2-0959651812441749">Table 2</xref> in ‘Summary’ subsection below).</p>
+<sec id="section10-0959651812441749">
+<title>Static and mass-free friction models</title>
+<p>Static and mass-free models consider contact of rigid solids only. They are simple to implement using an explicit algebraic relationship linking the relative velocity and the friction force. When the pre-sliding and frictional memory effects are negligible, there is no particular difficulty to identify a friction model for non-null velocities. Although look-up tables or polynomial models can be used efficiently, parametric models have to be preferred as they clearly reveal the structure of the velocity dependence (see ‘Position and speed’ subsection above). In particular, they provide control designers with efficient information for friction compensation. The friction model, equation (10), reproduces both Stribeck and hydrodynamic lubrication effects.<sup><xref ref-type="bibr" rid="bibr17-0959651812441749">17</xref></sup> It involves six parameters: the Coulomb force <italic>F<sub>C</sub></italic>, the viscous friction coefficient <italic>b<sub>v</sub></italic>, the quadratic friction coefficient <italic>b<sub>q</sub></italic>, the Stribeck friction with the breakaway force <italic>F<sub>b</sub></italic>, the reference Stribeck velocity <italic>V<sub>S</sub></italic> and the shape factor <italic>n</italic></p>
+<p>
+<disp-formula id="disp-formula10-0959651812441749">
+<label>(10)</label>
+<mml:math display="block" id="math10-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>S</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:msup>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0959651812441749" xlink:href="10.1177_0959651812441749-eq10.tif"/>
+</disp-formula>
+</p>
+<p>The fourth term on the right-hand side reproduces the Stribeck effect. It can be replaced by any mathematical relationship producing a change in friction at low relative velocity, e.g. by <inline-formula id="inline-formula1-0959651812441749">
+<mml:math display="inline" id="math11-0959651812441749">
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>S</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. The shape factor <italic>n</italic> is frequently set to unity.</p>
+<p>As a main advantage, such a simple model involves parameters that are easy to identify from simple experiments (e.g. constant speed if sufficient stroke or triangle position).</p>
+<sec id="section11-0959651812441749">
+<title>Extensions</title>
+<p>If necessary, the frictional lag can be introduced easily by delaying the value of the relative velocity that is used to calculate the Stribeck term.</p>
+<p>It has also been proposed recently<sup><xref ref-type="bibr" rid="bibr18-0959651812441749">18</xref></sup> to introduce the effects of acceleration in equation (10). For this purpose, the fixed-body electrohydrostatic actuator under test was driving a pure inertial load and tested under constant acceleration. The friction force model was identified through a curve fitting process applied the friction force calculated from the pressure difference, speed and acceleration. As observed in equation (11), the effect of acceleration is introduced by making the seven friction parameters dependent on its current value. The pressure difference was not introduced explicitly in the friction model although it plays a major role in seal friction.<sup><xref ref-type="bibr" rid="bibr19-0959651812441749">19</xref></sup> Signs of the friction force, acceleration and speed have to be considered to make this model applicable to any quadrant of operation</p>
+<p>
+<disp-formula id="disp-formula11-0959651812441749">
+<label>(11)</label>
+<mml:math display="block" id="math12-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>S</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0959651812441749" xlink:href="10.1177_0959651812441749-eq11.tif"/>
+</disp-formula>
+</p>
+<p>Cyclic friction in gear transmissions has been also easily introduced in equation (10) through a sinusoidal function of the actual gear position that represents the teeth engagement and modulates the friction parameters.<sup><xref ref-type="bibr" rid="bibr12-0959651812441749">12</xref></sup></p>
+</sec>
+<sec id="section12-0959651812441749">
+<title>Transition between sticking and sliding</title>
+<p>Unfortunately, a lot of systems do operate around the null relative velocity (e.g. flight controls, steering, braking). In this case, when the model of equation (10) is implemented, no equilibrium can be found at null relative velocity, except in the absence of external forces. Therefore, the sign function generates a pure oscillator that switches at each integration step between plus and minus the breakaway force <italic>F<sub>b</sub></italic>. This problem is fixed in mass-free static models by making the sign function continuous around the null. A simple and efficient means consists in replacing the sign function in equation (10) with a hyperbolic tangent function, assuming</p>
+<p>
+<disp-formula id="disp-formula12-0959651812441749">
+<label>(12)</label>
+<mml:math display="block" id="math13-0959651812441749">
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≈</mml:mo>
+<mml:mi>tanh</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0959651812441749" xlink:href="10.1177_0959651812441749-eq12.tif"/>
+</disp-formula>
+</p>
+<p>where the reference velocity <italic>V</italic><sub>0</sub> is typically set in the range 1/1000 to 1/10,000 of the rated relative velocity.</p>
+<p>In the vicinity of the null relative velocity, using the hyperbolic tangent function turns the model into a pure viscous model with a high viscous friction factor equal to <italic>F<sub>b</sub></italic>/<italic>V</italic><sub>0</sub>.</p>
+<p>The simplicity of this model is balanced by two main drawbacks. First, the reference velocity <italic>V</italic><sub>0</sub> is difficult to set: small values should produce a better approximation of the sign function but if they are too small they degrade the numerical robustness and increase the sensitivity of the results to the setting of the integration solver. Second, this model is unable to reproduce true sticking of the mobile under non-null external forces: the relative velocity establishes at a low value where the hyperbolic tangent generates a friction force balancing exactly the external forces. This is why this model is sometimes called a quasi-sticking model.</p>
+</sec>
+</sec>
+<sec id="section13-0959651812441749">
+<title>Dynamic and mass-free friction models</title>
+<p>The dynamic and mass-free models manage the transition between sticking and sliding through a differential equation. Most of the models are of first order and consider (explicitly or implicitly) the contact strain <italic>l</italic> of <xref ref-type="fig" rid="fig2-0959651812441749">Figure 2</xref>, displaying their ability to reproduce the pre-sliding friction. Even if pre-sliding has no significant effect on the performance to be predicted, type 2 models are often used as a means to get a more robust implementation of the transition between the sticking and sliding modes.</p>
+<sec id="section14-0959651812441749">
+<title>Dahl model</title>
+<p>The Dahl model<sup><xref ref-type="bibr" rid="bibr8-0959651812441749">8</xref></sup> captures essentially the elastic pre-sliding but does not reproduce any speed-dependent friction in sliding conditions (e.g. viscous or Stribeck) nor does it introduce explicitly the asperities strain. The friction force, equation (13), is calculated from a switched first-order differential equation involving three parameters. As the shape factor <italic>n</italic> is generally set to unity, the last factor can be removed</p>
+<p>
+<disp-formula id="disp-formula13-0959651812441749">
+<label>(13)</label>
+<mml:math display="block" id="math14-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0959651812441749" xlink:href="10.1177_0959651812441749-eq13.tif"/>
+</disp-formula>
+</p>
+<p>At low relative friction forces <italic>F<sub>f</sub></italic>/<italic>F<sub>0</sub></italic>, the Dahl model asymptotically reduces to a spring effect (stiffness <italic>K<sub>D</sub></italic>) at contact, as mentioned above under the subsection ‘Sticking mode’. Therefore, the asymptotic friction force is equal to <italic>K<sub>D</sub>X<sub>r</sub></italic>. As the friction force increases (with the same direction of velocity), its rate reduces asymptotically to null, bounding the friction force to a pure Coulomb friction ±<italic>F</italic><sub>0</sub>. The transition between the asymptotes occurs for a contact deformation of <italic>F</italic><sub>0</sub>/<italic>K<sub>D</sub></italic>.</p>
+<p>The Dahl model is simple to implement as it requires only a few parameters. Unfortunately, it does not reproduce the velocity effects in the sliding mode. In addition, the damping becomes poor for low-magnitude position oscillations around the null speed. The mobile position also drifts under low-magnitude oscillatory external forces, showing the Dahl model’s inability to reproduce the non-local frictional memory.<sup><xref ref-type="bibr" rid="bibr16-0959651812441749">16</xref></sup></p>
+</sec>
+<sec id="section15-0959651812441749">
+<title>The reset integrator model</title>
+<p>The key idea of the reset integrator model<sup><xref ref-type="bibr" rid="bibr20-0959651812441749">20</xref></sup> consists in calculating the bounded deformation <italic>l</italic> of the contact asperities with a limited integrator. According to <xref ref-type="fig" rid="fig9-0959651812441749">Figure 9</xref>, in a stuck condition the mobile is linked to the base through a spring (stiffness <italic>K</italic>) acting in parallel with a damper (viscous coefficient <italic>b<sub>v</sub></italic>). The friction force comes directly from the sum of the spring and damper forces. When the strain <italic>l</italic> of the asperities reaches the breakaway value ±<italic>l<sub>b</sub></italic>, sliding occurs: the friction force can be calculated as a pure function of velocity (e.g. according to the subsection on ‘Static and mass-free friction models’ above). The mathematical model involves a limited integrator that calculates the bounded asperities deformation <italic>l</italic> from the relative velocity <italic>V<sub>r</sub></italic> as follows.</p>
+<fig id="fig9-0959651812441749" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>The physical scheme of the reset integrator model.<sup><xref ref-type="bibr" rid="bibr20-0959651812441749">20</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig9.tif"/>
+</fig>
+<p>Asperities strain</p>
+<p>
+<disp-formula id="disp-formula14-0959651812441749">
+<label>(14)</label>
+<mml:math display="block" id="math15-0959651812441749">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mtext>If</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>l</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mtext>then</mml:mtext>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dl</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mtext>else</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dl</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0959651812441749" xlink:href="10.1177_0959651812441749-eq14.tif"/>
+</disp-formula>
+</p>
+<p>Contact force</p>
+<p>
+<disp-formula id="disp-formula15-0959651812441749">
+<label>(15)</label>
+<mml:math display="block" id="math16-0959651812441749">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mtext>If</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>l</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext>then</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>l</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mtext>sticking</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mtext>else</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>l</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mtext>sliding</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0959651812441749" xlink:href="10.1177_0959651812441749-eq15.tif"/>
+</disp-formula>
+</p>
+<p>Opposite to the Dahl model, the damping in the stuck condition can be generated and adjusted by acting on the viscous friction coefficient <italic>b<sub>v</sub></italic>. In sliding conditions, the dependence of friction to velocity is introduced with the <italic>K<sub>s</sub></italic>(<italic>V<sub>r</sub></italic>) function. Unfortunately, the friction force is discontinuous across the sticking/sliding transition as the two expressions of the friction force equation (15) give different values.</p>
+<p>Haessig and Friedland<sup><xref ref-type="bibr" rid="bibr20-0959651812441749">20</xref></sup> introduced the so-called bristle model in order to better capture the microscopic bonding effect. For that, multiple elastic bristles were associated to the mobile in which contact points to the base were randomly distributed. The number of bristles in contact was set as a function of the relative speed to reproduce the Stribeck effect. However, simulations using this model are very time consuming and much slower than for the other tested models (Dahl, Karnopp and reset integrator), even with a single bristle.</p>
+</sec>
+<sec id="section16-0959651812441749">
+<title>LuGre model</title>
+<p>The LuGre model<sup><xref ref-type="bibr" rid="bibr21-0959651812441749">21</xref></sup> can be seen as an extension of the Dahl model that enables introducing speed and time dependencies. According to <xref ref-type="fig" rid="fig2-0959651812441749">Figure 2</xref>, it explicitly takes into account the asperities strain <italic>l</italic>. The friction force, equation (15), is made of three components: the elastic force induced by the deformation of the asperities (stiffness <italic>K</italic>); the contact damping due to the deformation rate of the asperities (function <italic>f</italic><sub>1</sub>); and the damping force as an algebraic function <italic>f</italic><sub>2</sub> of the relative velocity <italic>V<sub>r</sub></italic></p>
+<p>
+<disp-formula id="disp-formula16-0959651812441749">
+<label>(15)</label>
+<mml:math display="block" id="math17-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>Kl</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dl</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula16-0959651812441749" xlink:href="10.1177_0959651812441749-eq16.tif"/>
+</disp-formula>
+</p>
+<p>The deformation of the asperities is calculated from the first-order differential equation (16) where the function <italic>f</italic><sub>3</sub> expresses the velocity dependence of friction. When the asperities deformation goes to null, the deformation rate becomes equal to the relative velocity. As the deformation increases, the deformation rate decreases to null</p>
+<p>
+<disp-formula id="disp-formula17-0959651812441749">
+<label>(16)</label>
+<mml:math display="block" id="math18-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dl</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>K</mml:mi>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula17-0959651812441749" xlink:href="10.1177_0959651812441749-eq17.tif"/>
+</disp-formula>
+</p>
+<p>In the standard parameterization of the LuGre model, the functions <italic>f</italic><sub>1</sub> and <italic>f</italic><sub>2</sub> are made linear</p>
+<p>
+<disp-formula id="disp-formula18-0959651812441749">
+<label>(17)</label>
+<mml:math display="block" id="math19-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dl</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula18-0959651812441749" xlink:href="10.1177_0959651812441749-eq18.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula19-0959651812441749">
+<label>(18)</label>
+<mml:math display="block" id="math20-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula19-0959651812441749" xlink:href="10.1177_0959651812441749-eq19.tif"/>
+</disp-formula>
+</p>
+<p>while the function <italic>f</italic><sub>3</sub> reproduces the Coulomb and Stribeck components, e.g. from equation (19)</p>
+<p>
+<disp-formula id="disp-formula20-0959651812441749">
+<label>(19)</label>
+<mml:math display="block" id="math21-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fs</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>S</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula20-0959651812441749" xlink:href="10.1177_0959651812441749-eq20.tif"/>
+</disp-formula>
+</p>
+<p>Even with these assumptions, the full LuGre model involves at least four parameters (<italic>K, b<sub>v</sub></italic><sub>1</sub>, <italic>b<sub>v</sub></italic><sub>2</sub>, <italic>F<sub>C</sub></italic>) that require a good physical understanding to ensure dissipativity. As does the Dahl model, the LugGre model suffers from producing a drift in the relative position <italic>X<sub>r</sub></italic> under low and variable external force. It is too dissipative during pre-sliding and the displacement/force model for transition is fixed. A detailed analysis of the LuGre model can be found elsewhere.<sup><xref ref-type="bibr" rid="bibr22-0959651812441749">22</xref></sup></p>
+<p>These last drawbacks have been removed<sup><xref ref-type="bibr" rid="bibr23-0959651812441749">23</xref></sup> by replacing the pure elastic term <italic>K<sub>l</sub></italic> of equation (15) by a hysteresis friction force function <italic>F<sub>h</sub></italic>(<italic>l</italic>) and by modifying the state equation (16). This approach was generalized<sup><xref ref-type="bibr" rid="bibr24-0959651812441749">24</xref></sup> by introducing the elastoplastic pre-sliding explicitly: from rest to breakaway, pre-sliding starts with pure elastic and changes progressively to pure plastic. To do so, equation (16) is modified as follows</p>
+<p>
+<disp-formula id="disp-formula21-0959651812441749">
+<label>(20)</label>
+<mml:math display="block" id="math22-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dl</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>l</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula21-0959651812441749" xlink:href="10.1177_0959651812441749-eq21.tif"/>
+</disp-formula>
+</p>
+<p>where the function <italic>f</italic><sub>4</sub> generates the continuous transition from pure elastic to pure plastic during pre-sliding:</p>
+<list id="list4-0959651812441749" list-type="bullet">
+<list-item>
+<p>
+<inline-formula id="inline-formula2-0959651812441749">
+<mml:math display="inline" id="math23-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>l</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is null if the relative velocity <italic>V<sub>r</sub></italic> is of same sign as the contact strain <italic>l</italic>;</p>
+</list-item>
+<list-item>
+<p>otherwise <inline-formula id="inline-formula3-0959651812441749">
+<mml:math display="inline" id="math24-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>l</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> generates a smooth change between unity and null when the magnitude of the contact strain <italic>l</italic> drops below the maximal value <italic>l<sub>b</sub></italic>.</p>
+</list-item>
+</list>
+<p>This single-state elastoplastic model adds at least one parameter, function <italic>f</italic><sub>4</sub>, to the LuGre model. It is particularly well suited the study of systems that operate mainly in the pre-sliding domain.</p>
+<p>Recently, the LuGre model has been adapted to fluid power actuators by introducing the lubricant film thickness and its settling dynamics explicitly.<sup><xref ref-type="bibr" rid="bibr25-0959651812441749">25</xref></sup> The viscous term of equation (15) has been replaced by a first-order lead term introducing the fluid friction time constant τ</p>
+<p>
+<disp-formula id="disp-formula22-0959651812441749">
+<label>(21)</label>
+<mml:math display="block" id="math25-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>Kl</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dl</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula22-0959651812441749" xlink:href="10.1177_0959651812441749-eq22.tif"/>
+</disp-formula>
+</p>
+<p>The function <italic>f</italic><sub>3</sub> of equation (19) is made sensitive to the dimensionless fluid thickness. The latter is calculated using first-order dynamics in which the time constant differs for acceleration, deceleration and dwell periods. Model validation indicates that the suggested modification enables the model to reproduce the hysteretic behaviour in both the negative resistance (Stribeck effect) and limit lubrication regimes. Unfortunately, this model typically involves 13 parameters that make it difficult to use for predictive virtual prototyping.</p>
+</sec>
+<sec id="section17-0959651812441749">
+<title>Friction dependency on the covered distance</title>
+<p>For systems operating at rest for long periods, it is important to reproduce the influence of the rest time on the transition between sticking and sliding. Being developed for atomic dimensions, the Carlson model<sup><xref ref-type="bibr" rid="bibr26-0959651812441749">26</xref>,<xref ref-type="bibr" rid="bibr27-0959651812441749">27</xref></sup> introduces a dimensionless state variable θ that is representative of the current situation between the sliding and stuck modes. The friction force <italic>F<sub>f</sub></italic> is therefore expressed by equation (22) as a linear combination of the viscous force <italic>bV<sub>r</sub></italic> and the current contact force state θ</p>
+<p>
+<disp-formula id="disp-formula23-0959651812441749">
+<label>(22)</label>
+<mml:math display="block" id="math26-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>θ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula23-0959651812441749" xlink:href="10.1177_0959651812441749-eq23.tif"/>
+</disp-formula>
+</p>
+<p>As the Carlson model was developed for one direction of motion only, the state variable θ is assumed to be positive and bounded. When it reaches its highest value θ<sub>max</sub>, the contact becomes solid-like, opposing high resistance to motion. When θ decreases to its lowest value θ<sub>min</sub>, the friction force moves to the dynamic friction force that is dominated by the fluid shear rate. The state variable evolution is defined by a first-order differential equation (23) involving two parameters that make the lubricant layer ‘melt’ in response to shear</p>
+<p>
+<disp-formula id="disp-formula24-0959651812441749">
+<label>(23)</label>
+<mml:math display="block" id="math27-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>θ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>θ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>θ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula24-0959651812441749" xlink:href="10.1177_0959651812441749-eq24.tif"/>
+</disp-formula>
+</p>
+<p>The time constant τ is representative of the transition rate between sticking and sliding. The parameter <italic>L</italic> is a characteristic length that is representative of the sliding distance to get fully sliding state.</p>
+<p>The same type of model has be used with success for the modelling of the friction of seals in hydraulic or pneumatic cylinders,<sup><xref ref-type="bibr" rid="bibr28-0959651812441749">28</xref>,<xref ref-type="bibr" rid="bibr29-0959651812441749">29</xref></sup> although the scale of the friction phenomenon is much higher. In this attempt, θ<sub>min</sub> is set to null and θ<sub>max</sub> is set to unity. The state variable θ calculated from equation (23) generates the transition between static and fully established dynamic lubrication, equation (24)</p>
+<p>
+<disp-formula id="disp-formula25-0959651812441749">
+<label>(24)</label>
+<mml:math display="block" id="math28-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mi>θ</mml:mi>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula25-0959651812441749" xlink:href="10.1177_0959651812441749-eq25.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula26-0959651812441749">
+<label>(25)</label>
+<mml:math display="block" id="math29-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>θ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula26-0959651812441749" xlink:href="10.1177_0959651812441749-eq26.tif"/>
+</disp-formula>
+</p>
+<p>The Bliman and Sorine model was introduced<sup><xref ref-type="bibr" rid="bibr30-0959651812441749">30</xref></sup> to again get a friction model that depends on the covered distance instead of the relative speed. A change in the time variable, introducing the covered distance <italic>X<sub>rc</sub></italic> from the initial to the actual time <italic>t<sub>a</sub></italic>, led to equation (26). The friction model, equations (27) and (28), has been expressed in a linear space invariant form (two states) that enables pure theoretical studies. In particular, it was proven that the model produces a pure dissipative hysteresis and that its parameters can be directly identified from the friction force versus relative displacement plot. When the model is reduced to first order, removing θ<sub>2</sub>, it appears as the Dahl model. The full model can be viewed as a parallel connection of a fast and a slow Dahl model<sup><xref ref-type="bibr" rid="bibr31-0959651812441749">31</xref></sup></p>
+<p>
+<disp-formula id="disp-formula27-0959651812441749">
+<label>(26)</label>
+<mml:math display="block" id="math30-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rc</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mo>∫</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula27-0959651812441749" xlink:href="10.1177_0959651812441749-eq27.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula28-0959651812441749">
+<label>(27)</label>
+<mml:math display="block" id="math31-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mn>1</mml:mn>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula28-0959651812441749" xlink:href="10.1177_0959651812441749-eq28.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula29-0959651812441749">
+<label>(28)</label>
+<mml:math display="block" id="math32-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rc</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>a</mml:mi>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mn>0</mml:mn>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mn>0</mml:mn>
+</mml:mtd>
+<mml:mtd columnalign="center">
+<mml:mn>1</mml:mn>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula29-0959651812441749" xlink:href="10.1177_0959651812441749-eq29.tif"/>
+</disp-formula>
+</p>
+<p>This Bliman and Sorine model, which calculates the friction force as a function of the <italic>X<sub>rc</sub></italic> path and not the velocity on the path, has been discussed in detail elsewhere.<sup><xref ref-type="bibr" rid="bibr31-0959651812441749">31</xref></sup> In particular, it was pointed out that the Stribeck effect only appears after a given distance from start and does not appear again when the speed reduces. The model simulation also showed a very poor damping when entering into the stuck mode. Similarly to the Dahl and the LuGre model, equations (27) and (28) do not predict friction correctly for very small displacements under oscillating external forces.</p>
+</sec>
+<sec id="section18-0959651812441749">
+<title>Generic type 2 friction model</title>
+<p>Finally, all of the type 2 models have the same generic structure that can be expressed in the form of a generic friction model (GFM), as suggested previously.<sup><xref ref-type="bibr" rid="bibr16-0959651812441749">16</xref></sup> The friction force <italic>F<sub>f</sub></italic> is a function of a state vector <italic>z</italic>, the relative velocity <italic>V<sub>r</sub></italic> and the asperities strain <italic>l</italic>, equation (29). The state equation (30) involves the same parameters</p>
+<p>
+<disp-formula id="disp-formula30-0959651812441749">
+<label>(29)</label>
+<mml:math display="block" id="math33-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi mathvariant="script">F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>l</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula30-0959651812441749" xlink:href="10.1177_0959651812441749-eq30.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula31-0959651812441749">
+<label>(30)</label>
+<mml:math display="block" id="math34-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mi mathvariant="script">G</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>l</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula31-0959651812441749" xlink:href="10.1177_0959651812441749-eq31.tif"/>
+</disp-formula>
+</p>
+<p>
+<xref ref-type="table" rid="table1-0959651812441749">Table 1</xref> summarizes the proposed ℱ and <inline-formula id="inline-formula4-0959651812441749">
+<mml:math display="inline" id="math35-0959651812441749">
+<mml:mi mathvariant="script">G</mml:mi>
+</mml:math>
+</inline-formula> functions for the models of type 2. In the first five models (#1 to #5), the state vector is 1D and is associated to the asperity strain <italic>l</italic> with <italic>X<sub>m</sub></italic> = <italic>l</italic>+<italic>X<sub>c</sub></italic>. Parameter σ<sub>0</sub> represents the Dahl stiffness <italic>K</italic>, while σ<sub>1</sub> and σ<sub>2</sub> are viscous friction coefficients bv. In the Carlson and Papatheodorou models #6 and #7, the unique generic state variable is dimensionless and applies as a multiplicative factor to the Coulomb force. The Bliman and Sorine model cannot be included in <xref ref-type="table" rid="table1-0959651812441749">Table 1</xref> as the state is derived versus the covered distance instead of time.</p>
+<table-wrap id="table1-0959651812441749" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Friction and state equation functions for type 2 models.</p>
+</caption>
+<graphic alternate-form-of="table1-0959651812441749" xlink:href="10.1177_0959651812441749-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th/>
+<th align="left">
+<inline-formula id="inline-formula5-0959651812441749">
+<mml:math display="inline" id="math36-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</th>
+<th align="left">
+<inline-formula id="inline-formula6-0959651812441749">
+<mml:math display="inline" id="math37-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mi>G</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>#1</td>
+<td>Dahl<sup><xref ref-type="bibr" rid="bibr8-0959651812441749">8</xref></sup> (<italic>z</italic> = <italic>l</italic>)</td>
+<td>
+<inline-formula id="inline-formula7-0959651812441749">
+<mml:math display="inline" id="math38-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>Kz</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula8-0959651812441749">
+<mml:math display="inline" id="math39-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>#2</td>
+<td>Reset integrator<sup><xref ref-type="bibr" rid="bibr20-0959651812441749">20</xref></sup></td>
+<td>
+<inline-formula id="inline-formula9-0959651812441749">
+<mml:math display="inline" id="math40-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>.</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mi>K</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula10-0959651812441749">
+<mml:math display="inline" id="math41-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>.</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≥</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>.</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>#3</td>
+<td>LuGre<sup><xref ref-type="bibr" rid="bibr21-0959651812441749">21</xref></sup> (<italic>z</italic> = <italic>l</italic>)</td>
+<td>
+<inline-formula id="inline-formula11-0959651812441749">
+<mml:math display="inline" id="math42-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>Kz</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula12-0959651812441749">
+<mml:math display="inline" id="math43-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fs</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>#4</td>
+<td>Swevers<sup><xref ref-type="bibr" rid="bibr23-0959651812441749">23</xref></sup> (<italic>z</italic> = <italic>l</italic>)</td>
+<td>
+<inline-formula id="inline-formula13-0959651812441749">
+<mml:math display="inline" id="math44-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> with <inline-formula id="inline-formula14-0959651812441749">
+<mml:math display="inline" id="math45-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula></td>
+<td>
+<inline-formula id="inline-formula15-0959651812441749">
+<mml:math display="inline" id="math46-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fs</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fs</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>#5</td>
+<td>Dupont<sup><xref ref-type="bibr" rid="bibr24-0959651812441749">24</xref></sup> (<italic>z</italic> = <italic>l</italic>)</td>
+<td>
+<inline-formula id="inline-formula16-0959651812441749">
+<mml:math display="inline" id="math47-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>Kz</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula17-0959651812441749">
+<mml:math display="inline" id="math48-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fs</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>#6</td>
+<td>Carlson<sup><xref ref-type="bibr" rid="bibr26-0959651812441749">26</xref>,<xref ref-type="bibr" rid="bibr27-0959651812441749">27</xref></sup> (<italic>z</italic> = θ)</td>
+<td>
+<inline-formula id="inline-formula18-0959651812441749">
+<mml:math display="inline" id="math49-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>z</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula19-0959651812441749">
+<mml:math display="inline" id="math50-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>#7</td>
+<td>Papatheodorou<sup><xref ref-type="bibr" rid="bibr28-0959651812441749">28</xref>,<xref ref-type="bibr" rid="bibr29-0959651812441749">29</xref></sup> (<italic>z</italic> = θ)</td>
+<td>
+<inline-formula id="inline-formula20-0959651812441749">
+<mml:math display="inline" id="math51-0959651812441749">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+<td>
+<inline-formula id="inline-formula21-0959651812441749">
+<mml:math display="inline" id="math52-0959651812441749">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>dz</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mi>z</mml:mi>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>z</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+</sec>
+<sec id="section19-0959651812441749">
+<title>Mass-integrated friction models</title>
+<p>In the models mentioned above, the transition between sticking and sliding is managed in such a way that it is impossible to get an exactly null relative velocity in the stuck mode. If necessary, this can be achieved as shown below by switching between models when the friction model can be embedded into a mass model.</p>
+<sec id="section20-0959651812441749">
+<title>The Karnopp model</title>
+<p>The Karnopp model<sup><xref ref-type="bibr" rid="bibr32-0959651812441749">32</xref></sup> is basically developed for a fixed base. In addition to equation (3), it introduces a filtered mass velocity <italic>V<sub>k</sub></italic> that is forced to null when the value calculated from the integration of the acceleration Γ<italic><sub>m</sub></italic> remains below a given range [± <italic>V</italic>ε]. An example of formulation is given by equation (31)</p>
+<p>
+<disp-formula id="disp-formula32-0959651812441749">
+<label>(31)</label>
+<mml:math display="block" id="math53-0959651812441749">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mtext>If</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ε</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext>then</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>∫</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>dt</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mtext>else</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula32-0959651812441749" xlink:href="10.1177_0959651812441749-eq32.tif"/>
+</disp-formula>
+</p>
+<p>Continuity is ensured between the sliding and sticking modes, calculating the friction force <italic>F<sub>f</sub></italic> from the forced value <italic>V<sub>k</sub></italic> of velocity and the external forces <italic>F<sub>e</sub></italic>. In the stuck mode (when <inline-formula id="inline-formula22-0959651812441749">
+<mml:math display="inline" id="math54-0959651812441749">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ε</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>), the static friction force <italic>F<sub>fl</sub></italic> balances the external forces and is limited to the breakaway force ± <italic>F<sub>b</sub></italic>, e.g. using equation (32)</p>
+<p>
+<disp-formula id="disp-formula33-0959651812441749">
+<label>(32)</label>
+<mml:math display="block" id="math55-0959651812441749">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mtext>If</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mtext>then</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fl</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ε</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mtext>else</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fl</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mtext>sgn</mml:mtext>
+</mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula33-0959651812441749" xlink:href="10.1177_0959651812441749-eq33.tif"/>
+</disp-formula>
+</p>
+<p>In the sliding mode (when <inline-formula id="inline-formula23-0959651812441749">
+<mml:math display="inline" id="math56-0959651812441749">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ε</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> ), the dynamic friction force is calculated as a pure algebraic function of velocity <italic>V<sub>k</sub></italic>, possibly as given by equation (10).</p>
+<p>The Karnopp model operates efficiently when the mobile is fixed. It is quite robust regarding the discontinuities introduced by equations (31) and (32) that affect low dynamic states. In the case of double contacts, the Karnopp approach can still be applied with added complexity. As main drawbacks, the Karnopp model is not adapted to the modelling of mobiles having multiple points of contact and the velocity threshold <italic>V</italic>ε can be difficult to set.</p>
+</sec>
+<sec id="section21-0959651812441749">
+<title>Event trigger model</title>
+<p>Event trigger models<sup><xref ref-type="bibr" rid="bibr33-0959651812441749">33</xref>,<xref ref-type="bibr" rid="bibr34-0959651812441749">34</xref></sup> require the solver to provide an event detection feature. For friction modelling, this feature is the zero crossing detection. In the nicest implementation, when a logical condition has switched between two integration steps, it triggers the solver to search for the event instant, calculates the discrete model associated with the event and then restarts the integrator at the event instant. For friction simulation, this feature allows clean management of the model discontinuity induced by the transition between the two states of sticking and sliding.</p>
+<p>In the software ACSL 87,<sup><xref ref-type="bibr" rid="bibr33-0959651812441749">33</xref></sup> a flag is used to force the relative velocity to null in the stuck mode, then the event search is triggered if the external forces exceed the breakaway force (<inline-formula id="inline-formula24-0959651812441749">
+<mml:math display="inline" id="math57-0959651812441749">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> ) to detect the exact instant at which sliding occurs. In the sliding mode, the event time search is activated when the sign of the relative velocity reverses; then it searches for the null speed time. The stuck mode is activated if the magnitude of the external force at null velocity is lower than the breakaway (or stop) force. Otherwise, the sliding mode is held. This process is summarized in <xref ref-type="fig" rid="fig10-0959651812441749">Figure 10</xref>.</p>
+<fig id="fig10-0959651812441749" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>Event trigger implementation for friction modelling as in ACLS 87.<sup><xref ref-type="bibr" rid="bibr33-0959651812441749">33</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig10.tif"/>
+</fig>
+<p>In Otter et al.,<sup><xref ref-type="bibr" rid="bibr34-0959651812441749">34</xref></sup> the friction model is defined in a declarative way taking benefit of one particular function of the simulation language: the pre(<italic>x</italic>) operator that delivers the left time limit <italic>x</italic>(<italic>t</italic><sup>-</sup>) of the variable <italic>x</italic> when the variable is discontinuous at sample instant <italic>t</italic>. A three states machine (stuck, moving backward and moving forward) is defined that drives the calculation of the friction force and the mass acceleration. In addition, the acceleration is made dependent on an <italic>s</italic> curve parameter equal to +1 at forward breakaway and −1 at backward breakaway. As an illustration, the process is implemented using the sequence of equations given in <xref ref-type="fig" rid="fig11-0959651812441749">Figure 11</xref>. It can be noticed that instead of using the external forces, this model uses the mobile acceleration.</p>
+<fig id="fig11-0959651812441749" position="float">
+<label>Figure 11.</label>
+<caption>
+<p>Event trigger implementation for friction modelling as in Otter et al.<sup><xref ref-type="bibr" rid="bibr34-0959651812441749">34</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_0959651812441749-fig11.tif"/>
+</fig>
+<p>The event trigger model is efficient numerically even if the event detection consumes computer time. It requires the simulation software to offer an event detection feature. It suffers from the same drawbacks as the Karnopp model for setting the appropriate event search accuracy and dealing with multiple contacts. As proposed elsewhere,<sup><xref ref-type="bibr" rid="bibr35-0959651812441749">35</xref></sup> this latter issue can be fixed by introducing an intermediate ‘waiting’ mode associated with two states (wait backward or wait forward) in addition to the sticking and sliding ones. The waiting mode can only be activated when two conditions are simultaneously true: the mobile is in the sticking mode and the external forces have reached the breakaway friction force. When all the contacts have reached the waiting mode in the same direction of motion, the acceleration of the mobile is computed from the sum of the external forces and the friction forces. If the acceleration is opposite to the external forces, the contact returns to the sticking mode. Otherwise, the sliding mode is activated and the motion starts. The stuck mode is systematically activated when the magnitude of the relative velocity drops below a threshold value. This condition is caught whatever the integration time step with the event detection function.</p>
+</sec>
+</sec>
+<sec id="section22-0959651812441749">
+<title>Identification of the friction parameters</title>
+<p>Although friction parameters identification is a wide topic in itself, it cannot be ignored that feeding the model with relevant parameters is generally the most demanding task. Experiments are expensive and time consuming and generally dedicated only to the final performance validation of the studied product. Although identification can sometimes be applied globally, like in Peer et al.,<sup><xref ref-type="bibr" rid="bibr36-0959651812441749">36</xref></sup> such tests are often of very little interest for friction identification. This raises the challenge of obtaining the time and financial resources to run dedicated experiments, which are the most time intrusive. Ideally, the time histories of relative position, relative velocity and friction force should be collected as directly as possible. In order to avoid noisy derivations, it is preferred to run experiments at constant<sup><xref ref-type="bibr" rid="bibr9-0959651812441749">9</xref></sup> or sine speed.<sup><xref ref-type="bibr" rid="bibr37-0959651812441749">37</xref></sup> Plotting in addition the friction dependency on relative position and relative velocity plays a very important role in model suggestion and validation, as detailed in Armstrong-Helouvry<sup><xref ref-type="bibr" rid="bibr17-0959651812441749">17</xref></sup> and illustrated by Nouri.<sup><xref ref-type="bibr" rid="bibr38-0959651812441749">38</xref></sup> Moreover, for very lightly damped positioning systems, the free response measurement can provide a precious means to reveal the main frictional effects. As an example, for a pure mass–spring system submitted to low friction, it can be shown that the decrement Δ<italic>X</italic> of the relative position between two consecutive oscillations is constant when pure Coulomb friction dominates</p>
+<p>
+<disp-formula id="disp-formula34-0959651812441749">
+<label>(33)</label>
+<mml:math display="block" id="math58-0959651812441749">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>X</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>4</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>/</mml:mo>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula34-0959651812441749" xlink:href="10.1177_0959651812441749-eq34.tif"/>
+</disp-formula>
+</p>
+<p>It varies linearly with the actual oscillation magnitude when pure viscous friction dominates</p>
+<p>
+<disp-formula id="disp-formula35-0959651812441749">
+<label>(34)</label>
+<mml:math display="block" id="math59-0959651812441749">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>X</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>π</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:mo>/</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:mi>KM</mml:mi>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula35-0959651812441749" xlink:href="10.1177_0959651812441749-eq35.tif"/>
+</disp-formula>
+</p>
+<p>while it displays linear, then constant asymptotes when pure Dahl friction dominates</p>
+<p>
+<disp-formula id="disp-formula36-0959651812441749">
+<label>(35)</label>
+<mml:math display="block" id="math60-0959651812441749">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>X</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>sh</mml:mi>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mtext>with</mml:mtext>
+<mml:mi>σ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>X</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">‖</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula36-0959651812441749" xlink:href="10.1177_0959651812441749-eq36.tif"/>
+</disp-formula>
+</p>
+</sec>
+<sec id="section23-0959651812441749">
+<title>Summary</title>
+<p>The properties of the common friction models are summarized in <xref ref-type="table" rid="table2-0959651812441749">Table 2</xref>, which aims at supporting the system-level model developer in selecting and/or implementing friction models. In practice, this task is driven by the needs (effects to be reproduced) with preference to available and verified friction models of the software model libraries. Making a decision to select the most relevant friction model is facilitated with reference to questions 1 and 3 posed in the Introduction. The main conclusions that can be drawn are summarized as follows.</p>
+<list id="list5-0959651812441749" list-type="order">
+<list-item>
+<p>If it is mandatory to reproduce the pre-sliding regime (e.g. for very accurate positioning actuators), one of the models #3 to #11 has to be selected. The LuGre model looks the most versatile and numerically robust. Even if there is no interest in considering the pre-sliding regime, such models can be used for their clean management of the transition between sticking and sliding.</p>
+</list-item>
+<list-item>
+<p>If exact null velocity when stuck is expected even in the presence of external forces, type 3 model #12 or #13 must be used but cannot be developed as an individual friction block. The Karnopp model does not require any simulation software capability as the event trigger models do.</p>
+</list-item>
+<list-item>
+<p>If computer time and cost are main issues, the model #2 is to be preferred as it only involves an algebraic hyperbolic tangent function to manage the transition between sticking and sliding. The model #1 is acceptable only if the system under study does not operate in the vicinity of the null relative velocity.</p>
+</list-item>
+<list-item>
+<p>Models #5 and #7 to #11 are not implemented in commercial system-level simulation software.</p>
+</list-item>
+<list-item>
+<p>The influence of rest time or distance covered since sliding start is reproduced by models #9 to #11.</p>
+</list-item>
+<list-item>
+<p>The influences of load, direction of power and temperature are almost never considered even if they often alter the friction forces in the same magnitude as the relative speed does.<sup><xref ref-type="bibr" rid="bibr19-0959651812441749">19</xref></sup></p>
+</list-item>
+</list>
+<table-wrap id="table2-0959651812441749" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Summary of candidate friction models at system level.</p>
+</caption>
+<graphic alternate-form-of="table2-0959651812441749" xlink:href="10.1177_0959651812441749-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Model no.</th>
+<th align="left">Type of model</th>
+<th align="left" colspan="7">Modelling</th>
+<th align="left">Remarks/drawbacks</th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th/>
+<th align="left">Null relative velocity when stuck</th>
+<th align="left">Dahl effect/elastic pre-sliding</th>
+<th align="left">Rest time/covered distance</th>
+<th align="left">No. of parameters</th>
+<th align="left">No. of integrators</th>
+<th align="left">Single (S) input <italic>V<sub>r</sub></italic>/Double (D) input <italic>V<sub>r</sub>, Fe</italic></th>
+<th align="left">Availability in common simulation softwares</th>
+<th/>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Type 1</td>
+<td>#1</td>
+<td>Basic model, equations (5) to (9)</td>
+<td/>
+<td/>
+<td/>
+<td>1</td>
+<td>0</td>
+<td>S</td>
+<td/>
+<td>Does not work around the null relative speed</td>
+</tr>
+<tr>
+<td/>
+<td>#2</td>
+<td>Smoothed sign function, equations (10) and (12)</td>
+<td/>
+<td/>
+<td/>
+<td>7</td>
+<td>0</td>
+<td>S</td>
+<td>×</td>
+<td>Easy to implement and fast simulation<break/>Relative speed cannot be null under constant external forces</td>
+</tr>
+<tr>
+<td>Type 2</td>
+<td>#3</td>
+<td>Dahl, equation (13)</td>
+<td/>
+<td>×</td>
+<td/>
+<td>3</td>
+<td>1</td>
+<td>S</td>
+<td>×</td>
+<td>Only pure Coulomb at high relative speeds<break/>Poor final damping around sticking (spring effect)</td>
+</tr>
+<tr>
+<td/>
+<td>#4</td>
+<td>Reset integrator, equations (14) and (15)</td>
+<td/>
+<td>×</td>
+<td/>
+<td>4 minimum</td>
+<td>1</td>
+<td>S</td>
+<td>×</td>
+<td>Efficient if pre-sliding mandatory<break/>Discontinuity at breakaway may lower robustness</td>
+</tr>
+<tr>
+<td/>
+<td>#5</td>
+<td>Bristle<sup><xref ref-type="bibr" rid="bibr20-0959651812441749">20</xref></sup></td>
+<td/>
+<td>×</td>
+<td/>
+<td>4</td>
+<td>1</td>
+<td>S</td>
+<td/>
+<td>More realistic for bonding representation<break/>Very slow simulation even with a few bristles</td>
+</tr>
+<tr>
+<td/>
+<td>#6</td>
+<td>LuGre standard, equations (15) to (19)</td>
+<td/>
+<td>×</td>
+<td/>
+<td>6</td>
+<td>1</td>
+<td>S</td>
+<td>×</td>
+<td>Versatile but many parameters/functions to be set<break/>Performances increased with elastoplastic extension</td>
+</tr>
+<tr>
+<td/>
+<td>#7</td>
+<td>Swevers<sup><xref ref-type="bibr" rid="bibr23-0959651812441749">23</xref></sup></td>
+<td/>
+<td>×</td>
+<td/>
+<td>*</td>
+<td>1</td>
+<td>S</td>
+<td/>
+<td>*In addition to the LuGre, requires a parametric modelling of the hysteresis function<break/>Reproduces the non local frictional memory</td>
+</tr>
+<tr>
+<td/>
+<td>#8</td>
+<td>Dupont<sup><xref ref-type="bibr" rid="bibr24-0959651812441749">24</xref></sup></td>
+<td/>
+<td>×</td>
+<td/>
+<td>**</td>
+<td>1</td>
+<td>S</td>
+<td/>
+<td>**In addition to the LuGre, requires a parametric <italic>f</italic><sub>4</sub> function<break/>Reproduces the non-local frictional memory</td>
+</tr>
+<tr>
+<td/>
+<td>#9</td>
+<td>Carlson<sup><xref ref-type="bibr" rid="bibr26-0959651812441749">26</xref>,<xref ref-type="bibr" rid="bibr27-0959651812441749">27</xref></sup></td>
+<td/>
+<td>×</td>
+<td/>
+<td>4</td>
+<td>1</td>
+<td>S</td>
+<td/>
+<td>Suited well for systems with long periods at rest <break/>To be extended to include Stribeck effect</td>
+</tr>
+<tr>
+<td/>
+<td>#10</td>
+<td>Papatheodorou<sup><xref ref-type="bibr" rid="bibr28-0959651812441749">28</xref>,<xref ref-type="bibr" rid="bibr29-0959651812441749">29</xref></sup></td>
+<td/>
+<td>×</td>
+<td>×</td>
+<td>4</td>
+<td>1</td>
+<td>S</td>
+<td/>
+<td>Suited well for systems with long periods at rest <break/>To be extended to include Stribeck effect</td>
+</tr>
+<tr>
+<td/>
+<td>#11</td>
+<td>Bliman and Sorine<sup><xref ref-type="bibr" rid="bibr30-0959651812441749">30</xref></sup></td>
+<td/>
+<td>×</td>
+<td>×</td>
+<td>4</td>
+<td>2</td>
+<td>S</td>
+<td/>
+<td>Allows theroretical studies but not realistic for Stribeck</td>
+</tr>
+<tr>
+<td>Type 3</td>
+<td>#12</td>
+<td>Karnopp, equations (31) and (32)</td>
+<td>×</td>
+<td/>
+<td/>
+<td>2 minimum</td>
+<td>0</td>
+<td>D</td>
+<td>×</td>
+<td>Efficient if pre-sliding not to be reproduced<break/>Not possible to implement if more than 2 contacts</td>
+</tr>
+<tr>
+<td/>
+<td>#13</td>
+<td>Rendez vous<sup><xref ref-type="bibr" rid="bibr33-0959651812441749">33</xref></sup></td>
+<td>×</td>
+<td/>
+<td/>
+<td>1 minimum</td>
+<td>0</td>
+<td>D</td>
+<td>×</td>
+<td>Interesting if pre-sliding not to be reproduced<break/>Requires back stepping/event search features</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+</sec>
+<sec id="section24-0959651812441749" sec-type="conclusions">
+<title>Conclusion</title>
+<p>The modelling and simulation of friction have been reviewed in the frame of the virtual prototyping of actuation systems. Although friction is generally modelled at system level essentially for control design purposes, this paper aimed at meeting the need for realism. In this attempt, the appearance of the friction phenomena, the associated models and their numerical implementation have been addressed in sequence with a wide scope. Mixing theoretical and experimental views has provided parametric models of grey-box type that explicitly display the generic effects, allowing further friction compensation or health monitoring. The candidate friction models have been discussed considering the reproduced effects, the means to manage the transition between sticking and sliding and the numerical issues. Finally, friction modelling has been summarized in a reference table that aims at supporting decision making for system-level model designers.</p>
+<p>Friction modelling still needs to be addressed in different directions. For virtual prototyping and sizing, load, direction of power and thermal effects must be introduced in the friction models. For sizing purposes, investigating the inverse simulation of friction is valuable to take benefit of the emerging commercial non-causal simulation softwares. These softwares also enable building of friction model libraries in an object-oriented way that might hide efficiently the numerical aspects for the designer. Virtual system integration and progressive real integration through software- or hardware-in-the-loop approaches are also demanding simplified but realistic friction models that meet real-time simulation needs.</p>
+</sec>
+</body>
+<back>
+<app-group>
+<app id="app1-0959651812441749">
+<title>Appendix 1</title>
+<sec id="section25-0959651812441749">
+<title>Notation</title>
+<p><italic>a</italic> friction model parameter</p>
+<p><italic>b</italic> friction parameter for speed dependency</p>
+<p><italic>f</italic> function</p>
+<p><italic>F</italic> force (N)</p>
+<p>Φ function</p>
+<p>Γ function</p>
+<p><italic>h</italic> function</p>
+<p><italic>K</italic> stiffness (N/m)</p>
+<p><italic>l</italic> asperity strain (m)</p>
+<p><italic>L</italic> characteristic length (m)</p>
+<p><italic>M</italic> mass (kg)</p>
+<p><italic>n</italic> shape factor (–)</p>
+<p><italic>s</italic> curve parameter (–)</p>
+<p><italic>t</italic> time (s)</p>
+<p><italic>V</italic> velocity (m/s)</p>
+<p><italic>X</italic> position (m)</p>
+<p><italic>z</italic> state variable (m)</p>
+<p>Γ absolute acceleration (m/s<sup>2</sup>)</p>
+<p>Δ difference in magnitude</p>
+<p>θ dimensionless friction state variable</p>
+<p>τ time constant (s)</p>
+</sec>
+<sec id="section26-0959651812441749">
+<title>Subscripts</title>
+<p><italic>a</italic> actual</p>
+<p><italic>b</italic> base, breakaway</p>
+<p><italic>c</italic> covered distance</p>
+<p><italic>C</italic> Coulomb</p>
+<p><italic>d</italic> spring characteristic of the hysteresis function</p>
+<p><italic>D</italic> Dahl</p>
+<p><italic>e</italic> External</p>
+<p><italic>f</italic> friction</p>
+<p><italic>h</italic> hysteresis</p>
+<p><italic>k</italic> Karnopp filtered</p>
+<p><italic>l</italic> locked (sticking)</p>
+<p><italic>m</italic> mobile</p>
+<p><italic>max</italic> maximal</p>
+<p><italic>min</italic> minimal</p>
+<p><italic>n</italic> normal</p>
+<p><italic>q</italic> quadratic</p>
+<p><italic>r</italic> relative</p>
+<p><italic>s</italic> sliding</p>
+<p><italic>S</italic> Stribeck</p>
+<p><italic>v</italic> viscous</p>
+<p>0 reference</p>
+<p>1, 2 index</p>
+<p>ε threshold</p>
+</sec>
+</app>
+</app-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0959651812441749">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Maru</surname><given-names>MM</given-names></name>
+<name><surname>Tanaka</surname><given-names>DK</given-names></name>
+</person-group>. <article-title>Consideration of Stribeck diagram parameters in the investigation on wear and friction behavior in lubricated sliding</article-title>. <source>J Braz Soc Mech Sci Eng</source> <year>2007</year>; <volume>29</volume>(<issue>1</issue>): <fpage>55</fpage>–<lpage>62</lpage>.</citation>
+</ref>
+<ref id="bibr2-0959651812441749">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hayase</surname><given-names>T</given-names></name>
+<name><surname>Hayashi</surname><given-names>S</given-names></name>
+<name><surname>Kijima</surname><given-names>K</given-names></name><etal/>
+</person-group>. <article-title>Suppression of micro stick-slip vibrations in hydraulic servosystem</article-title>. <source>J Dyn Syst Meas Contr</source> <year>2000</year>; <volume>122</volume>(<issue>2</issue>): <fpage>249</fpage>–<lpage>256</lpage>.</citation>
+</ref>
+<ref id="bibr3-0959651812441749">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jatta</surname><given-names>F</given-names></name>
+<name><surname>Legnani</surname><given-names>G</given-names></name>
+<name><surname>Vissioli</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Friction compensation in hybrid force–velocity control in industrial manipulators</article-title>. <source>IEEE Trans Ind Electron</source> <year>2006</year>; <volume>53</volume>(<issue>2</issue>): <fpage>604</fpage>–<lpage>613</lpage>.</citation>
+</ref>
+<ref id="bibr4-0959651812441749">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jansen</surname><given-names>L</given-names></name>
+<name><surname>Hölscher</surname><given-names>H</given-names></name>
+<name><surname>Fuchs</surname><given-names>H</given-names></name><etal/>
+</person-group>. <article-title>Temperature dependence of atomic scale stick–slip motion</article-title>. <source>Phys Rev Lett</source> <year>2010</year>; <volume>104</volume>: <fpage>256101-1</fpage>–<lpage>256101-4</lpage>.</citation>
+</ref>
+<ref id="bibr5-0959651812441749">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Favreau</surname><given-names>P</given-names></name>
+<name><surname>Ionesco</surname><given-names>IR</given-names></name>
+<name><surname>Compillo</surname><given-names>M</given-names></name>
+</person-group>. <article-title>On dynamic sliding with rate and state dependent friction laws</article-title>. <source>Geophys J Int</source> <year>1999</year>; <volume>139</volume>: <fpage>671</fpage>–<lpage>678</lpage>.</citation>
+</ref>
+<ref id="bibr6-0959651812441749">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hayhurst</surname><given-names>DR</given-names></name>
+<name><surname>Chan</surname><given-names>MW</given-names></name>
+</person-group>. <article-title>Determination of friction models for metallic die–workpiece interfaces</article-title>. <source>Int J Mech Sci</source> <year>2005</year>; <volume>47</volume>: <fpage>1</fpage>–<lpage>25</lpage>.</citation>
+</ref>
+<ref id="bibr7-0959651812441749">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Baillet</surname><given-names>L</given-names></name>
+<name><surname>Linck</surname><given-names>V</given-names></name>
+<name><surname>D’Errico</surname><given-names>S</given-names></name><etal/>
+</person-group>. <article-title>Finite element simulation of dynamic instabilities in frictional sliding contact</article-title>. <source>J Tribol</source> <year>2005</year>; <volume>127</volume>(<issue>3</issue>): <fpage>652</fpage>–<lpage>657</lpage>.</citation>
+</ref>
+<ref id="bibr8-0959651812441749">
+<label>8.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Dahl</surname><given-names>PR</given-names></name>
+</person-group>. <article-title>A solid friction model</article-title>. <comment>Technical report TOR-0158(3107–18)-1</comment>, <publisher-name>The Aerospace Corporation</publisher-name>, <publisher-loc>USA</publisher-loc>, <year>1968</year>.</citation>
+</ref>
+<ref id="bibr9-0959651812441749">
+<label>9.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Berthe</surname><given-names>P-E</given-names></name>
+</person-group>. <source>Développements d’outils de modélisation et de caractérisation de combinés de suspension oléopneumatiques à surface libre</source>. <publisher-name>Mémoire de thèse de Doctorat</publisher-name>, <publisher-loc>INSA Toulouse, France</publisher-loc>, <year>1999</year>.</citation>
+</ref>
+<ref id="bibr10-0959651812441749">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Stribeck</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Die wesentlichen Eigenschaften der Gleit- und Rollenlager (The key qualities of sliding and roller bearings)</article-title>. <source>Zeitschrift des Vereines Deutscher Ingenieure</source> <year>1902</year>; <volume>46</volume>(<issue>38,39</issue>): <fpage>1342</fpage>–<lpage>1348</lpage>, <fpage>1432</fpage>–<lpage>1437</lpage>.</citation>
+</ref>
+<ref id="bibr11-0959651812441749">
+<label>11.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Maré</surname><given-names>J-C</given-names></name>
+<name><surname>Moulaire</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Etude et mise au point des asservissements nacelle centrigugeuse CEV – recalage des modèles de simulation</article-title>. <comment>Technical report JCM/CR/E260/4097</comment>, <publisher-name>Imagine</publisher-name>, <publisher-loc>France</publisher-loc>, <year>1998</year>.</citation>
+</ref>
+<ref id="bibr12-0959651812441749">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Garcia</surname><given-names>E</given-names></name>
+<name><surname>Gonzalez</surname><given-names>de</given-names></name>
+<name><surname>Santos</surname><given-names>P</given-names></name>
+<name><surname>Canudas</surname><given-names>de</given-names></name>
+<name><surname>Vit</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Velocity dependence on the cyclic friction arising with gears</article-title>. <source>Int J Robot Res</source> <year>2002</year>; <volume>21</volume>(<issue>9</issue>): <fpage>761</fpage>–<lpage>771</lpage>.</citation>
+</ref>
+<ref id="bibr13-0959651812441749">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Herrera</surname><given-names>C</given-names></name>
+<name><surname>Gorla</surname><given-names>B</given-names></name>
+<name><surname>Maré</surname><given-names>J-C</given-names></name>
+</person-group>. <article-title>Towards adaptive control of a positioning electrohydraulic actuator</article-title>. <source>J Autom Comput Integrated Mfg</source> <year>1991</year>; <volume>4</volume>(<issue>2</issue>): <fpage>123</fpage>–<lpage>140</lpage>.</citation>
+</ref>
+<ref id="bibr14-0959651812441749">
+<label>14.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Maré</surname><given-names>J-C</given-names></name>
+<name><surname>Karam</surname><given-names>W</given-names></name>
+</person-group>. <article-title>Force control of a roller-screw electro-mechanical actuator for dynamic loading of aerospace actuators</article-title>. In: <conf-name>Proceedings of the Bath/ASME symposium on fluid power and motion control</conf-name>, <conf-loc>Bath, UK</conf-loc>, <conf-date>10–12 September 2008</conf-date>, pp. <fpage>515</fpage>–<lpage>528</lpage>.</citation>
+</ref>
+<ref id="bibr15-0959651812441749">
+<label>15.</label>
+<citation citation-type="other">
+<comment>Harmonic Drive. General catalogue, ref. 00154, May 2009</comment>.</citation>
+</ref>
+<ref id="bibr16-0959651812441749">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Al-Bender</surname><given-names>F</given-names></name>
+<name><surname>Swevers</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Characterization of friction forces dynamics</article-title>. <source>IEEE Contr Syst Mag</source> <year>2008</year>; <volume>28</volume>(<issue>6</issue>): <fpage>64</fpage>–<lpage>81</lpage>.</citation>
+</ref>
+<ref id="bibr17-0959651812441749">
+<label>17.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Armstrong-Helouvry</surname><given-names>B</given-names></name>
+</person-group>. <source>Control of machines with friction</source>. <publisher-loc>Dordrecht</publisher-loc>: <publisher-name>Kluwer Academic Publishers</publisher-name>, <year>1991</year>.</citation>
+</ref>
+<ref id="bibr18-0959651812441749">
+<label>18.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>W</given-names></name>
+<name><surname>Burton</surname><given-names>R</given-names></name>
+<name><surname>Habibi</surname><given-names>S</given-names></name>
+<etal/>
+</person-group>. <article-title>Investigation of the acceleration effect on dynamic friction of EHA system</article-title>. In: <conf-name>Proceedings of the Bath/ASME symposium on fluid power and motion control</conf-name>, <conf-loc>Bath, UK</conf-loc>, <conf-date>15–17 September 2010</conf-date>. <publisher-loc>Basildon, Essex</publisher-loc>: <publisher-name>Hadleys Ltd</publisher-name>.</citation>
+</ref>
+<ref id="bibr19-0959651812441749">
+<label>19.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Maré</surname><given-names>J-C</given-names></name>
+</person-group>. <article-title>System level modelling of mechanical losses in actuators</article-title>. In: <conf-name>Proceedings of the 20th international conference on hydraulics and pneumatics</conf-name>, <conf-loc>Prague, Czech Republic</conf-loc>, <conf-date>29 September–1 October 2008</conf-date>.</citation>
+</ref>
+<ref id="bibr20-0959651812441749">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Haessig</surname><given-names>DA</given-names></name>
+<name><surname>Friedland</surname><given-names>B</given-names></name>
+</person-group>. <article-title>On the modelling and simulation of friction</article-title>. <source>Int J Dyn Syst Meas Contr</source> <year>1991</year>; <volume>113</volume>: <fpage>354</fpage>–<lpage>362</lpage>.</citation>
+</ref>
+<ref id="bibr21-0959651812441749">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Canudas</surname><given-names>de</given-names></name>
+<name><surname>Vit</surname><given-names>C</given-names></name>
+<name><surname>Olsson</surname><given-names>H</given-names></name>
+<name><surname>Astrom</surname><given-names>KJ</given-names></name><etal/>
+</person-group>. <article-title>A new model for control of systems with friction</article-title>. <source>IEEE Trans Autom Contr</source> <year>1995</year>; <volume>40</volume>(<issue>3</issue>): <fpage>419</fpage>–<lpage>425</lpage>.</citation>
+</ref>
+<ref id="bibr22-0959651812441749">
+<label>22.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Astrom</surname><given-names>KJ</given-names></name>
+<name><surname>Canudas</surname><given-names>de</given-names></name>
+<name><surname>Wit</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Revisiting the LuGre friction model</article-title>. <source>Contr Syst</source> <year>2008</year>; <volume>28</volume>(<issue>6</issue>): <fpage>101</fpage>–<lpage>104</lpage>.</citation>
+</ref>
+<ref id="bibr23-0959651812441749">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Swevers</surname><given-names>J</given-names></name>
+<name><surname>Al-Bender</surname><given-names>F</given-names></name>
+<name><surname>Ganseman</surname><given-names>C</given-names></name><etal/>
+</person-group>. <article-title>An integrated friction model structure with improved presliding behaviour for accurate friction compensation</article-title>. <source>IEEE Trans Autom Contr</source> <year>2000</year>; <volume>45</volume>(<issue>4</issue>): <fpage>675</fpage>–<lpage>686</lpage>.</citation>
+</ref>
+<ref id="bibr24-0959651812441749">
+<label>24.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Dupont</surname><given-names>P</given-names></name>
+<name><surname>Hayward</surname><given-names>V</given-names></name>
+<name><surname>Armstrong</surname><given-names>B</given-names></name><etal/>
+</person-group>. <article-title>Single state elasto-plastic friction models</article-title>. <source>IEEE Trans Autom Contr</source> <year>2002</year>; <volume>47</volume>(<issue>5</issue>): <fpage>787</fpage>–<lpage>792</lpage>.</citation>
+</ref>
+<ref id="bibr25-0959651812441749">
+<label>25.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Xuan</surname><given-names>BT</given-names></name>
+<name><surname>Hideki</surname><given-names>Y</given-names></name>
+</person-group>. <article-title>Modeling of dynamic friction behaviours of fluid power actuators</article-title>. In: <conf-name>Proceedings of the 12th Scandinavian international conference on fluid power</conf-name>, <conf-loc>Linkoping, Sweden</conf-loc>, <conf-date>18–20 May 2011</conf-date>.</citation>
+</ref>
+<ref id="bibr26-0959651812441749">
+<label>26.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Carlson</surname><given-names>JM</given-names></name>
+<name><surname>Batista</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Constitutive relations for the friction between lubricated surfaces</article-title>. <source>Phys Rev</source> <year>1996</year>; <volume>53</volume>(<issue>4</issue>): <fpage>4153</fpage>–<lpage>4154</lpage>.</citation>
+</ref>
+<ref id="bibr27-0959651812441749">
+<label>27.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Batista</surname><given-names>A.</given-names></name>
+<name><surname>Carlson</surname><given-names>JM</given-names></name>
+</person-group>. <article-title>Bifurcations from steady sliding to stick slip in boundary lubrication</article-title>. <source>Phys Rev E</source> <year>1998</year>; <volume>57</volume>(<issue>5</issue>): <fpage>4986</fpage>–<lpage>4996</lpage>.</citation>
+</ref>
+<ref id="bibr28-0959651812441749">
+<label>28.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Papatheodorou</surname><given-names>T</given-names></name>
+<name><surname>Achanbach</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Mathematishe model zur Reibung von Stangedichtungen im hydraulischen Zylinder</article-title>. In: <conf-name>Proceedings of the 4th international power conference</conf-name>, <conf-date>24–26 March 2004</conf-date>, pp. <fpage>159</fpage>–<lpage>172</lpage>.</citation>
+</ref>
+<ref id="bibr29-0959651812441749">
+<label>29.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Papatheodorou</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Ein Dichtingsreibungsmodell für Hubbewegungen in hydraulischen Zylindern</article-title>. In: <conf-name>Proceedings of the 13th international sealing conference</conf-name>, <conf-loc>Stuttgart, Germany</conf-loc> <conf-date>5–6 October 2004</conf-date>, pp. <fpage>295</fpage>–<lpage>307</lpage>.</citation>
+</ref>
+<ref id="bibr30-0959651812441749">
+<label>30.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Bliman</surname><given-names>P-A</given-names></name>
+<name><surname>Sorine</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Easy-to-use realistic dry friction models for automatic control</article-title>. In: <conf-name>Proceedings of the 3rd European control conference</conf-name>, <conf-loc>Rome, Italy</conf-loc>, <conf-date>5–8 September 1995</conf-date>, pp. <fpage>3788</fpage>–<lpage>3794</lpage>.</citation>
+</ref>
+<ref id="bibr31-0959651812441749">
+<label>31.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Olsson</surname><given-names>H</given-names></name>
+<name><surname>Aström</surname><given-names>KJ</given-names></name>
+<name><surname>Canudas</surname><given-names>de</given-names></name>
+<name><surname>Vit</surname><given-names>C</given-names></name><etal/>
+</person-group>. <article-title>Friction models and friction compensation</article-title>. <source>Eur J Contr</source> <year>1998</year>; <volume>4</volume>(<issue>3</issue>): <fpage>176</fpage>–<lpage>195</lpage>.</citation>
+</ref>
+<ref id="bibr32-0959651812441749">
+<label>32.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Karnopp</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Computer simulation of stick slip friction in mechanical dynamic systems</article-title>. <source>J Dyn Syst Meas Contr</source> <year>1985</year>; <volume>107</volume>(<issue>1</issue>): <fpage>100</fpage>–<lpage>103</lpage>.</citation>
+</ref>
+<ref id="bibr33-0959651812441749">
+<label>33.</label>
+<citation citation-type="book">
+<collab>Mitchell and Gauthier Associates</collab>. <source>ACSL 87, Advanced continuous simulation language, reference manual</source>. <publisher-loc>Concord, MA</publisher-loc>: <publisher-name>Mitchell and Gauthier Associates</publisher-name>, <year>1987</year>.</citation>
+</ref>
+<ref id="bibr34-0959651812441749">
+<label>34.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Otter</surname><given-names>M</given-names></name>
+<name><surname>Elmqvist</surname><given-names>H</given-names></name>
+<name><surname>Mattson</surname><given-names>SE</given-names></name>
+</person-group>. <article-title>Hybrid modelling in Modelica based on the synchronous data flow principle</article-title>. In: <conf-name>Proceedings of the 1999 IEEE symposium on computer-aided control system design</conf-name>, <conf-loc>Hawaii, USA</conf-loc>, <conf-name>22–26 August 1999</conf-name>, pp. <fpage>151</fpage>–<lpage>157</lpage>.</citation>
+</ref>
+<ref id="bibr35-0959651812441749">
+<label>35.</label>
+<citation citation-type="web">
+<collab>MathWorks Inc</collab>. <article-title>Joint Stiction Actuator – Apply classical friction to joint primitive</article-title>. <comment><ext-link ext-link-type="uri" xlink:href="http://www.mathworks.com/access/helpdesk/help/toolbox/physmod/mech/ref/jointstictionactuator.html">http://www.mathworks.com/access/helpdesk/help/toolbox/physmod/mech/ref/jointstictionactuator.html</ext-link></comment> (<access-date>accessed 17 March 2012</access-date>)</citation>
+</ref>
+<ref id="bibr36-0959651812441749">
+<label>36.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Peer</surname><given-names>A</given-names></name>
+<name><surname>Bajcinca</surname><given-names>N</given-names></name>
+<name><surname>Schweiger</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Physical-based friction identification of an electro-mechanical actuator with Dymola/Modelica and MOPS</article-title>. In: <conf-name>Proceedings of the 3rd international Modelica conference</conf-name>, <conf-loc>Linköping, Sweden</conf-loc>, <conf-date>3–4 November 2003</conf-date>, pp. <fpage>241</fpage>–<lpage>248</lpage>.</citation>
+</ref>
+<ref id="bibr37-0959651812441749">
+<label>37.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Karam</surname><given-names>W</given-names></name>
+<name><surname>Maré</surname><given-names>J-C</given-names></name>
+</person-group>. <article-title>Comparison of EMA and HA performance for dynamic load simulators</article-title>. In: <conf-name>Proceedings of the Bath power transmission and motion control symposium</conf-name>, <conf-loc>Bath, UK</conf-loc>, <conf-date>7–9 September 2006</conf-date>, pp. <fpage>211</fpage>–<lpage>224</lpage>. <publisher-loc>Basildon, Essex</publisher-loc>: <publisher-name>Hadleys Ltd</publisher-name>.</citation>
+</ref>
+<ref id="bibr38-0959651812441749">
+<label>38.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Nouri</surname><given-names>BMY</given-names></name>
+</person-group>. <article-title>Friction identification in mechatronic systems</article-title>. <source>ISA Trans</source> <year>2004</year>; <volume>43</volume>(<issue>2</issue>): pp. <fpage>205</fpage>–<lpage>216</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

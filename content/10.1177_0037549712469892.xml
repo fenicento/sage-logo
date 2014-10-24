@@ -1,0 +1,2434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">SIM</journal-id>
+<journal-id journal-id-type="hwp">spsim</journal-id>
+<journal-title>SIMULATION</journal-title>
+<issn pub-type="ppub">0037-5497</issn>
+<issn pub-type="epub">1741-3133</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0037549712469892</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0037549712469892</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>A rate-based TCP traffic model to accelerate network simulation</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Li</surname><given-names>Ting</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Van Vorst</surname><given-names>Nathanael</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Liu</surname><given-names>Jason</given-names></name>
+</contrib>
+<aff id="aff1-0037549712469892">Florida International University, Miami, FL, USA</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0037549712469892">Ting Li, Florida International University, 11200 SW 8th Street, ECS 264, Miami, FL 33199, USA. Email: <email>tli001@cis.fiu.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>89</volume>
+<issue>4</issue>
+<fpage>466</fpage>
+<lpage>480</lpage>
+<permissions>
+<copyright-statement>© 2013 The Society for Modeling and Simulation International</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="society">Simulation Councils Inc.</copyright-holder>
+</permissions>
+<abstract>
+<p>Traditional discrete-event simulation of large-scale networks at the packet level is computationally expensive. This article presents a fast rate-based transmission control protocol (RTCP) traffic model designed to reduce the time and space complexity for simulating network traffic whilst maintaining good accuracy. A distinct feature of the proposed model is that the transmission control protocol (TCP) congestion control behavior is represented using analytical models that describe the send rate at the traffic source as a function of the round-trip time and the packet loss rate at different phases of a TCP connection. Rather than modeling at the granularity of individual packets visiting the intermediate routers, the model approximates traffic flows as a series of rate windows, each consisting of a number of packets considered to possess the same arrival rate. The model calculates the queuing delays and the packet losses as these rate windows traverse the individual network queues along the flow path. The proposed RTCP model is able to achieve a performance advantage over other TCP models, by integrating analytical solutions and aggregating traffic using rate windows. Empirical results show that the RTCP model can correctly capture the overall TCP behavior and achieve a speedup of more than two orders of magnitude over the corresponding detailed packet-oriented simulation.</p>
+</abstract>
+<kwd-group>
+<kwd>network simulation</kwd>
+<kwd>network traffic modeling</kwd>
+<kwd>TCP</kwd>
+<kwd>analytical models</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0037549712469892" sec-type="intro">
+<title>1. Introduction</title>
+<p>As the size and complexity of the Internet increases, it becomes increasingly challenging to study the network behavior. Simulation can be useful for representing the detailed behavior of network applications in large-scale settings. Traditional packet-oriented simulation typically requires several simulation events to represent a packet visiting each router along its way from the traffic source to the destination (with at least two events to represent the packet arrival and departure at each router). Such detailed packet-level representation of traffic can incur substantial cost when simulating traffic for large-scale networks with millions of hosts and routers.<sup><xref ref-type="bibr" rid="bibr1-0037549712469892">1</xref></sup> Furthermore, since the space complexity of a detailed packet-level simulation is proportional to the number of packets stored in the network queues, for networks that consist of links with a large delay bandwidth product, the memory cost can be exorbitant.</p>
+<p>There are existing solutions for reducing the cost of simulating large-scale networks by representing the network traffic at a higher level of modeling abstraction through aggregation. For example, Ahn and Danzig<sup><xref ref-type="bibr" rid="bibr2-0037549712469892">2</xref></sup> proposed to model the network traffic as “packet trains”, each consisting of a number of closely spaced packets. Guo et al.<sup><xref ref-type="bibr" rid="bibr3-0037549712469892">3</xref></sup> also proposed a method to group the packets at a router within a time interval as a “chunk”. Fluid models<sup><xref ref-type="bibr" rid="bibr4-0037549712469892">4</xref><xref ref-type="bibr" rid="bibr5-0037549712469892"/><xref ref-type="bibr" rid="bibr6-0037549712469892"/><xref ref-type="bibr" rid="bibr7-0037549712469892"/><xref ref-type="bibr" rid="bibr8-0037549712469892"/>–<xref ref-type="bibr" rid="bibr9-0037549712469892">9</xref></sup> represent network traffic as fluid flows rather than individual packets. Hybrid models aim at integrating fluid models into the detailed packet-level simulation.<sup><xref ref-type="bibr" rid="bibr10-0037549712469892">10</xref><xref ref-type="bibr" rid="bibr11-0037549712469892"/><xref ref-type="bibr" rid="bibr12-0037549712469892"/><xref ref-type="bibr" rid="bibr13-0037549712469892"/>–<xref ref-type="bibr" rid="bibr14-0037549712469892">14</xref></sup> Their performance is adjustable by tuning the proportion of fluid traffic and packet-oriented traffic in the simulation.</p>
+<p>Since the transmission control protocol (TCP) handles the brunt of today’s network traffic, a good aggregate traffic model must be able to accurately capture the TCP behavior. One type of solution<sup><xref ref-type="bibr" rid="bibr6-0037549712469892">6</xref>,<xref ref-type="bibr" rid="bibr8-0037549712469892">8</xref></sup> simulates TCP by only capturing the long-term average behavior of TCP in order to improve computational efficiency. This approach inevitably results in a loss of accuracy as it overlooks the fine-grained time-varying features of TCP. The other type of solution<sup><xref ref-type="bibr" rid="bibr7-0037549712469892">7</xref>,<xref ref-type="bibr" rid="bibr9-0037549712469892">9</xref></sup> maintains the detailed state transitions of TCP, in particular, the evolution of the TCP congestion window at the senders. However, in doing so it can greatly inflate the computational demand.</p>
+<p>In this article, we present a fast rate-based model to approximate the TCP behaviors, which offers a new level of granularity for simulating TCP traffic. Our solution uses the packet aggregation idea, similar to those employed by Ahn and Danzig,<sup><xref ref-type="bibr" rid="bibr2-0037549712469892">2</xref></sup> Guo et al.,<sup><xref ref-type="bibr" rid="bibr3-0037549712469892">3</xref></sup> and Nicol and Yan.<sup><xref ref-type="bibr" rid="bibr9-0037549712469892">9</xref></sup> In particular, rather than modeling the network traffic packet by packet as in the traditional approach, we group the packets as chunks of variable length, called rate windows, which consist of a number of packets from the same TCP session and with a similar arrival rate. We describe each rate window by the packet arrival rate and duration, both of which can be adjusted according to the network condition as the chunk of packets visit the routers along the path from the source to the destination altogether. Different from the existing solutions, we apply analytical models to capture the congestion window behavior in response to the simulated network traffic conditions at different stages of TCP. That is, rather than modeling the complex state transitions of TCP, we apply mathematical models to derive the packet send rate as a function of the round-trip time (RTT) and the packet loss rate. The RTT and the packet loss rate are measured along the flow path as the rate windows are sent to visit the network queues and interact with other flows represented either as rate windows or individual packets. The latter, in particular, allows the model to seamlessly mix with a packet-oriented simulation.</p>
+<p>We call our model the <italic>rate-based TCP</italic> (RTCP) model. Speedup is achieved because we are simulating the TCP traffic at a higher level of granularity. This comes at the cost of potential degradation of accuracy. Experiments show that the RTCP model is able to correctly capture the overall TCP behavior. Even for congested networks, our model can reduce the number of simulation events and accelerate simulation by more than two orders of magnitude. For uncongested network conditions, the RTCP model can improve execution time even more drastically.</p>
+<p>The contribution of this article can be summarized as follows:</p>
+<list id="list1-0037549712469892" list-type="simple">
+<list-item><p>— We propose a fast rate-based TCP model to approximate the behavior of TCP traffic in network simulation at a new level of granularity.</p></list-item>
+<list-item><p>— We apply analytical models to capture the approximate behavior of the TCP end systems to further speed up network simulation.</p></list-item>
+<list-item><p>— We conduct extensive experiments to validate our model and show that it can lead to more than two orders of magnitude reduction both in the number of simulation events and the simulation time for congested networks.</p></list-item>
+</list>
+<p>The remainder of this article is organized as follows. In Section 2, we review the related work in traffic modeling. In Section 3, we describe an overview of the proposed rate-based TCP model. In Section 4, we provide a detailed description of the model for representing the TCP congestion control behavior at the end nodes; and in Section 5, we describe the interaction among the flows traversing the intermediate network queues. We conducted extensive experiments to analyze the performance of our model and the results are shown in Section 6. Finally, in Section 7, we present our conclusions and outline future research directions.</p>
+</sec>
+<sec id="section2-0037549712469892">
+<title>2. Related work</title>
+<p>There exist several traffic generators, such as Surge,<sup><xref ref-type="bibr" rid="bibr15-0037549712469892">15</xref></sup> Harpoon,<sup><xref ref-type="bibr" rid="bibr16-0037549712469892">16</xref></sup> Tmix,<sup><xref ref-type="bibr" rid="bibr17-0037549712469892">17</xref></sup> and Swing,<sup><xref ref-type="bibr" rid="bibr18-0037549712469892">18</xref></sup> which can be used to either replay the packet trace or extend it to produce specified traffic load in real networks. They are fully fledged traffic generators and can certainly be used to generate packets for simulation. However, using these tools to produce the detailed packet sequence can incur substantial cost, making them computationally undesirable for large-scale network simulations. Abstract models, in contrast, solve this problem by modeling traffic at a higher level of abstraction. In general, abstract models can greatly reduce the computational demand. However, the reduction in computational complexity results in a loss of accuracy at various degrees.</p>
+<p>Ahn and Danzig<sup><xref ref-type="bibr" rid="bibr2-0037549712469892">2</xref></sup> proposed the idea of “packet trains”. Each packet train consists of a number of closely spaced packets. The time complexity of this approach depends on the size of the packet train. The modeling granularity can be adjusted to go between a packet-level simulation, where the train size is limited to contain only a single packet, and a conversation-level simulation, where the entire flow is modeled as a single packet train. It has been shown that the packet train model can achieve a significant reduction in the number of simulation events over the corresponding packet-oriented simulation, by as much as an order of magnitude if using a coarse granularity.</p>
+<p>Guo et al.<sup><xref ref-type="bibr" rid="bibr3-0037549712469892">3</xref></sup> proposed a time-stepping hybrid simulation (TSHS) framework. The packets that arrive within a time step are put together as a single “chunk”. Instead of handling individual packets, the routers process the whole chunk as it arrives. At the flow destination, packets within a chunk are individually acknowledged. Similar to the packet train approach, the time complexity of this approach can be adjusted, in this case, by choosing the length of the time step. Compared with the traditional packet-oriented simulation, the hybrid model has been shown to achieve moderate speedup when using sufficiently large time steps. It has been shown that TSHS can achieve over three times the speedup with a time step of 2 ms.<sup><xref ref-type="bibr" rid="bibr3-0037549712469892">3</xref></sup></p>
+<p>Although both the packet train and TSHS employ aggregation, many packet-level details remain in the models. For example, the packet train model still emits individual packets at the source and converts them into packet trains on the fly. TSHS carries the information of individual packets in the chunk so that the packets can be separately acknowledged at the destination. In contrast, fluid models<sup><xref ref-type="bibr" rid="bibr4-0037549712469892">4</xref><xref ref-type="bibr" rid="bibr5-0037549712469892"/><xref ref-type="bibr" rid="bibr6-0037549712469892"/><xref ref-type="bibr" rid="bibr7-0037549712469892"/><xref ref-type="bibr" rid="bibr8-0037549712469892"/>–<xref ref-type="bibr" rid="bibr9-0037549712469892">9</xref></sup> eliminate the packet-level information altogether and only describe the flow-level traffic intensity.</p>
+<p>There are two major categories of fluid models. The first category consists of event-driven models,<sup><xref ref-type="bibr" rid="bibr4-0037549712469892">4</xref>,<xref ref-type="bibr" rid="bibr7-0037549712469892">7</xref>,<xref ref-type="bibr" rid="bibr9-0037549712469892">9</xref></sup> where the traffic flows are broken down as segments each described using a piece-wise constant rate function. The flow rate may change when the TCP congestion window is changed at the sender due to the changing RTT or packet loss rate. As the flow traverses the network queues, the flow rate may also change as it interacts with other flows and competes for resources. The changes in the flow rate are represented by simulation events. Consequently, the efficiency of the fluid model depends on the network traffic condition. Experiments show that the number of simulation events can be reduced significantly by as much as three orders of magnitude over the packet-oriented simulation for large flow size and with little congestion. However, for heavily congested networks, the number of events increases, due to more interactions among flows in the congested network queues, which can “ripple” through the rest of the network.</p>
+<p>The other category of fluid models consists of time-driven fluid models.<sup><xref ref-type="bibr" rid="bibr5-0037549712469892">5</xref>,<xref ref-type="bibr" rid="bibr6-0037549712469892">6</xref>,<xref ref-type="bibr" rid="bibr8-0037549712469892">8</xref></sup> These models aggregate the traffic flows from the same source to the same destination into a “fluid class” and use differential equations to describe the changes in the traffic intensity at the TCP senders and at the subsequent network queues. These differential equations can be solved numerically using the fixed time-stepped Runge–Kutta method. The speedup of the time-driven fluid models is primarily achieved by flow aggregation. Experiment results suggest that with heavy flow aggregation, that is, when each fluid class contains a large number of TCP flows, the fluid models can achieve a speedup of nearly three orders of magnitude. However, such performance gains can be reduced significantly if the flows are more spread out.</p>
+<p>The fluid models face difficulty in modeling the packet-level details of the fluid flows. The time-driven fluid models<sup><xref ref-type="bibr" rid="bibr6-0037549712469892">6</xref></sup> can only capture the average behavior of long-term TCP flows (during the TCP congestion avoidance mode). The models therefore cannot accurately represent the transient behavior of the TCP flows. The event-driven fluid models<sup><xref ref-type="bibr" rid="bibr9-0037549712469892">9</xref></sup> address this problem by including complex logic to handle detailed TCP transactions in response to packet losses during the TCP slow start and congestion avoidance phases. This method, however, increases the computational demand.</p>
+<p>Instead of flow-level aggregation, the aggregation of traffic in the gateway at access network level is proposed by Chen et al.<sup><xref ref-type="bibr" rid="bibr14-0037549712469892">14</xref></sup> This model treats the access network as one single node. The traffic generator generates the amount of traffic for the entire access network and pushes the traffic to transmission controller. The transmission controller estimates the network condition according to the feedback of the ACKs and sends the packets to the destination through the network. This method achieves better performance than the traditional packet-oriented simulation through the aggregation of individual senders within one access network. However, the traffic transactions through the network are still represented packet by packet. Therefore, the improvement of its performance is limited.</p>
+<p>Most aggregate models discussed above can be extended to hybrid models that can handle both fluid traffic and packet-oriented traffic. Hybrid models<sup><xref ref-type="bibr" rid="bibr10-0037549712469892">10</xref><xref ref-type="bibr" rid="bibr11-0037549712469892"/><xref ref-type="bibr" rid="bibr12-0037549712469892"/>–<xref ref-type="bibr" rid="bibr13-0037549712469892">13</xref></sup> aim at capturing the interactions between fluid background traffic and foreground packet-oriented flows. Therefore, their focus is on the integration mechanism, not the statistical behavior of Internet traffic.</p>
+<p>To efficiently model the TCP behavior, analytical models have been widely used. These analytical models<sup><xref ref-type="bibr" rid="bibr19-0037549712469892">19</xref><xref ref-type="bibr" rid="bibr20-0037549712469892"/><xref ref-type="bibr" rid="bibr21-0037549712469892"/><xref ref-type="bibr" rid="bibr22-0037549712469892"/><xref ref-type="bibr" rid="bibr23-0037549712469892"/>–<xref ref-type="bibr" rid="bibr24-0037549712469892">24</xref></sup> provide an approximation of the TCP congestion control behavior. Some models only capture the steady-state behavior of TCP for long-lived flows;<sup><xref ref-type="bibr" rid="bibr19-0037549712469892">19</xref>,<xref ref-type="bibr" rid="bibr20-0037549712469892">20</xref>,<xref ref-type="bibr" rid="bibr22-0037549712469892">22</xref></sup> others only consider the connection establishment and slow-start phase of TCP for short-lived flows;<sup><xref ref-type="bibr" rid="bibr24-0037549712469892">24</xref></sup> while others model TCP transfers for any given sizes of flows.<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref>,<xref ref-type="bibr" rid="bibr23-0037549712469892">23</xref></sup> To the best of the authors’ knowledge, these analytical models have not been used extensively in network simulation. Our rate-based TCP traffic model incorporates the analytical TCP models to reduce the computational complexity at the end nodes. In particular, to deal with the arbitrary sizes of TCP flows, we use the models proposed by Cardwell et al.<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> to predict the traffic intensity for both short- and long-lived TCP flows as a function of the RTT and the packet loss rate. For simplicity, we use the model proposed by Padhye et al.<sup><xref ref-type="bibr" rid="bibr22-0037549712469892">22</xref></sup> to approximate the TCP send rate in steady state. This approximation has also been applied in Cardwell et al.’s model as a solution for capturing the TCP behavior in the congestion avoidance stage. The models we adopt in our model are well validated by using simulations, controlled Internet measurements, and comparisons with live traces.<sup><xref ref-type="bibr" rid="bibr25-0037549712469892">25</xref></sup> Our solution also adopts the general packet aggregation idea from the packet train model,<sup><xref ref-type="bibr" rid="bibr2-0037549712469892">2</xref></sup> TSHS,<sup><xref ref-type="bibr" rid="bibr3-0037549712469892">3</xref></sup> and the event-driven fluid model.<sup><xref ref-type="bibr" rid="bibr9-0037549712469892">9</xref></sup></p>
+</sec>
+<sec id="section3-0037549712469892">
+<title>3. An overview of the model</title>
+<p>The essential aspect of TCP is its congestion control mechanism. Since TCP congestion control is performed at end nodes, we use an RTCP sender and an RTCP receiver to regulate the data transfer in simulation. It is important to note that our model is based on three assumptions. First, we assume that the time it takes to send all packets in a congestion window is smaller than the RTT. This assumption is normally true for today’s network with high bandwidth and long latency. Second, we assume that packet losses within a round (defined by the RTT) are independent of the losses in other rounds, while packet losses in the same round can be correlated. This assumption holds for FIFO drop-tail queues,<sup><xref ref-type="bibr" rid="bibr26-0037549712469892">26</xref><xref ref-type="bibr" rid="bibr27-0037549712469892"/>–<xref ref-type="bibr" rid="bibr28-0037549712469892">28</xref></sup> but may not be true for RED queues<sup><xref ref-type="bibr" rid="bibr29-0037549712469892">29</xref></sup> or for paths where packet loss is largely due to link errors rather than congestion.<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> Finally, the ACK losses are insignificant and therefore ignored after the initial handshake. This assumption is acceptable because the ACK packets are much smaller than the normal data packets, which makes them less likely to be dropped due to congestion. As expected, network paths are often more congested in the direction from data sender to receiver than in the reverse direction.<sup><xref ref-type="bibr" rid="bibr30-0037549712469892">30</xref></sup></p>
+<p>It is also important to note that our study here is limited to TCP Reno, which implements fast retransmit and fast recovery. In addition, we assume that the receiver implements delayed ACK: an ACK is sent for the successful delivery of two consecutive data segments. These limitations are simply because of the analytical models which we use for estimating the send rate for the TCP flows. Our model can be extended in principle by substituting the analytical models with those for other TCP variants, such as BIC and CUBIC.</p>
+<p>We model three distinct phases of TCP. Connection establishment consists of the three-way handshake used by TCP to establish the connection between the sender and the receiver. Slow start is the exponential growth phase, during which TCP aggressively increases its congestion window by the same number of acknowledged segments. Congestion avoidance is the primary phase for congestion control, where TCP implements the additive increase and multiplicative decrease scheme. The congestion avoidance phase may also include periods of slow start, where TCP recovers from detected packet losses. However, we do not model slow start after retransmission timeouts because of the analytical models we adopt here. In addition, retransmission timeouts do not happen very often under low loss rate conditions. We do not model TCP termination phase because it does not play an important role in determining the throughput or latency of a data transfer.<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup></p>
+<p>We define four types of messages between the RTCP sender and the RTCP receiver:</p>
+<list id="list2-0037549712469892" list-type="simple">
+<list-item><p>— The START messages are used as probes, which accumulate the RTT and packet loss rate during the TCP connection establishment and slow start.</p></list-item>
+<list-item><p>— The DATA messages carry the data over the TCP connection from the RTCP sender to the RTCP receiver. Each DATA message contains a “rate window”, which represents a chunk of packets considered to have the same arrival rate. A DATA message keeps track of the packet arrival rate, the duration, as well as the delivery ratio for the rate window, which can be adjusted as the message travels over the network from the sender to the receiver.</p></list-item>
+<list-item><p>— The UPDATE messages are sent from the RTCP receiver or an intermediate router to inform the RTCP sender of the network condition so that the sender can adjust the TCP congestion window and send rate accordingly.</p></list-item>
+<list-item><p>— An END message is sent from the RTCP receiver to the RTCP sender once the receiver has successfully received all the data. The END message will cause the sender to immediately stop the transmission.</p></list-item>
+</list>
+<p>To guarantee that the RTCP sender is aware of the network conditions, we do not allow START, UPDATE, nor END messages to be dropped in simulation. Both START and DATA messages are treated as regular packets, which means that they experience proper queuing delays in the network. UPDATE and END messages, however, are special packets which are delivered to the RTCP sender directly and are never queued.</p>
+<p>To reduce the computational cost of the simulation, we model TCP data transfer in the unit of “rate windows”, where a number of consecutive packets from the same TCP session are lumped together and described using a constant arrival rate. The changes in rate of each rate window are determined by the network conditions (i.e. RTT and loss rate) that the previous rate window of the same flow has experienced. The RTT and loss rate are both rate-window specific. When loss happens, we do not keep track of which packet (or packets) are lost within a given rate window, instead we update the delivery ratio to indicate the loss. Each DATA message carries one rate window sent from the RTCP sender to the RTCP receiver. A rate window has the following attributes:</p>
+<list id="list3-0037549712469892" list-type="simple">
+<list-item><p>— <italic>Send time:</italic> the time at which the rate window is sent out from the RTCP sender. The send time will be copied to the UPDATE message on the way back to the RTCP sender, which uses the UPDATE message to calculate the RTT.</p></list-item>
+<list-item><p>— <italic>Arrival rate:</italic> the rate at which packets belonging to the rate window are sent. At the beginning, the arrival rate is the same as the send rate of the TCP sender. In the subsequent queues, the arrival rate is the departure rate at the preceding queue.</p></list-item>
+<list-item><p>— <italic>Duration:</italic> the length of the rate window in time. The product of the arrival rate and the duration is the total number of packets represented by the rate window, which remains unchanged as the rate window travels from the sender to the receiver.</p></list-item>
+<list-item><p>— <italic>Delivery ratio:</italic> the proportion of data successfully delivered by the rate window so far. It is the number of bytes remaining in a rate window over the total number of bytes originally sent from the RTCP sender. At the beginning, the delivery ratio is one; and the delivery ratio may decrease as a result of packet losses at the intermediate routers.</p></list-item>
+</list>
+<p><xref ref-type="fig" rid="fig1-0037549712469892">Figure 1</xref> shows the high-level interactions between the sender and the receiver. A TCP session starts when the RTCP sender sends a START message over the network to the RTCP receiver, which immediately sends it back (steps 1 and 2). This allows the sender to probe the network and calculate the expected duration of the handshake phase before a TCP connection can be established successfully. After that, the RTCP sender starts sending DATA messages, each representing one rate window with the packet arrival rate calculated from measured RTT and the packet loss probability. For each DATA message received, the RTCP receiver returns an UPDATE message carrying the necessary information for the RTCP sender to get the RTT and the packet loss probability (steps 3 and 4).</p>
+<fig id="fig1-0037549712469892" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Interactions between RTCP sender and receiver.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712469892-fig1.tif"/>
+</fig>
+<p>Each intermediate network queue on the flow path from the sender to the receiver can modify the arrival rate, the duration, and delivery ratio of the DATA message, as the rate window interacts with other rate windows. If somehow the delivery ratio of a DATA message drops to zero, the entire rate window is considered lost, in which case an UPDATE message is immediately sent back to the RTCP sender so that the sender can be notified of the loss and adjust its send rate quickly (step 5). The RTCP receiver is responsible for determining whether a data transfer has completed (the data transfer size has been given to the receiver during the connection establishment), and if so, the RTCP receiver sends an END message to the sender to stop further transmissions (step 6).</p>
+<p>The cost of the RTCP model depends on the size of the rate window. If the rate window is too small, we cannot achieve a significant performance improvement over the traditional packet-oriented simulation. If the rate window is too large, RTCP may not be able to properly respond to network congestions and cause significant errors in its estimation of the throughput. We choose to use the RTT as the duration of the rate window, which means that the size of a rate window is equal to the current congestion window size. This is a reasonable choice because TCP cannot react to network congestions unless the packet is delivered and acknowledged (or timeout happens). As an optimization, if we have prior knowledge that the network is under congested, that is, if the network has sufficient resources so that traffic experiences little loss, we can increase the size of the rate window for improved efficiency.</p>
+</sec>
+<sec id="section4-0037549712469892">
+<title>4. Determining send rate</title>
+<p>We extend existing analytical models to represent the TCP congestion control behavior. In particular, during the connection establishment and slow start phases, we apply the model proposed by Cardwell et al.<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> to estimate the duration of the phases and the send rate. We use the model proposed by Padhye et al.,<sup><xref ref-type="bibr" rid="bibr22-0037549712469892">22</xref></sup> which is also a part of the model proposed by Cardwell et al.,<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> to estimate the send rate during the congestion avoidance phase. Both models describe the TCP congestion window behavior as a function of the RTT and the packet loss rate. Both TCP timeout and triple duplicate ACKs are taken into account in these two models. In the following, we elaborate on the analytical models during the three TCP phases.</p>
+<sec id="section5-0037549712469892">
+<title>4.1. Connection establishment</title>
+<p>Connection establishment is the first phase of TCP, which consists of the three-way handshake before a successful TCP connection can be established. The three-way handshake consists of zero or more failed attempts by the sender to transmit the TCP SYN message, followed by one successful delivery of the TCP SYN message, and then zero or more failed attempts to transmit the TCP SYN/ACK message by the receiver, followed by one successful delivery of the SYN/ACK message. The expected number of failed attempts depends on <italic>p<sub>f</sub></italic>(<italic>t</italic>) and <italic>p<sub>r</sub></italic>(<italic>t</italic>), which are defined to be the packet loss probability on the forwarding path (from the sender to the receiver) and on the reverse path (from the receiver to the sender) at time <italic>t</italic>, respectively. Typically, TCP will give up connection attempts after 4–6 failures. If <italic>p<sub>f</sub></italic>(<italic>t</italic>) and <italic>p<sub>r</sub></italic>(<italic>t</italic>) are low, most TCP handshakes will be successful before giving up. Using the analytical model by Cardwell et al.,<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> we can estimate the duration of a successful connection establishment, <italic>T<sub>ce</sub></italic>(<italic>t</italic>), as follows:</p>
+<p><disp-formula id="disp-formula1-0037549712469892">
+<label>(1)</label>
+<mml:math display="block" id="math1-0037549712469892">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ce</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>π</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0037549712469892" xlink:href="10.1177_0037549712469892-eq1.tif"/>
+</disp-formula></p>
+<p>where π(<italic>t</italic>) is the measured RTT and <italic>t<sub>s</sub></italic> is the length of the TCP timeout for the SYN message.</p>
+<p>We set <italic>t<sub>s</sub></italic> to be 3 seconds, which is a typical value.<sup><xref ref-type="bibr" rid="bibr31-0037549712469892">31</xref></sup> The RTT, π(<italic>t</italic>), and the packet loss probabilities, <italic>p<sub>f</sub></italic>(<italic>t</italic>) and <italic>p<sub>r</sub></italic>(<italic>t</italic>), are collected during the exchange of the START messages between the RTCP sender and receiver. Once the expected duration of the connection establishment is determined, the RTCP sender waits for the duration before it enters the slow start phase, which we describe next.</p>
+</sec>
+<sec id="section6-0037549712469892">
+<title>4.2 Slow start</title>
+<p>In the slow start mode, TCP quickly increases its congestion window until it detects a packet loss. From now on, we assume that packet loss only happens in the forwarding path from the sender to the receiver. Suppose that the flow size is ξ. If there is no packet loss, i.e. <italic>p<sub>f</sub></italic> (<italic>t</italic>) = 0, we expect to send all ξ segments during the slow start phase. However, if <italic>p<sub>f</sub></italic> (<italic>t</italic>) &gt; 0, according to Cardwell et al.,<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> the expected number of segments to be sent during the slow start phase, <italic>L<sub>ss</sub></italic>(<italic>t</italic>), can be estimated as follows:</p>
+<p><disp-formula id="disp-formula2-0037549712469892">
+<label>(2)</label>
+<mml:math display="block" id="math2-0037549712469892">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ss</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ξ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ξ</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mi>ξ</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">) </mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ξ</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0037549712469892" xlink:href="10.1177_0037549712469892-eq2.tif"/>
+</disp-formula></p>
+<p>Here, we assume that the size of a segment (i.e., a TCP packet) is the maximum segment size (MSS).</p>
+<p>If the TCP congestion window is not constrained by the maximum window size <italic>W<sub>max</sub></italic>, the resulting TCP congestion window after sending <italic>L<sub>ss</sub></italic> segments can be approximated by</p>
+<p><disp-formula id="disp-formula3-0037549712469892">
+<label>(3)</label>
+<mml:math display="block" id="math3-0037549712469892">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ss</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ss</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0037549712469892" xlink:href="10.1177_0037549712469892-eq3.tif"/>
+</disp-formula></p>
+<p>where <italic>W</italic><sub>1</sub> is the initial value of the sender’s congestion window, and γ denotes the rate of exponential growth of the congestion window during the slow start. Typically, 1 ≤ W<sub>1</sub>≤ 3. We set γ to be 1.5 to capture the expected TCP behavior at slow start: the TCP sender increases its congestion window size by one MSS for each ACK packet received; and the TCP receiver that implements delayed ACK sends one ACK roughly for every two data packets. That is, during each RTT, the congestion window size increases by as much as half of the congestion window size during the previous round. Therefore, γ = 1.5.</p>
+<p>To determine whether the TCP congestion window is constrained by the maximum send window size, we compare <italic>W<sub>ss</sub></italic>(<italic>t</italic>) and <italic>W<sub>max</sub></italic>. If <italic>W<sub>ss</sub></italic>(<italic>t</italic>) &gt; <italic>W<sub>max</sub></italic>, TCP experiences two phases during the slow start: at first, the congestion window size increases from <italic>W</italic><sub>1</sub> to <italic>W<sub>max</sub></italic> at the rate γ per RTT; after that, the congestion window remains at <italic>W<sub>max</sub></italic>. If <italic>W<sub>ss</sub></italic>(<italic>t</italic>) ≤<italic>W<sub>max</sub></italic>, TCP would send all <italic>L<sub>ss</sub></italic>(<italic>t</italic>) segments in the first phase.</p>
+<p>The model proposed by Cardwell et al.<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> predicts the duration of the slow start phase, <italic>T<sub>ss</sub></italic>(<italic>t</italic>), as follows:</p>
+<p><disp-formula id="disp-formula4-0037549712469892">
+<label>(4)</label>
+<mml:math display="block" id="math4-0037549712469892">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ss</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mi>π</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>lo</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>max</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>max</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ss</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>max</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mi>if</mml:mi>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ss</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>&gt;</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>max</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mi>π</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>lo</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ss</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>*</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mi>otherwise</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0037549712469892" xlink:href="10.1177_0037549712469892-eq4.tif"/>
+</disp-formula></p>
+<p>We model the slow start phase by having the RTCP sender and receiver first exchange the START messages, from which we can use <xref ref-type="disp-formula" rid="disp-formula2-0037549712469892">Equation (2)</xref> to determine <italic>L<sub>ss</sub></italic>(<italic>t</italic>), the expected number of segments to be sent during the slow start phase. Then we use <xref ref-type="disp-formula" rid="disp-formula3-0037549712469892">Equation (3)</xref> to determine <italic>W<sub>ss</sub></italic>(<italic>t</italic>), the unconstrained congestion window size, and then use <xref ref-type="disp-formula" rid="disp-formula4-0037549712469892">Equation (4)</xref> to determine <italic>T<sub>ss</sub></italic>(<italic>t</italic>), the expected duration of the slow start phase. If it is determined that the TCP session is still in the slow start phase, i.e. if the number of segments sent by TCP is less than <italic>L<sub>ss</sub></italic>(<italic>t</italic>), for each RTT π(t), the RTCP sender sends a DATA message carrying a rate window with the packet arrival rate <italic>R<sub>ss</sub></italic>(<italic>t</italic>) = (<italic>L<sub>ss</sub></italic>(<italic>t</italic>)/<italic>T<sub>ss</sub></italic>(<italic>t</italic>)). Whenever the RTCP sender receives an UPDATE message, it recalibrates <italic>L<sub>ss</sub></italic>(<italic>t</italic>), <italic>T<sub>ss</sub></italic>(<italic>t</italic>) and <italic>R<sub>ss</sub></italic>(<italic>t</italic>). When the number of sent segments has gone beyond the expected value, TCP switches to congestion avoidance.</p>
+<p>Our model may not be able to capture the exact time of the transition from slow start to congestion avoidance. This is because the model handles packet transfers in the unit of rate windows. The model does not keep track of the exact packet positions within the rate windows, and therefore it is impossible to record the exact time the congestion avoidance model would start. The error is considered insignificant since it depends on the size of the rate window, which is the RTT.</p>
+</sec>
+<sec id="section7-0037549712469892">
+<title>4.3. Congestion avoidance</title>
+<p>TCP enters steady state during the congestion avoidance phase. We use the model proposed by Padhye et al.<sup><xref ref-type="bibr" rid="bibr22-0037549712469892">22</xref></sup> to estimate the send rate as a function of the RTT, the packet loss (whether it is due to duplicate ACKs or timeouts), and the current congestion window size. According to the model, the send rate can be determined as follows:</p>
+<p><disp-formula id="disp-formula5-0037549712469892">
+<label>(5)</label>
+<mml:math display="block" id="math5-0037549712469892">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ca</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mtext>min</mml:mtext>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>,</mml:mo>
+<mml:mi>R</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0037549712469892" xlink:href="10.1177_0037549712469892-eq5.tif"/>
+</disp-formula></p>
+<p>where <italic>R</italic>(<italic>t</italic>) is a rate determined by the RTT π(<italic>t</italic>), and the packet loss probability on the forwarding path <italic>p<sub>f</sub></italic> (<italic>t</italic>) as follows:</p>
+<p><disp-formula id="disp-formula6-0037549712469892">
+<label>(6)</label>
+<mml:math display="block" id="math6-0037549712469892">
+<mml:mrow>
+<mml:mi>R</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mi>b</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:msqrt>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>O</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mtext>min</mml:mtext>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>3</mml:mn>
+<mml:msqrt>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+<mml:mi>b</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:msqrt>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>32</mml:mn>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0037549712469892" xlink:href="10.1177_0037549712469892-eq6.tif"/>
+</disp-formula></p>
+<p>where <italic>t<sub>O</sub></italic> is the length of the timeout and <italic>b</italic> is the average number of packets that are acknowledged by each received ACK. We set <italic>t<sub>O</sub></italic> = 0.2 s and <italic>b</italic> = 2.</p>
+<p>Here <italic>W<sub>m</sub></italic>(<italic>t</italic>) is the current congestion window size. The model originally proposed by Padhye et al.<sup><xref ref-type="bibr" rid="bibr22-0037549712469892">22</xref></sup> does not provide a way to calculate the current congestion window. We extend the model by incorporating TCP’s additive increase and multiplicative decrease behavior.</p>
+<p>We calculate <italic>W<sub>m</sub></italic> in rounds. At first we set <inline-formula id="inline-formula1-0037549712469892">
+<mml:math display="inline" id="math7-0037549712469892">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula> to be the maximum congestion window size <italic>W<sub>max</sub></italic>. At round <italic>i</italic>, we update the congestion window <inline-formula id="inline-formula2-0037549712469892">
+<mml:math display="inline" id="math8-0037549712469892">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula> as follows:</p>
+<p><disp-formula id="disp-formula7-0037549712469892">
+<label>(7)</label>
+<mml:math display="block" id="math9-0037549712469892">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mtext>min</mml:mtext>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>max</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mi>if</mml:mi>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mtext>max</mml:mtext>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>W</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="left">
+<mml:mrow>
+<mml:mi>otherwise</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0037549712469892" xlink:href="10.1177_0037549712469892-eq7.tif"/>
+</disp-formula></p>
+<p>The TCP send rate is controlled by a closed-loop system. A change in the measured RTT and packet loss rate will cause the RTCP sender to adjust its send rate. The RTCP receiver is responsible for sending the information back to the sender. During the connection establishment phase, the receiver immediately returns a START message after it receives a START message from the sender. During the data transfer (at the slow start and congestion avoidance phases), the receiver sends an UPDATE message for each received DATA message to the sender to report the current RTT and the packet loss rate. When the receiver determines that it has received all of the data, the receiver sends an END message to inform the sender to terminate further transmission.</p>
+</sec>
+</sec>
+<sec id="section8-0037549712469892">
+<title>5. Conducting flows at queues</title>
+<p>Being able to capture the interaction among the traffic flows at the network routers both accurately and efficiently is essential to the success of the RTCP model. In this section we show how the network queues react to rate windows. Our model is restricted to FCFS queues with drop-tail behavior. We first consider a single flow at the queue and then extend the model to handle the interaction among multiple flows.</p>
+<sec id="section9-0037549712469892">
+<title>5.1 Single flow</title>
+<p>We start by considering a drop-tail queue being fed by one and only one flow. Suppose that a rate window arrives at an empty queue with an arrival rate λ<italic><sup>in</sup></italic>, a duration δ<italic><sup>in</sup></italic>, and a delivery ratio τ<italic><sup>in</sup></italic>. In this case, λ<italic><sup>in</sup></italic>δ<italic><sup>in</sup></italic> is the total amount of data originally sent by the RTCP sender for the rate window (it is an invariant); λ<italic><sup>in</sup></italic>δ<italic><sup>in</sup></italic>τ<italic><sup>in</sup></italic> is the total amount of data actually arriving at the queue during the rate window; and λ<italic><sup>in</sup></italic>τ<italic><sup>in</sup></italic> is the effective arrival rate. Let µ be the link capacity, which is the service rate of the queue.</p>
+<p>If the effective arrival rate λ<italic><sup>in</sup></italic>τ<italic><sup>in</sup></italic> is less than the service rate µ, there will be no accumulation at the queue, and the attributes of the rate window will not change: λ<italic><sup>out</sup></italic> = λ<italic><sup>in</sup>, δ<sup>out</sup></italic> = δ<italic><sup>in</sup></italic>, and τ<italic><sup>out</sup></italic> = τ<italic><sup>in</sup></italic>.</p>
+<p>Otherwise, if λ<italic><sup>in</sup></italic>τ<italic><sup>in</sup></italic>≥µ, the rate window will be served at the maximum capacity µ and the queue will start to accumulate a back log at a rate equal to the difference between the effective arrival rate, λ<italic><sup>in</sup></italic>τ<italic><sup>in</sup></italic>, and the service rate, µ. Suppose that the buffer size is <italic>B</italic>. The final queue length when the rate window completes its arrival at the queue can be calculated as</p>
+<p><disp-formula id="disp-formula8-0037549712469892">
+<label>(8)</label>
+<mml:math display="block" id="math10-0037549712469892">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>B</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0037549712469892" xlink:href="10.1177_0037549712469892-eq8.tif"/>
+</disp-formula></p>
+<p>where <inline-formula id="inline-formula3-0037549712469892">
+<mml:math display="inline" id="math11-0037549712469892">
+<mml:mrow>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:msubsup>
+<mml:mrow>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>B</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>=</mml:mo>
+<mml:mtext>min</mml:mtext>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mtext>max</mml:mtext>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo>}</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The duration of the output rate window needs to be extended to include the time to flush out the back log (at the rate of µ):</p>
+<p><disp-formula id="disp-formula9-0037549712469892">
+<label>(9)</label>
+<mml:math display="block" id="math12-0037549712469892">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>out</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mtext>μ</mml:mtext>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0037549712469892" xlink:href="10.1177_0037549712469892-eq9.tif"/>
+</disp-formula></p>
+<p>Since the product of the arrival rate and the duration should indicate the total amount of data for the rate window sent from the RTCP sender, the arrival rate of the output rate window can be easily adjusted:</p>
+<p><disp-formula id="disp-formula10-0037549712469892">
+<label>(10)</label>
+<mml:math display="block" id="math13-0037549712469892">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>out</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>out</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0037549712469892" xlink:href="10.1177_0037549712469892-eq10.tif"/>
+</disp-formula></p>
+<p>The delivery ratio needs to be calculated to account for the losses due to possible buffer overflow. In case that (λ<italic><sup>in</sup></italic>τ<italic><sup>in</sup></italic>−µ)δ<italic><sup>in</sup></italic>≤<italic>B</italic>, the rate window will not experience any loss and therefore τ<italic><sup>out</sup></italic> = τ<italic><sup>in</sup></italic>. Otherwise, there will be data loss due to buffer overflow:</p>
+<p><disp-formula id="disp-formula11-0037549712469892">
+<label>(11)</label>
+<mml:math display="block" id="math14-0037549712469892">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mtext>μ</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>δ</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>in</mml:mtext>
+</mml:mrow>
+</mml:msup>
+<mml:mo>-</mml:mo>
+<mml:mtext>B</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0037549712469892" xlink:href="10.1177_0037549712469892-eq11.tif"/>
+</disp-formula></p>
+<p>The delivery ratio can be updated as follows:</p>
+<p><disp-formula id="disp-formula12-0037549712469892">
+<label>(12)</label>
+<mml:math display="block" id="math15-0037549712469892">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>out</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0037549712469892" xlink:href="10.1177_0037549712469892-eq12.tif"/>
+</disp-formula></p>
+<p><disp-formula id="disp-formula13-0037549712469892">
+<label>(13)</label>
+<mml:math display="block" id="math16-0037549712469892">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>B</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:msup>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>in</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0037549712469892" xlink:href="10.1177_0037549712469892-eq13.tif"/>
+</disp-formula></p>
+</sec>
+<sec id="section10-0037549712469892">
+<title>5.2. Multiple flows</title>
+<p>Now we consider the more interesting case when the queue consists of multiple flows. We define <italic>W<sub>i</sub></italic> (λ<italic><sub>i</sub></italic>, δ<italic><sub>i</sub></italic>, τ<italic><sub>i</sub>, s<sub>i</sub>, e<sub>i</sub></italic>) to be a rate window currently visiting the network queue, where λ<italic><sub>i</sub></italic> is the packet arrival rate, δ<italic><sub>i</sub></italic> is the duration, τ<sub><italic>i</italic></sub> is the delivery ratio, <italic>s<sub>i</sub></italic> is the start time, and <italic>e<sub>i</sub></italic> is the end time (<italic>e<sub>i</sub></italic> = <italic>s<sub>i</sub></italic>+δ<italic><sub>i</sub></italic>). In the algorithm, we maintain a priority queue <italic>Q</italic> to store all current rate windows visiting the network queue; we use the end time <italic>e<sub>i</sub></italic> as the priority key. Initially, the priority queue is empty. We use <italic>A</italic> to store the aggregate effective arrival rate of all rate windows, i.e. <inline-formula id="inline-formula4-0037549712469892">
+<mml:math display="inline" id="math17-0037549712469892">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>Q</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Here <italic>A</italic> is initialized to be zero. We denote by <italic>t</italic><sub>0</sub> the arrival time of the previous rate window, and by <italic>q</italic><sub>0</sub> the queue size at that time. Both <italic>t</italic><sub>0</sub> and <italic>q</italic><sub>0</sub> are initialized to zero. We assume the capacity of the network queue is <italic>B</italic>, and the delay of the link between the network queue and the subsequent queue is <italic>D</italic>.</p>
+<p>Algorithm 1 shows the algorithm that processes the simulation event representing the arrival of a new rate window <italic>W<sub>f</sub></italic> at time <italic>s<sub>f</sub></italic> (which is the current simulation time). An example is given in <xref ref-type="fig" rid="fig2-0037549712469892">Figure 2</xref>, where rate window <italic>f</italic> arrives at the queue at time <italic>s<sub>f</sub></italic> . In this example, the previous rate window arrived at the queue is rate window 3. Assume that the algorithm correctly sets <italic>t<sub>0</sub></italic> = <italic>s</italic><sub>3</sub>, <italic>q</italic><sub>0</sub> = <italic>q</italic>(<italic>s</italic><sub>3</sub>), and <inline-formula id="inline-formula5-0037549712469892">
+<mml:math display="inline" id="math18-0037549712469892">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, after the previous invocation of the algorithm. The priority queue currently should contain the three rate windows (sorted by their end times).</p>
+<fig id="fig2-0037549712469892" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>An example showing the queuing length changes at the start and end of the rate windows.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712469892-fig2.tif"/>
+</fig>
+<p>The algorithm starts by calculating the current queue length (lines 1–9). If there are rate windows in the priority queue <italic>Q</italic> that finish before the current time <italic>s<sub>f</sub></italic>, the algorithm adjusts the queue length <italic>q</italic><sub>0</sub> (line 4) and the aggregate effective arrival rate <italic>A</italic> (line 5), to simulate the effect of these rate windows in the increasing order of the end time. The rate windows are also removed from the priority queue <italic>Q</italic> (line 6), since they will no longer be needed. After that, the algorithm updates the current queue length (line 8) and adds the effective arrival rate of the new rate window to the aggregate rate (line 9). In the example, rate window 2 is the only one that completes after <italic>s</italic><sub>3</sub> and before <italic>s<sub>f</sub></italic>. Therefore, we update <italic>q</italic><sub>0</sub> from <italic>q</italic>(<italic>s</italic><sub>3</sub>) to <italic>q</italic>(<italic>e</italic><sub>2</sub>) and then from <italic>q</italic>(<italic>e</italic><sub>2</sub>) to <italic>q</italic>(<italic>s<sub>f</sub></italic>); the example assumes that the aggregate effective arrival rate at the two segments is larger than the service rate; that is why the queue length increases.</p>
+<graphic id="img1-0037549712469892" position="anchor" xlink:href="10.1177_0037549712469892-img1.tif"/>
+<p>Next, the algorithm needs to compute the <italic>projected</italic> queue length at the end time of the newly arrived rate window. The queue length <inline-formula id="inline-formula6-0037549712469892">
+<mml:math display="inline" id="math19-0037549712469892">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is used to calculate the duration of the output rate window (see <xref ref-type="disp-formula" rid="disp-formula9-0037549712469892">Equation (9)</xref>). The algorithm also needs to compute the projected data loss due to buffer overflow. The data loss <inline-formula id="inline-formula7-0037549712469892">
+<mml:math display="inline" id="math20-0037549712469892">
+<mml:mover accent="true">
+<mml:mi>θ</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> is used to update the delivery ratio of the output rate window (see <xref ref-type="disp-formula" rid="disp-formula12-0037549712469892">Equation (12)</xref>).</p>
+<p>To compute the projected values, the algorithm needs to scan into the simulated future. In order to protect the queue length, the current time, and the aggregate effective arrival rate from being overwritten, the algorithm first creates a set of shadow variables and copies the values from the original variables (line 10). The algorithm also uses a set <italic>S</italic> to temporarily store the rate windows removed from the priority queue; these rate windows need to be restored once the scan is finished (lines 22 and 29). The algorithm uses, which is initialized at line 11, to accumulate the amount of data loss due to buffer overflow.</p>
+<p>If there are rate windows in the priority queue <italic>Q</italic> that finish before the end time of the newly arrived rate window, <italic>e<sub>f</sub></italic>, the algorithm deals with them one by one in increasing end time order. The algorithm first adjusts the shadow queue length <inline-formula id="inline-formula8-0037549712469892">
+<mml:math display="inline" id="math21-0037549712469892">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> assuming that the queue has infinite capacity (line 15). If the shadow queue length turns out to be larger than the buffer size (lines 16–19), the surplus is deemed to be lost due to overflow. The quantity is then proportioned according to the effective arrival rate and added to accumulative data loss (line 17). The shadow queue length is then reset to the maximum buffer size (line 18). The algorithm also updates the shadow aggregate effective arrival rate <inline-formula id="inline-formula9-0037549712469892">
+<mml:math display="inline" id="math22-0037549712469892">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math>
+</inline-formula> as rate window ends (line 20). After that, the algorithm updates the shadow queue length at the end of the current rate window (line 24). The same logic is applied to calculate the data loss (lines 25–28).</p>
+<p>In the example, rate window 3 ends before the newly arrived rate window ends. Therefore, the shadow queue length <inline-formula id="inline-formula10-0037549712469892">
+<mml:math display="inline" id="math23-0037549712469892">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is updated from <italic>q</italic>(<italic>s<sub>f</sub></italic>) to <italic>q</italic>(<italic>e</italic><sub>3</sub>) and then to <italic>q</italic>(<italic>e<sub>f</sub></italic>). Buffer overflow happens both at <italic>e</italic><sub>3</sub> and <italic>e<sub>f</sub></italic>; the surplus is added proportionally to the accumulative data loss .</p>
+<p>The algorithm finally inserts the newly arrived rate window into the priority queue (line 30). In the meantime, it creates the output rate window with the updated attributes (line 31); the output rate window will be sent downstream to the next hop. The start time of the output rate window is calculated to be the start time of the input rate window <italic>s<sub>f</sub></italic>, plus the time needed to flush all data enqueued at time <italic>s<sub>f</sub></italic> (right before the input rate window arrives), and the propagation delay between this queue and the one downstream (line 32). The algorithm schedules an event to represent the arrival of the output rate window at the next queue (line 33).</p>
+<p>We note that the algorithm calculates the projected queue length and data losses based only on the interaction between the newly arrived rate window and the existing rate windows in the queue. In particular, it assumes that future arrivals will not alter the prediction. This is obviously an approximation. If a rate window later arrives at a congested queue (resulting an aggregate arrival rate larger than the service rate), every flow in the queue needs to adjust its output rate for a fair share of the bandwidth. That is, one rate change may result in the update of all of the rate windows at this queue as well as all subsequent queues. This phenomenon is called the “ripple effect” and has been well documented.<sup><xref ref-type="bibr" rid="bibr7-0037549712469892">7</xref>,<xref ref-type="bibr" rid="bibr32-0037549712469892">32</xref></sup></p>
+<p>The ripple effect can significantly increase the computational demand. To avoid that, in our model, we do not allow the rate windows to be changed once they have been propagated to the downstream queues. We only make changes to the newly arrived rate windows and project the queuing effect based on the rate windows currently in the queue. Our solution is reasonable because our model is a closed-loop system: the queuing state is updated continuously as the RTCP sender adjusts its send rate at each round and sends a DATA message carrying a rate window and subsequently receives the UPDATE message carrying the network measurements. Even if the current rate window in a queue does not immediately adjust its rate to respond to the succeeding arrivals that overlap with it, the rate window in the next round will.</p>
+<p>We need to be aware that such approximation may result in a rare condition where the rate window sent in the next round (from the same sender to the same receiver) catches up with the rate window in the previous round at a queue. This condition is caused by the over-estimation of the RTT in the previous round. Since the changes to the existing rate window is not propagated, it is possible that the sender sends the rate window for the next round with a start time earlier than the end time of the previous rate window. The successive rate windows of the same flow may overlap. To compensate for this error, we simply terminate the previous rate window in the queue as it carries stale information.</p>
+</sec>
+</sec>
+<sec id="section11-0037549712469892">
+<title>6. Experiments</title>
+<p>We implemented the RTCP model in PRIME,<sup><xref ref-type="bibr" rid="bibr33-0037549712469892">33</xref></sup> which is a parallel simulator designed for simulating large-scale network models. PRIME provides detailed models of 14 TCP congestion control algorithms, including RENO, BIC, and CUBIC, which have been validated carefully through extensive studies.<sup><xref ref-type="bibr" rid="bibr34-0037549712469892">34</xref></sup> PRIME also supports real-time simulation, where simulated network protocols can interact with real network devices. The following experiments were conducted on a Linux workstation with a 2.3 GHz Intel Core2 Duo processor and 2 GB of RAM. All measurements shown are averages of 20 trials.</p>
+<sec id="section12-0037549712469892">
+<title>6.1 Dumbbell topology</title>
+<p>Our first set of experiments aimed to provide a baseline comparison between RTCP and the detailed TCP models. We use a simple dumbbell network (shown in <xref ref-type="fig" rid="fig3-0037549712469892">Figure 3</xref>), which consists of two routers and four hosts with two servers and two clients. The connection between the two routers forms a bottleneck link, configured with 10 Mb/s bandwidth and 64 ms delay. We set the bandwidths of all other links to be 1 Gbps, and set their delays to be 1 µs. All network interfaces use drop-tail queues with a buffer size of 70 KB (around 50 packets). Using this dumbbell model, we study RTCP’s accuracy and performance in terms of speedup and reduction in event count.</p>
+<fig id="fig3-0037549712469892" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Dumbbell network with two flows.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712469892-fig3.tif"/>
+</fig>
+<p>First, we consider the scenario with a single flow. At the start of the simulation, we direct one TCP flow from S<sub>1</sub> to C<sub>1</sub>. We observe the queue length and loss at R<sub>1</sub>; we also measure the overall throughput of the TCP flow. The results, shown in <xref ref-type="table" rid="table1-0037549712469892">Table 1</xref>, indicate that RTCP can accurately capture the overall throughput of a detailed TCP flow. However, RTCP’s average loss probability and queue length differ from the detailed TCP model, although RTCP can capture the overall queue behavior, as is seen in <xref ref-type="fig" rid="fig4-0037549712469892">Figure 4(a)</xref>.</p>
+<table-wrap id="table1-0037549712469892" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Statistics for the dumbbell network with one flow.</p>
+</caption>
+<graphic alternate-form-of="table1-0037549712469892" xlink:href="10.1177_0037549712469892-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">TCP</th>
+<th align="left">RTCP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Throughput (Mb/s)</td>
+<td>8.938</td>
+<td>9.111</td>
+</tr>
+<tr>
+<td>Average loss probability</td>
+<td>0.08%</td>
+<td>0.03%</td>
+</tr>
+<tr>
+<td>Average queue length (packet)</td>
+<td>15.6</td>
+<td>8.2</td>
+</tr>
+<tr>
+<td>Simulation events</td>
+<td>361,065</td>
+<td>5556</td>
+</tr>
+<tr>
+<td>Execution time, Mean ± SD (s)</td>
+<td>1.404 ± 0.015</td>
+<td>0.0152 ± 0.0001</td>
+</tr>
+<tr>
+<td>Event ratio</td>
+<td>1</td>
+<td>0.015</td>
+</tr>
+<tr>
+<td>Execution ratio</td>
+<td>1</td>
+<td>0.011</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig4-0037549712469892" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Comparison of the instantaneous queue size at R<sub>1</sub>.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712469892-fig4.tif"/>
+</fig>
+<p>We next study the scenario with two flows. At the start of the simulation, we direct one TCP flow from S1 to C1 and a competing flow from S<sub>2</sub> to C<sub>2</sub>. The results are shown in <xref ref-type="table" rid="table2-0037549712469892">Table 2</xref>. RTCP is able to capture the overall throughput and fairly divides the bandwidth between the two flows. RTCP is also able to capture the overall queue behavior, which is shown in <xref ref-type="fig" rid="fig4-0037549712469892">Figure 4(b)</xref>.</p>
+<table-wrap id="table2-0037549712469892" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Statistics for the dumbbell network with two flows.</p>
+</caption>
+<graphic alternate-form-of="table2-0037549712469892" xlink:href="10.1177_0037549712469892-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">TCP</th>
+<th align="left">RTCP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flow 1’s throughput (Mb/s)</td>
+<td>4.607</td>
+<td>4.660</td>
+</tr>
+<tr>
+<td>Flow 2’s throughput (Mb/s)</td>
+<td>4.501</td>
+<td>4.533</td>
+</tr>
+<tr>
+<td>Aggregate throughput (Mb/s)</td>
+<td>9.107</td>
+<td>9.193</td>
+</tr>
+<tr>
+<td>Average loss probability</td>
+<td>0.16%</td>
+<td>0.11%</td>
+</tr>
+<tr>
+<td>Average queue length (packet)</td>
+<td>18.7</td>
+<td>9.5</td>
+</tr>
+<tr>
+<td>Simulation events</td>
+<td>368,970</td>
+<td>8,531</td>
+</tr>
+<tr>
+<td>Execution time, Mean ± SD (s)</td>
+<td>1.453 ± 0.019</td>
+<td>0.028 ± 0.0002</td>
+</tr>
+<tr>
+<td>Event ratio</td>
+<td>1</td>
+<td>0.023</td>
+</tr>
+<tr>
+<td>Execution ratio</td>
+<td>1</td>
+<td>0.019</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>RTCP achieves a significant speed up in both scenarios. The number of events is reduced by a factor of 67 for a single flow and a factor of 43 for two flows. Likewise, the overall execution time is reduced by a factor of 91 and a factor of 53 for the single flow and two flow cases. The two-flow scenario sees a smaller speed up because RTCP must send more rate windows in response to the competition between the two flows.</p>
+</sec>
+<sec id="section13-0037549712469892">
+<title>6.2. Multiple clients</title>
+<p>Our next experiment examines the behavior of RTCP in the case where multiple clients download from a single server. The network model is depicted in <xref ref-type="fig" rid="fig5-0037549712469892">Figure 5</xref>. Each client (C<italic><sub>x</sub></italic>) is connected with a link with delay set to be 1 +<italic>x</italic>*<italic>N</italic>. Here <italic>N</italic> is the delay increment, which we vary in the experiment between 0 and 5 ms. For example, if we set <italic>N</italic> = 2, the adjacent links connecting clients and the router R will differ by a delay of 5 ms. The buffer size for all interfaces is configured to be 50 packets. The bottleneck link between the server S and router R has a bandwidth of 45 Mb/s and a delay of 64 ms. At the start of the simulation, each client initiates a download of a large file from the server.</p>
+<fig id="fig5-0037549712469892" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Multiple client network.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712469892-fig5.tif"/>
+</fig>
+<p>Owing to space limitations, we only show the results of the scenario when the delay increment is 0 in <xref ref-type="table" rid="table3-0037549712469892">Table 3</xref>. To compare the model performance under all different scenarios as we change the delay increment, we show the results in <xref ref-type="fig" rid="fig6-0037549712469892">Figures 6</xref> and <xref ref-type="fig" rid="fig7-0037549712469892">7</xref>. <xref ref-type="fig" rid="fig6-0037549712469892">Figure 6</xref> shows the throughput achieved by each client using both the TCP and RTCP models after 100 seconds. Overall, RTCP and TCP match well. RTCP seems to achieve more balanced throughput than TCP (meaning it is more fair). As in the previous experiment, we also observed the average queue size at S for RTCP is consistently lower than that for TCP.</p>
+<table-wrap id="table3-0037549712469892" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Statistics for a multiple client network with four flows (with 0 delay increment).</p>
+</caption>
+<graphic alternate-form-of="table3-0037549712469892" xlink:href="10.1177_0037549712469892-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">TCP</th>
+<th align="left">RTCP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flow 1’s throughput (Mb/s)</td>
+<td>11.638</td>
+<td>9.966</td>
+</tr>
+<tr>
+<td>Flow 2’s throughput (Mb/s)</td>
+<td>9.305</td>
+<td>9.898</td>
+</tr>
+<tr>
+<td>Flow 3’s throughput (Mb/s)</td>
+<td>8.574</td>
+<td>9.752</td>
+</tr>
+<tr>
+<td>Flow 4’s throughput (Mb/s)</td>
+<td>7.663</td>
+<td>9.745</td>
+</tr>
+<tr>
+<td>Aggregate throughput (Mb/s)</td>
+<td>37.18</td>
+<td>39.361</td>
+</tr>
+<tr>
+<td>Simulation events</td>
+<td>271,421</td>
+<td>14,293</td>
+</tr>
+<tr>
+<td>Execution time, Mean ± SD (s)</td>
+<td>1.354 ± 0.012</td>
+<td>0.017 ± 0.0001</td>
+</tr>
+<tr>
+<td>Event ratio</td>
+<td>1</td>
+<td>0.053</td>
+</tr>
+<tr>
+<td>Execution ratio</td>
+<td>1</td>
+<td>0.012</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig6-0037549712469892" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Throughput of the multiple client network.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712469892-fig6.tif"/>
+</fig>
+<fig id="fig7-0037549712469892" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Reduction in execution time and number of events for the multiple client network.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712469892-fig7.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig7-0037549712469892">Figure 7</xref> shows the reduction in the number of events and in the execution time for the different values of <italic>N</italic>. On average, RTCP reduces the number of events by a factor of 18 and reduces the execution time by a factor of 70.</p>
+</sec>
+<sec id="section14-0037549712469892">
+<title>6.3. Multiple bottleneck model</title>
+<p>In this experiment, we evaluate the performance of RTCP using the so-called “parking lot” model, which contains multiple bottleneck links. The topology, shown in <xref ref-type="fig" rid="fig8-0037549712469892">Figure 8</xref>, consists of four routers, four servers, and four clients. The bandwidths of all links are set to be 100 Mb/s. The delays of the links connecting routers and hosts are set to be 1 ms, and the delays of the links between the routers are set to be 5 ms. Downloads are initiated by the clients with a 5 second offset. That is, Flow 0 starts at time 0, Flow 1 at 5 s, Flow 2 at 10 s, and Flow 3 at 15 s. We initialize the flows at different times so that we can avoid the synchronization among the flows. The results are shown in <xref ref-type="table" rid="table4-0037549712469892">Table 4</xref>. RTCP closely matches TCP’s behavior in terms of the average and aggregate throughput. In this case, RTCP is able to reduce the number of events by a factor of 143 and the execution time by a factor of 125.</p>
+<fig id="fig8-0037549712469892" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Parking lot network.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712469892-fig8.tif"/>
+</fig>
+<table-wrap id="table4-0037549712469892" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Statistics for the parking lot network.</p>
+</caption>
+<graphic alternate-form-of="table4-0037549712469892" xlink:href="10.1177_0037549712469892-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">TCP</th>
+<th align="left">RTCP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Per-flow throughput (Mb/s)</td>
+<td>56.059</td>
+<td>57.710</td>
+</tr>
+<tr>
+<td>Aggregate throughput (Mb/s)</td>
+<td>224.237</td>
+<td>230.839</td>
+</tr>
+<tr>
+<td>Simulation events</td>
+<td>8,629,198</td>
+<td>69,076</td>
+</tr>
+<tr>
+<td>Execution time, Mean ± SD (s)</td>
+<td>33.991 ± 0.215</td>
+<td>0.251 ± 0.002</td>
+</tr>
+<tr>
+<td>Event ratio</td>
+<td>1</td>
+<td>0.008</td>
+</tr>
+<tr>
+<td>Execution ratio</td>
+<td>1</td>
+<td>0.007</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section15-0037549712469892">
+<title>6.4 Large-scale topology</title>
+<p>For our last experiment, we evaluate RTCP in a large network scenario. To achieve the necessary scale and realism for our experiments, here we use BRITE for the backbone network and use a campus network model for the network topology at the institutional level. We use BRITE<sup><xref ref-type="bibr" rid="bibr35-0037549712469892">35</xref></sup> to generate the large network topology, which uses the statistics extracted from real network measurements. BRITE can produce random network models using a top-down method: it first generates a random network topology for the autonomous systems (ASs), then for each AS generates a router-level topology, and finally merges the AS-level and router-level topologies by connecting the routers belonging to different ASs. For the experiment, we use BRITE to generate a network topology consisting of 10 ASs, each with 10 routers. We then randomly choose two routers in each AS and attach a single campus network to each selected router. The campus network is a synthetic network defined by Nicol.<sup><xref ref-type="bibr" rid="bibr36-0037549712469892">36</xref></sup> Each campus network has 13 LANs, 508 hosts with 504 clients, 4 servers, and 18 routers. The resulting topology consists of 10 ASs and 20 campus networks with a total of 460 routers and 10,160 hosts. To generate traffic, we randomly select the clients and have them download a 100 MB file from a randomly selected server. We schedule the clients to initiate downloads with an exponentially distributed inter-arrival time with a mean of 1 second. We run the simulation for 300 seconds and measure both the aggregate and average per-flow throughputs.</p>
+<p>The results are shown in <xref ref-type="table" rid="table5-0037549712469892">Table 5</xref>. The speedup achieved by RTCP is significant in this case. RTCP reduces the number of events by a factor of 60 and the execution time by a factor of 200. The aggregate throughput using RTCP, however, is 15% lower than that of TCP. <xref ref-type="fig" rid="fig9-0037549712469892">Figure 9</xref> is the <italic>Q</italic>–<italic>Q</italic> plot for comparing the empirical distributions of the throughput for individual flows between RTCP and TCP. The curved pattern suggests that the central quantiles are more closely spaced in TCP throughput than in RTCP throughput. We see that overall the flows match quite well, although RTCP seems to have underestimated the throughput at the low end of the range and overestimated the throughput at the high end of the range.</p>
+<table-wrap id="table5-0037549712469892" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Statistics for a large network.</p>
+</caption>
+<graphic alternate-form-of="table5-0037549712469892" xlink:href="10.1177_0037549712469892-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">TCP</th>
+<th align="left">RTCP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aggregate throughput (Mb/s)</td>
+<td>857.320</td>
+<td>735.708</td>
+</tr>
+<tr>
+<td>Simulation events</td>
+<td>433,019,043</td>
+<td>7,038,100</td>
+</tr>
+<tr>
+<td>Execution time, Mean ± SD (s)</td>
+<td>3,700.955 ± 336.036</td>
+<td>19.314 ± 1.371</td>
+</tr>
+<tr>
+<td>Event ratio</td>
+<td>1</td>
+<td>0.016</td>
+</tr>
+<tr>
+<td>Execution ratio</td>
+<td>1</td>
+<td>0.005</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig9-0037549712469892" position="float">
+<label>Figure 9.</label>
+<caption>
+<p><italic>Q</italic>–<italic>Q</italic> plot of RTCP throughput versus TCP throughput for large network.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549712469892-fig9.tif"/>
+</fig>
+</sec>
+<sec id="section16-0037549712469892">
+<title>6.5. Discussion</title>
+<p>RTCP is able to capture the behavior of TCP reasonably well. However, RTCP tends to underestimate throughput and the average queue size. We suspect that this is because the analytical models used by RTCP react to data losses faster than they should. Further, we observed that the analytical models seem to be less sensitive to amount of data loss. For small models, these errors cause negligible differences (less than 5.4%) in the overall throughput, which is confirmed by our experiments. For large models, however, the effect on the throughput is noticeable (14% difference). In the last experiment, RTCP significantly underestimates the throughput of a handful of flows that happen to contribute a large portion of the aggregate throughput. In addition to the inaccuracy introduced by the abstraction of the traffic at the “rate window” level, the deviation can also be explained by the analytical TCP models we adopt.</p>
+<p>The model proposed by Cardwell et al.<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> has been evaluated through simulations, controlled Internet measurements and comparing with live traces under many different scenarios with different RTT, transfer size, MSS, and maximum congestion window size. The connection establishment model has been shown to have good accuracy as long as its assumption holds (i.e. the loss rate is below 0.5). The data transfer model that consists of the slow start model and the steady-state model presents variable performances of different lengths of data transmission under different loss conditions. Since the model proposed by Padhye et al.<sup><xref ref-type="bibr" rid="bibr22-0037549712469892">22</xref></sup> is used as an approximate model to deal with the data transfer in the congestion avoidance model, the errors introduced here are mainly because of the two limitations of this approximation. First, in the approximate model, once the first loss is detected, the window size will be immediately adjusted to its steady-state value. However, in a real TCP implementation, when the sender detects a loss in the initial slow start phase, its instantaneous window size is often much larger than the steady-state average congestion window size.<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> Therefore, it takes a period of time for the sender to adjust its congestion window size from its value at that moment to its steady-state value. The lower the loss rate is, the longer the duration of this transition time will be. According to the results shown by Cardwell et al.,<sup><xref ref-type="bibr" rid="bibr21-0037549712469892">21</xref></sup> for high loss rates (i.e. 5% and higher), the sender exits slow start mode and immediately drops its window size to a small value that is close to the steady-state window value. So the error of the model in this case should be small. For low loss rates (i.e. 0.1% and below), it takes longer, which is usually three or more loss indications, to transit from the slow start mode to the steady-state phase. So the model in this case often overestimates the transmission latency. Consequently, the throughput will be underestimated. Second, Padhye et al.’s model does not model slow start after retransmission timeouts. For loss rates above 1%, the send rate of the steady-state phase is similar to that of the slow start phase after retransmission timeouts. So the error of the model should be small. On the other hand, for lower loss rates, although retransmission timeouts rarely happen, once they occur, the errors will be inevitable.</p>
+<p>Regardless of these errors, both models we apply have proved their accuracy for most cases. In addition, the implementation of our RTCP model allows the analytical sending models to be easily replaced with other solutions for different targets. For example, we assume TCP RENO because Padhye et al.’s model<sup><xref ref-type="bibr" rid="bibr22-0037549712469892">22</xref></sup> is restricted to modeling TCP RENO. However, by replacing with other TCP analytical models, our RTCP model can definitely provide solutions for modeling other TCP protocols.</p>
+<p>Overall, for all cases, the estimated instantaneous queue size is similar between RTCP and TCP. More importantly, the inaccuracies are well compensated for by the reduction in the number of events and in the execution time when the packet-level details are not critical for the goal of the study. For large experiments, we can observe a speedup of over two orders of magnitude.</p>
+</sec>
+</sec>
+<sec id="section17-0037549712469892" sec-type="conclusions">
+<title>7. Conclusions and future work</title>
+<p>In this article we have presented a traffic model which reduces the time and space complexity for simulating TCP traffic behavior with good accuracy. The proposed RTCP model introduces a new level of granularity for representing the network traffic. Rather than modeling at the granularity of individual packets, we have approximated the traffic flows as individual rate windows, each consisting of a number of packets with the same arrival rate. To model the detailed TCP behavior, we have used existing analytical models to calculate the send rate at the traffic source as a function of the measured RTT and packet loss probability. We have calculated the queuing delay and the loss probability as the rate window traverse individual network queues along the flow path. Experimental results are encouraging. They have shown that RTCP can speed up the simulation of large network traffic by a factor of 200, while still maintaining a reasonable level of accuracy. For all of the experiments we conducted, the RTCP model has been shown to achieve greater than a factor of 50 speed-up over the TCP model.</p>
+<p>Although we only evaluate RTCP as a pure rate-based traffic model in this article, the model can actually be extended to deal with mixed traffic generated by packet-oriented simulations. Nicol and Yan<sup><xref ref-type="bibr" rid="bibr9-0037549712469892">9</xref></sup> proposed a method for mixing packets and fluid flows. The method can also be used with RTCP.</p>
+<p>In the following, we outline a simple method. We keep track of the recent packet arrival rate. Once a packet arrives, we can estimate the current queue length by using the information of the aggregate arrival rate of packets and rate windows. Suppose a new packet of size <italic>S</italic> arrives at the queue at time <italic>t</italic>. The queue length can be updated as follows:</p>
+<p><disp-formula id="disp-formula14-0037549712469892">
+<mml:math display="block" id="math24-0037549712469892">
+<mml:mrow>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>last</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>last</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>*</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rate</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pkt</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>μ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>B</mml:mtext>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0037549712469892" xlink:href="10.1177_0037549712469892-eq14.tif"/>
+</disp-formula></p>
+<p>where λ<italic><sub>rate</sub></italic> is the aggregate arrival rate of all rate windows, λ<italic><sub>pkt</sub></italic> is the recent packet arrival rate, <italic>t<sub>last</sub></italic> is arrival time of the previous packet, and <italic>q<sub>last</sub></italic> is the queue length at <italic>t<sub>last</sub></italic>. Whether we enqueue the packet will depend on the current queue length, the mixture of different types of flows, and the queue capacity. A similar approach has been use by Yan<sup><xref ref-type="bibr" rid="bibr37-0037549712469892">37</xref></sup> for mixed packet and fluid flows. We are currently investigating this approach so that RTCP can be used to describe background traffic (which does not require very high fidelity).</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work is supported in part by the National Science Foundation (grant numbers CNS-0836408 and HRD-0833093), and a subcontract from the GENI Project Office at Raytheon BBN Technologies.</p>
+</fn>
+</fn-group>
+<bio>
+<title>Author biographies</title>
+<p><bold>Ting Li</bold> is a PhD candidate at the School of Computing and Information Sciences, Florida International University. She received her BE degree and MS degree both from Nankai University in China in 2004 and 2007, respectively. Her research focuses on network modeling and simulation, specifically in high-performance network traffic modeling and network routing in simulation.</p>
+<p><bold>Nathanael Van Vorst</bold> is a member of the technical staff at VMware. He received a BS degree from Colorado State University in 2003, an M.S. degree from the Colorado School of Mines in 2007, and a PhD degree from Florida International University in 2012. His research focuses on simulation and emulation of computer networks.</p>
+<p><bold>Jason Liu</bold> is an Associate Professor at the School of Computing and Information Sciences, Florida International University. His research focuses on parallel simulation and high-performance modeling of computer networks and computer systems. He received a BA degree from Beijing University of Technology in China in 1993, an MS degree from College of William and Mary in 2000, and a PhD degree from Dartmouth College in 2003. He served as General Chair for MASCOTS’10, SIMUTools’11 and PADS’12, and Program Chair for PADS’08 and SIMUTools’10. He is serving on the Steering Committee for ACM SIGSIM-PADS. He is also an Associate Editor for the <italic>SIMULATION</italic> journal.</p>
+</bio>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0037549712469892">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Fujimoto</surname><given-names>RM</given-names></name>
+<name><surname>Perumalla</surname><given-names>K</given-names></name>
+<name><surname>Park</surname><given-names>A</given-names></name>
+<name><surname>Wu</surname><given-names>H</given-names></name>
+<name><surname>Ammar</surname><given-names>MH</given-names></name>
+<name><surname>Riley</surname><given-names>GF</given-names></name>
+</person-group>. <article-title>Large-scale network simulation: how big? how fast?</article-title> In <source>MASCOTS</source>, <year>2003</year>.</citation>
+</ref>
+<ref id="bibr2-0037549712469892">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ahn</surname><given-names>JS</given-names></name>
+<name><surname>Danzig</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Packet network simulation: speedup and accuracy versus timing granularity</article-title>. <source>IEEE/ACM Trans Networking</source> <year>1996</year>; <volume>4</volume>: <fpage>743</fpage>–<lpage>757</lpage>.</citation>
+</ref>
+<ref id="bibr3-0037549712469892">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Guo</surname><given-names>Y</given-names></name>
+<name><surname>Gong</surname><given-names>W</given-names></name>
+<name><surname>Towsley</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Time-stepped hybrid simulation (TSHS) for large scale networks</article-title>. In <source>INFOCOM</source>, <year>2000</year>, pp. <fpage>441</fpage>–<lpage>450</lpage>.</citation>
+</ref>
+<ref id="bibr4-0037549712469892">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kesidis</surname><given-names>G</given-names></name>
+<name><surname>Singh</surname><given-names>A</given-names></name>
+<name><surname>Cheung</surname><given-names>D</given-names></name>
+<name><surname>Kwok</surname><given-names>W</given-names></name>
+</person-group>. <article-title>Feasibility of fluid-driven simulation for ATM network</article-title>. In <source>GLOBECOM</source>, <volume>vol. 3</volume>, <year>1996</year>, pp. <fpage>2013</fpage>–<lpage>2017</lpage>.</citation>
+</ref>
+<ref id="bibr5-0037549712469892">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Liu</surname><given-names>B</given-names></name>
+<name><surname>Figueiredo</surname><given-names>DR</given-names></name>
+<name><surname>Guo</surname><given-names>Y</given-names></name>
+<name><surname>Kurose</surname><given-names>JF</given-names></name>
+<name><surname>Towsley</surname><given-names>DF</given-names></name>
+</person-group>. <article-title>A study of networks simulation efficiency: fluid simulation vs. packet-level simulation</article-title>. In <source>INFOCOM</source>, <year>2001</year>, pp. <fpage>1244</fpage>–<lpage>1253</lpage>.</citation>
+</ref>
+<ref id="bibr6-0037549712469892">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Misra</surname><given-names>V</given-names></name>
+<name><surname>Gong</surname><given-names>W-B</given-names></name>
+<name><surname>Towsley</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Fluid-based analysis of a network of AQM routers supporting TCP flows with an application to RED</article-title>. In <source>SIGCOMM</source>, <year>2000</year>, pp. <fpage>151</fpage>–<lpage>160</lpage>.</citation>
+</ref>
+<ref id="bibr7-0037549712469892">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Nicol</surname><given-names>DM</given-names></name>
+</person-group>. <article-title>Discrete event fluid modeling of TCP</article-title>. In <source>WSC</source>, <year>2001</year>.</citation>
+</ref>
+<ref id="bibr8-0037549712469892">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Misra</surname><given-names>V</given-names></name>
+<name><surname>Gong</surname><given-names>W-B</given-names></name>
+<name><surname>Towsley</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Fluid models and solutions for large-scale IP networks</article-title>. In <source>SIGMETRICS</source>, <year>2003</year>, pp. <fpage>91</fpage>–<lpage>101</lpage>.</citation>
+</ref>
+<ref id="bibr9-0037549712469892">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Nicol</surname><given-names>DM</given-names></name>
+<name><surname>Yan</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Discrete event fluid modeling of background TCP traffic</article-title>. <source>TOMACS</source> <year>2004</year>; <volume>14</volume>: <fpage>211</fpage>–<lpage>250</lpage>.</citation>
+</ref>
+<ref id="bibr10-0037549712469892">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Riley</surname><given-names>GF</given-names></name>
+<name><surname>Jaafar</surname><given-names>TM</given-names></name>
+<name><surname>Fujimoto</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Integrated fluid and packet network simulations</article-title>. In <source>MASCOTS</source>, <year>2002</year>, pp. <fpage>511</fpage>–<lpage>518</lpage>.</citation>
+</ref>
+<ref id="bibr11-0037549712469892">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kiddle</surname><given-names>C</given-names></name>
+<name><surname>Simmonds</surname><given-names>R</given-names></name>
+<name><surname>Williamson</surname><given-names>C</given-names></name>
+<name><surname>Unger</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Hybrid packet/fluid flow network simulation</article-title>. In <source>PADS</source>, <year>2003</year>, pp. <fpage>143</fpage>–<lpage>152</lpage>.</citation>
+</ref>
+<ref id="bibr12-0037549712469892">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Gu</surname><given-names>Y</given-names></name>
+<name><surname>Liu</surname><given-names>Y</given-names></name>
+<name><surname>Towsley</surname><given-names>D</given-names></name>
+</person-group>. <article-title>On integrating fluid models with packet simulation</article-title>. In <source>INFOCOM</source>, <year>2004</year>.</citation>
+</ref>
+<ref id="bibr13-0037549712469892">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Liu</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Packet-level integration of fluid TCP models in real-time network simulation</article-title>. In <conf-name>Winter Simulation Conference (WSC)</conf-name>, <conf-date>2006</conf-date>, pp. <fpage>2162</fpage>–<lpage>2169</lpage>.</citation>
+</ref>
+<ref id="bibr14-0037549712469892">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>Y</given-names></name>
+<name><surname>Dong</surname><given-names>Y</given-names></name>
+<name><surname>Xiang</surname><given-names>Z</given-names></name>
+<name><surname>Lu</surname><given-names>D</given-names></name>
+</person-group>. <article-title>A hybrid simulating framework of TCP traffic at aggregated level</article-title>. In <source>ChinaCom</source>, <year>2008</year>, pp. <fpage>327</fpage>–<lpage>332</lpage>.</citation>
+</ref>
+<ref id="bibr15-0037549712469892">
+<label>15.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Barford</surname><given-names>P</given-names></name>
+<name><surname>Crovella</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Generating representative web workloads for network and server performance</article-title>. In <source>MMCS</source>, <year>1998</year>, pp. <fpage>151</fpage>–<lpage>160</lpage>.</citation>
+</ref>
+<ref id="bibr16-0037549712469892">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sommers</surname><given-names>J</given-names></name>
+<name><surname>Barford</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Self-configuring network traffic generation</article-title>. In <source>IMC</source>, <year>2004</year>.</citation>
+</ref>
+<ref id="bibr17-0037549712469892">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Weigle</surname><given-names>MC</given-names></name>
+<name><surname>Adurthi</surname><given-names>P</given-names></name>
+<name><surname>Hernández-Campos</surname><given-names>F</given-names></name>
+<name><surname>Jeffay</surname><given-names>K</given-names></name>
+<name><surname>Smith</surname><given-names>FD</given-names></name>
+</person-group>.<article-title>Tmix: a tool for generating realistic TCP application workloads in ns-2</article-title>. <source>Comput Commun Rev</source> <year>2006</year>; <volume>36</volume>(<issue>3</issue>): <fpage>67</fpage>–<lpage>76</lpage>.</citation>
+</ref>
+<ref id="bibr18-0037549712469892">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Vishwanath</surname><given-names>KV</given-names></name>
+<name><surname>Vahdat</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Realistic and responsive network traffic generation</article-title>. In <source>SIGCOMM</source>, <year>2006</year>.</citation>
+</ref>
+<ref id="bibr19-0037549712469892">
+<label>19.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mathis</surname><given-names>M</given-names></name>
+<name><surname>Semke</surname><given-names>J</given-names></name>
+<name><surname>Mahdavi</surname><given-names>J</given-names></name>
+<name><surname>Ott</surname><given-names>T</given-names></name>
+</person-group>. <article-title>On the performance of a hybrid network traffic model</article-title>. <source>Comput Commun Rev</source> <year>1997</year>; <volume>27</volume>(<issue>3</issue>): <fpage>67</fpage>–<lpage>82</lpage>.</citation>
+</ref>
+<ref id="bibr20-0037549712469892">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Altman</surname><given-names>E</given-names></name>
+<name><surname>Avrachenkov</surname><given-names>K</given-names></name>
+<name><surname>Barakat</surname><given-names>C</given-names></name>
+</person-group>. <article-title>A stochastic model of TCP/IP with stationary random losses</article-title>. In <source>SIGCOMM</source>, <year>2000</year>, pp. <fpage>231</fpage>–<lpage>242</lpage>.</citation>
+</ref>
+<ref id="bibr21-0037549712469892">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cardwell</surname><given-names>N</given-names></name>
+<name><surname>Savage</surname><given-names>S</given-names></name>
+<name><surname>Anderson</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Modeling TCP latency</article-title>. In <source>INFOCOM</source>, <year>2000</year>, pp. <fpage>1724</fpage>–<lpage>1751</lpage>.</citation>
+</ref>
+<ref id="bibr22-0037549712469892">
+<label>22.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Padhye</surname><given-names>J</given-names></name>
+<name><surname>Firoiu</surname><given-names>V</given-names></name>
+<name><surname>Towsley</surname><given-names>DF</given-names></name>
+<name><surname>Kurose</surname><given-names>JF</given-names></name>
+</person-group>. <article-title>Modeling TCP Reno performance: a simple model and its empirical validation</article-title>. <source>IEEE/ACM Trans Networking</source> <year>2000</year>; <volume>8</volume>: <fpage>133</fpage>–<lpage>145</lpage>.</citation>
+</ref>
+<ref id="bibr23-0037549712469892">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sikdar</surname><given-names>B</given-names></name>
+<name><surname>Kalyanaraman</surname><given-names>S</given-names></name>
+<name><surname>Vastola</surname><given-names>KS</given-names></name>
+</person-group>. <article-title>Analytic models for the latency and steady-state throughput of TCP Tahoe, Reno and SACK</article-title>. In <source>GLOBECOM</source>, <year>2001</year>, pp. <fpage>25</fpage>–<lpage>29</lpage>.</citation>
+</ref>
+<ref id="bibr24-0037549712469892">
+<label>24.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mellia</surname><given-names>M</given-names></name>
+<name><surname>Stoica</surname><given-names>I</given-names></name>
+<name><surname>Zhang</surname><given-names>H</given-names></name>
+</person-group>. <article-title>TCP model for short lived flows</article-title>. <source>IEEE Commun Lett</source> <year>2002</year>; <volume>6</volume>: <fpage>85</fpage>–<lpage>87</lpage>.</citation>
+</ref>
+<ref id="bibr25-0037549712469892">
+<label>25.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Khalifa</surname><given-names>I</given-names></name>
+<name><surname>Trajkovic</surname><given-names>L</given-names></name>
+</person-group>. <article-title>An overview and comparison of analytical TCP models</article-title>. In <source>ISCAS</source>, <volume>vol. 5</volume>, <year>2004</year>.</citation>
+</ref>
+<ref id="bibr26-0037549712469892">
+<label>26.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bolot</surname><given-names>J</given-names></name>
+<name><surname>Vega-Garcia</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Control mechanisms for packet audio in the Internet</article-title>. In <source>INFOCOM</source>, <year>1996</year>, pp. <fpage>232</fpage>–<lpage>239</lpage>.</citation>
+</ref>
+<ref id="bibr27-0037549712469892">
+<label>27.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Paxson</surname><given-names>V</given-names></name>
+</person-group>. <article-title>End-to-end internet packet dynamics</article-title>. <source>ACM SIGCOMM</source> <year>1997</year>; <volume>27</volume>: <fpage>139</fpage>–<lpage>152</lpage>.</citation>
+</ref>
+<ref id="bibr28-0037549712469892">
+<label>28.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Yajnik</surname><given-names>M</given-names></name>
+<name><surname>Moon</surname><given-names>S</given-names></name>
+<name><surname>Kurose</surname><given-names>J</given-names></name>
+<name><surname>Towsley</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Measurement and modelling of the temporal dependence in packet loss</article-title>. In <source>INFOCOM</source>, <volume>vol. 1</volume>, <year>1999</year>, pp. <fpage>345</fpage>–<lpage>352</lpage>.</citation>
+</ref>
+<ref id="bibr29-0037549712469892">
+<label>29.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Floyd</surname><given-names>S</given-names></name>
+<name><surname>Jacobson</surname><given-names>V</given-names></name>
+</person-group>. <article-title>Random early detection gateways for congestion avoidance</article-title>. In <source>IEEE/ACM Trans Networking</source> <year>1993</year>; <volume>1</volume>: <fpage>397</fpage>–<lpage>413</lpage>.</citation>
+</ref>
+<ref id="bibr30-0037549712469892">
+<label>30.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Thompson</surname><given-names>K</given-names></name>
+<name><surname>Miller</surname><given-names>GJ</given-names></name>
+<name><surname>Wilder</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Wide-area Internet traffic patterns and characteristics</article-title>. <source>IEEE Network</source> <year>1997</year>; <volume>11</volume>: <fpage>10</fpage>–<lpage>23</lpage>.</citation>
+</ref>
+<ref id="bibr31-0037549712469892">
+<label>31.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Braden</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Requirements for Internet hosts communication layers</article-title>. <source>Request for Comments</source> <volume>1122</volume>, <year>1989</year>.</citation>
+</ref>
+<ref id="bibr32-0037549712469892">
+<label>32.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Liu</surname><given-names>B</given-names></name>
+<name><surname>Figueiredo</surname><given-names>DR</given-names></name>
+<name><surname>Guo</surname><given-names>Y</given-names></name>
+<name><surname>Kurose</surname><given-names>J</given-names></name>
+<name><surname>Towsley</surname><given-names>D</given-names></name>
+</person-group>. <article-title>A study of networks simulation efficiency: fluid simulation vs. packet-level simulation</article-title>. In <source>INFOCOM</source>, <year>2001</year>.</citation>
+</ref>
+<ref id="bibr33-0037549712469892">
+<label>33.</label>
+<citation citation-type="web">
+<collab>PRIME Research Group</collab>, <ext-link ext-link-type="uri" xlink:href="http://www.primessf.net/">http://www.primessf.net/</ext-link>, <year>2011</year>.</citation>
+</ref>
+<ref id="bibr34-0037549712469892">
+<label>34.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Erazo</surname><given-names>M</given-names></name>
+<name><surname>Li</surname><given-names>Y</given-names></name>
+<name><surname>Liu</surname><given-names>J</given-names></name>
+</person-group>. <article-title>SVEET! A scalable virtualized evaluation environment for TCP</article-title>. In <source>TridentCom</source>, <year>2009</year>.</citation>
+</ref>
+<ref id="bibr35-0037549712469892">
+<label>35.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Medina</surname><given-names>A</given-names></name>
+<name><surname>Lakhina</surname><given-names>A</given-names></name>
+<name><surname>Matta</surname><given-names>I</given-names></name>
+<name><surname>Byers</surname><given-names>J</given-names></name>
+</person-group>. <article-title>BRITE: an approach to universal topology generation</article-title>. In <source>MASCOTS</source>, <year>2001</year>.</citation>
+</ref>
+<ref id="bibr36-0037549712469892">
+<label>36.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Nicol</surname><given-names>D</given-names></name>
+</person-group>. <article-title>DARPA NMS baseline network topology</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.ssfnet.org/Exchange/gallery/baseline/index.html">http://www.ssfnet.org/Exchange/gallery/baseline/index.html</ext-link>, <year>2002</year>.</citation>
+</ref>
+<ref id="bibr37-0037549712469892">
+<label>37.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Yan</surname><given-names>G</given-names></name>
+</person-group>. <source>Improving Large-scale Network Traffic Simulation with Multi-resolution Models</source>. PhD dissertation, <publisher-name>Dartmouth College</publisher-name>, <year>2005</year>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

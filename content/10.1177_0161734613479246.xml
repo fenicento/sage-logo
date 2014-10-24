@@ -1,0 +1,2052 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">UIX</journal-id>
+<journal-id journal-id-type="hwp">spuix</journal-id>
+<journal-title>Ultrasonic Imaging</journal-title>
+<issn pub-type="ppub">0161-7346</issn>
+<issn pub-type="epub">XXXX-XXXX</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage CA: Los Angeles, CA</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0161734613479246</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0161734613479246</article-id>
+<title-group>
+<article-title>Variance and Covariance of Accumulated Displacement Estimates</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Bayer</surname><given-names>Matthew</given-names></name>
+<xref ref-type="aff" rid="aff1-0161734613479246">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Hall</surname><given-names>Timothy J.</given-names></name>
+<xref ref-type="aff" rid="aff1-0161734613479246">1</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-0161734613479246"><label>1</label>Department of Medical Physics, University of Wisconsin, Madison, WI, USA</aff>
+<author-notes>
+<corresp id="corresp1-0161734613479246">Matthew Bayer, Department of Medical Physics, University of Wisconsin, 1111 Highland Avenue, Madison, WI 53705, USA. Email: <email>matthewbayer@wisc.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>35</volume>
+<issue>2</issue>
+<fpage>90</fpage>
+<lpage>108</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2013</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Tracking large deformations in tissue using ultrasound can enable the reconstruction of nonlinear elastic parameters, but poses a challenge to displacement estimation algorithms. Such large deformations have to be broken up into steps, each of which contributes an estimation error to the final accumulated displacement map. The work reported here measured the error variance for single-step and accumulated displacement estimates using one-dimensional numerical simulations of ultrasound echo signals, subjected to tissue strain and electronic noise. The covariance between accumulation steps was also computed. These simulations show that errors due to electronic noise are negatively correlated between steps, and therefore accumulate slowly, whereas errors due to tissue deformation are positively correlated and accumulate quickly. For reasonably low electronic noise levels, the error variance in the accumulated displacement estimates is remarkably constant as a function of step size, but increases with the length of the tracking kernel.</p>
+</abstract>
+<kwd-group>
+<kwd>elastography</kwd>
+<kwd>displacement estimation</kwd>
+<kwd>accumulation</kwd>
+<kwd>multicompression</kwd>
+<kwd>nonlinear</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0161734613479246" sec-type="intro">
+<title>Introduction</title>
+<p>Ultrasound elastography uses ultrasound echo signals to track tissue displacement, usually with the aim of imaging tissue stiffness. In many tissues, however, stiffness changes with deformation, and this nonlinear behavior can potentially be used to differentiate tissue types.<sup><xref ref-type="bibr" rid="bibr1-0161734613479246">1</xref></sup> While obtaining some indicator of stiffness, such as the tissue strain, can be done with very small displacements, estimating the elastic nonlinearity requires much larger deformations. Measurements of these deformations can be combined with a nonlinear elastic model of tissue to solve an inverse problem and reconstruct maps of a nonlinearity parameter,<sup><xref ref-type="bibr" rid="bibr2-0161734613479246">2</xref>,<xref ref-type="bibr" rid="bibr3-0161734613479246">3</xref></sup> which could be clinically useful.</p>
+<p>Tracking the required large deformations, however, poses a problem for displacement estimation. As a tissue undergoes strain, its echo signal will change, or “decorrelate,” so that tracking a portion of signal between image frames becomes more uncertain. One solution to this problem is to break large deformations into a series of smaller steps that are then added together. This strategy decreases the strain-induced error in each individual estimate, but each step also contributes a separate error induced by the electronic noise of the imaging system. The way that these two types of errors accumulate will depend on the number and size of the tracking steps, whether the errors are correlated between steps, and various parameters of the estimation algorithm. The aim of the present work is to characterize these dependencies using a relatively simple simulated model.</p>
+<p>The idea of breaking up a large-strain displacement estimation problem into smaller steps arose early in the strain imaging literature. A number of authors have explored it, often under the name of “multicompression.”<sup><xref ref-type="bibr" rid="bibr4-0161734613479246">4</xref><xref ref-type="bibr" rid="bibr5-0161734613479246"/><xref ref-type="bibr" rid="bibr6-0161734613479246"/><xref ref-type="bibr" rid="bibr7-0161734613479246"/>-<xref ref-type="bibr" rid="bibr8-0161734613479246">8</xref></sup></p>
+<p>O’Donnell et al.,<sup><xref ref-type="bibr" rid="bibr8-0161734613479246">8</xref></sup> for example, proposed the accumulation of many small displacement estimates to minimize error due to strain-induced decorrelation. They showed simulations of strain estimation error over a single tracking step as a function of applied strain, and used accumulated displacements to create strain images of phantoms. They did not simulate the accumulation process itself, however, and did not try to optimize the size of the tracking step. They also made the common assumption that the displacement estimation errors in one step are uncorrelated with previous and subsequent steps. The present study will show that assumption to be false; the correlation of errors between steps is in fact very important.</p>
+<p>Later studies by Varghese, Ophir, and Céspedes<sup><xref ref-type="bibr" rid="bibr4-0161734613479246">4</xref>,<xref ref-type="bibr" rid="bibr5-0161734613479246">5</xref></sup> analyzed the effects of multicompression more carefully, using the concept of the strain filter<sup><xref ref-type="bibr" rid="bibr9-0161734613479246">9</xref></sup> and including the technique of temporal stretching. They built a theoretical model of the strain image signal-to-noise ratio (SNR) based on the Cramér–Rao lower bound for time-delay estimation, as derived by Walker and Trahey,<sup><xref ref-type="bibr" rid="bibr10-0161734613479246">10</xref></sup> as well as the modified Ziv-Zakai lower bound and the Barankin lower bound described by Weinstein and Weiss.<sup><xref ref-type="bibr" rid="bibr11-0161734613479246">11</xref></sup> The authors concluded that one could obtain better strain SNR by combining multicompression and temporal stretching, and predicted that an optimal strain-step increment, in the sense of maximizing SNR, existed at 0.5% strain. This work also had some limitations, though. The authors included only limited simulation support for these results and, like O’Donnell, made the assumption that displacement errors were uncorrelated between steps.</p>
+<p>Du et al.<sup><xref ref-type="bibr" rid="bibr6-0161734613479246">6</xref></sup> performed another study on optimizing the multicompression approach that used theoretical estimates and data from phantoms and in vivo breast scans to find an optimal strain increment, in the sense of minimizing displacement variance. Their theoretical considerations, for one particular set of parameters, found 0.35% to be the optimal increment, while heuristic measures of variance on their in vivo data led them to recommend a 0.15% increment for tissue. Notably, this study pointed out the importance of step covariance in multicompression techniques. They did not explain the source of the covariance or characterize it in detail, however.</p>
+<p>The studies discussed so far have used multicompression to improve strain imaging, but other researchers have used sequences of displacement estimates to demonstrate the elastic nonlinearity of tissues. One method is to form small-strain images at different levels of prior deformation, or to form images of large accumulated strain, and monitor changes in strain contrast. Varghese, Ophir, and Krouskop<sup><xref ref-type="bibr" rid="bibr12-0161734613479246">12</xref></sup> presented a theoretical model and simulated images to show how contrast and contrast-to-noise ratio (CNR) of strain images would change if a medium’s Young’s modulus varied with applied deformation. Pavan et al.,<sup><xref ref-type="bibr" rid="bibr13-0161734613479246">13</xref></sup> in demonstrating the construction of a nonlinear elastic ultrasound phantom, created incremental strain images at different levels of pre-deformation as well as accumulated strain images using multicompression. Again, differing nonlinear properties made the strain contrast between the phantom’s background and inclusion change as the phantom was deformed.</p>
+<p>Sequences of displacements, incremental or accumulated, have also been used to directly reconstruct an elastic modulus or other material parameters. Emelianov and Lubinski<sup><xref ref-type="bibr" rid="bibr14-0161734613479246">14</xref></sup> acquired an image sequence of an ex vivo kidney subjected to a total of 16% average strain, dividing the sequence into steps to analyze the organ’s nonlinear elastic properties. They then reconstructed Young’s modulus images at different levels of pre-deformation and monitored the change. In a similar setup, a later article by Nitta and Shiina<sup><xref ref-type="bibr" rid="bibr15-0161734613479246">15</xref></sup> used accumulated displacements to estimate a nonlinearity parameter from ex vivo chicken gizzard and pig kidney. Oberai et al.<sup><xref ref-type="bibr" rid="bibr2-0161734613479246">2</xref></sup> accumulated a large-deformation data set over time and reconstructed a different nonlinearity parameter from images of in vivo breast lesions. Being focused on the nonlinearity of materials, rather than on motion tracking algorithms, none of these studies explicitly analyzed their displacement accumulation processes.</p>
+<p>The present work focuses attention on the displacement accumulation problem, investigated for a single displacement estimation site using one-dimensional simulations subjected to strain and tracked over time up to a total strain of 20%. The variance of accumulated displacement estimates was computed for different strain-step sizes, electronic noise levels, and tracking kernel lengths. The results demonstrate that covariance between estimation steps is an important effect, contrary to the assumptions of many previous authors. A one-dimensional simulation model, though simple, was sufficient to show important features of the accumulation process. Although our ultimate objective is to improve the input to reconstructions of elastic nonlinearity of tissues (in 3D), we expect the results will also be useful for the formation of conventional strain images, and will make a contribution toward further understanding of the statistics of motion tracking.</p>
+</sec>
+<sec id="section2-0161734613479246" sec-type="methods">
+<title>Method</title>
+<sec id="section3-0161734613479246">
+<title>Simulation</title>
+<p>Radiofrequency (RF) ultrasound signals were simulated in small, one-dimensional pieces by convolving a windowed sinusoidal pulse with a random scattering medium. In these simulations, the wavelength corresponding to the pulse’s center frequency was taken as the fundamental unit of distance and is denoted by λ. The results may be translated into concrete units of echo time or range by applying appropriate scaling factors, but concrete units are not necessary in the context of these simulations.</p>
+<p>The scattering medium was modeled as a collection of point scatterers randomly placed along a line, whose amplitudes were normal random variables. A simulated scattering section contained 400 scatterers spread over a distance of 40 wavelengths, or 10 scatterers per wavelength. Each section represented a single tracking site, independent of all other sections and small enough that its deformation could be modeled simply. These simulations did not produce full echo images and displacement maps, but rather ensembles of individual speckle patches and displacement estimates.</p>
+<p>The ultrasonic imaging process was modeled as a simple convolution with a generic pulse-echo point-spread function (PSF). The depth dependence of a real imaging system’s PSF was neglected for simplicity. First, scatterers were generated as arrays of positions and amplitudes. To enable standard digital convolution, the set of scatterers were then transformed into a sampled scattering function by binning them into a discrete set of locations, with 100 spatial samples per wavelength. If two or more scatterers were placed within the same location bin, their amplitudes were summed. The resulting numerical scattering function was then convolved with the one-dimensional PSF, consisting of a sine wave multiplied by a Hann window. A Hann window was chosen because it is similar in shape to the often-simulated Gaussian window but, unlike the Gaussian, has compact support without needing to truncate the function. The length of the Hann window, from beginning to end, was four wavelengths, resulting in a full-width half-maximum bandwidth of about 50%.</p>
+<p>To create a strained version of this signal, the positions of the underlying scatterers were subjected to a uniform compressive strain. The set of scatterers were strained in 180 incremental steps up to a total of 20% strain. The strain increments had a uniform size of about 0.12%, relative to that step’s configuration of scatterers. In other words, at each step, the length of the scattering section was reduced by about 0.12% of its current length, not of its initial length. This process ensured that every step had the same incremental strain, regardless of its position in the sequence. As a consequence, the total strain of 20% is equal to the incremental strain, 0.12%, compounded over 180 steps, rather than multiplied by 180 steps.</p>
+<p>Deformation of the scatterer positions occurred about the center point of the scattering length, which later was also used as the center point of the data kernel used for tracking. The displacement of this center point was considered the true displacement of the simulated tissue. Since these simulations assumed a shift-invariant PSF, a simple translation of the scattering medium would not be a source of error and was therefore arbitrary. In this case, the center-point displacement was set at zero. After each application of strain, the scatterers were again binned into a scattering function and again convolved with the same PSF.</p>
+<p>Uncorrelated noise was then added to each signal, to simulate the effects of electronic noise. Each signal with a different level of strain received an independent noise realization. The noise was modeled as Gaussian, with the same power spectrum as the signal. It was produced by convolving a vector of Gaussian random variables with the same PSF, followed by appropriate scaling to achieve the desired SNR. A range of SNRs was simulated.</p>
+<p>This entire simulation process was repeated for 800 independently generated scatterer distributions and sets of noise realizations. These scatterer and noise realizations were saved so that any simulated case might be reproduced at will. To reduce the amount of data stored, the same scatterers and noise realizations were used for each kernel size, changing only the proper motion tracking parameter; and for each SNR, changing only the scaling factor between signal and noise. Since all estimation of statistical values was performed for a particular kernel size and SNR, and not among differing kernel sizes or SNRs, there was no need to produce independent realizations of data for every distinct estimation parameter.</p>
+</sec>
+<sec id="section4-0161734613479246">
+<title>Displacement Estimation</title>
+<p>Finally, displacement was estimated between each pair in the set of 181 signals (the original signal plus 180 strained versions). The number of elementary strain increments that had occurred between each pair of signals determined the strain-step size for the estimate. Displacement estimation was performed by selecting a segment, or kernel, of data in whichever signal in the pair had lower overall strain, called the “predeformation” or “reference” signal, and computing the value of a matching function with kernels of data from the second, “postdeformation” signal. The center of the kernel in the postdeformation signal was varied, and the location of the peak of the matching function was then taken to be the displacement estimate. The estimation error is simply the difference between the estimate and the known value of zero displacement.</p>
+<p>During this displacement estimation process, no companding or temporal stretching<sup><xref ref-type="bibr" rid="bibr16-0161734613479246">16</xref>,<xref ref-type="bibr" rid="bibr17-0161734613479246">17</xref></sup> was performed to compensate for tissue strain. While these methods have been shown to improve tracking performance, they add complexity and computational expense. This work, instead, has analyzed the basic block-matching tracking method.</p>
+<p>Several aspects of the displacement estimation method require more detail to fully understand the results. First, the matching function search region was constricted to a range of two-thirds of a wavelength on either side of the true displacement. This limitation sped up the simulation and also purposely eliminated tracking errors larger than a wavelength. In the ultrasonic motion tracking literature, these large errors are known as “peak-hop” errors, since they arise from a false peak in the matching function. In rejecting these types of errors, the simulation was restricted to the case where there is enough prior information to know, within about a wavelength, what the true displacement is. This prior information may be gained, for example, through the use of “guided search” strategies in creating a displacement map.<sup><xref ref-type="bibr" rid="bibr18-0161734613479246">18</xref><xref ref-type="bibr" rid="bibr19-0161734613479246"/><xref ref-type="bibr" rid="bibr20-0161734613479246"/>-<xref ref-type="bibr" rid="bibr21-0161734613479246">21</xref></sup> In other words, it was assumed that some existing strategy could select the correct peak in the matching function, so only errors in the precise localization of that peak were measured.</p>
+<p>Second, although zero overall displacement has been simulated for these sets of scatterers, the results are not limited to that case. It has been argued previously that an overall displacement is arbitrary at this level of approximation, because the assumed PSF is shift-invariant. Therefore, simulations of zero-displacement scatterers would be equivalent to sets of scatterers undergoing translations, as long as the location of the data kernel was also translated at each step to ensure that it was centered over the same piece of scattering medium. Such a tracking algorithm would essentially follow a single piece of tissue along its whole trajectory of motion. This method of tracking and accumulation operates in “material” or “Lagrangian” coordinates, that is, coordinates that denote a particular piece of a medium, and follow the piece as it moves.<sup><xref ref-type="bibr" rid="bibr22-0161734613479246">22</xref></sup></p>
+<p>Material coordinates contrast with coordinates that denote a particular point in space, called “spatial” or “Eulerian” coordinates. A motion tracking algorithm in spatial coordinates would estimate incremental displacements at a certain set of spatial locations—a fixed grid of image coordinates, for instance—while the medium moves around them. A motion tracking algorithm in material coordinates would move its tracking locations to match tissue motion, so that each incremental displacement estimate operates on the same piece of tissue. In material coordinates, the accumulated displacement of a piece of tissue is simply the sum of all its incremental displacements. In spatial coordinates, computing an accumulated displacement map requires a series of coordinate transformations.<sup><xref ref-type="bibr" rid="bibr13-0161734613479246">13</xref></sup> Because it is more convenient for accumulation, the material coordinates system has been simulated here.</p>
+<p>Finally, the sampling of the signal should be addressed. Because the simulated echo signals were sampled, the computed maximum of the matching function could only occur at a sample location. Measuring a finer displacement required a method of subsample estimation, the subject of much research in its own right.<sup><xref ref-type="bibr" rid="bibr23-0161734613479246">23</xref>,<xref ref-type="bibr" rid="bibr24-0161734613479246">24</xref></sup> In general, the accuracy of a displacement estimate depends on the subsample displacement estimation method, and on where the true displacement falls between adjacent sample locations. The present study was not interested in the effects of subsample estimation, however. To reduce its influence, these simulations used the high sampling frequency of 100 samples per wavelength, with an additional subsample estimation using quadratic fitting around the matching function peak.<sup><xref ref-type="bibr" rid="bibr23-0161734613479246">23</xref></sup> The normal sampling rate for a commercial ultrasound system, in contrast, might be 40 MHz, which for a signal of 10 MHz center frequency would record only four samples per wavelength. With a high simulated sampling rate, subsample displacement effects were considered to be negligible. Future work will assess the effects of coarser, more realistic sampling.</p>
+<p>Displacement estimates were carried out using four kernel sizes—3, 6, 10, and 14 wavelengths—and three matching functions—normalized cross-correlation (NCC), sum of squared differences (SSD), and non-normalized cross-correlation (CC). Although the results show subtle differences between these functions, for brevity only the NCC results will be shown.</p>
+</sec>
+<sec id="section5-0161734613479246">
+<title>Accumulation</title>
+<p>Since displacement was estimated between each possible pair of signals, accumulating to 20% strain only required selecting the proper estimates and summing them. To illustrate, denote the displacement estimation error between signals <italic>i</italic> and <italic>j</italic> as <inline-formula id="inline-formula1-0161734613479246">
+<mml:math display="inline" id="math1-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Then, the accumulated error using a strain-step size of 1 (expressed as the number of elementary strain steps, instead of a strain percentage) is</p>
+<p><disp-formula id="disp-formula1-0161734613479246">
+<mml:math display="block" id="math2-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>u</mml:mi>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+</mml:mstyle>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0161734613479246" xlink:href="10.1177_0161734613479246-eq1.tif"/></disp-formula></p>
+<p>where <italic>N</italic> is the total number of elementary strain steps, and the simulated signals are labeled from 0 to <italic>N</italic>. Similarly, the accumulated displacement error using a strain-step size of <italic>m</italic>, and assuming that <italic>N</italic> is divisible by <italic>m</italic>, is</p>
+<p><disp-formula id="disp-formula2-0161734613479246">
+<mml:math display="block" id="math3-0161734613479246">
+<mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>u</mml:mi>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo>/</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+</mml:mstyle>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mi>k</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>…</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0161734613479246" xlink:href="10.1177_0161734613479246-eq2.tif"/></disp-formula></p>
+<p>The postdeformation signal for one term in the sum is always the predeformation signal for the next term. If <italic>N</italic> is not divisible by <italic>m</italic>, then let the first step in the accumulation sequence have a size smaller than <italic>m</italic>. Let <italic>a</italic> be the remainder when dividing <italic>N</italic> by <italic>m</italic>. This gives,</p>
+<p><disp-formula id="disp-formula3-0161734613479246">
+<mml:math display="block" id="math4-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>u</mml:mi>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>0,</mml:mn>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>⌊</mml:mo>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mo>⌋</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mi>k</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>a</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+</mml:mrow>
+</mml:mstyle>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>0,</mml:mn>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>a</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>a</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mo>⋯</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0161734613479246" xlink:href="10.1177_0161734613479246-eq3.tif"/></disp-formula></p>
+<p>where N/m stands for rounding down the quotient to the nearest integer.</p>
+<p>Of course, the accumulated error is just the sum of many single-step errors. As a sum of random variables, its overall variance is equal to the sum of error covariances between each pair of individual steps. If the indices above are abbreviated so that <inline-formula id="inline-formula2-0161734613479246">
+<mml:math display="inline" id="math5-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mi>i</mml:mi>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> simply indicates “the error in the <italic>i</italic>th step of an accumulation sequence,” then the accumulated variance can be expressed as,</p>
+<p><disp-formula id="disp-formula4-0161734613479246">
+<mml:math display="block" id="math6-0161734613479246">
+<mml:mrow>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mtext>Var</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>u</mml:mi>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:munder>
+</mml:mstyle>
+<mml:mtext>Cov</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mn>,</mml:mn>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mi>j</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0161734613479246" xlink:href="10.1177_0161734613479246-eq4.tif"/></disp-formula></p>
+<p>The variances of single-step and accumulated estimates, as well as the covariance between individual estimation steps, were all computed over the ensemble of 800 simulated data sets for each kernel size and SNR.</p>
+</sec>
+</sec>
+<sec id="section6-0161734613479246" sec-type="results">
+<title>Results</title>
+<sec id="section7-0161734613479246">
+<title>Single-Step and Accumulated Variance</title>
+<p>The accumulated displacement error for a given strain-step size depends on the error in each step. <xref ref-type="fig" rid="fig1-0161734613479246">Figure 1</xref> shows plots of single-step variance as a function of tissue strain for three different electronic noise levels, quantified by their SNR. More precisely, they are plots of <inline-formula id="inline-formula3-0161734613479246">
+<mml:math display="inline" id="math7-0161734613479246">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>0,</mml:mn>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the variance of the estimation error between the 0th and <italic>k</italic>th signals, with the single-step strain between each signal pair on the <italic>x</italic> axis. Variance is plotted rather than some other measure of error, like standard deviation or strain SNR, because it is simpler to analyze the accumulation of error in terms of variance.</p>
+<fig id="fig1-0161734613479246" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Single-step displacement estimate error variance as a function of strain.</p>
+<p>Larger kernels have a greater dependence on strain and smaller kernels have a greater dependence on electronic SNR. SNR = signal-to-noise ratio.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613479246-fig1.tif"/></fig>
+<p><xref ref-type="fig" rid="fig1-0161734613479246">Figure 1</xref> shows that single-step error variance is initially relatively constant as a function of strain, being sensitive instead to the level of electronic noise. As strain increases, the corresponding strain-induced error comes to dominate, resulting in a curve that appears roughly quadratic with strain. Larger kernels better suppress the effects of electronic noise but are more sensitive to strain-induced errors, so their error variance is lower at small strains but increases more rapidly as strain increases.</p>
+<p>The effects of accumulating these individual steps are shown in <xref ref-type="fig" rid="fig2-0161734613479246">Figure 2</xref>, which plots the error variance of the accumulated displacement estimate described in the “Accumulation” section. In the plots of noise-free results, accumulated variance increases with kernel size and with step size, though the step size effect is surprisingly weak except for the largest kernel size. Adding noise also has a surprisingly weak effect, except for the smallest kernel sizes and highest noise level.</p>
+<fig id="fig2-0161734613479246" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Accumulated displacement estimate error variance as a function of strain-step size.</p>
+<p>The accumulated variance is remarkably insensitive to step size and electronic noise level.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613479246-fig2.tif"/></fig>
+</sec>
+<sec id="section8-0161734613479246">
+<title>Covariance of Consecutive Displacement Estimates</title>
+<p>Because an accumulated displacement error is just the sum of all the single-step errors in a sequence, knowing the covariance between the errors of each step will aid in understanding the accumulated error. Since there are two sources of estimation error, electronic noise and tissue strain, their effects will be examined separately before considering them in combination.</p>
+</sec>
+<sec id="section9-0161734613479246">
+<title>Covariance due to Electronic Noise</title>
+<p><xref ref-type="fig" rid="fig3-0161734613479246">Figure 3</xref> shows the covariance matrix for a simulation that only included the effects of electronic noise. The previously described simulation procedure was followed, except that no strain was induced in the scatterers. Each <italic>x</italic> or <italic>y</italic> position in the figure represents an estimation step, and the brightness of the image at the point (<italic>x, y</italic>) is proportional to the covariance between the errors of those two steps. Only the first 30 steps are shown for clarity.</p>
+<fig id="fig3-0161734613479246" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Displacement estimate error covariance matrix due to electronic noise.</p>
+<p>This set of simulations had zero strain and an electronic SNR of 20 dB. The kernel size was 4λ. Results for other SNR and kernel sizes have similar patterns but different magnitudes.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613479246-fig3.tif"/></fig>
+<p>The bright line of positive covariance down the main diagonal of the matrix is simply the variance of each estimation step. The off-diagonal elements are close to zero, except for the superdiagonal and subdiagonal, immediately above and below the main diagonal. These side diagonals have <italic>negative</italic> covariance, with a magnitude approximately half that of the main diagonal.</p>
+</sec>
+<sec id="section10-0161734613479246">
+<title>Covariance due to Tissue Strain</title>
+<p>The covariance structure for the strain-induced error has a very different appearance. <xref ref-type="fig" rid="fig4-0161734613479246">Figure 4</xref> shows a representative covariance matrix for an accumulation simulation in which no electronic noise has been added, so that the only source of error is tissue strain. Each estimation step in this figure is the size of two elementary strain steps, or about 0.25% strain. The 90 steps shown in the matrix cover the entire 20% simulated deformation.</p>
+<fig id="fig4-0161734613479246" position="float">
+<label>Figure 4.</label>
+<caption><p>Displacement estimate error covariance matrix due to tissue strain.</p>
+<p>This set of simulations included no electronic noise. The kernel length was 12λ, and the step size was two elementary steps, or 0.25%.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613479246-fig4.tif"/></fig>
+<p>The most important feature of this matrix is that it is nonzero throughout the matrix, not only along a few diagonals. The magnitude tends to decrease in the corners of the matrix, meaning that estimates that have a greater separation in the accumulation sequence—steps 10 and 90, for example—have lower covariance than steps that are closer together.</p>
+<p>Although no electronic noise has been added, the pattern of superdiagonal and subdiagonal with depressed covariance also appears. Relative to the covariance values in the rest of the matrix, the amount that these side diagonals are depressed tends to be about half the amount that the center diagonal is elevated, just as in the electronic noise case. Nevertheless, this main diagonal pattern is much smaller in magnitude than the similar effect of electronic noise, as will be seen when the two sources of error are combined.</p>
+</sec>
+<sec id="section11-0161734613479246">
+<title>Electronic Noise and Strain Combined</title>
+<p>A more realistic displacement estimation experiment includes both electronic noise and strain decorrelation. The simulated electronic noise was generated independently from the simulated echo signal, so the errors induced by electronic noise and by strain should also be independent. In that case, their covariances simply add together.</p>
+<p><xref ref-type="fig" rid="fig5-0161734613479246">Figures 5</xref> and <xref ref-type="fig" rid="fig6-0161734613479246">6</xref> are two examples of combining these sources of error, for different electronic noise levels and strain-step sizes, and are consistent with the expectation of independence. The first rows of the figures show covariance matrices for electronic noise alone and strain alone. The second rows compare the results from simply adding the previous two matrices together, and from performing a full simulation with both noise and strain. Although these latter matrices are not identical, they are similar enough to justify treating electronic noise and strain errors as approximately independent.</p>
+<fig id="fig5-0161734613479246" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Displacement estimate error covariance matrices due to combinations of electronic noise and strain.</p>
+<p>The matrices are for (a) strain only, (b) electronic noise only, (c) strain and electronic noise simulated together, and (d) the individual strain and noise matrices summed together. Note the similarity of (c) and (d). The kernel length was 12λ and the electronic SNR was 20 dB. The strain step was five elementary strain steps, or about 0.6% strain. These parameters were chosen so that the dynamic ranges of the noise and strain covariance matrix images would be similar.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613479246-fig5.tif"/></fig>
+<fig id="fig6-0161734613479246" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>The same types of example matrices as in <xref ref-type="fig" rid="fig5-0161734613479246">Figure 5</xref>, but using a kernel length of 16λ, a strain step of 1%, and an SNR of 10 dB.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613479246-fig6.tif"/></fig>
+</sec>
+<sec id="section12-0161734613479246">
+<title>Comparison of Accumulation Models</title>
+<p>The covariance matrices in the previous section show that the estimates in an accumulation sequence are far from independent. To demonstrate the consequences of this finding, the variance of this study’s accumulated estimates can be compared with the predictions of the uncorrelated model that is common in the literature. By assuming the error in each step is uncorrelated, this model predicts that the accumulated variance will simply be the product of the single-step variance and the number of steps. <xref ref-type="fig" rid="fig7-0161734613479246">Figure 7</xref> plots this study’s accumulated variance, here called the “correlated model,” against the predictions of the uncorrelated model, demonstrating their divergent results.</p>
+<fig id="fig7-0161734613479246" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Comparison between correlated and uncorrelated models.</p>
+<p>Accumulated displacement estimate error variance was calculated in (a) and (c), the correlated model, from accumulated simulation results. The uncorrelated model in (b) and (d) assumes no step covariance and simply multiplies the single-step variance by the number of steps. The marker types represent different electronic noise levels, and each row of the figure reports a different kernel size. Note that the no-noise lines can be difficult to see because they are often overlaid with other lines. SNR = signal-to-noise ratio.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613479246-fig7.tif"/></fig>
+<p>The effect of electronic noise is larger in the uncorrelated model, where error variance increases greatly as SNR falls. For the correlated model, in contrast, the variance curves for different noise levels are often so close together as to be nearly indistinguishable; the smallest kernel size and SNR are the only exceptions. The uncorrelated model also predicts that the contribution of strain-induced error to the variance (most clearly visible in the zero-noise lines in the plots) will be negligible for near-zero step sizes and increase roughly linearly with step size. In the correlated model, however, the variance begins at a finite value for near-zero step size and increases only slightly for larger steps.</p>
+</sec>
+</sec>
+<sec id="section13-0161734613479246" sec-type="discussion">
+<title>Discussion</title>
+<p>The accumulated variance plot of <xref ref-type="fig" rid="fig2-0161734613479246">Figure 2</xref> shows that optimizing an accumulated estimate is a different problem from optimizing a single-step estimate. As a simple example, suppose one wanted to select the optimal kernel size for a strain-step size of 1%, SNR of 13 dB, and an accumulated strain of 20%. <xref ref-type="fig" rid="fig1-0161734613479246">Figure 1</xref> would suggest using a 12λ kernel to obtain the lowest single-step variance. Because of the covariance of consecutive estimates, however, <xref ref-type="fig" rid="fig2-0161734613479246">Figure 2</xref> reveals that a 4λ kernel would be a better choice, giving an accumulated variance only one-third as high as the 12λ kernel would produce.</p>
+<p>This difference is explained by the structure of the covariance matrices in <xref ref-type="fig" rid="fig3-0161734613479246">Figures 3</xref> and <xref ref-type="fig" rid="fig4-0161734613479246">4</xref>. This section begins with an elaboration of the uncorrelated accumulation model and proceeds to an interpretation of the covariance matrices.</p>
+<sec id="section14-0161734613479246">
+<title>The Uncorrelated Model</title>
+<p>Some simple calculations and approximations can express the general behavior of the uncorrelated model. Later, with an understanding of the real covariance between estimation steps, the model will be modified to explain the observed accumulated variance curves.</p>
+<p>The section “Electronic Noise and Strain Combined” has shown that errors due to electronic noise and errors due to strain are approximately independent, so the variance for a single step is the sum of a strain-induced term and a noise-induced term. Furthermore, suppose that the strain-induced variance depends quadratically on the strain-step size, as might be suggested by the single-step variance plots in <xref ref-type="fig" rid="fig1-0161734613479246">Figure 1</xref>. The single-step variance can then be expressed as a function of the strain-step size, denoted by <italic>s</italic><sub>0</sub>:</p>
+<p><disp-formula id="disp-formula5-0161734613479246">
+<mml:math display="block" id="math8-0161734613479246">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≈</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:msubsup>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0161734613479246" xlink:href="10.1177_0161734613479246-eq5.tif"/></disp-formula></p>
+<p>where <italic>A</italic> is a coefficient, constant in <italic>s</italic><sub>0</sub>, and <inline-formula id="inline-formula4-0161734613479246">
+<mml:math display="inline" id="math9-0161734613479246">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the error variance due to electronic noise, which does not depend on strain but does depend on the SNR and the kernel size.</p>
+<p>If the uncorrelated model were correct, then the total accumulated variance for <italic>n</italic> estimates would be simply <italic>n</italic> times the single-step variance.</p>
+<p><disp-formula id="disp-formula6-0161734613479246">
+<mml:math display="block" id="math10-0161734613479246">
+<mml:mrow>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mtext>tot,uncorr</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>≈</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>⋅</mml:mo>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mtext>step</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mspace width="1.25em"/>
+<mml:mo>≈</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>⋅</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:msubsup>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>⋅</mml:mo>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mtext>noise</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>.</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0161734613479246" xlink:href="10.1177_0161734613479246-eq6.tif"/></disp-formula></p>
+<p>To express this in terms of total strain <italic>s</italic><sub>tot</sub> rather than number of steps <italic>n</italic>, substitute <italic>n</italic> = <italic>s</italic><sub>tot/</sub><italic>s</italic><sub>0</sub>:</p>
+<p><disp-formula id="disp-formula7-0161734613479246">
+<mml:math display="block" id="math11-0161734613479246">
+<mml:mrow>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mtext>tot,uncorr</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>≈</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mrow>
+<mml:mtext>tot</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>⋅</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:msubsup>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mrow>
+<mml:mtext>tot</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>⋅</mml:mo>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mtext>noise</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mspace width="1.25em"/>
+<mml:mo>≈</mml:mo>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mrow>
+<mml:mtext>tot</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mtext>noise</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>.</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0161734613479246" xlink:href="10.1177_0161734613479246-eq7.tif"/></disp-formula></p>
+<p>For a given experiment, <italic>s</italic><sub>tot</sub> can be treated as a fixed quantity, so the accumulated variance depends only on the term inside the parentheses. This term becomes large for both small <italic>s</italic><sub>0</sub>, where the large number of estimation steps create a large buildup of error from electronic noise, and large <italic>s</italic><sub>0</sub>, where strain-induced errors become dominant. Minimizing the expression would yield an optimal step size of <inline-formula id="inline-formula5-0161734613479246">
+<mml:math display="inline" id="math12-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msqrt>
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>/</mml:mo>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p>The formula in (7) very much resembles the plots of uncorrelated-model results in <xref ref-type="fig" rid="fig7-0161734613479246">Figure 7</xref>. In those plots, with zero electronic noise, the model variance is nearly a straight line passing through the origin, and at higher noise levels the 1/<italic>s</italic><sub>0</sub> dependence becomes apparent. Unfortunately for this model, the simulation results are very different. The step covariance matrices provide an explanation.</p>
+</sec>
+<sec id="section15-0161734613479246">
+<title>Covariance due to Electronic Noise</title>
+<p>The covariance matrix for the uncorrelated model would consist of only a nonzero main diagonal, with zeros in all other positions. The matrix for error due to electronic noise shown in <xref ref-type="fig" rid="fig3-0161734613479246">Figure 3</xref>, in contrast, featured a bright main diagonal, anticorrelated superdiagonal and subdiagonal, and zero covariance elsewhere. The reason that anticorrelation appears is that a pair of consecutive displacement estimation processes share an echo signal and are therefore not independent. Consider a sequence of three echo signals, with zero deformation:</p>
+<p><disp-formula id="disp-formula8-0161734613479246">
+<mml:math display="block" id="math13-0161734613479246">
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>f</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>f</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>f</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0161734613479246" xlink:href="10.1177_0161734613479246-eq8.tif"/>
+</disp-formula></p>
+<p>where <italic>f</italic> is a noise-free echo signal, and the <italic>n<sub>i</sub></italic> are independent noise realizations. Using the notation of the section “Accumulation,” let the displacement estimate <inline-formula id="inline-formula6-0161734613479246">
+<mml:math display="inline" id="math14-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> be a functional of two of these echo signals, <inline-formula id="inline-formula7-0161734613479246">
+<mml:math display="inline" id="math15-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mn>,</mml:mn>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mi>j</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Then,</p>
+<p><disp-formula id="disp-formula9-0161734613479246">
+<mml:math display="block" id="math16-0161734613479246">
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mn>,</mml:mn>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>f</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:msub>
+<mml:mn>,</mml:mn>
+<mml:mi>f</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mn>,</mml:mn>
+<mml:msub>
+<mml:mi>r</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>f</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msub>
+<mml:mn>,</mml:mn>
+<mml:mi>f</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mn>3</mml:mn>
+</mml:msub>
+<mml:mo stretchy="false">]</mml:mo>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0161734613479246" xlink:href="10.1177_0161734613479246-eq9.tif"/></disp-formula></p>
+<p>The component <italic>f</italic> does not change between signals, so it is not a source of error. Notice, however, that the noise realization <italic>n</italic><sub>2</sub>(<italic>x</italic>) appears in both <inline-formula id="inline-formula8-0161734613479246">
+<mml:math display="inline" id="math17-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula9-0161734613479246">
+<mml:math display="inline" id="math18-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>; it appears in <inline-formula id="inline-formula10-0161734613479246">
+<mml:math display="inline" id="math19-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> as the postdeformation signal and in <inline-formula id="inline-formula11-0161734613479246">
+<mml:math display="inline" id="math20-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> as the predeformation signal. Because the two estimates share a signal component, but in opposite positions, they will be anticorrelated.</p>
+<p>For example, suppose the effect of <italic>n</italic><sub>2</sub> was to make signal <italic>r</italic><sub>2</sub> appear shifted slightly in the +<italic>x</italic> direction relative to the other signals. Then <inline-formula id="inline-formula12-0161734613479246">
+<mml:math display="inline" id="math21-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> would err in that same direction. For the next estimate, the signal <italic>r</italic><sub>2</sub> again appears shifted in the +<italic>x</italic> direction relative to <italic>r</italic><sub>3</sub>, but because <italic>r</italic><sub>2</sub> is now the reference signal, the error in <inline-formula id="inline-formula13-0161734613479246">
+<mml:math display="inline" id="math22-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is in the -<italic>x</italic> direction. Whatever the influence of <italic>n</italic><sub>2</sub> on <inline-formula id="inline-formula14-0161734613479246">
+<mml:math display="inline" id="math23-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, it tends to have the opposite effect on <inline-formula id="inline-formula15-0161734613479246">
+<mml:math display="inline" id="math24-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, creating a negative covariance. The same argument holds for any pair of consecutive estimates. A pair of estimates separated by more than one estimation step, however, would not share any noise realizations, and therefore could be expected to have zero covariance. This pattern of negative and zero covariance is precisely what appears in <xref ref-type="fig" rid="fig3-0161734613479246">Figure 3</xref>.</p>
+<p>The consequence of this negative component in the covariance matrix is that electronic noise has far less impact on the accumulated variance than the uncorrelated model would predict. In summing the covariance matrix, all three center diagonals contribute. Let the values of the superdiagonal and subdiagonal be <inline-formula id="inline-formula16-0161734613479246">
+<mml:math display="inline" id="math25-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>ρ</mml:mtext>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>⋅</mml:mo>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where ρ<sub>noise</sub> is a correlation coefficient and <inline-formula id="inline-formula17-0161734613479246">
+<mml:math display="inline" id="math26-0161734613479246">
+<mml:mrow>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the single-step error variance due to electronic noise. Then,</p>
+<p><disp-formula id="disp-formula10-0161734613479246">
+<mml:math display="block" id="math27-0161734613479246">
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mtext>tot</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mtext>noise</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>=</mml:mo>
+<mml:mstyle displaystyle="true">
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mn>,</mml:mn>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:munder>
+</mml:mstyle>
+<mml:mtext>Cov</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mi>i</mml:mi>
+</mml:msub>
+<mml:mn>,</mml:mn>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mi>j</mml:mi>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>≈</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>⋅</mml:mo>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mtext>noise</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msub>
+<mml:mtext>ρ</mml:mtext>
+<mml:mrow>
+<mml:mtext>noise</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>⋅</mml:mo>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mtext>noise</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>≈</mml:mo>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mtext>ρ</mml:mtext>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>≈</mml:mo>
+<mml:msubsup>
+<mml:mtext>σ</mml:mtext>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mtext>ρ</mml:mtext>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>+</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mtext>ρ</mml:mtext>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>,</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0161734613479246" xlink:href="10.1177_0161734613479246-eq10.tif"/></disp-formula></p>
+<p>where the last step substitutes <italic>n</italic> = <italic>s</italic><sub>tot</sub>/<italic>s</italic><sub>0</sub>. The variance takes the form of an inverse <italic>s</italic><sub>0</sub>curve plus a constant, which is consistent with the electronic noise component of the curves in <xref ref-type="fig" rid="fig2-0161734613479246">Figure 2</xref>.</p>
+<p>If ρ<sub>noise</sub> = 0, the formula recovers the prediction of the electronic noise portion of the uncorrelated model. In the simulations, in contrast, the value of ρ<sub>noise</sub> was usually slightly less negative than -0.5. At the limit of ρ<sub>noise</sub> = -0.5, the second term in the last line of (8) vanishes, so that the accumulated variance for <italic>n</italic> steps is the same as for a single step. For ρ<sub>noise</sub> slightly less negative than -0.5, the variance increases with the number of steps, but at a much slower rate than in the uncorrelated model. This effect explains why the correlated-model and uncorrelated-model plots of accumulated variance in <xref ref-type="fig" rid="fig7-0161734613479246">Figure 7</xref> differ so much in their behavior under electronic noise. The <xref ref-type="app" rid="app1-0161734613479246">appendix</xref> contains more details about the values of ρ<sub>noise</sub> for different estimation parameters and noise levels.</p>
+</sec>
+<sec id="section16-0161734613479246">
+<title>Covariance due to Strain</title>
+<p>The strain-induced error covariance matrices shown in <xref ref-type="fig" rid="fig4-0161734613479246">Figure 4</xref> had three notable features. The first and most important feature was that all off-diagonal elements were nonzero. The matrices were not entirely uniform, however. The matrices also possessed an elevated center diagonal and depressed superdiagonal and subdiagonal, similar to the covariance matrices from electronic noise simulations, and covariance decreased between estimates that were far apart in the accumulation sequence. Each of these features can be explained by the error mechanisms for echo signals from strained media.</p>
+<p>When a portion of tissue undergoes a deformation, the echo signal distorts in such a way as to roughly track the tissue deformation. This distortion of the signal is what makes displacement estimation possible. But it also causes a mismatch between pre- and postdeformation signals, introducing error into displacement estimation. The distortion is not as apparent when comparing small sections of signal, so the mismatch is not as bad for smaller data kernels. This type of strain-induced error was explained in more detail in an early paper by Céspedes and Ophir.<sup><xref ref-type="bibr" rid="bibr25-0161734613479246">25</xref></sup></p>
+<p>Error that arises from this kind of mismatch is random in that it depends on shape of the echo signal, which is determined by the random positions of small scatterers in the tissue. But for a given section of echo signal tracked through time, each tissue strain step will induce a similar signal distortion, and the resulting tracking errors will be highly correlated between steps. Consider the first estimation step in a sequence, for example, between 0% and 0.2% strain. The postdeformation signal will be distorted by 0.2%, creating a small mismatch in the two data kernels and inducing an error in the displacement estimate. In the next estimation step, from 0.2% to 0.4% strain, the signal will be distorted by another 0.2%. The mismatch between signals in this second step will be very similar to the mismatch in the previous step, and the estimation error is likely to be nearly the same. These similar mismatches, then, explain the nonzero covariance between estimation errors that appears in <xref ref-type="fig" rid="fig4-0161734613479246">Figure 4</xref>.</p>
+<p>In addition to distorting the echo signals, tissue deformation “decorrelates” them, gradually changing the speckle pattern. An echo signal is formed from the coherent sum of echoes from individual scatterers, interfering with one another. Deformation on a scale smaller than the ultrasound pulse changes this coherent sum in a way that depends on the random locations of the scatterers. By producing new configurations of these scatterers, tissue deformation effectively introduces new, uncorrelated information into the signal. More details on this effect in two dimensions, including other types of deformations besides uniform strain, can be found in an article by Meunier and Bertrand.<sup><xref ref-type="bibr" rid="bibr26-0161734613479246">26</xref></sup></p>
+<p>This new information in the echo signal could explain the remaining features of the strain-induced covariance matrix. First, the addition of some small amount of uncorrelated information at each strain step could mimic the effect of electronic noise, which would explain the pattern of a brighter center diagonal with depressed superdiagonal and subdiagonal that appears in the strain-only matrices. Second, as the accumulation sequence progresses, increasingly more uncorrelated information is incorporated into the echo signals. As the signals change, so would the estimation errors, explaining the decrease in the covariance between estimates at the beginning and estimates at the end of the sequence.</p>
+<p>Of these three features of the strain-only covariance matrices, the latter two will not matter as much for predicting the ultimate accumulated variance. The elevated and depressed covariances in the three center diagonals tend to cancel each other out, and they have small magnitudes to begin with. The decrease in covariance at the corners will have a greater effect on the sum over the matrix, but is still not as important as the overall positive covariance. As an approximation, then, let every element in the covariance matrix have the same value, <inline-formula id="inline-formula18-0161734613479246">
+<mml:math display="inline" id="math28-0161734613479246">
+<mml:mrow>
+<mml:mtext>α</mml:mtext>
+<mml:mo>⋅</mml:mo>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where α is a correlation coefficient, close to unity, and <inline-formula id="inline-formula19-0161734613479246">
+<mml:math display="inline" id="math29-0161734613479246">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the single-step error variance due to strain. The number of elements in the matrix is the square of the number of strain steps, <italic>n</italic>, so its sum, the accumulated variance, is</p>
+<p><disp-formula id="disp-formula11-0161734613479246">
+<mml:math display="block" id="math30-0161734613479246">
+<mml:mrow>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mtext>tot</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mtext>strain</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>≈</mml:mo>
+<mml:msup>
+<mml:mi>n</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:msubsup>
+<mml:mtext>ασ</mml:mtext>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0161734613479246" xlink:href="10.1177_0161734613479246-eq11.tif"/></disp-formula></p>
+<p>Combining this approximation with a previous assumption, that the single-step error variance is roughly quadratic with strain, produces the curious result that the accumulated variance should be independent of strain-step size. Substituting the strain-induced portion of (5) into (9), recalling that <italic>s</italic><sub>tot</sub> is the total strain and <italic>s</italic><sub>0</sub> is the size of the strain step,</p>
+<p><disp-formula id="disp-formula12-0161734613479246">
+<mml:math display="block" id="math31-0161734613479246">
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mtext>tot</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mtext>strain</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>≈</mml:mo>
+<mml:msup>
+<mml:mi>n</mml:mi>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:mtext>α</mml:mtext>
+<mml:mi>A</mml:mi>
+<mml:msubsup>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>≈</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msup>
+<mml:mtext>α</mml:mtext>
+<mml:mi>A</mml:mi>
+<mml:msubsup>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>≈</mml:mo>
+<mml:mtext>α</mml:mtext>
+<mml:mi>A</mml:mi>
+<mml:msubsup>
+<mml:mi>s</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>.</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0161734613479246" xlink:href="10.1177_0161734613479246-eq12.tif"/></disp-formula></p>
+<p>Adding this result to <inline-formula id="inline-formula20-0161734613479246">
+<mml:math display="inline" id="math32-0161734613479246">
+<mml:mrow>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mtext>tot</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mtext>noise</mml:mtext>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+</inline-formula> in (8) above and consolidating many of the constants produces an overall accumulated error variance of the form</p>
+<p><disp-formula id="disp-formula13-0161734613479246">
+<mml:math display="block" id="math33-0161734613479246">
+<mml:mrow>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msubsup>
+<mml:mi>σ</mml:mi>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:msubsup>
+<mml:mo>≈</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mi>b</mml:mi>
+<mml:mrow>
+<mml:msub>
+<mml:mi>s</mml:mi>
+<mml:mn>0</mml:mn>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0161734613479246" xlink:href="10.1177_0161734613479246-eq13.tif"/></disp-formula></p>
+<p>where <italic>a</italic> and <italic>b</italic> are constants.</p>
+<p>As in the equivalent formula for the uncorrelated model, (7), buildup of error due to electronic noise increases the variance for low <italic>s</italic><sub>0</sub>, though here that buildup is greatly dampened. Unlike the uncorrelated formula, however, the variance settles into a constant value for high <italic>s</italic><sub>0</sub>. Although this result is surprising, it is consistent with the findings in <xref ref-type="fig" rid="fig2-0161734613479246">Figure 2</xref>. Past a certain <italic>s</italic><sub>0</sub>, when the electronic noise effects have faded, those accumulated variance curves are remarkably flat as a function of step size. The major exception is the 16λ kernel. The upward trajectory of that curve indicates that for such a large kernel, the single-step variance increases at a rate faster than quadratic. One could also draw that conclusion from the single-step plots of <xref ref-type="fig" rid="fig1-0161734613479246">Figure 1</xref>.</p>
+<p>The prediction of an accumulated variance that is constant as a function of step size only holds as far as the single-step variance behavior remains quadratic. We expect that at a high enough strain, though, single-step variances for <italic>all</italic> kernel sizes will begin to increase at a faster-than-quadratic rate. Nevertheless, the step size at which the quadratic approximation breaks down and accumulated variance begins to increase (perhaps 2% strain for the 16λ tracking kernel, more than 4% strain for the shorter kernels) seems to be larger than the usual operating point for multicompression strain imaging strategies.</p>
+<p>Here, the limitations of these simulations become important. Unlike these simulated scattering functions, tissue is three-dimensional and far from uniform, even on the scale of an ultrasound pulse. Tissue deformation results in more complex motion and more signal decorrelation than was modeled here. With more signal decorrelation, we would expect single-step variance to increase more rapidly with strain, causing accumulated variance to begin to increase at a smaller step size.</p>
+<p>A more complex displacement estimation algorithm, such as one incorporating companding, could also alter these results. Since companding, in particular, compensates for how the ultrasound signal distorts in accord with tissue motion, it would likely change the covariance structure of strain-induced errors. Testing the effects of companding or other advanced algorithms on displacement estimate accumulation would be an interesting avenue of future work.</p>
+<p>We would not expect more realistic deformation or more advanced algorithms to change the core finding, however, that the steps in an accumulation sequence have important covariances. Rather, they would add new effects in addition to those already described. The relative simplicity of the present work isolates the most important aspects of displacement estimation, granting insight into the problem and serving to guide future studies. Extensions of this work to 2D and 3D deformation, including shear strain, are underway.</p>
+</sec>
+</sec>
+<sec id="section17-0161734613479246" sec-type="conclusions">
+<title>Conclusion</title>
+<p>These simulations revealed some general statistical properties of accumulated displacement estimates. Most importantly, the errors in an accumulation sequence are not uncorrelated but have an important covariance structure that affects the final accumulated displacement estimate. Displacement estimate errors caused by electronic noise are anticorrelated with the estimation steps immediately before and after, while errors caused by tissue strain are positively correlated with all other estimation steps in the sequence. As a result of this covariance structure, accumulated displacement estimates behave differently from single-step estimates.</p>
+<p>While the one-dimensional model presented here cannot provide precise guidance to tracking algorithms for tissue, some qualitative recommendations are possible. Compared with a single-step displacement estimate, an accumulated estimate is robust to the presence of electronic noise but is sensitive to strain-induced error. Therefore, it may be more effective to use smaller kernel sizes for accumulation than would be used for single-step estimates. The present results suggest that kernel sizes only somewhat larger than a pulse length may be safely used unless there is very high electronic noise. This work also indicates that accumulated variance should depend only weakly on strain-step size, so the choice of step size in accumulation may not need to be tightly optimized.</p>
+<p>These statistical properties and recommendations should help to guide the creation of accumulated displacement maps, both for the reconstruction of elasticity parameters and for strain images that use a multicompression method.</p>
+</sec>
+</body>
+<back>
+<app-group>
+<app id="app1-0161734613479246">
+<title>Appendix</title>
+<sec id="section18-0161734613479246">
+<title>The Anticovariance Caused by Electronic Noise</title>
+<p>Figure 3 showed that with only electronic noise and no tissue strain, consecutive displacement estimates are anticorrelated, with a correlation coefficient close to -0.5. This <xref ref-type="app" rid="app1-0161734613479246">appendix</xref> shows estimated values of ρ<sub>noise</sub>, as well as how those estimates change for various combinations of simulation and estimation parameters.</p>
+<p>Correlation coefficients were computed by taking the covariance over all pairs of displacement errors that shared an echo signal and dividing it by the error variance. Again, using the notation of the section “Accumulation,” let be the displacement estimation error between signals <italic>i</italic> and <italic>j</italic>. Then ρ<sub>noise</sub> can be expressed as</p>
+<p><disp-formula id="disp-formula14-0161734613479246">
+<mml:math display="block" id="math34-0161734613479246">
+<mml:mrow>
+<mml:msub>
+<mml:mtext>ρ</mml:mtext>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext>Cov</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mn>,</mml:mn>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>Var</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mover accent="true">
+<mml:mi>D</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0161734613479246" xlink:href="10.1177_0161734613479246-eq14.tif"/></disp-formula></p>
+<p>The results of this computation for different SNR and kernel lengths are plotted in <xref ref-type="fig" rid="fig8-0161734613479246">Figure A1</xref>, which helps to further explain the accumulated variance results in <xref ref-type="fig" rid="fig2-0161734613479246">Figure 2</xref>. For high and moderate SNR, the correlation coefficient is very close to -0.5 for all kernel lengths, so error due to electronic noise largely cancels out, and little variance accumulates. At low SNR, the anticorrelation is still strong for the larger kernels tested, but decays considerably for the smaller kernels. Thus, in <xref ref-type="fig" rid="fig2-0161734613479246">Figure 2</xref> the larger kernels show little accumulated effect from any level of electronic noise, while the smaller ones, especially the 4λ length, build up considerable error from electronic noise. As a rule, it seems that variations in parameters that lower the noise-induced error variance, such as high SNR or larger kernels, will also tend to bring the correlation coefficient of consecutive estimates closer to -0.5.</p>
+<fig id="fig8-0161734613479246" position="float">
+<label>Figure A1.</label>
+<caption>
+<p>Correlation coefficients for consecutive displacement estimates where electronic noise is the only source of error.</p>
+</caption>
+<graphic xlink:href="10.1177_0161734613479246-fig8.tif"/></fig>
+</sec>
+</app>
+</app-group>
+<fn-group>
+<fn fn-type="conflict">
+
+<p>The author(s) declared no potential conflicts of interest with respect to the research, authorship, and/or publication of this article.</p>
+</fn>
+<fn fn-type="financial-disclosure">
+
+<p>The author(s) disclosed receipt of the following financial support for the research, authorship, and/or publication of this article: This work was supported by National Institutes of Health Grants R01CA140271 and T32CA009206.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0161734613479246">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Krouskop</surname><given-names>TA</given-names></name>
+<name><surname>Wheeler</surname><given-names>TM</given-names></name>
+<name><surname>Kallel</surname><given-names>F</given-names></name>
+<name><surname>Garra</surname><given-names>BS</given-names></name>
+<name><surname>Hall</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Elastic moduli of breast and prostate tissues under compression</article-title>. <source>Ultrason Imaging</source>. <year>1998</year>;<volume>20</volume>:<fpage>260</fpage>-<lpage>74</lpage>.</citation>
+</ref>
+<ref id="bibr2-0161734613479246">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Oberai</surname><given-names>AA</given-names></name>
+<name><surname>Gokhale</surname><given-names>NH</given-names></name>
+<name><surname>Goenezen</surname><given-names>S</given-names></name>
+<name><surname>Barbone</surname><given-names>P</given-names></name>
+<name><surname>Hall</surname><given-names>TJ</given-names></name>
+<name><surname>Sommer</surname><given-names>AM</given-names></name>
+<name><surname>Jiang</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Linear and nonlinear elasticity imaging of soft tissue in vivo: demonstration of feasibility</article-title>. <source>Phys Med Biol</source>. <year>2009</year>;<volume>54</volume>:<fpage>1191</fpage>-<lpage>207</lpage>.</citation>
+</ref>
+<ref id="bibr3-0161734613479246">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Goenezen</surname><given-names>S</given-names></name>
+<name><surname>Dord</surname><given-names>JF</given-names></name>
+<name><surname>Sink</surname><given-names>Z</given-names></name>
+<name><surname>Barbone</surname><given-names>PE</given-names></name>
+<name><surname>Jiang</surname><given-names>J</given-names></name>
+<name><surname>Hall</surname><given-names>TJ</given-names></name>
+<name><surname>Oberai</surname><given-names>AA</given-names></name>
+</person-group>. <article-title>Linear and nonlinear elastic modulus imaging: an application to breast cancer diagnosis</article-title>. <source>IEEE Trans Med Imaging</source>. <year>2012</year>;<volume>31</volume>:<fpage>1628</fpage>-<lpage>37</lpage>.</citation>
+</ref>
+<ref id="bibr4-0161734613479246">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Varghese</surname><given-names>T</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Performance optimization in elastography: multicompression with temporal stretching</article-title>. <source>Ultrason Imaging</source>. <year>1996</year>;<volume>18</volume>:<fpage>193</fpage>-<lpage>214</lpage>.</citation>
+</ref>
+<ref id="bibr5-0161734613479246">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Varghese</surname><given-names>T</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+<name><surname>Cespedes</surname><given-names>I</given-names></name>
+</person-group>. <article-title>Noise reduction in elastograms using temporal stretching with multicompression averaging</article-title>. <source>Ultrasound Med Biol</source>. <year>1996</year>;<volume>22</volume>:<fpage>1043</fpage>-<lpage>52</lpage>.</citation>
+</ref>
+<ref id="bibr6-0161734613479246">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Du</surname><given-names>H</given-names></name>
+<name><surname>Liu</surname><given-names>J</given-names></name>
+<name><surname>Pellot-Barakat</surname><given-names>C</given-names></name>
+<name><surname>Insana</surname><given-names>MF</given-names></name>
+</person-group>. <article-title>Optimizing multicompression approaches to elasticity imaging</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>2006</year>;<volume>53</volume>:<fpage>90</fpage>-<lpage>99</lpage>.</citation>
+</ref>
+<ref id="bibr7-0161734613479246">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lubinski</surname><given-names>M</given-names></name>
+<name><surname>Emelianov</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Adaptive strain estimation using retrospective processing</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1999</year>;<volume>46</volume>:<fpage>97</fpage>-<lpage>107</lpage>.</citation>
+</ref>
+<ref id="bibr8-0161734613479246">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>O’Donnell</surname><given-names>M</given-names></name>
+<name><surname>Skovoroda</surname><given-names>AR</given-names></name>
+<name><surname>Shapo</surname><given-names>BM</given-names></name>
+<name><surname>Emelianov</surname><given-names>SY</given-names></name>
+</person-group>. <article-title>Internal displacement and strain imaging using ultrasonic speckle tracking</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1994</year>;<volume>41</volume>:<fpage>314</fpage>-<lpage>25</lpage>.</citation>
+</ref>
+<ref id="bibr9-0161734613479246">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Varghese</surname><given-names>T</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+</person-group>. <article-title>A theoretical framework for performance characterization of elastography: the strain filter</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1997</year>;<volume>44</volume>:<fpage>164</fpage>-<lpage>72</lpage>.</citation>
+</ref>
+<ref id="bibr10-0161734613479246">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Walker</surname><given-names>WF</given-names></name>
+<name><surname>Trahey</surname><given-names>GE</given-names></name>
+</person-group>. <article-title>A fundamental limit on delay estimation using partially correlated speckle signals</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1995</year>;<volume>42</volume>:<fpage>301</fpage>-<lpage>308</lpage>.</citation>
+</ref>
+<ref id="bibr11-0161734613479246">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Weinstein</surname><given-names>E</given-names></name>
+<name><surname>Weiss</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Fundamental limitations in passive time-delay estimation–part II: wide-band systems</article-title>. <source>IEEE Trans Acoust Speech Signal Process</source>. <year>1984</year>;<volume>32</volume>:<fpage>1064</fpage>-<lpage>78</lpage>.</citation>
+</ref>
+<ref id="bibr12-0161734613479246">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Varghese</surname><given-names>T</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+<name><surname>Krouskop</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Nonlinear stress-strain relationships in tissue and their effect on the contrast-to-noise ratio in elastograms</article-title>. <source>Ultrasound Med Biol</source>. <year>2000</year>;<volume>26</volume>:<fpage>839</fpage>-<lpage>51</lpage>.</citation>
+</ref>
+<ref id="bibr13-0161734613479246">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Pavan</surname><given-names>TZ</given-names></name>
+<name><surname>Madsen</surname><given-names>EL</given-names></name>
+<name><surname>Frank</surname><given-names>GR</given-names></name>
+<name><surname>Jiang</surname><given-names>J</given-names></name>
+<name><surname>Carneiro</surname><given-names>AA</given-names></name>
+<name><surname>Hall</surname><given-names>TJ</given-names></name>
+</person-group>. <article-title>A nonlinear elasticity phantom containing spherical inclusions</article-title>. <source>Phys Med Biol</source>. <year>2012</year>;<volume>57</volume>:<fpage>4787</fpage>-<lpage>804</lpage>.</citation>
+</ref>
+<ref id="bibr14-0161734613479246">
+<label>14.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Emelianov</surname><given-names>S</given-names></name>
+<name><surname>Lubinski</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Reconstructive ultrasound elasticity imaging for renal pathology detection</article-title>. In: <conf-name>IEEE Ultrasonics Symposium</conf-name>, <conf-loc>Ontario, Canada</conf-loc>, <conf-date>5-8 October 1997</conf-date>, pp. <fpage>1123</fpage>–<lpage>1126</lpage>. IEEE, <conf-loc>New York</conf-loc>.</citation>
+</ref>
+<ref id="bibr15-0161734613479246">
+<label>15.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Nitta</surname><given-names>N</given-names></name>
+<name><surname>Shiina</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Estimation of nonlinear elasticity parameter of tissues by ultrasound</article-title>. <source>Jpn J Appl Phys Part 1</source>. <year>2002</year>;<volume>41</volume>:<fpage>3572</fpage>-<lpage>78</lpage>.</citation>
+</ref>
+<ref id="bibr16-0161734613479246">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Alam</surname><given-names>SK</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Reduction of signal decorrelation from mechanical compression of tissues by temporal stretching: applications to elastography</article-title>. <source>Ultrasound Med Biol</source>. <year>1997</year>;<volume>23</volume>:<fpage>95</fpage>-<lpage>105</lpage>.</citation>
+</ref>
+<ref id="bibr17-0161734613479246">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chaturvedi</surname><given-names>P</given-names></name>
+<name><surname>Insana</surname><given-names>MF</given-names></name>
+<name><surname>Hall</surname><given-names>TJ</given-names></name>
+</person-group>. <article-title>2-D companding for noise reduction in strain imaging</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>1998</year>;<volume>45</volume>:<fpage>179</fpage>-<lpage>91</lpage>.</citation>
+</ref>
+<ref id="bibr18-0161734613479246">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zhu</surname><given-names>Y</given-names></name>
+<name><surname>Hall</surname><given-names>TJ</given-names></name>
+</person-group>. <article-title>A modified block matching method for real-time freehand strain imaging</article-title>. <source>Ultrason Imaging</source>. <year>2002</year>;<volume>24</volume>:<fpage>161</fpage>-<lpage>76</lpage>.</citation>
+</ref>
+<ref id="bibr19-0161734613479246">
+<label>19.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jiang</surname><given-names>J</given-names></name>
+<name><surname>Hall</surname><given-names>TJ</given-names></name>
+</person-group>. <article-title>A parallelizable real-time motion tracking algorithm with applications to ultrasonic strain imaging</article-title>. <source>Phys Med Biol</source>. <year>2007</year>;<volume>52</volume>:<fpage>3773</fpage>-<lpage>90</lpage>.</citation>
+</ref>
+<ref id="bibr20-0161734613479246">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>L</given-names></name>
+<name><surname>Treece</surname><given-names>GM</given-names></name>
+<name><surname>Lindop</surname><given-names>JE</given-names></name>
+<name><surname>Gee</surname><given-names>AH</given-names></name>
+<name><surname>Prager</surname><given-names>RW</given-names></name>
+</person-group>. <article-title>A quality-guided displacement tracking algorithm for ultrasonic elasticity imaging</article-title>. <source>Med Image Anal</source>. <year>2009</year>;<volume>13</volume>:<fpage>286</fpage>-<lpage>96</lpage>.</citation>
+</ref>
+<ref id="bibr21-0161734613479246">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jiang</surname><given-names>J</given-names></name>
+<name><surname>Hall</surname><given-names>TJ</given-names></name>
+</person-group>. <article-title>A fast hybrid algorithm combining regularized motion tracking and predictive search for reducing the occurrence of large displacement errors</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>2011</year>;<volume>58</volume>:<fpage>730</fpage>-<lpage>36</lpage>.</citation>
+</ref>
+<ref id="bibr22-0161734613479246">
+<label>22.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Lai</surname><given-names>MW</given-names></name>
+<name><surname>Rubin</surname><given-names>D</given-names></name>
+<name><surname>Krempl</surname><given-names>E</given-names></name>
+</person-group>. <article-title>Introduction to Continuum Mechanics</article-title>. <edition>4th ed.</edition> <publisher-loc>Burlington, MA</publisher-loc>: <publisher-name>Butterworth-Heinemann</publisher-name>; <year>2010</year>.</citation>
+</ref>
+<ref id="bibr23-0161734613479246">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Céspedes</surname><given-names>I</given-names></name>
+<name><surname>Huang</surname><given-names>Y</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+<name><surname>Spratt</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Methods for estimation of subsample time delays of digitized echo signals</article-title>. <source>Ultrason Imaging</source>. <year>1995</year>;<volume>17</volume>:<fpage>142</fpage>-<lpage>71</lpage>.</citation>
+</ref>
+<ref id="bibr24-0161734613479246">
+<label>24.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Viola</surname><given-names>F</given-names></name>
+<name><surname>Walker</surname><given-names>W</given-names></name>
+</person-group>. <article-title>A comparison of the performance of time-delay estimators in medical ultrasound</article-title>. <source>IEEE Trans Ultrason Ferroelectr Freq Control</source>. <year>2003</year>;<volume>50</volume>:<fpage>392</fpage>-<lpage>401</lpage>.</citation>
+</ref>
+<ref id="bibr25-0161734613479246">
+<label>25.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Céspedes</surname><given-names>I</given-names></name>
+<name><surname>Ophir</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Reduction of image noise in elastography</article-title>. <source>Ultrason Imaging</source>. <year>1993</year>;<volume>15</volume>:<fpage>89</fpage>-<lpage>102</lpage>.</citation>
+</ref>
+<ref id="bibr26-0161734613479246">
+<label>26.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Meunier</surname><given-names>J</given-names></name>
+<name><surname>Bertrand</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Ultrasonic texture motion analysis: theory and simulation</article-title>. <source>IEEE Trans Med Imaging</source>. <year>1995</year>;<volume>14</volume>:<fpage>293</fpage>-<lpage>300</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

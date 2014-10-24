@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">DMS</journal-id>
+<journal-id journal-id-type="hwp">spdms</journal-id>
+<journal-title>The Journal of Defense Modeling and Simulation: Applications, Methodology, Technology</journal-title>
+<issn pub-type="ppub">1548-5129</issn>
+<issn pub-type="epub">1557-380X</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1548512912445228</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1548512912445228</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Special Issue Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>The modeling and simulation of a network controller based on router queue-size predictions</article-title>
+</title-group>
+<contrib-group content-type="issue">
+<contrib contrib-type="guest-editor">
+<name><surname>Henshaw</surname><given-names>Michael</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Brathen</surname><given-names>Karsten</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Isler</surname><given-names>Veysi</given-names></name>
+</contrib>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Haught</surname><given-names>James D</given-names></name>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Hopkinson</surname><given-names>Kenneth M</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Hemmes</surname><given-names>Jeffrey M</given-names></name>
+</contrib>
+<aff id="aff1-1548512912445228">Department of Electrical and Computer Engineering, Air Force Institute of Technology, Wright-Patterson AFB, OH, USA</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-1548512912445228">Kenneth M Hopkinson, Department of Electrical and Computer Engineering, Air Force Institute of Technology, 2950 Hobson Way, Wright-Patterson AFB, OH 45433, USA. Email: <email>kenneth.hopkinson@afit.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>10</volume>
+<issue>2</issue>
+<issue-title>Special Issue: Modelling and Simulation for NEC</issue-title>
+<fpage>105</fpage>
+<lpage>115</lpage>
+<permissions>
+<copyright-statement>© 2012 The Society for Modeling and Simulation International</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">The Society for Modeling and Simulation International</copyright-holder>
+</permissions>
+<abstract>
+<p>While the current routing and congestion control algorithms in use today are often adequate for networks with relatively static topology and relatively lax quality of service (QoS) requirements, these algorithms may not be sufficient for military networks where a strict level of QoS is required in order to achieve mission objectives. Current technology limits a network’s ability to adapt to changes and interactions, and this often results in sub-optimal performance. This article develops a network controller that uses outbound router queue size predictions to optimize computer networks. These queue size predictions are made possible through the use of Kalman filters to detect network congestion. The premise is that intelligent agents can use such predictions to form context-aware, cognitive processes to managing network communication. The system shows great promise when modeled and simulated using the NS2 network simulation platform.</p>
+</abstract>
+<kwd-group>
+<kwd>network optimization</kwd>
+<kwd>Kalman filter</kwd>
+<kwd>quality of service</kwd>
+<kwd>queue size prediction</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1548512912445228" sec-type="intro">
+<title>1. Introduction</title>
+<p>Modern military communication often takes place in environments that include mobile networks, relatively strict quality of service (QoS) requirements, and the potential for deadly mission impact when failures occur. Current networks are opaque to both their users and to the network protocols themselves. The users and network administrators tend to have little insight into the state of the network on a moment-by-moment basis. Similarly, the network protocols at the transport layer and below have no insight into the priorities of the network’s users. Limited in state, scope, and response mechanisms, the network elements (consisting of nodes, protocol layers, policies, and behaviors) are unable to make intelligent adaptations to meet network-wide goals. Communication of network state information is stifled by the layered protocol architecture, making individual elements unaware of the network conditions experienced by other elements. Any response that an element may make to network stimuli can only be made inside of its limited scope. The adaptations that are performed are typically reactive, taking place only after a problem has occurred.</p>
+<p>There exists across the field of computer networking the need to achieve network-level objectives in the face of increasing network complexity. Particularly in wireless networks, there has been a trend towards increasingly heterogeneous and dynamic environments. Past research has been investigating a radical new paradigm where the cognitive network using distributed intelligent agents, to autonomously and dynamically achieve complex network-level objectives in a wireless network. A network with distributed intelligence utilizes cognition in the network which is defined loosely as the ability to perceive current conditions. The intelligent agents in the network then plan and decide how to act on the current perceived network conditions. The intelligent agents learn to make decisions that take end-to-end goals into account. The agents in the cognitive network cooperate in a peer-to-peer manner to create an intelligent distributed system. Making this vision a reality requires advances in intelligent network optimization, wide-area network monitoring, and distributed routing. In particular, this article concentrates on a wide-area network monitor and prediction system, which will serve as a key step towards realizing this vision.</p>
+<p>To provide automated decision support for network-level objectives, this research investigates the broader problem of linking users to the networking infrastructure that they operate on. The main idea is that by giving users a better picture of the status and overall capabilities of the network, the cognitive (i.e. intelligent) processes in the distributed network will be given clearer, more accurate insight into the mission objectives. <xref ref-type="fig" rid="fig1-1548512912445228">Figure 1</xref> illustrates how current conditions are combined with user preferences and network objectives to determine the best network configuration in this type of system. This may not easily be applied directly to large chaotic networks, such as the Internet, but this system could be applied to many special-purpose networks for corporations, critical infrastructure management, and military command and control. These networks could be better predicted and controlled than they are today with the right inputs and distributed management framework.</p>
+<fig id="fig1-1548512912445228" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>An illustration of a mobile network using middleware to manage the network in order to enhance the reliability and quality of service (QoS) properties of the system.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912445228-fig1.tif"/>
+</fig>
+<p>Major elements of this vision have been created over the past few years. Air Force tactical environments are typically planned at least a day ahead, in a document called an Air Tasking Order; such information could be incorporated into what we call a Network Tasking Order in order to feed medium- to long-term information into the agent-based network management framework just described. Previous research has shown that such information could enable more optimal network outcomes if it were available.<sup><xref ref-type="bibr" rid="bibr1-1548512912445228">1</xref><xref ref-type="bibr" rid="bibr2-1548512912445228"/>-<xref ref-type="bibr" rid="bibr3-1548512912445228">3</xref></sup> Past work has also demonstrated the ability of an agent-based framework to optimize network behavior using long-term, mid-term, and short-term estimates of network behavior.<sup><xref ref-type="bibr" rid="bibr2-1548512912445228">2</xref></sup></p>
+<p>This article presents one approach for making short-term to medium-term estimates of network conditions. This is made possible through the use of Kalman filters. An application called the Dynamic Routing Queue Controller (DRQC) is developed in this article to use such estimates to manage the network traffic in order to increase the QoS for higher-priority traffic. The idea is to maximize the mission impact of the network traffic based on current conditions. Experimental results illustrate the promise of this approach.</p>
+</sec>
+<sec id="section2-1548512912445228">
+<title>2. Background</title>
+<p>In the field of engineering, filtering is desirable for use with a wide range of signals, which may be degraded by various sources of undesirable noise. For example, filters are often used with radio communication signals that are often corrupted with noise. A good filtering algorithm can remove this noise from electromagnetic signals while still retaining its useful information. Although Rudolf E Kalman developed Kalman filtering to solve a spacecraft navigation problem for the Apollo space program in 1960, it has roots far<sup><xref ref-type="bibr" rid="bibr3-1548512912445228">3</xref></sup> back as Karl Gauss in 1795 with his method of least squares. A Kalman filter is a designed recursive solution to the discrete-data linear filtering problem. In the theory of stochastic processes, the discrete-data linear filtering problem involves formulating a best estimate of the true value of the system when given a set of potentially noisy observations from that system. The Kalman filter has been the subject of extensive research and a wide range of engineering applications from radar to computer vision, and is an important topic in control theory. The Kalman filter is the best known least mean-square (LMS) algorithm to optimally estimate the unknown state of a dynamic system from a series of incomplete and noisy measurements.<sup><xref ref-type="bibr" rid="bibr4-1548512912445228">4</xref></sup> The Kalman filter is a set of mathematical equations that provides the means to estimate the state of a process. The main benefit of the Kalman filter is that it supports estimations of past, present, and even future states of dynamic systems.</p>
+<p>The Kalman filter is a recursive estimator that is constantly in a one of two distinct phases, <italic>predict</italic> and <italic>update</italic>, which are illustrated in <xref ref-type="fig" rid="fig2-1548512912445228">Figure 2</xref>. This means that only the estimated state from the previous time step and the current measurement are needed to compute the estimate for the current state with no history of observations or estimates required. The predict phase uses the Kalman filter’s state estimate from the previous time to produce an estimate of the state at the current time, this state is also known as the <italic>a priori</italic> state because it is an estimate of the state at the current time step. The update phase combines <italic>a priori</italic> prediction with the current observed information into a refined state estimate called the <italic>a posteriori</italic> state estimate.</p>
+<fig id="fig2-1548512912445228" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Kalman filter cycle.<sup><xref ref-type="bibr" rid="bibr5-1548512912445228">5</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_1548512912445228-fig2.tif"/>
+</fig>
+<p>Stuckey<sup><xref ref-type="bibr" rid="bibr6-1548512912445228">6</xref></sup> implemented the idea of the <italic>Network Weatherman</italic> (NWM). NWM is an extended Kalman filter that predicts the future state of a network queue based on current and past measurements. These predictions allow network control algorithms to manage network traffic to optimize QoS metrics of interest such as delay or throughput. Unlike the Network Weather Service (NWS), the NWM uses a Kalman filter to estimate the network state instead of a collection of data to create a mean- or median-based prediction; therefore, the NWM does not need an explicit history of past data to make its predictions and only requires the current state of the network to forecast future queue levels.</p>
+<p><xref ref-type="fig" rid="fig3-1548512912445228">Figure 3</xref>, a Kalman filter is placed in-between two routers. The scenario was simulated in OPNET. A series of representative types of network traffic were modeled inside of OPNET. All traffic that went from router 1 to router 2 used the UDP transport protocol. Poisson traffic was sent with a mean arrival rate of 5 packets/second and a mean packet size of 1,500 bytes. The NWM’s Kalman filter was used to predict the network’s queue size. <xref ref-type="fig" rid="fig4-1548512912445228">Figure 4</xref> displays a queue size versus time graph of a Kalman filter that was able to predict the actual queue size ten seconds into the future from the simulation in <xref ref-type="fig" rid="fig3-1548512912445228">Figure 3</xref>. The Kalman filter implemented computes the packet arrival rate using the Marcum <italic>Q</italic>-function which is used in solving the expected value of the queue size. The behavior of the Kalman filter is represented by two states, packet arrival rate and packet service rate which are traditionally represented by <inline-formula id="inline-formula1-1548512912445228"><mml:math display="inline" id="math1-1548512912445228"><mml:mrow><mml:msub><mml:mrow><mml:mi>λ</mml:mi></mml:mrow><mml:mrow><mml:mi>n</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> and <inline-formula id="inline-formula2-1548512912445228"><mml:math display="inline" id="math2-1548512912445228"><mml:mrow><mml:msub><mml:mrow><mml:mi>μ</mml:mi></mml:mrow><mml:mrow><mml:mi>n</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> for the integer queue size <italic>n</italic>. The advantage of having an estimated queue size is that a middleware system attached to the network can use the predictions in a region to optimize the network’s traffic. Such optimizations can include rerouting traffic and stopping information flows with lower priorities.</p>
+<fig id="fig3-1548512912445228" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>A Kalman filter placed between router 1 and router 2 in an OPNET simulation with numerous representative traffic types.<sup><xref ref-type="bibr" rid="bibr5-1548512912445228">5</xref></sup></p>
+</caption>
+<graphic xlink:href="10.1177_1548512912445228-fig3.tif"/>
+</fig>
+<fig id="fig4-1548512912445228" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Actual queue size versus 10 second future queue size predictions of a Kalman filter placed between the two nodes in <xref ref-type="fig" rid="fig3-1548512912445228">Figure 3</xref>.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912445228-fig4.tif"/>
+</fig>
+<p>Before concluding the background section, it should be mentioned that many other researchers have looked at various aspects of network prediction in the recent past. Stuckey’s NWM system for predicting future network state through the use of Kalman filters appears to be novel and original based on our literature search, but several techniques have been proposed for the use of network traffic in the face of jitter and uncertainty. The NWS uses a mean-based, median-based, and autoregressive methods to cast predictions of performance deliverable to the application from the available metacomputing resources.<sup><xref ref-type="bibr" rid="bibr7-1548512912445228">7</xref></sup> It has not been applied to outbound network queues, but does predict future performance in computer systems. A number of researchers have also looked at state estimation in the face of network delays and network losses. Fletcher and Goyal use multiple-state Markovian chains to model losses over network channels.<sup><xref ref-type="bibr" rid="bibr8-1548512912445228">8</xref></sup> Smith and Seiler<sup><xref ref-type="bibr" rid="bibr9-1548512912445228">9</xref></sup> use a suboptimal jump linear estimator based on a loss history where the loss process is modeled by a two-state Markovian chain.<sup><xref ref-type="bibr" rid="bibr9-1548512912445228">9</xref></sup> Xia et al. use data fusion techniques to make use of streams of network information from various sources in the face of losses and delays.<sup><xref ref-type="bibr" rid="bibr10-1548512912445228">10</xref></sup> There has also been some work looking at the possibility of using preplanning as a basic for network optimization.<sup><xref ref-type="bibr" rid="bibr11-1548512912445228">11</xref></sup></p>
+</sec>
+<sec id="section3-1548512912445228">
+<title>3. The Dynamic Routing Queue Controller</title>
+<p>The Dynamic Routing Queue Controller (DRQC) is a centralized network controller that routes network traffic, in the form of network flows, based on flow priority, queue predictions, and network congestion. When the controller detects congestion in the network, the controller adjusts the network to eliminate the network congestion. From the perspective of DRQC, network congestion occurs when the queue size is above normal, where ‘normal’ is defined by the user through a set point. This section describes the design of the DRQC, which controls network flows to optimize a network according to the current and predicted states of the network.</p>
+<p>The main idea behind DRQC is that it is possible to use the information from the NWM’s predictions to proactively respond to congestion and link underutilization. In a medium or large network, the DRQC would undoubtedly have some type of decentralized structure so that local or regional controllers could respond to predictions in a timely manner. The DRQC controller in this article’s experiments runs in a centralized fashion in order to serve as a small proof of concept. The DRQC has access to queue sizes, future queue size predictions, and a set of all network flows operating in the network at any given moment. A benefit of a centralized system is the ease of maintaining accurately updated lists of data that can be easily accessed from all points. A weakness in this type of system is that it is centered on a few components. If those central components fail, then the system as a whole is affected greatly. Timing is also an issue in large networks. The centralized approach taken in this article would be appropriate to smaller networks, such as many present-day tactical networks, and, as just mentioned, serves as a proof of concept for the main DRQC ideas.</p>
+<p>The DRQC manages information traversing over communication networks in the form of network flows. In its basic form, a network flow can be seen as a quadruple specifying the source, destination, priority, and bandwidth requirement for a given information flow. In addition, information might be provided giving a specific start and end time for the flow. Specific QoS requirements might also be stated. This information can be used by the DRQC controller to determine which information should be allowed to traverse the network and what path such information should use. If a router reservation mechanism, such as MPLS, is used then many routers only allow one path to be used per flow identifier. In this work, the splitting of flows is allowed. This means that if no one path has enough bandwidth to carry a given network flow, but two different paths have enough combined bandwidth to support the network flow then this will be an allowable solution. In this controller, a network flow has minimum bandwidth requirements. When there is not enough bandwidth available on the flow’s current path, it is to be rerouted if possible or paused so other network flows can utilize the network capacity. The network flows in this article’s experiments have a constant arrival rate, which means the packets are generated at a consistent average rate. In real networks, the rate specified might be seen as an upper bound or average bound on a network flow’s bandwidth requirements.</p>
+<p>A key feature of this controller is that it is designed for prioritized network flows. <italic>Prioritized network flows</italic> are flows where they are ranked in order of importance. Network flows with a higher priority should be given the available bandwidth in the network before lower ranked prioritized network flows. This allows the users to indicate which network flows have higher mission impact through the assignment of priority levels. Through this setup, vital mission flows have a better chance to make it to their destination and fulfill their quality of service requirements. If there is limited bandwidth in the network, lower-priority flows will be rerouted or stopped completely until there is more bandwidth available. Some of the other key features of the DRQC include:</p>
+<list id="list1-1548512912445228" list-type="bullet">
+<list-item><p>priority rerouting;</p></list-item>
+<list-item><p>priority flow control;</p></list-item>
+<list-item><p>prediction detection;</p></list-item>
+<list-item><p>dynamically split flows;</p></list-item>
+<list-item><p>flow reactivation.</p></list-item>
+</list>
+<p><italic>Priority rerouting</italic> changes the network flow paths with respect to their priority. This is done by changing the network routing tables. There are a number of different methods for routing according to flow ID. Examples include RSVP and MPLS. Standard IP routing tables only contain the next-hop based on the destination in the flow packet’s headers. The routing tables that are managed by the DRQC controller allow packets to be routed based on a flow ID. These flow ID paths through the network are set up, torn down, and otherwise managed by the DRQC based on the available bandwidth and flow priorities.</p>
+<p><italic>Priority flow control</italic> deals with starting and stopping flows according to priority. If there is no path available for a network flow based on the available link capacities, then the flow will be suspended in order to allow higher-priority flows to function. This allows higher-priority network flows to utilize the available network bandwidth before lower-priority network flows. The DRQC has the ability to adjust network flows to adapt to the current network situation. This is a key requirement to giving DRQC the capability to prevent network congestion.</p>
+<p><italic>Prediction detection</italic> is the controller’s ability to look at future queue size predictions from the Kalman filter. It is assumed that controller will have direct access to the actual and predicted queue size data for the network as a whole in small networks or for a region of the network in larger systems. On a non-Kalman filter link, the prediction is not available and the controller will only look at the actual queue size to see if there is congestion on the link. This feature reacts to the predictions through priority rerouting and priority flow control.</p>
+<p><italic>Dynamically splitting flows</italic> is the capability allows that the controller to use multiple paths for a single flow simultaneously in order to meet its bandwidth requirements. Many network routers do not support dynamically split flows since it adds complexity to the routing tables, but permitting split flows will typically allow more flows to be fitted into the network. In this article’s experiments, split flows were allowed. The split flow paths were computed using a minimum cost-flow solver called cost-scaling 2 (CS2).<sup><xref ref-type="bibr" rid="bibr12-1548512912445228">12</xref></sup> The experiments were run using NS2. Support for split flows was enabled using a custom-written routing algorithm to support the DRQC.</p>
+<p><italic>Flow reactivation</italic> deals with starting flows that were suspended to prevent network congestion. Each flow has a start time and end time. If a current active network flow finishes sending data and there are network flows that were suspended then the DRQC reevaluates network conditions to see if one or more of the suspended flows can be reactivated. This allows lower-priority flows to function after the higher-priority flows have finished streaming.</p>
+<p>To summarize, the DRQC receives network conditions and produces decisions to optimize the network, as illustrated in <xref ref-type="fig" rid="fig5-1548512912445228">Figure 5</xref>. The desire is to predict congestion levels and spare network capacity directly, but this is difficult. As a proxy for these measurements, network conditions take the form of actual and predicted outbound queue sizes at key routers in the network. This process is repeated at every prediction time step. For example, if the Kalman filter makes predictions at 5-second intervals then this process also occurs once every 5 seconds. The DRQC makes network management decisions based on the actual and predicted outbound router queue sizes. If little or no congestion is detected then the DRQC will not make changes unless network flows exist that have been suspended or rerouted due to previous network congestion. If the network can be improved by adjusting the routing of network flows or by restarting previously suspended flows then the DRQC will adjust the network routing tables accordingly. Either the DRQC will adjust the network to improve it or the network state will remain unchanged based on predicted network congestion levels.</p>
+<fig id="fig5-1548512912445228" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>State diagram of DRQC.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912445228-fig5.tif"/>
+</fig>
+</sec>
+<sec id="section4-1548512912445228">
+<title>4. Simulation</title>
+<p>In order to demonstrate the effectiveness of the DRQC, a set of simulations were developed and implemented. These simulations were performed using a network simulator called Network Simulator 2 (NS2). Four major simulation variations were performed 30 times each. These variations consisted of running without the DRQC, using the DRQC without NWM predictions, using the DRQC with the NWM making 1-second predictions into the future, and using the NWM to make 5-second predictions into the future. A series of network flows were sent through the network in a series of 30 trials. These network flows were intended to cause congestion in the network. The contention for the network allowed DRQC to intervene and repair the network congestion by rerouting and/or by shutting off lower-priority flows.</p>
+<sec id="section5-1548512912445228">
+<title>4.1. NS2</title>
+<p>The simulations in this article run using NS2. NS2 is an event-driven simulation tool that is used to study communication networks. Since its initial creation in 1989, NS2 has continued to grow in popularity in the research community.<sup><xref ref-type="bibr" rid="bibr13-1548512912445228">13</xref></sup> C++ and the Object-oriented Tool Command Language (OTcl) are the two main programming languages in NS2. C++ code defines the internal mechanism of NS2, while OTCL initializes a simulation scenario by creating the network topology, simulation traffic, the protocols in use, and other major scenario details.</p>
+<p>As seen in <xref ref-type="fig" rid="fig6-1548512912445228">Figure 6</xref>, the NS2 engine begins by reading in a scenario script coded in Tcl. Through the Tcl script, the NS2 engine creates links, nodes, network flows, and other network objects. Once these network objects are created, the simulation is executed. The steps described so far are consistent across all NS2 simulations. Kalman filter code has been added to the basic NS2 simulation source code. The Kalman filter uses a combination of Matlab code and a C++ interface to the outbound router queues for each node. At every prediction step, which is a user-defined time interval, the NS2 engine sends the current outbound queue sizes and current time to the Kalman filter modular. The Kalman filter module returns the predicted queue size at the next time step for each outbound link. The Kalman filter records the actual queue sizes and the predicted queue sizes in a data file for analysis of how well the Kalman filter is performing. The NS2 engine makes a trace file that contains all the actions executed in the network and a network animator (NAM) file that is used for visualization of the network in action. The Tcl script can be used to specify which nodes in the network will be outfitted with the Kalman prediction system.</p>
+<fig id="fig6-1548512912445228" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Overview of the DRQC implementation in NS2.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912445228-fig6.tif"/>
+</fig>
+</sec>
+<sec id="section6-1548512912445228">
+<title>4.2. Simulation setup</title>
+<p>Four variants of the DQRC simulation setup are tested. The first variation executes without the use of the DRQC. This variant demonstrates the impact of network congestion when the DRQC is not employed. The network flows in the system are sufficiently large so that they cause congestion in the network. This results in full queues and causes routers to drop packets. The queues will only return to nominal low levels when a given scenario’s network flows have finished streaming.</p>
+<p>The second variation utilizes the DRQC decisions which are only based on current network conditions. The second variation demonstrates the DRQC’s ability to fix network congestion. This is shown by comparing the results from the first and second variation. The difference in network congestion illustrates how well the DRQC performs. These comparisons are made by analyzing the queue size differences across the various Kalman filter queues. Although the second variation only uses the current queue size data and does not utilize predicted queue data, the queue size graph can nonetheless be used to indicate network congestion in a particular area of the network.</p>
+<p>The third variation utilizes the DRQC which is based on both predicted and current network conditions data. This variation utilizes both predicted and current queue size data to make intelligent decisions to optimize the network. This variation demonstrates the DRQC’s ability to utilize NWM predictions. This variation measures the performance improvement that occurs when the DRQC has access to future predicted queue sizes as a proxy for future congestion levels. Comparisons between the results from the second and third variation show how the prediction data impacts the DRQC’s reactions. This variation makes use of Kalman filters that make queue size predictions 1 second into the future.</p>
+<p>The fourth variation is the same as the third except it utilizes Kalman filters that make 5-second predictions into the future. This variation serves as an indication of the performance of the DRQC as the NWM is asked to make predictions farther into the future. This variation is compared with the third variation to see how the DRQC decisions are affected by these further into the future predictions.</p>
+<p>All variations utilize the same network topology and set of Kalman filter placements. The network topology used in the simulations in this experiment is shown in <xref ref-type="fig" rid="fig7-1548512912445228">Figure 7</xref>. The network links each have a bandwidth of 4 Mbps. The Kalman filters were placed in the middle of the network, as shown in <xref ref-type="fig" rid="fig7-1548512912445228">Figure 7</xref>. For each random scenario, 60 network flows were created. A flow consisted of a randomly selected source node, a randomly selected sink node, a packet transmission rate between 1,000 and 4,000 packets per second, constant sending rate randomly chosen between 1 and 4 Mbps, a duration ranging between 15 and 25 seconds, a priority ranging from 1 to 5, and a randomly selected start time between 1 and 100 seconds. Each packet was 1,000 bytes in length. In the network scenarios runs, each network flow sent between 1,000 and 4,000 packets a second. Each network flow was set to start streaming at a random time between 1 and 100 seconds. This resulted in a total runtime of 125 seconds. The flows each had a constant arrival rate. UDP and TCP flows were mixed. The transport protocol used by a given flow was chosen at random. A total of 30 trials were run for each of the four simulation variants. Each trial had a series of network flows were generated at random, as just described. The same set of 30 trials was used for each of the four simulation variants. In all cases, the routers had a maximum queue size of 1,000 packets. These network flows were intended to cause congestion in the network. The contention for the network allowed DRQC to intervene and repair the network congestion by rerouting and/or by shutting off lower-priority flows.</p>
+<fig id="fig7-1548512912445228" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Network topology of the DRQC simulation.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912445228-fig7.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section7-1548512912445228" sec-type="results">
+<title>5. Results</title>
+<p>The result averaged across 30 random trials for each of the four variants described above is shown in <xref ref-type="fig" rid="fig8-1548512912445228">Figure 8</xref>. Each graph shows the result as registered by Kalman filter 4. In the top graph, Kalman filter 4 peaks at a queue size of 158 packets when the DRQC is not used. When the DRQC is utilized without predictions, the peak network queue size is reduced by more than half to 75. When the DRQC utilizes 1 second Kalman filter predictions, peak network congestion is reduced to a queue size of 50 packets compared with 158 packets when Kalman filter prediction is not used. When the DRQC uses Kalman filter predictions that are 5 seconds into the future, the network congestion is again greater than is the case when using 1-second predictions or when no future network predictions are used with a peak size of 217 packets. From these results, it can be seen that predictions become less accurate as they are made farther into the future. When the DRQC controller is fed predictions 5 seconds into the future by the Kalman filters, it is noticeably less accurate in its network management and control than when it is fed 1-second predictions. Although the results are worse with 5-second predictions than those that those that used 1-second predictions, the results are still better than not using the Kalman filter prediction system at all. The results of each of the other Kalman filter queues were similar to those from Kalman filter 4 presented in <xref ref-type="fig" rid="fig8-1548512912445228">Figure 8</xref>. Simulations ran for 125 seconds, but there was no activity after 100 seconds in any of the trials run so only 120 seconds is shown in the graphs in <xref ref-type="fig" rid="fig8-1548512912445228">Figure 8</xref>.</p>
+<fig id="fig8-1548512912445228" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Graphs of the current and predicted queue sizes averaged across 30 trials for each of the four simulation variations.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912445228-fig8.tif"/>
+</fig>
+<p>Because the 30 trials are each randomly generated, some trials consist of flows that cause relatively little congestion while others result in a great deal of congestion. This explains why none of the averaged results come close to the 1,000 packet queue size limit in <xref ref-type="fig" rid="fig8-1548512912445228">Figure 8</xref>. <xref ref-type="fig" rid="fig9-1548512912445228">Figure 9</xref> shows a particular trial where the network flows do cause congestion in the network. As in <xref ref-type="fig" rid="fig8-1548512912445228">Figure 8</xref>, each graph in <xref ref-type="fig" rid="fig9-1548512912445228">Figure 9</xref> shows the result as registered by Kalman filter 4. In the top graph, Kalman filter 4 experiences network congestion at two points and reaches maximum queue size during both of these points. When the DRQC is utilized without predictions, the network congestion at both of these points is reduced by more than half. When the DRQC utilizes 1-second Kalman filter predictions, the first spike of network congestion is reduced to a peak of 700 packets compared with 950 packets when Kalman filter prediction are not used. When the DRQC uses Kalman filter predictions that are 5 seconds into the future, the network congestion is again greater than is the case when using 1-second predictions or when no future network predictions are used. These results reinforce the conclusions made based on the averaged data in <xref ref-type="fig" rid="fig8-1548512912445228">Figure 8</xref>. Namely, the DRQC aids in reducing congestion, particularly when combined with NWM data predicting 1 second into the future. The results of each of the other Kalman filter queues were similar to those from Kalman filter 4 presented in <xref ref-type="fig" rid="fig9-1548512912445228">Figure 9</xref>.</p>
+<fig id="fig9-1548512912445228" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>Graphs of the current and predicted queue sizes during the four variations at Kalman Filter 4.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912445228-fig9.tif"/>
+</fig>
+<p>The average queue size in each Kalman filter queue is shown in <xref ref-type="table" rid="table1-1548512912445228">Table 1</xref>. This table demonstrates that the queue size would reduce by over 50% when using the DRQC without Kalman filter predictions when compared to the network conditions when the DRQC was not used. Network congestion was reduced further when using Kalman filter predictions 1 second into the future. When using 5-second Kalman filter predictions, network congestion, as measured by link queue sizes, increases dramatically.</p>
+<table-wrap id="table1-1548512912445228" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Average queue size in the six Kalman filters</p>
+</caption>
+<graphic alternate-form-of="table1-1548512912445228" xlink:href="10.1177_1548512912445228-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">No DRQC versus DRQC without predictions</th>
+<th align="left">DRQC without predictions versus DRQC with 1-second predictions</th>
+<th align="left">DRQC with 1-second predictions versus DRQC with 5-second predictions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Queue 1</td>
+<td>−60.75%</td>
+<td>−31.54%</td>
+<td>171.81%</td>
+</tr>
+<tr>
+<td>Queue 2</td>
+<td>−61.79%</td>
+<td>−5.65%</td>
+<td>106.81%</td>
+</tr>
+<tr>
+<td>Queue 3</td>
+<td>−60.44%</td>
+<td>−13.26%</td>
+<td>99.58%</td>
+</tr>
+<tr>
+<td>Queue 4</td>
+<td>−62.82%</td>
+<td>−11.61%</td>
+<td>143.91%</td>
+</tr>
+<tr>
+<td>Queue 5</td>
+<td>−56.17%</td>
+<td>−10.24%</td>
+<td>77.57</td>
+</tr>
+<tr>
+<td>Queue 6</td>
+<td>−85.75%</td>
+<td>3.98%</td>
+<td>221.00%</td>
+</tr>
+<tr>
+<td>Sum of All Queues</td>
+<td>−61.16%</td>
+<td>−12.86%</td>
+<td>110.4%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The average number of packets sent during these simulations is shown in <xref ref-type="table" rid="table2-1548512912445228">Table 2</xref>. The results in the table demonstrate that when network congestion was detected, lower-priority network flows were altered or paused at a greater rate than was the case with higher-priority flows. When comparing DRQC without predictions and to DRQC using Kalman filter predictions made 1 second into the future, the number of priority 1 and 2 packets is higher than is the case for lower-priority flows.</p>
+<table-wrap id="table2-1548512912445228" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Packets sent by priority during the simulation</p>
+</caption>
+<graphic alternate-form-of="table2-1548512912445228" xlink:href="10.1177_1548512912445228-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">No DRQC versus DRQC without predictions</th>
+<th align="left">DRQC without predictions versus DRQC with 1-second predictions</th>
+<th align="left">DRQC with 1-second predictions versus DRQC with 5-second predictions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Priority 1</td>
+<td>−6.30%</td>
+<td>0.57%</td>
+<td>0.38%</td>
+</tr>
+<tr>
+<td>Priority 2</td>
+<td>−14.68%</td>
+<td>0.20%</td>
+<td>2.13%</td>
+</tr>
+<tr>
+<td>Priority 3</td>
+<td>−22.69%</td>
+<td>−0.06%</td>
+<td>3.64%</td>
+</tr>
+<tr>
+<td>Priority 4</td>
+<td>−33.57%</td>
+<td>−0.52%</td>
+<td>9.55%</td>
+</tr>
+<tr>
+<td>Priority 5</td>
+<td>−40.31%</td>
+<td>−1.08%</td>
+<td>7.91%</td>
+</tr>
+<tr>
+<td>Overall</td>
+<td>−24.01%</td>
+<td>−0.11%</td>
+<td>4.30%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The number of packets that were dropped during these simulations is shown in <xref ref-type="table" rid="table3-1548512912445228">Table 3</xref>. The number of packets dropped was reduced by nearly 100% from all flows regardless of their priority. The percentages rise markedly when using Kalman filter predictions 5 seconds into the future. This is because the number of packets dropped averaged a level of roughly 100 packets when using 1-second predictions, but rose to over 2,000 packets when using 5-second predictions. Over 10,000 packets were dropped on average when the DRQC was not used at all.</p>
+<table-wrap id="table3-1548512912445228" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Packets dropped by priority during the simulation</p>
+</caption>
+<graphic alternate-form-of="table3-1548512912445228" xlink:href="10.1177_1548512912445228-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">No DRQC versus DRQC without predictions</th>
+<th align="left">DRQC without predictions versus DRQC with 1-second predictions</th>
+<th align="left">DRQC with 1-second predictions versus DRQC with 5-second predictions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Priority 1</td>
+<td>−96.69%</td>
+<td>−42.97%</td>
+<td>1437.52%</td>
+</tr>
+<tr>
+<td>Priority 2</td>
+<td>−97.90%</td>
+<td>−36.62%</td>
+<td>1539.88%</td>
+</tr>
+<tr>
+<td>Priority 3</td>
+<td>−98.51%</td>
+<td>−53.12%</td>
+<td>2840.48%</td>
+</tr>
+<tr>
+<td>Priority 4</td>
+<td>−98.87%</td>
+<td>−40.08%</td>
+<td>2874.76%</td>
+</tr>
+<tr>
+<td>Priority 5</td>
+<td>−98.67%</td>
+<td>−49.06%</td>
+<td>1983.40%</td>
+</tr>
+<tr>
+<td>Overall</td>
+<td>−98.18%</td>
+<td>−43.56%</td>
+<td>1926.27%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The average packet latency, defined as the end-to-end delay for the packets that were sent and received, is shown in <xref ref-type="table" rid="table4-1548512912445228">Table 4</xref>. The latency dramatically improved when comparing results with the DRQC to those without the DRQC. Latency improved further when using 1 second Kalman filter predictions, but increased when using 5-second predictions. The reason for this is that queues remain relatively small when packet streams are managed well and packets flow through the network relatively quickly. Congestion leads to large outbound router queues and slow transmission times.</p>
+<table-wrap id="table4-1548512912445228" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Latency by priority during the simulation</p>
+</caption>
+<graphic alternate-form-of="table4-1548512912445228" xlink:href="10.1177_1548512912445228-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">No DRQC versus DRQC without predictions</th>
+<th align="left">DRQC without predictions versus DRQC with 1-second predictions</th>
+<th align="left">DRQC with 1-second predictions versus DRQC with 5-second predictions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Priority 1</td>
+<td>−45.83%</td>
+<td>−7.94%</td>
+<td>62.17%</td>
+</tr>
+<tr>
+<td>Priority 2</td>
+<td>−56.35%</td>
+<td>−8.42%</td>
+<td>82.57%</td>
+</tr>
+<tr>
+<td>Priority 3</td>
+<td>−64.67%</td>
+<td>−15.79%</td>
+<td>101.71%</td>
+</tr>
+<tr>
+<td>Priority 4</td>
+<td>−71.51%</td>
+<td>−12.80%</td>
+<td>118.21%</td>
+</tr>
+<tr>
+<td>Priority 5</td>
+<td>−67.47%</td>
+<td>−12.84%</td>
+<td>104.75%</td>
+</tr>
+<tr>
+<td>Overall</td>
+<td>−45.83%</td>
+<td>−7.94%</td>
+<td>62.17%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The performance of the DRQC is similar in each of these five approaches to measuring network performance. Network performance was improved when using the DRQC without prediction data and improved even more when using Kalman filters making 1-second predictions into the future. When using 5-second prediction data, network performance was worse than when using 1-second data but was still better than when not using the DRQC at all. These results demonstrate that the DRQC improves network performance overall, and particularly favors network flows with high priorities. This ensures that the most valuable network flows gain access to valuable network resources before less important network flows.</p>
+</sec>
+<sec id="section8-1548512912445228">
+<title>6. Conclusion</title>
+<p>While many public networks, such as the Internet, are too chaotic to control effectively, there are many special-purpose networks in application areas such as critical infrastructure protection and control systems, disaster rescue operation networks, and military tactical networks where there is enough predictability and control to manage effectively. This article proposes using situational awareness regarding the state of the network and the priorities of its users in order to allow for enhanced network management. Specifically, the article presents a DRQC to manage information streams based on their priorities and near-term predictions about future network congestion levels. The network predictions are extrapolated from outbound router queue sizes by Kalman filters in a system known as the NWM. The information streams are managed in the form of network flows. Through the utilization of predicted and current queue size data, this research demonstrates that it is possible to detect, locate, and manage network congestion with the goal of getting the most mission impact possible from a network communication infrastructure.</p>
+<p>This article proposes the use of outbound router queue size predictions as a proxy for congestion based on Kalman filters. Past research has shown that Kalman filters can be utilized to make network congestion predictions in small two-node networks. This research demonstrated how Kalman filters perform in a larger simulated 14-node network. A network controller was designed and implemented to use the Kalman filter predictions called the DRQC. The DRQC can take in the current and predicted situation, and manage the network traffic, in the form of network flows, to favor the traffic with highest mission impact. The network flows have a priority, which can be set by administrators to correspond to the just mentioned mission impact, and the DRQC can ensure the highest priority flows reach their destination with little or no interference from network congestion.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This research was jointly sponsored by the Air Force Research Laboratory (grant numbers FRHBKC1084G001 and F4HBKC1084G002) and the Air Force Office of Scientific Research (grant number F1ATA01103J001).</p>
+</fn>
+<fn fn-type="conflict">
+<label>Conflict of interest statement</label>
+<p>The views expressed in this article are those of the authors and do not reflect the official policy or position of the United States Air Force, Department of Defense, or the U.S. Government.</p>
+</fn>
+</fn-group>
+<bio>
+<title>Author Biographies</title>
+<p><bold>James D Haught</bold> received a BS in Computer Science from Wright State University in 2009 and a MS in Computer Science from the Air Force Institute of Technology in 2011. He is currently an interface specialist at MED3000 in Miamisburg, Ohio. His research interests lie in the areas of network optimization, mobile <italic>ad hoc</italic> networks, and software development.</p>
+<p><bold>Kenneth M Hopkinson</bold> received a BS in Computer Science from Rensselaer Polytechnic Institute in 1997, an MS in Computer Science from Cornell University in 2002, and a PhD in Computer Science from Cornell University in 2004. He is currently an Associate Professor of Computer Science at the Air Force Institute of Technology. His research interests include simulation, networking, security, and distributed systems.</p>
+<p><bold>Jeffrey M Hemmes</bold> received a BS in Computer at Indiana University South Bend in 1997, an MS in Computer Science at the Air Force Institute of Technology in 1999, and a PhD in Computer Science and Engineering at the University of Notre Dame in 2009. He is an Assistant Professor of Computer Engineering at the Air Force Institute of Technology, and has been assigned to AFIT since 2008. His research interests include mobile <italic>ad hoc</italic> networks, distributed systems, cooperative computing, and software engineering.</p>
+</bio>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1548512912445228">
+<label>1.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Compton</surname><given-names>M</given-names></name>
+</person-group>. <article-title>The Network Tasking Order (NTO)</article-title>. In <conf-name>IEEE Military Communications Conference</conf-name>, <year>2008</year>, pp. <fpage>1</fpage>–<lpage>7</lpage>.</citation>
+</ref>
+<ref id="bibr2-1548512912445228">
+<label>2.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Pecarina</surname><given-names>JM</given-names></name>
+</person-group>. <source>Creating an Agent Based Framework to Maximize Information Utility</source>. Thesis, <publisher-name>Air Force Institute of Technology, WPAFB</publisher-name>, <publisher-loc>OH</publisher-loc>, <year>2008</year>.</citation>
+</ref>
+<ref id="bibr3-1548512912445228">
+<label>3.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Simon</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Innovatia</article-title>, <month>April</month> <year>2009</year>. Available at: <ext-link ext-link-type="uri" xlink:href="http://www.innovatia.com/software/papers/kalman.htm">http://www.innovatia.com/software/papers/kalman.htm</ext-link></citation>
+</ref>
+<ref id="bibr4-1548512912445228">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Xia</surname><given-names>Yuanqing</given-names></name>
+<name><surname>Shang</surname><given-names>Jizong</given-names></name>
+<name><surname>Chen</surname><given-names>Jie</given-names></name>
+<name><surname>Liu</surname><given-names>Guo-Ping</given-names></name>
+</person-group>. <article-title>Networked data fusion with packet losses and variable delays</article-title>. <source>IEEE Trans Syst Man Cybernet B Cybernet</source> <year>2009</year>; <volume>39</volume>: <fpage>1107</fpage>–<lpage>1120</lpage>.</citation>
+</ref>
+<ref id="bibr5-1548512912445228">
+<label>5.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Kim</surname><given-names>Mingook</given-names></name>
+</person-group>. <source>Stochastic Estimation and Control Of Queues within a Computer Network</source>. Thesis, <publisher-name>Air Force Institute of Technology, WPAFB</publisher-name>, <publisher-loc>OH</publisher-loc>, <year>2009</year>.</citation>
+</ref>
+<ref id="bibr6-1548512912445228">
+<label>6.</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Stuckey</surname><given-names>N</given-names></name>
+</person-group>. <source>Stochastic Estimation and Control of Queues Within a Computer Network</source>. Technical report, Wright-Patterson AFB, <year>2007</year>.</citation>
+</ref>
+<ref id="bibr7-1548512912445228">
+<label>7.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wolski</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Forecasting network performance to support dynamic scheduling using the network weather service</article-title>. In <conf-name>Proceedings of the Sixth International Symposium on High Performance Distributed Computing</conf-name>. <conf-loc>Portland, OR</conf-loc>, <year>1997</year>, pp. <fpage>316</fpage>–<lpage>325</lpage>.</citation>
+</ref>
+<ref id="bibr8-1548512912445228">
+<label>8.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Fletcher</surname><given-names>KA</given-names></name>
+<name><surname>Goyal</surname><given-names>VK</given-names></name>
+</person-group>. <article-title>Estimation from lossy sensor data: Jump linear modeling and Kalman filtering</article-title>. In <conf-name>Proceedings 3rd AXM/IEEE International Symposium on Information Processing and Sensor Networks</conf-name>, <conf-loc>Berkeley, CA</conf-loc>, <year>2004</year>, pp. <fpage>251</fpage>–<lpage>258</lpage>.</citation>
+</ref>
+<ref id="bibr9-1548512912445228">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Smith</surname><given-names>SC</given-names></name>
+<name><surname>Seiler</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Estimation with lossy measurements: Jump estimator for jump systems</article-title>. <source>IEEE Trans Automat Control</source> <year>2003</year>; <volume>48</volume>: <fpage>2163</fpage>–<lpage>2171</lpage>.</citation>
+</ref>
+<ref id="bibr10-1548512912445228">
+<label>10.</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Xia</surname><given-names>Yuanqing</given-names></name>
+<name><surname>Shang</surname><given-names>Jizong</given-names></name>
+<name><surname>Chen</surname><given-names>Jie</given-names></name>
+<name><surname>Liu</surname><given-names>Guo-Ping</given-names></name>
+</person-group>, <article-title>“Networked Data Fusion With Packet Losses and Variable Delays,” Systems, Man, and Cybernetics, Part B: Cybernetics, IEEE Transactions on</article-title>, pp. <fpage>1107</fpage>–<lpage>1120</lpage>, <year>2009</year>.</citation>
+</ref>
+<ref id="bibr11-1548512912445228">
+<label>11.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Gocmen</surname><given-names>M</given-names></name>
+<name><surname>Hopkinson</surname><given-names>KM</given-names></name>
+<name><surname>Compton</surname><given-names>M</given-names></name>
+</person-group>. <article-title>The benefits of a network tasking order in combat search and rescue missions</article-title>. In <conf-name>2009 Military Communications Conference (MILCOM)</conf-name>, <conf-date>18–21 October</conf-date> <year>2009</year>, <conf-loc>Boston, MA, USA</conf-loc>, pp. <fpage>1</fpage>–<lpage>7</lpage>.</citation>
+</ref>
+<ref id="bibr12-1548512912445228">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Goldberg</surname><given-names>AV</given-names></name>
+</person-group>. <article-title>An efficient implementation of a scaling minimum-cost flow algorithm</article-title>. <source>J Algorithms</source> <year>1997</year>; <volume>22</volume>: <fpage>1</fpage>–<lpage>29</lpage>.</citation>
+</ref>
+<ref id="bibr13-1548512912445228">
+<label>13.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Issariyakul</surname><given-names>T</given-names></name>
+<name><surname>Hossain</surname><given-names>E</given-names></name>
+</person-group>. <source>Introduction to Network Simulator NS2</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2010</year>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

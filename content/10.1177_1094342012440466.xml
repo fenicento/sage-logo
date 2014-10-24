@@ -1,0 +1,1406 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">HPC</journal-id>
+<journal-id journal-id-type="hwp">sphpc</journal-id>
+<journal-title>The International Journal of High Performance Computing Applications</journal-title>
+<issn pub-type="ppub">1094-3420</issn>
+<issn pub-type="epub">1741-2846</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1094342012440466</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1094342012440466</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Multi-core and many-core shared-memory parallel raycasting volume rendering optimization and tuning</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name>
+<surname>Bethel</surname>
+<given-names>E Wes</given-names>
+</name>
+<xref ref-type="aff" rid="aff1-1094342012440466">1</xref>
+<xref ref-type="corresp" rid="corresp1-1094342012440466"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Howison</surname>
+<given-names>Mark</given-names>
+</name>
+<xref ref-type="aff" rid="aff2-1094342012440466">2</xref>
+</contrib>
+<bio>
+<title>Author Biographies</title>
+<p>
+<italic>E Wes Bethel</italic> is a Computer Scientist at Lawrence Berkeley National Laboratory, where is is a member of and Group Leader for the Scientific Visualization Group. The group’s activities include visualization and analytics research, development, and deployment, all of which focus on increasing scientific productivity through better visual data understanding technologies. His research interests include computer graphics and visualization software architecture, remote and distributed visualization algorithms, latency tolerant and parallel graphics, visualization, and analysis techniques. He received an MS in Computer Science from the University of Tulsa, and a PhD in Computer Science from the University of California–Davis. He is a member of ACM, ACM/SIGGRAPH, ACM/SIGHPC, and IEEE.</p>
+<p>
+<italic>Mark Howison</italic> is an application scientist at Brown University’s Center for Computation and Visualization and a Computer Systems Engineer in Lawrence Berkeley National Laboratory’s Visualization Group. His research interests include scientific computing, visualization, graphics, and parallel I/O. Howison has an MS in Computer Science from the University of California, Berkeley.</p>
+</bio>
+</contrib-group>
+<aff id="aff1-1094342012440466">
+<label>1</label>Computational Research Division, Lawrence Berkeley National Laboratory, Berkeley, CA, USA</aff>
+<aff id="aff2-1094342012440466">
+<label>2</label>Center for Computation and Visualization, Brown University, Providence, RI, USA</aff>
+<author-notes>
+<corresp id="corresp1-1094342012440466">E Wes Bethel, Computational Research Division, Lawrence Berkeley National Laboratory, One Cyclotron Road, Mail Stop 50F, Berkeley, CA 94720, USA Email: <email>ewbethel@lbl.gov</email>
+</corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>11</month>
+<year>2012</year>
+</pub-date>
+<volume>26</volume>
+<issue>4</issue>
+<issue-title>Special Issue: Manycore and Accelerator-based High-performance Scientific Computing</issue-title>
+<fpage>399</fpage>
+<lpage>412</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Given the computing industry trend of increasing processing capacity by adding more cores to a chip, the focus of this work is tuning the performance of a staple visualization algorithm, raycasting volume rendering, for shared-memory parallelism on multi-core CPUs and many-core GPUs. Our approach is to vary tunable algorithmic settings, along with known algorithmic optimizations and two different memory layouts, and measure performance in terms of absolute runtime and L2 memory cache misses. Our results indicate there is a wide variation in runtime performance on all platforms, as much as 254% for the tunable parameters we test on multi-core CPUs and 265% on many-core GPUs, and the optimal configurations vary across platforms, often in a non-obvious way. For example, our results indicate the optimal configurations on the GPU occur at a crossover point between those that maintain good cache utilization and those that saturate computational throughput. This result is likely to be extremely difficult to predict with an empirical performance model for this particular algorithm because it has an unstructured memory access pattern that varies locally for individual rays and globally for the selected viewpoint. Our results also show that optimal parameters on modern architectures are markedly different from those in previous studies run on older architectures. In addition, given the dramatic performance variation across platforms for both optimal algorithm settings and performance results, there is a clear benefit for production visualization and analysis codes to adopt a strategy for performance optimization through auto-tuning. These benefits will likely become more pronounced in the future as the number of cores per chip and the cost of moving data through the memory hierarchy both increase.</p>
+</abstract>
+<kwd-group>
+<kwd>parallel volume rendering</kwd>
+<kwd>performance optimization</kwd>
+<kwd>auto-tuning</kwd>
+<kwd>multi-core CPU</kwd>
+<kwd>many-core GPU</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1094342012440466">
+<title>1 Introduction</title>
+<p>For the past two decades, a majority of high-performance parallel computing research, including much visualization research, has focused on the large, commercial off-the-shelf (COTS)-based distributed memory system as the primary platform. These systems have become more powerful due to a combination of faster processors, faster memory, and faster interconnect. Up until recently, growth in processor speed and capacity more or less followed Moore's law: transistors shrank, allowing more of them to be packed into a given unit area of silicon, and clock rates increased. As heat and power constraints may limit future gains, multi-core processors have emerged as industry's solution.</p>
+<p>In computational science research communities, recent research has focused on the problem of adapting algorithms to make effective use of this ‘new' platform, the multi-core processor. Achieving optimal algorithm performance typically involves a careful examination of how an algorithm moves data through the memory hierarchy. Unfortunately, the cache hierarchies and memory management systems evolve at a very fast pace. Increasingly, there is often a non-obvious relationship between algorithmic parameters such as blocking strategies, their impact on memory utilization, and in turn the relationship with runtime issues. For example, on GPUs, performance can be highly sensitive to the degree to which threads in a thread block all execute the same code: performance will degrade when there is conditional branching and threads execute different code paths. Recent work has shown there is not necessarily a clear correlation between the amount of memory traffic and absolute runtime (<xref ref-type="bibr" rid="bibr7-1094342012440466">Datta et al. 2009b</xref>), a result confirmed by our study here. At best, multi-processor algorithmic performance models, which are derived using a combination of architectural knowledge and empirical runtime observations, can predict performance bounds, but do not always offer advice on how algorithms should be tuned to produce optimal performance, particularly in light of architecture-specific characteristics, such as thread divergence on GPUs.</p>
+<p>As a result, the computational science community has evolved a technique known as ‘auto-tuning' which is methodology for finding the combinations of tunable algorithmic parameters that result in the best performance of an algorithm on a particular platform for a particular problem size. This approach has been used with success to optimize the performance of stencil-based codes on multi-core CPUs and many-core GPUs (<xref ref-type="bibr" rid="bibr6-1094342012440466">Datta et al. 2008</xref>, <xref ref-type="bibr" rid="bibr7-1094342012440466">2009b</xref>, <xref ref-type="bibr" rid="bibr5-1094342012440466">a</xref>; <xref ref-type="bibr" rid="bibr17-1094342012440466">Hollingsworth and Tiwari 2010</xref>; <xref ref-type="bibr" rid="bibr21-1094342012440466">Kamil et al. 2010</xref>; <xref ref-type="bibr" rid="bibr38-1094342012440466">Williams et al. 2010</xref>). Auto-tuning is based upon the premise that one can enumerate all possible tunable configurations of an algorithm. As the number of potential permutations of configuration can be quite large, search strategies have emerged as a research area to avoid having to perform an exhaustive search of all possible configurations.</p>
+<p>The contribution of this work is an application of auto-tuning principles (the systematic exploration of tunable algorithmic parameters, known algorithmic optimizations, and memory layout strategies) to study the relative performance gain of a staple visualization algorithm, raycasting volume rendering, on two multi-core CPUs and one many-core GPU by measuring absolute runtime as well as memory cache utilization (L2 cache misses via hardware performance counters). The comparison of hardware performance counter and runtime data helps to provide deeper insight into the relationship between memory traffic, cache utilization, and absolute runtime for volume rendering using known algorithmic optimizations. Our test results reveal a wide variation in runtime performance across all platforms and datasets, as much as 254% on the CPU and 265% on the GPU. The settings that produce the best performance vary from problem to problem and platform to platform, often in a non-obvious way. For example, our results indicate the best-performing configurations on the GPU occur at a crossover between memory utilization and thread divergence, a result that is likely to be extremely difficult, if not impossible, to predict with an empirical performance model.</p>
+<p>The auto-tuning methodology, which is familiar to the computational science community, is relatively unexplored in the visualization community. The settings and algorithmic optimizations that result in the ‘best performance' will change as platforms evolve: our results suggest very different settings than earlier work due to the evolution in memory and processor technology. The focus of this work is a thorough study of the performance and memory utilization characteristics of known algorithmic optimizations on modern platforms. The findings reveal insights about their performance on modern platforms, including the fact that an optimization (Z-order memory layout) initially designed to be ‘cache friendly' on decade-old single-core technology is surprisingly beneficial on modern GPUs. The auto-tuning methodology will likely prove useful in suggesting new algorithmic optimizations and evolution on future platforms where core density increases along with the cost of moving data through the memory hierarchy.</p>
+</sec>
+<sec id="section2-1094342012440466">
+<title>2 Previous work</title>
+<p>Levoy's formulation for raycasting volume rendering is the process of casting rays through a 3D volume and integrating color and opacity along the ray's length to produce a final pixel color (<xref ref-type="bibr" rid="bibr24-1094342012440466">Levoy 1988</xref>). A common approach for parallelizing this staple visualization algorithm produces what is known as ‘hybrid volume rendering' (<xref ref-type="bibr" rid="bibr26-1094342012440466">Ma et al. 1993</xref>; <xref ref-type="bibr" rid="bibr36-1094342012440466">Tiwari and Huntsberger 1994</xref>; <xref ref-type="bibr" rid="bibr25-1094342012440466">Ma 1995</xref>; <xref ref-type="bibr" rid="bibr1-1094342012440466">Bajaj et al. 1999</xref>), which is a two-stage algorithm where data is partitioned across processors to be rendered with raycasting (<xref ref-type="bibr" rid="bibr11-1094342012440466">Drebin et al. 1988</xref>; <xref ref-type="bibr" rid="bibr24-1094342012440466">Levoy 1988</xref>; <xref ref-type="bibr" rid="bibr33-1094342012440466">Sabella 1988</xref>; <xref ref-type="bibr" rid="bibr37-1094342012440466">Upson and Keeler 1988</xref>). Each processor generates a partial image, and these are combined in a second algorithmic stage using compositing (<xref ref-type="bibr" rid="bibr11-1094342012440466">Drebin et al. 1988</xref>; <xref ref-type="bibr" rid="bibr24-1094342012440466">Levoy 1988</xref>; <xref ref-type="bibr" rid="bibr37-1094342012440466">Upson and Keeler 1988</xref>).</p>
+<p>
+<xref ref-type="bibr" rid="bibr29-1094342012440466">Nieh and Levoy (1992)</xref> describe a parallel ray tracing volume rendering algorithm that runs on a shared-memory platform and uses a task-queue image partitioning technique where screen pixels are partitioned amongst processors. <xref ref-type="bibr" rid="bibr31-1094342012440466">Palmer et al. (1998)</xref> studied two parallel partitioning and dynamic load balancing algorithms to explore the tradeoffs between their memory hierarchy performance. They suggest that image-order decomposition strategies suffer from a lack of locality in accessing the 3D volume data: during the ray integration loop, the most resource intensive part of the raycasting volume rendering algorithm, a given ray may need to access any voxel within the source volume. This lack of locality can result in ‘cache thrashing', which is a relatively low level of cache reuse. They report that object-parallel partitionings scale well, and this form of partitioning has been adopted as the basis for parallel work decomposition in many subsequent works (e.g. <xref ref-type="bibr" rid="bibr20-1094342012440466">Hsu 1993</xref>; <xref ref-type="bibr" rid="bibr10-1094342012440466">DeMarle et al. 2003</xref>; <xref ref-type="bibr" rid="bibr4-1094342012440466">Cavin et al. 2005</xref>; <xref ref-type="bibr" rid="bibr39-1094342012440466">Yu et al. 2008</xref>). In contrast, our work here is a more comprehensive, systematic exploration of the relationship between algorithmic optimization and tunable algorithmic parameters (image tile size, work assignment strategy, and alternative memory layouts for the source data, and algorithmic optimizations) and their impact on algorithm performance in terms of runtime and cache utilization measured via hardware performance counters.</p>
+<p>Looking more closely at the impact of memory accesses and algorithmic performance, <xref ref-type="bibr" rid="bibr16-1094342012440466">Grim et al. (2004)</xref> explored the performance impact resulting when varying the size of data blocks allocated to processors in object-order parallel volume rendering on a shared-memory, multi-core CPU platform. Their objective is to minimize the number of repeated voxel loads, so their approach is to use an ‘advancing ray-front' approach (<xref ref-type="bibr" rid="bibr23-1094342012440466">Law and Yagel 1996</xref>) combined with small data blocks that will fit within cache so as to exploit spatial locality. In contrast, our approach is to exploit temporal, rather than spatial coherence, in an image-parallel approach that is portable to multi-core CPUs and many-core GPUs, as well as comparing performance of alternative memory layouts.</p>
+<p>With the aim of exploring a memory layout that is more ‘cache friendly', <xref ref-type="bibr" rid="bibr32-1094342012440466">Pascucci and Frank (2001)</xref> used an indexing scheme based upon the Lebesgue, or Z-order, space-filling curve to improve and optimize progressive visualization algorithms. This data layout has desirable spatial locality properties: at any point in the mesh, nearby points are nearby in memory or storage. In our study, we wish to compare the performance impact of this type of data layout in shared-memory parallel raycasting volume rendering with array-order memory layout and with interactions of other algorithmic optimizations and tunable algorithmic parameters.</p>
+<p>Whereas CPU-based volume rendering techniques span both object- and image-order parallel approaches, GPU-based volume rendering algorithms tend to exploit image-level parallelism. Examples including implementing volume rendering as a fragment program with raycasting (<xref ref-type="bibr" rid="bibr22-1094342012440466">Krüeger and Westermann 2003</xref>; <xref ref-type="bibr" rid="bibr34-1094342012440466">Stegmaier et al. 2005</xref>; <xref ref-type="bibr" rid="bibr15-1094342012440466">Gobbetti et al. 2008</xref>; <xref ref-type="bibr" rid="bibr13-1094342012440466">Fogal and Krüger 2010</xref>). The basic idea with these implementations is to draw a proxy geometry where the fragment program, invoked during rasterization, performs the actual raycasting volume rendering. The degree of parallelism is a function of the number of fragment programs that can be run at once by a given GPU. With this approach, there is no direct opportunity for tuning algorithm performance in terms of parameters such as block size, which may provide the opportunity for performance gains through improved temporal cache locality.</p>
+<p>
+<xref ref-type="bibr" rid="bibr27-1094342012440466">Marsalek et al. (2008)</xref> implement a raycasting volume rendering kernel in CUDA. As with our CUDA implementation, theirs is an image-parallel approach where each CUDA thread performs raycasting on an image pixel. Their results suggest that CUDA kernels perform at a rate commensurate with earlier fragment-based approaches. They achieve a performance boost by a process of manual experimentation with thread block size, the number of threads per thread block, to find a good balance between register and shared memory use. In contrast, we systematically explore and report on the performance impact of varying the thread block size as well as alternative memory layouts.</p>
+<p>In recent years, there has been a great deal of activity focusing on optimizing the performance of codes on parallel computing platforms. Given the diversity of computer architectures, along with their rapid change, a technique known as ‘auto-tuning' has emerged as a way to tune codes to achieve optimal performance (<xref ref-type="bibr" rid="bibr6-1094342012440466">Datta et al. 2008</xref>; <xref ref-type="bibr" rid="bibr17-1094342012440466">Hollingsworth and Tiwari 2010</xref>; <xref ref-type="bibr" rid="bibr38-1094342012440466">Williams et al. 2010</xref>). Auto-tuning is based upon the premise that one can enumerate all possible tunable configurations of an algorithm for a given problem size. As the number of potential permutations of configuration can be quite large, search strategies have emerged as a research area to avoid having to perform an exhaustive search of all possible configurations. Alternately, some recent research, such as that by <xref ref-type="bibr" rid="bibr8-1094342012440466">de la Cruz and Araya-Polo (2011)</xref>, focuses on deriving a predictive performance model for a 3D stencil computation code, which has a uniform and predictable memory access pattern. The problem we are studying here, raycasting volume rendering, is representative of a class of algorithm that performs ‘unstructured' or ‘non-uniform' memory access. In particular, since our implementation uses perspective projection during rendering (<xref ref-type="bibr" rid="bibr14-1094342012440466">Foley et al. 1990</xref>), each of the rays through the volume will diverge from one another along their length moving away from the viewpoint. The result is that each ray's memory access pattern is different than all other ray's memory access patterns. Therefore, this application is well suited for auto-tuning. While we perform what amounts to an exhaustive search of the space of tunable algorithmic parameters, interesting future work could focus on using one of several different search strategies to avoid the expensive exhaustive search.</p>
+<p>Our work extends previous studies to explore the effect of varying the size of the image-tile partitioning and memory layout options in a shared-memory volume renderer on modern multi-core CPU and many-core GPU platforms. Specifically, we wish to understand the relationship between various tunable algorithmic parameters, namely tile size and shape, and memory layout alternative, with performance on a variety of platforms run on a variety of different problems. Do different size or shape tiles or different memory layouts result in better use of memory hierarchy? What is the difference in performance that results from different configurations? Is the performance and memory utilization sufficiently variable to warrant use of auto-tuning for large, production runs? Does a known algorithmic optimization, such as early ray termination, offer a performance gain on a platform such as the GPU where there is a performance penalty for thread divergence?</p>
+<p>These questions help us to better understand how tunable algorithmic parameters can affect performance on multi- and many-core systems. While the work in this study focuses on single-node rather than extreme concurrency configurations, our work here helps to reveal how to improve performance at extreme concurrencies by speeding the shared-memory parallel raycasting volume rendering by establishing algorithmic parameter settings that result in optimal, or near-optimal, performance. These single-socket configurations then comprise building blocks in large-scale multi-core hybrid-parallel and hybrid volume rendering applications executed at extreme concurrency, as in the case of recent work by <xref ref-type="bibr" rid="bibr18-1094342012440466">Howison et al. (2010)</xref>, or in situations where multiple GPUs are employed as part of a distributed-memory parallel implementation (<xref ref-type="bibr" rid="bibr12-1094342012440466">Fogal et al. 2010</xref>).</p>
+</sec>
+<sec id="section3-1094342012440466">
+<title>3 System design and implementation</title>
+<p>Our implementation is a raycasting volume renderer that follows Levoy's formulation (<xref ref-type="bibr" rid="bibr24-1094342012440466">Levoy 1988</xref>) and that is parallelized using a shared-memory programming model. In our parallel implementation, each thread is responsible for casting rays into the volume, performing color and opacity integration along its ray, and writing the result into a final image buffer. We are using an image-space decomposition: there is one single copy of the volume data, the work is divided up amongst threads such that each thread is assigned a separate part of the image space. We use this algorithm design pattern and parallelization strategy on both multi-core CPUs (Section 3.1) and many-core GPUs (Section 3.2), along with alternative memory layouts (Section 3.3).</p>
+<sec id="section4-1094342012440466">
+<title>3.1 Multi-core CPU implementation</title>
+<sec id="section5-1094342012440466">
+<title>3.1.1 Shared memory volume rendering</title>
+<p>For the implementation in this study, our implementation uses POSIX threads (<xref ref-type="bibr" rid="bibr2-1094342012440466">Butenhof 1997</xref>) as the shared memory programming model and execution environment. Upon startup, the application launches a user-specified number of rendering threads. Each of these threads is a slave that executes an event loop. A master thread tells all slave threads to execute a particular task, e.g., render the volume. A pair of shared memory barriers serve to synchronize the communication between the master and slave threads in the event loop. Prior to releasing the slave threads for rendering, the master thread will compute a number of values that are common across all slave rendering threads, e.g., inverse of model-view matrix, etc., and store these values into a shared-memory data structure that is visible to all threads.</p>
+</sec>
+<sec id="section6-1094342012440466">
+<title>3.1.2 Shared memory parallel work/block decomposition</title>
+<p>The approach we use for parallelism in this study is to have each thread independently cast rays into the volume to produce final image pixels; the master thread computes a list of work assignments for each thread, then each thread independently processes the list of work assignments. Each work assignment, or work block, consists of a spatially disjoint region of the final image, and a single thread will perform raycasting over all pixels in its assigned work block, then move on to the next work block. We explore two methods for assigning work blocks to threads: (1) a static assignment, where the master assigns blocks to threads in a round-robin fashion; and (2) a dynamic assignment where threads request work blocks from a single work queue. The user specifies an arbitrary tessellation of the output image that forms the basis for the work assignments: blocks of size <inline-formula id="inline-formula1-1094342012440466">
+<mml:math id="mml-inline1-1094342012440466">
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula2-1094342012440466">
+<mml:math id="mml-inline2-1094342012440466">
+<mml:mn>8</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>8</mml:mn>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula3-1094342012440466">
+<mml:math id="mml-inline3-1094342012440466">
+<mml:mn>512</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula4-1094342012440466">
+<mml:math id="mml-inline4-1094342012440466">
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula>, etc., pixels.</p>
+<p>We explored a configuration, called ‘block synchronization', in which all threads encounter a shared barrier after completing work on a given block. The idea is to force all threads to process blocks in lock-step, with the intent of inducing better memory utilization by having the multiple worker threads accessing nearby regions of the source data. For the tests run in this study, we use the dynamic work assignment algorithm on multi-core CPU implementation, as in <xref ref-type="bibr" rid="bibr29-1094342012440466">Nieh and Levoy (1992)</xref>. We determined through empirical testing that it performs better than the static work assignment approaches. Those results are not shown here due to space limits, and are consistent with earlier findings (<xref ref-type="bibr" rid="bibr29-1094342012440466">Nieh and Levoy 1992</xref>; <xref ref-type="bibr" rid="bibr31-1094342012440466">Palmer et al. 1998</xref>) that suggest static work assignment algorithms can suffer from load imbalance.</p>
+</sec>
+<sec id="section7-1094342012440466">
+<title>3.1.3 Concurrency</title>
+<p>To explore the effects of varying thread concurrency and of non-uniform memory access, we ran tests across lower concurrency levels than the number of available CPU cores. However, to maintain the same image and data volume size in these tests, we used a hybrid parallelism approach that combines the image-tile decomposition described above with a domain decomposition to distribute the data volume across groups of threads. In this way, we still ran as many threads as the number of cores by using multiple groups at the given concurrency level, with each group allocating its own memory buffer disjoint from the other groups (see <xref ref-type="table" rid="table1-1094342012440466">Table 1</xref>). This functionality was already implemented for large-scale tests we conducted on distributed-memory systems using a hybrid parallelism approach (<xref ref-type="bibr" rid="bibr19-1094342012440466">Howison et al. 2011</xref>). For the CPU tests, we invoked the <bold>-Mconcur=numa</bold> flag in the PGI compiler to link in a thread affinity library that prevented threads from migrating across cores.</p>
+<table-wrap id="table1-1094342012440466" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Data decomposition for varying concurrency levels.</p>
+</caption>
+<graphic alternate-form-of="table1-1094342012440466" xlink:href="10.1177_1094342012440466-table1.tif"/>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Threads per buffer</th>
+<th>Disjoint buffers</th>
+<th>Buffer size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+</td>
+<td>1</td>
+<td>8</td>
+<td>
+<inline-formula id="inline-formula5-1094342012440466">
+<mml:math id="mml-inline5-1094342012440466">
+<mml:mn>256</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>256</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>256</mml:mn>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>2</td>
+<td>4</td>
+<td>
+<inline-formula id="inline-formula6-1094342012440466">
+<mml:math id="mml-inline6-1094342012440466">
+<mml:mn>256</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>256</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>Intel/Nehalem</td>
+<td>4</td>
+<td>2</td>
+<td>
+<inline-formula id="inline-formula7-1094342012440466">
+<mml:math id="mml-inline7-1094342012440466">
+<mml:mn>256</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>512</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>8</td>
+<td>1</td>
+<td>
+<inline-formula id="inline-formula8-1094342012440466">
+<mml:math id="mml-inline8-1094342012440466">
+<mml:mn>512</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>512</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>AMD/MagnyCours</td>
+<td>6</td>
+<td>4</td>
+<td>
+<inline-formula id="inline-formula9-1094342012440466">
+<mml:math id="mml-inline9-1094342012440466">
+<mml:mn>256</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>256</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>24</td>
+<td>1</td>
+<td>
+<inline-formula id="inline-formula10-1094342012440466">
+<mml:math id="mml-inline10-1094342012440466">
+<mml:mn>512</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>512</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>512</mml:mn>
+</mml:math>
+</inline-formula>
+</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+</sec>
+<sec id="section8-1094342012440466">
+<title>3.2 Many-core GPU implementation</title>
+<p>Our GPU raycasting kernel implementation is essentially the same as the CPU version. However, the way work blocks are assigned to GPU threads differs from the CPU implementation owing to the data-parallel nature of the CUDA language: the image is considered as a 2D CUDA grid that is divided into CUDA thread blocks. Each thread block corresponds to an image tile, and each individual CUDA thread in each thread block performs raycasting of a single pixel in the image. Therefore, an <inline-formula id="inline-formula11-1094342012440466">
+<mml:math id="mml-inline11-1094342012440466">
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> thread block corresponds to an <inline-formula id="inline-formula12-1094342012440466">
+<mml:math id="mml-inline12-1094342012440466">
+<mml:mi>M</mml:mi>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:math>
+</inline-formula> pixel image tile. The CUDA runtime manages the dynamic scheduling of thread blocks on the GPU, assigning up to eight blocks at a time to each of the GPU's multiprocessors (<xref ref-type="bibr" rid="bibr30-1094342012440466">NVIDIA Corporation 2010</xref>). The GPU uses hardware context switches between the blocks within a multiprocessor to hide memory latency.</p>
+<p>We used version 3.2 of the CUDA compiler and runtime and version 270.41.19 of the NVIDIA driver. ECC support was enabled. During compilation, we targeted CUDA ‘compute capability' 2.0 (<xref ref-type="bibr" rid="bibr30-1094342012440466">NVIDIA Corporation 2010</xref>) to take advantage of additional optimizations available on the Fermi-series architecture. We also configured shared memory to be used as L1 cache for global memory requests.</p>
+</sec>
+<sec id="section9-1094342012440466">
+<title>3.3 Memory layout</title>
+<p>We explore two alternative ways of laying out source data in memory. In the array-order layout, a 3D source volume <italic>S</italic> is indexed such that a data value at <inline-formula id="inline-formula13-1094342012440466">
+<mml:math id="mml-inline13-1094342012440466">
+<mml:mi>S</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:math>
+</inline-formula> is at memory location <inline-formula id="inline-formula14-1094342012440466">
+<mml:math id="mml-inline14-1094342012440466">
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">∗</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>z</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mo stretchy="false">+</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">∗</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>z</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mo stretchy="false">∗</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>z</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:math>
+</inline-formula>. The Z-order method is essentially a way of laying out a 2<italic>
+<sup>n</sup>
+</italic> tree in memory in 1D fashion. Unlike array-order indexing, Z-order indexing has the desirable property that at any [<italic>i</italic>, <italic>j</italic>, <italic>k</italic>] location, accessing a point that is nearby in index space is also nearby in physical memory location. We use the formulation described by <xref ref-type="bibr" rid="bibr32-1094342012440466">Pascucci and Frank (2001)</xref> where we compute the Z-order index through a series of bitwise operations.</p>
+<p>To optimize algorithm runtime for both memory layouts, we implement a data structure that supports rapid memory index computation for both layout schemes. During volume rendering, we compute the index of a <inline-formula id="inline-formula15-1094342012440466">
+<mml:math id="mml-inline15-1094342012440466">
+<mml:mi>S</mml:mi>
+<mml:mo stretchy="false">[</mml:mo>
+<mml:mi>i</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>j</mml:mi>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo stretchy="false">]</mml:mo>
+</mml:math>
+</inline-formula> location for array-order indexing using two table lookups and three additions, and for Z-order indexing, using three table lookups and two logical OR operations. In our GPU implementation, these lookup tables are stored in the GPU's constant memory for fast access. In both implementations, we found that a single lookup operation was significantly faster than the <inline-formula id="inline-formula16-1094342012440466">
+<mml:math id="mml-inline16-1094342012440466">
+<mml:mn>12</mml:mn>
+<mml:mi>n</mml:mi>
+</mml:math>
+</inline-formula> bitwise operations (2<italic>n</italic> bit shifts, <italic>n</italic> bitwise ANDs, and <italic>n</italic> bitwise ORs for each dimension) needed to calculate the Z-order index on the fly, or the two additions and three multiplications to calculate the array-order index.</p>
+</sec>
+</sec>
+<sec id="section10-1094342012440466">
+<title>4 Experiment results</title>
+<sec id="section11-1094342012440466">
+<title>4.1 Methodology</title>
+<p>Given that we are using an image-order algorithm, and that we are dividing up the work by having each thread work on a subset of the total image, we adopt the term ‘block size' to refer to the size of the image tile assigned to a thread in the CPU version or a CUDA thread block in the GPU version. Our primary research goal is to determine how much performance varies as a function of block size and layout of data in memory by measuring runtime and cache utilization characteristics.</p>
+<p>The runtime we measure is the elapsed time required to perform raycasting and store a resulting pixel buffer. It does not take into account I/O time for either storing an image or loading the data, which is known to account for a sizeable fraction of total rendering time in large-data visualization applications. We are not trying to solve the I/O problem, and our focus on rendering only is appropriate for many use cases, such as creating multiple images from the same dataset as is typical of interactive visualization applications. For this same reason, we do not include the time required by our CUDA implementation for memory transfers between host and device.</p>
+<p>Our second performance metric is L2 cache misses, which offers a more detailed picture of memory traffic. To obtain this data, we use the Performance Application Programming Interface (PAPI)<sup>
+<xref ref-type="fn" rid="fn1-1094342012440466">1</xref>
+</sup> for the CPU platforms. PAPI requires a kernel module as well as application instrumentation via a simple API to specify which hardware counters to monitor.<sup>
+<xref ref-type="fn" rid="fn2-1094342012440466">2</xref>
+</sup> On the GPU platform, we used the profiler available with the CUDA Toolkit version 3.2.<sup>
+<xref ref-type="fn" rid="fn1-1094342012440466">1</xref>
+</sup> Conventional thinking is that there is a strong correlation between lower memory traffic levels and increased performance, however this is not always the case (<xref ref-type="bibr" rid="bibr5-1094342012440466">Datta et al. 2009a</xref>).</p>
+<sec id="section12-1094342012440466">
+<title>4.1.1 Platforms and datasets</title>
+<p>For this study, we make use of several different multi- and many-core systems. We ran our tests on a single node of each of the following systems, each having core/cache configurations shown in <xref ref-type="table" rid="table2-1094342012440466">Table 2</xref>:</p>
+<table-wrap id="table2-1094342012440466" position="float">
+<label>Table 2.</label>
+<caption>
+<p>The cache hierarchies of our test platforms.</p>
+</caption>
+<graphic alternate-form-of="table2-1094342012440466" xlink:href="10.1177_1094342012440466-table2.tif"/>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Cores/MPs</th>
+<th>L1 cache</th>
+<th>L2 cache</th>
+<th>L3 cache</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AMD/MagnyCours</td>
+<td>24</td>
+<td>64 kB / core</td>
+<td>512 kB / core</td>
+<td>6 MB / 6 cores</td>
+</tr>
+<tr>
+<td>Intel/Nehalem</td>
+<td>8</td>
+<td>64 kB / core</td>
+<td>256 kB / core</td>
+<td>8 MB / 4 cores</td>
+</tr>
+<tr>
+<td>NVIDIA/Fermi</td>
+<td>14</td>
+<td>64 kB / MP</td>
+<td>768 kB / 14 MPs</td>
+<td align="center">(none)</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<list list-type="bullet">
+<list-item>
+<p>carver.nersc.gov has 400 nodes, each consisting of dual quad-core 2.67 GHz Intel 5550 Nehalem processors and between 24 GB and 48 GB of DDR3 RAM.</p>
+</list-item>
+<list-item>
+<p>hopper.nersc.gov has 6384 nodes, each consisting of dual 12-core 2.1 GHz AMD 6172 MagnyCours processors and 32 GB of DDR3 RAM.</p>
+</list-item>
+<list-item>
+<p>oscar.ccv.brown.edu has two GPU test nodes, each consisting of dual 2.5 GHz Intel 5630 Nehalem processors and 24 GB of RAM. The GPU accelerator is a NVIDIA Fermi M2050, a many-core GPU with 448 ‘CUDA cores' grouped as 14 ‘multiprocessors' CUDA3-ProgGuide sharing 3 GB of GDDR5 memory. The M2050 is installed as a PCI-E x16v2 add-on card in these IBM iDataPlex nodes.</p>
+</list-item>
+</list>
+<p>Our dataset is a 512<sup>
+<xref ref-type="fn" rid="fn3-1094342012440466">3</xref>
+</sup> volume that we flattened from an adaptively refined mesh produced by a combustion simulation. <xref ref-type="fig" rid="fig1-1094342012440466">Figure 1</xref> shows the rendering of the dataset across the 10 representative views we used for our tests. We chose these views to span a diverse range of memory stride and access patterns during the ray integration stage.</p>
+<fig id="fig1-1094342012440466" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Output from our shared-memory parallel raycasting volume renderer, showing the 10 views we averaged our results over. Each frame is a 512 ×512 image rendered from a 512<sup>
+<xref ref-type="fn" rid="fn3-1094342012440466">3</xref>
+</sup> dataset of a combustion simulation output. Simulation data courtesy of J. Bell and M. Day, Lawrence Berkeley National Laboratory.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342012440466-fig1.tif"/>
+</fig>
+<p>Our shading calculations require a gradient field with three elements per every element in the scalar data set. This gradient field can be precomputed and cached in memory, but it increases the memory footprint by a factor of three. Alternatively, the gradient field can be computed as needed inside the shading calculation. This choice poses a classic trade-off of storage space versus compute time. We experimented with both methods, using central differences in both cases to compute the gradient vector, and found that on-the-fly computation was faster for both the CPU and GPU implementations by an average of 8.2% on the Intel/Nehalem, 19.4% on the AMD/MagnyCours, and 80.7% on the NVIDIA/Fermi. The additional cache pressure of loading in precomputed gradients appears to be more detrimental than the six-point stencil operation needed to recompute the gradient at each ray integration step. The stencil operation has significant spatial and temporal locality, however, since the scalar values that are needed are either spatially nearby (especially in the case of Z-ordered memory), or are loaded at a similar time by the previous or consequent integration step. Conversely, this locality is not exploited when loading precomputed gradients from a separate memory buffer.</p>
+</sec>
+<sec id="section13-1094342012440466">
+<title>4.1.2 Parameter sweep/auto-tuning</title>
+<p>The term ‘auto-tuning' has come to mean the process of evaluating the performance of all potential implementations of a kernel, potentially using some advanced search heuristics to avoid performing an exhaustive search of all possible permutations. In our case here, it means sweeping through tunable algorithmic parameters to find the combination resulting in the best performance. Unlike a ‘production' auto-tuning system, which would include a code generation phase followed by a lengthy run, we are performing only the parameter sweep to obtain performance measurements for each such configuration.</p>
+<p>In our CPU tests, we explore 64 different image tile sizes where width and height both vary over <inline-formula id="inline-formula17-1094342012440466">
+<mml:math id="mml-inline17-1094342012440466">
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>8</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>16</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>32</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>64</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>128</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:math>
+</inline-formula>. A complete test battery consists of approximately 5120 tests on the AMD/MagnyCours: 10 views, 64 block sizes, with and without early ray termination (ERT), two memory layouts, and two concurrency levels, and only the dynamic work assignment. The test battery on the Intel/Nehalem was similar, with three work assignment methods but only 8-way concurrency, for a total of 7680 tests. In addition, we reran another 7680 tests on the Intel/Nehalem at 1-way, 2-way, and 4-way concurrency, but with only the dynamic work assignment, in order to measure the runtime variation across concurrency levels reported in <xref ref-type="table" rid="table3-1094342012440466">Table 3</xref>.</p>
+<table-wrap id="table3-1094342012440466" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Percentage variation in runtime (averaged over 10 views) across all block sizes, broken down by levels of concurrency, memory layout, and ERT. Block size has a dramatic impact on performance, particularly as concurrency increases to all available CPU cores. On the GPU, variation was greatest for Z-ordered memory, because the performance of the fastest block configurations increased considerably with Z-ordered access.</p>
+</caption>
+<graphic alternate-form-of="table3-1094342012440466" xlink:href="10.1177_1094342012440466-table3.tif"/>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Concurrency</th>
+<th>Array order</th>
+<th>Z-order</th>
+<th>Array + ERT</th>
+<th>Z + ERT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+</td>
+<td>1</td>
+<td>10.2%</td>
+<td>7.7%</td>
+<td>2.8%</td>
+<td>2.6%</td>
+</tr>
+<tr>
+<td>Intel/Nehalem</td>
+<td>2</td>
+<td>7.4%</td>
+<td>10.1%</td>
+<td>9.7%</td>
+<td>9.1%</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>4</td>
+<td>32.8%</td>
+<td>28.7%</td>
+<td>30.3%</td>
+<td>27.7%</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>8</td>
+<td>55.1%</td>
+<td>52.8%</td>
+<td>50.9%</td>
+<td>46.5%</td>
+</tr>
+<tr>
+<td>AMD/MagnyCours</td>
+<td>6</td>
+<td>102.7%</td>
+<td>100.7%</td>
+<td>93.6%</td>
+<td>92.4%</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>24</td>
+<td>247.2%</td>
+<td>254.1%</td>
+<td>241.5%</td>
+<td>242.5%</td>
+</tr>
+<tr>
+<td>NVIDIA/Fermi</td>
+<td align="center">—</td>
+<td>74.8%</td>
+<td>255.0%</td>
+<td>78.9%</td>
+<td>265.1%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>On the GPU, we ran 880 tests over 22 different thread block sizes, with width and height varying over <inline-formula id="inline-formula18-1094342012440466">
+<mml:math id="mml-inline18-1094342012440466">
+<mml:mo fence="false" stretchy="false">{</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>8</mml:mn>
+<mml:mo stretchy="false">,</mml:mo>
+<mml:mn>16</mml:mn>
+<mml:mo fence="false" stretchy="false">}</mml:mo>
+</mml:math>
+</inline-formula> (excluding the <inline-formula id="inline-formula19-1094342012440466">
+<mml:math id="mml-inline19-1094342012440466">
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula20-1094342012440466">
+<mml:math id="mml-inline20-1094342012440466">
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:math>
+</inline-formula>, and <inline-formula id="inline-formula21-1094342012440466">
+<mml:math id="mml-inline21-1094342012440466">
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:math>
+</inline-formula> blocks), across two memory layouts, and with and without ERT. We excluded the blocks with fewer than four threads because the NVIDIA/Fermi requires at least four threads per block to saturate the computational throughput of a warp of execution (as described in more detail later in Section 4.5).</p>
+</sec>
+</sec>
+<sec id="section14-1094342012440466">
+<title>4.2 Variation in runtime</title>
+<p>To begin, we first wished to determine whether block size impacts performance, and if so, by how much, as measured overall by percentage variation. The summary results, shown in <xref ref-type="table" rid="table3-1094342012440466">Table 3</xref>, indicate that block size can have a dramatic impact on performance. From <xref ref-type="table" rid="table3-1094342012440466">Table 3</xref>, we draw several conclusions. First, the amount of variation increases with increasing concurrency on the CPUs. This result is expected since there is increased opportunity for reuse of data that is shared among more threads. Block sizes that better utilize the cache hierarchy can perform much better, increasing the variation in performance when compared with less optimal block sizes. Second, block size has a nearly equal effect on variation for both array- and Z-ordered layouts in CPU memory. Although Z-ordering improves the spatial locality of data within the same 3D neighborhood, it is still sensitive to changes to spatial locality caused by different block sizes. Third, variation is greater for Z-ordering in GPU memory by more than a factor of three when compared with array ordering (see Section 4.7 for more details).</p>
+<p>
+<xref ref-type="fig" rid="fig2-1094342012440466">Figure 2</xref> amplifies the results shown in <xref ref-type="table" rid="table3-1094342012440466">Table 3</xref> for the Intel/Nehalem platform. The parameter sweep through block sizes at a single concurrency produces a 2D array of performance data. However, we are interested in the patterns that may emerge across concurrency levels, so by ‘stacking' the 2D arrays at each concurrency level, we have a 3D dataset to which we can apply traditional visualization techniques for inspection. The corners enclosed by the red contour correspond to block sizes that performed worse relative to others at that concurrency level. The innermost blue contour shows the region of best performance, which is composed of medium-sized blocks and is consistent across concurrency levels. We see relatively lower variation at lower concurrency levels, and the largest relative outliers (the red contour) at 8-way concurrency. Again, both memory layouts exhibit similar performance characteristics in terms of variation across block size.</p>
+<fig id="fig2-1094342012440466" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Runtimes (averaged over 10 views, then normalized across concurrency level relative to the best runtime) from the Intel/Nehalem across four levels of concurrency presented in 3D using isocontours. Two of the axes are block sizes, while the third axis is concurrency. Larger and smaller block sizes produce relatively poorer performance, particularly at higher concurrency levels, while medium-sized blocks produce relatively better performance at all concurrency levels.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342012440466-fig2.tif"/>
+</fig>
+<p>It is likely that larger block sizes suffer from poor load balancing since the granularity of the image tiles is so much larger. In this application, the amount of work each thread performs while processing an image tile is a function of scene characteristics, and there is not necessarily the same amount of actual work per block. In addition, the raycasting algorithm employs an ‘empty-space skipping' (<xref ref-type="bibr" rid="bibr28-1094342012440466">Müller et al. 2006</xref>) optimization that skips pixels that are predetermined not to lie within the bounding box of the oriented 3D volume after it has been projected onto the 2D view plane. Therefore, image tiles that have less coverage of the 3D volume can end up calculating substantially fewer ray integration steps.</p>
+</sec>
+<sec id="section15-1094342012440466">
+<title>4.3 Intel/Nehalem</title>
+<p>On the Intel/Nehalem, medium-sized blocks show the best performance in terms of both faster runtime and lower levels of L2 cache misses (<xref ref-type="fig" rid="fig3-1094342012440466">Figure 3</xref>) regardless of work assignment algorithm or memory layout. With smaller block sizes, we also see consistently higher runtimes. This result is likely due to a relatively lower level of temporal cache coherence, as evidenced by the relatively higher rate of L2 cache misses associated with smaller block sizes.</p>
+<fig id="fig3-1094342012440466" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Runtime (a) and L2 cache misses (b) averaged across 10 views fro 8-way concurrency on the Intel/Nehalem platform with varying block size, memory layout, work assignment method, and early ray termination (ERT).</p>
+</caption>
+<graphic xlink:href="10.1177_1094342012440466-fig3.tif"/>
+</fig>
+<p>With the static work assignment algorithm, we conducted an experiment aimed at inducing temporal cache coherency. This algorithmic option, which appears in <xref ref-type="fig" rid="fig1-1094342012440466">Figure 3</xref> as ‘static/sync’, forces all threads synchronize at the block level. The intent is to force all threads to access nearby memory locations in a synchronous fashion. This configuration performed so poorly that we abandoned further investigation. The poor performance is most likely due to load imbalance. In contrast, the dynamic work assignment shows better overall performance due to its better load balancing characteristics.</p>
+<p>The Z-ordered memory layout results in consistently better performance due to better use of the memory hierarchy. We see consistently lower levels of L2 cache misses when using the Z-ordered layout.</p>
+</sec>
+<sec id="section16-1094342012440466">
+<title>4.4 AMD/MagnyCours</title>
+<p>The AMD/MagnyCours shows similar trends to the Intel/Nehalem: medium-sized blocks performed best, and there are benefits for both ERT and Z-ordering (see <xref ref-type="fig" rid="fig4-1094342012440466">Figure 4</xref>).</p>
+<fig id="fig4-1094342012440466" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Runtime (a) and L2 cache misses (b) averaged across 10 views on the AMD/MagnyCours platform with varying block size, memory layout, concurrency level, and early ray termination (ERT).</p>
+</caption>
+<graphic xlink:href="10.1177_1094342012440466-fig4.tif"/>
+</fig>
+<p>We ran tests at two different concurrencies to look for effects due to non-uniform memory access (NUMA), where a core on one socket accesses memory with affinity to a different socket. Although our MagnyCours test system has two twelve-core processors in two physical sockets, these 24 cores actually share four memory controllers, so we use the term ‘NUMA socket' to refer to the set of six cores that share a memory controller.</p>
+<p>In the six-way concurrency test, we allocated four disjoint memory buffers and used the first-touch policy of the Linux kernel to set the affinity of each buffer to its own NUMA socket. In this test, we executed four groups of six threads, with each group scheduled on its own NUMA socket. Our theory is that this configuration should lead to more uniform memory access, and therefore better performance. Surprisingly, we found the opposite to be true. At 24-way concurrency, with only a single memory buffer shared by threads executing across all 24 cores, performance was better across all conditions: block size, memory layout, and with and without ERT, even though this meant that 18 of those cores were accessing memory on a different NUMA socket.</p>
+<p>Moreover, <xref ref-type="fig" rid="fig4-1094342012440466">Figure 4</xref> shows that the block sizes that exhibited the fewest L2 cache misses are in the six-way concurrency condition, even though those block sizes had longer runtimes than their corresponding trials in the 24-way concurrency condition. We suspect that there are other important effects at the L3 cache level that we are not capturing with our L2 cache measurements. Exploring this issue further and refining our measurement of the cache hierarchy will be the subject of future work.</p>
+</sec>
+<sec id="section17-1094342012440466">
+<title>4.5 NVIDIA/Fermi</title>
+<p>On the GPU, we see a wide variation in runtime across different block sizes (<xref ref-type="fig" rid="fig5-1094342012440466">Figure 5</xref>). Both Z-ordering and ERT show benefits for the more optimal block sizes. The best configurations on the NVIDIA/Fermi are the <inline-formula id="inline-formula22-1094342012440466">
+<mml:math id="mml-inline22-1094342012440466">
+<mml:mn>4</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>8</mml:mn>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula23-1094342012440466">
+<mml:math id="mml-inline23-1094342012440466">
+<mml:mn>8</mml:mn>
+<mml:mo stretchy="false">×</mml:mo>
+<mml:mn>4</mml:mn>
+</mml:math>
+</inline-formula> thread blocks with Z-ordering and ERT. Performance appears to vary with the total number of threads in a block, leading to the diagonal striping in <xref ref-type="fig" rid="fig5-1094342012440466">Figure 5</xref>.</p>
+<fig id="fig5-1094342012440466" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Runtime (a) and L2 cache misses (b) averaged over 10 views for different thread block sizes on the NVIDIA/Fermi with varying memory layout and early ray termination (ERT). Gray boxes indicate thread blocks with too few threads to fill a warp of execution.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342012440466-fig5.tif"/>
+</fig>
+<p>Even though CUDA thread blocks require a minimum of 32 threads to saturate computational throughput, many of the block sizes with 16 or fewer threads still perform well because of the branching nature of our algorithm, which causes divergence among CUDA threads. A thread block is executed in a single-instruction-multiple-thread (SIMT) fashion in which ‘warps' of 32 threads are executed across four clock cycles in subsets of eight threads that share a common instruction. If those eight threads do not share a common instruction, such as when conditionals cause branching code paths, the threads diverge and must be executed serially. This situation is prevalent in our algorithm. For example, imagine a thread block owning a region of the image that only partially covers the data volume. Some of the threads immediately exit because of the empty-space skipping optimization in our algorithm, while the other threads proceed to cast rays through the volume. Even the threads that proceed together with raycasting may have rays of different lengths, which will cause divergence and load imbalance.</p>
+<p>Since a warp must be scheduled across at least four clock cycles, using fewer than four threads per thread block will guarantee under-utilization, so we excluded those configurations from our sweep. Empirically, the sweet spot for thread block size is 16 or 32 threads, depending on the memory ordering and whether ERT is enabled. Many block sizes with 16 threads perform well even though this is less than the warp size of 32 threads, indicating the complex interaction of the CUDA runtime and warp scheduler in handling branching for this particular algorithm and problem. It is also likely that larger thread blocks exhibited greater load imbalance because the variation in ray lengths tends to increase with block size.</p>
+<p>Surprisingly, the small thread blocks that displayed the worst performance also exhibited the fewest L2 cache misses (see <xref ref-type="fig" rid="fig5-1094342012440466">Figure 5</xref>). Yet, the converse is not true: the most optimal block sizes do not show the most L2 cache misses. Instead, L2 cache misses appear to rise uniformly with the total number of threads in a block, leading to the same diagonal striping as seen in the runtime plot. Therefore, we conclude that achieving the best performance on the GPU is a trade-off between using enough threads to saturate a warp and using few enough to maintain good cache utilization. We also find that, as in the CPU tests, L2 cache misses are systematically less when using the Z-ordered memory layout on the GPU because of the improved spatial locality.</p>
+<p>Interestingly, the NVIDIA CUDA Programming Guide (<xref ref-type="bibr" rid="bibr30-1094342012440466">NVIDIA Corporation 2010</xref>) says: ‘The effect of execution configuration on performance for a given kernel call generally depends on the kernel code. Experimentation is therefore recommended'. Our experiments show a wide variation in performance depending upon thread block size. While there is little surprise that such variation exists, the amount of variation, as much as 265%, is somewhat unexpected, as is the fact that the optimal block size for one problem is not the same as for another problem when run on the same platform.</p>
+</sec>
+<sec id="section18-1094342012440466">
+<title>4.6 Algorithmic optimization: ERT</title>
+<p>We tested an algorithmic optimization called ERT, where a conditional within the inner-most loop that iterates along an individual ray tests the condition of the ray reaching full opacity. If it has, the loop is aborted since any further steps will not contribute to the color or opacity of that pixel. This optimization is dependent both on the input data and on the transfer function that determines how data values map to color and opacity. For our specific data set and transfer function, we see approximately 10% fewer integration steps when ERT is enabled, which is directly reflected in our reported runtimes: in cases where ERT is enabled, we see a 10--15% improvement in absolute runtime.</p>
+<p>To demonstrate the relationship between the transfer function and the benefits of ERT, we ran an additional test with a ‘shallower' transfer function (called ‘B' in <xref ref-type="fig" rid="fig6-1094342012440466">Figure 6</xref>) that did not penetrate as deep into the volume. With ERT enabled, this transfer function exhibited 19.7% fewer integration steps and ran 19.1% faster, as expected. However, the image rendered with transfer function ‘B' has important differences in the areas and features of the dataset that are visualized, which may or may not be appropriate according to the application.</p>
+<fig id="fig6-1094342012440466" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Two different transfer functions have different benefits from early ray termination (ERT), but also yield images that accentuate different features of the underlying dataset. For the results presented in this paper, we used transfer function ‘A'.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342012440466-fig6.tif"/>
+</fig>
+<p>The benefits of ERT are highly dependent upon scene characteristics and transfer function, so it is impossible to say with certainty how much ERT will help algorithm performance in general. In earlier work investigating the use of ERT in raycasting volume rendering (<xref ref-type="bibr" rid="bibr22-1094342012440466">Krüeger and Westermann 2003</xref>), an opaque volume exhibited a 300% improvement in runtime, while a semi-transparent volume exhibited no improvement in runtime from ERT and instead sustained a 30% penalty from the additional conditional overhead. This conditional can have an adverse impact on performance, particularly for GPU implementations where divergent code paths are costly. In an early test case where there was no reduction in raycasting steps from ERT for a particular scene, we measured a penalty of 5%. In summary, the effects of ERT are highly variable: there are combinations of data sets and transfer function where ERT has no effect, and others where it lead to a dramatic reduction in the number of integration steps.</p>
+</sec>
+<sec id="section19-1094342012440466">
+<title>4.7 Algorithmic optimization: Z-ordered memory</title>
+<p>Z-ordered memory outperforms array-ordered memory on all platforms and at all concurrency levels, and these performance gains increase with concurrency (see <xref ref-type="fig" rid="fig7-1094342012440466">Figure 7</xref>). The benefits of Z-ordering at higher concurrency are likely due to the larger penalties for non-contiguous access and cache misses in shared memory systems that service many cores, as on the AMD/MagnyCours and NVIDIA/Fermi. While the Intel/Nehalem and AMD/MagnyCours show a modest gain from Z-ordering, ranging from 3% to 29%, the NVIDIA/Fermi exhibits gains of 146% at 64-way concurrency, i.e. 64 threads per thread block.</p>
+<fig id="fig7-1094342012440466" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>The performance gains (averaged across thread block size, with ERT) from using Z-ordered memory instead of array-ordered increase with concurrency. The gains are most notable on the NVIDIA/Fermi, where we count the number of threads per block as the concurrency.</p>
+</caption>
+<graphic xlink:href="10.1177_1094342012440466-fig7.tif"/>
+</fig>
+<p>As more cores access memory through a shared memory controller and subsystem, the improved locality of Z-ordered memory access and correspondingly lower L2 miss rates becomes increasingly beneficial. Thus, the NVIDIA/Fermi, whose memory subsystem must service 14 multiprocessors each with many thread blocks in flight, sees the largest improvements from Z-ordering. While the slower block configurations improve somewhat with Z-ordering, the best configurations improve greatly, leading to larger variation for Z-ordering than array ordering.</p>
+<p>Because many datasets are not already stored with a Z-ordered layout, there is in practice a cost associated with re-ordering the data buffer, which we have not included. However, in the use case where multiple visualizations will be generated from the same data set, this initial cost is amortized.</p>
+</sec>
+</sec>
+<sec id="section20-1094342012440466">
+<title>5 Conclusions and future work</title>
+<p>The main point of this study has been to explore the relationship between tunable algorithm parameters and known algorithmic optimizations and the resulting impact on performance of a staple visualization algorithm on modern multi-core and many-core platforms. Our results suggest a wide variation in performance can result: up to 254% on multi-core CPUs and 265% on many-core GPUs. We used the findings of this study to set tunable algorithmic parameters for a set of extreme-concurrency runs (<xref ref-type="bibr" rid="bibr18-1094342012440466">Howison et al. 2010</xref>, <xref ref-type="bibr" rid="bibr19-1094342012440466">2011</xref>) that required literally millions of CPU hours; by finding and using optimal settings for tunable algorithmic parameters, we in effect saved millions of additional CPU hours that would have been spent executing an application in a non-optimal configuration.</p>
+<p>This work, which uses a well-established methodology for finding optimal performance, shows that such a methodology can be useful for visualization algorithms as well, and that the algorithmic parameters that produce the best performance vary from problem to problem and platform to platform, often in a non-obvious way. Our GPU results underscore this result: the best performance results in what appears to be a crossover point between cache utilization and thread warp size and thread divergence that occurs due to this particular algorithm. This approach helps empirically establish algorithmic parameters that may be difficult, if not impossible, to determine using a performance model that predicts performance bounds, and has been widely used in the computational science community with great success (Datta et al. 2009b, <xref ref-type="bibr" rid="bibr5-1094342012440466">a</xref>; <xref ref-type="bibr" rid="bibr21-1094342012440466">Kamil et al. 2010</xref>).</p>
+<p>The algorithm we study, raycasting volume rendering with perspective projection, uses an unstructured, or irregular memory access pattern. Each ray will, in effect, execute a different traversal path through memory, and the set of paths and the number of computational steps each requires is a function of runtime parameters, such as viewpoint, data set, and color transfer function. Other visualization algorithms exhibit similar memory access characteristics, such as parallel streamline computation (<xref ref-type="bibr" rid="bibr3-1094342012440466">Camp et al. 2011</xref>), and could benefit from this performance optimization methodology.</p>
+<p>An avenue for future work would be to expand the scope of algorithmic parameters and options and discover how they inform performance within the context of the auto-tuning approach. Does the cost of branch prediction in the inner ray integration loop outweigh the benefit of an acceleration option such as ERT? In object-order (bricking) approaches, what is the relationship between brick size/shape and actual observed cache utilization? How well would a bricking strategy work on the GPU, and does its use improve memory access patterns on the GPU? Would an alternate encoding of data in bricks, such as using a space-filling curve layout, result in better or worse utilization of the memory hierarchy, and what is the relationship of that performance with brick size and shape? How does a change in final image resolution alter the choice of block size? Could predictive performance models be enhanced to include some statistical estimation of runtime given known variability in algorithm performance that depends upon data or runtime characteristics? What is the impact of multi-field data, particularly with respect to memory utilization, and do the lessons learned for scalar data apply to complex data types?</p>
+<p>Another avenue of future work would be to explore the efficacy of alternative programming environments, such as MapReduce (<xref ref-type="bibr" rid="bibr9-1094342012440466">Dean and Ghemawat 2008</xref>), for use on multi- and many-core systems. Recent work by <xref ref-type="bibr" rid="bibr35-1094342012440466">Stuart and Owens (2011)</xref> pursues this line of investigation for several computational kernels. Interestingly, their implementation of a GPU-capable MapReduce library ‘relaxes’ some of the MapReduce semantics to expose GPU-centric features, such as thread block size, although it is not clear whether this kind of control, which is necessary for auto-tuning, exists outside of Stuart and Owens’ GPMR library, for example on multi-core CPU implementations. Even though our shared-memory implementation does not have an explicit ‘reduce’ step, one desirable outcome would be the ability to write code once that runs on many different types of platforms. Given that the settings that produce optimal performance vary by platform, dataset, and other runtime attributes, there seems to be a clear benefit to using an auto-tuning methodology to find those that produce optimal performance rather than by-hand coding.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure" id="fn4-1094342012440466">
+<label>Funding</label>
+<p>This work was supported by the Director, Office of Science, Office and Advanced Scientific Computing Research, of the U.S. Department of Energy (contract number DE-AC02-05CH11231) through the Scientific Discovery through Advanced Computing (SciDAC) program’s Visualization and Analytics Center for Enabling Technologies (VACET). This work used resources of the National Center for Computational Sciences at Oak Ridge National Laboratory, which is supported by the Office of Science of the U.S. Department of Energy (contract number DE-AC05-00OR22725), and of the National Energy Research Scientific Computing Center (NERSC), which is supported by the Office of Science of the U.S. Department of Energy (contract number DE-AC02-05CH11231). This work was also supported by Brown University through the use of the facilities of its Center for Computation and Visualization.</p>
+</fn>
+<fn fn-type="other" id="fn5-1094342012440466">
+<p>This document was prepared as an account of work sponsored by the United States Government. While this document is believed to contain correct information, neither the United States Government nor any agency thereof, nor The Regents of the University of California, nor any of their employees, makes any warranty, express or implied, or assumes any legal responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or process disclosed, or represents that its use would not infringe privately owned rights. Reference herein to any specific commercial product, process, or service by its trade name, trademark, manufacturer, or otherwise, does not necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or any agency thereof, or The Regents of the University of California. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or any agency thereof or The Regents of the University of California.</p>
+</fn>
+</fn-group>
+<notes>
+<title>Notes</title>
+<fn-group>
+<fn fn-type="other" id="fn1-1094342012440466">
+<label>1.</label>
+<p>See <ext-link ext-link-type="uri" xlink:href="http://icl.cs.utk.edu/papi/index.html">http://icl.cs.utk.edu/papi/index.html</ext-link>
+</p>
+</fn>
+<fn fn-type="other" id="fn2-1094342012440466">
+<label>2.</label>
+<p>For the Intel/Nehalem we measured L2 misses as the sum of the hard-ware counters <monospace>MEM_LOAD_RETIRED: LLC_MISS + MEM_LOAD_RETIRED: LLC_UNSHARED_HIT + MEM_LOAD_RETIRED: OTHER_CORE_L2_HIT_HITM.</monospace>For the AMD/MagnyCours, we used the counter <monospace>L2_CACHE_MISS: DATA.</monospace>
+</p>
+</fn>
+<fn fn-type="other" id="fn3-1094342012440466">
+<label>3.</label>
+<p>We measured the 12_subp0_read_sector_misses counter available to compute capability 2.0 devices.</p>
+</fn>
+</fn-group>
+</notes>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Bajaj</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Ihm</surname>
+<given-names>I</given-names>
+</name>
+<name>
+<surname>Joo</surname>
+<given-names>G</given-names>
+</name>
+<name>
+<surname>Park</surname>
+<given-names>S</given-names>
+</name>
+</person-group> (<year>1999</year>) <article-title>Parallel ray casting of visible human on distributed memory architectures</article-title>. In <source>VisSym’99 Joint EUROGRAPHICS-/IEEE TCCG Symposium on Visualization</source>, pp. <fpage>269</fpage>–<lpage>276</lpage>.</citation>
+</ref>
+<ref id="bibr2-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Butenhof</surname>
+<given-names>DR</given-names>
+</name>
+</person-group> (<year>1997</year>) <source>Programming with POSIX threads</source>. <publisher-loc>Boston, MA</publisher-loc>: <publisher-name>Addison-Wesley Longman Publishing Co</publisher-name>.</citation>
+</ref>
+<ref id="bibr3-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Camp</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Garth</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Childs</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Pugmire</surname>
+<given-names>D</given-names>
+</name>
+<name>
+<surname>Joy</surname>
+<given-names>KI</given-names>
+</name>
+</person-group> (<year>2011</year>) <article-title>Streamline integration using MPI-hybrid parallelism on a large multicore architecture</article-title>. <source>IEEE Transactions on Visualization and Computer Graphics</source> <volume>17</volume>: <fpage>1702</fpage>–<lpage>1713</lpage>.</citation>
+</ref>
+<ref id="bibr4-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Cavin</surname>
+<given-names>X</given-names>
+</name>
+<name>
+<surname>Mion</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Filbois</surname>
+<given-names>A</given-names>
+</name>
+</person-group> (<year>2005</year>) <article-title>COTS cluster-based sort-last rendering: performance evaluation and pipelined implementation</article-title>. In <source>Proceedings of the 2005 IEEE Visualization Conference</source>.</citation>
+</ref>
+<ref id="bibr5-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Datta</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Kamil</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Williams</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Oliker</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Shalf</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Yelick</surname>
+<given-names>K</given-names>
+</name>
+</person-group> (<year>2009a</year>) <article-title>Optimization and performance modeling of stencil computations on modern microprocessors</article-title>. <source>SIAM Review</source> <volume>51</volume>: <fpage>129</fpage>–<lpage>159</lpage>.</citation>
+</ref>
+<ref id="bibr6-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Datta</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Murphy</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Volkov</surname>
+<given-names>V</given-names>
+</name>
+<name>
+<surname>Williams</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Carter</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Oliker</surname>
+<given-names>L</given-names>
+</name>
+<etal/>
+</person-group>. (<year>2008</year>) <article-title>Stencil computation optimization and auto-tuning on state-of-the-art multicore architectures</article-title>. In <source>SC '08: Proceedings of the 2008 ACM/IEEE conference on Supercomputing</source>. <publisher-loc>Piscataway, NJ</publisher-loc>: <publisher-name>IEEE Press</publisher-name>, pp. <fpage>1</fpage>–<lpage>12</lpage>.</citation>
+</ref>
+<ref id="bibr7-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Datta</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Williams</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Volkov</surname>
+<given-names>V</given-names>
+</name>
+<name>
+<surname>Carter</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Oliker</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Shalf</surname>
+<given-names>J</given-names>
+</name>
+<etal/>
+</person-group>. (<year>2009b</year>) <article-title>Auto-tuning the 27-point stencil for multicore</article-title>. In <source>4th International Workshop on Automatic Performance Tuning (iWAPT)</source>.</citation>
+</ref>
+<ref id="bibr8-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>de la Cruz</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Araya-Polo</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>2011</year>) <article-title>Towards a multi-level cache performance model for 3D stencil computation</article-title>. In <source>Procedia Computer Science, Proceedings of the International Conference on Computational Sciences, ICCS</source>, vol. <volume>4</volume>, pp. <fpage>2145</fpage>–<lpage>2155</lpage>.</citation>
+</ref>
+<ref id="bibr9-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Dean</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Ghemawat</surname>
+<given-names>S</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>MapReduce: simplified data processing on large clusters</article-title>. <source>Communications of the ACM</source> <volume>51</volume>: <fpage>107</fpage>–<lpage>113</lpage>.</citation>
+</ref>
+<ref id="bibr10-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>DeMarle</surname>
+<given-names>DE</given-names>
+</name>
+<name>
+<surname>Parker</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Hartner</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Gribble</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Hansen</surname>
+<given-names>C</given-names>
+</name>
+</person-group> (<year>2003</year>) <article-title>Distributed interactive ray tracing for large volume visualization</article-title>. In <source>PVG '03: Proceedings of the 2003 IEEE Symposium on Parallel and Large-Data Visualization and Graphics</source>. <publisher-loc>Washington, DC</publisher-loc>: <publisher-name>IEEE Computer Society</publisher-name>, p. <fpage>12</fpage>.</citation>
+</ref>
+<ref id="bibr11-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Drebin</surname>
+<given-names>RA</given-names>
+</name>
+<name>
+<surname>Carpenter</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Hanrahan</surname>
+<given-names>P</given-names>
+</name>
+</person-group> (<year>1988</year>) <article-title>Volume rendering</article-title>. <source>SIGGRAPH Computer Graphics</source> <volume>22</volume>(<issue>4</issue>): <fpage>65</fpage>–<lpage>74</lpage>.</citation>
+</ref>
+<ref id="bibr12-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Fogal</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Childs</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Shankar</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Krüger</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Bergeron</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Hatcher</surname>
+<given-names>P</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Large data visualization on distributed memory multi-GPU clusters</article-title>. In <source>Proceedings of High Performance Graphics 2010</source>, pp. <fpage>57</fpage>–<lpage>66</lpage>. <comment>Available at</comment>: <ext-link ext-link-type="uri" xlink:href="http://www.sci.utah.edu/publications/fogal10/Fogal_MultiGPU2010.pdf">http://www.sci.utah.edu/publications/fogal10/Fogal_MultiGPU2010.pdf</ext-link>.</citation>
+</ref>
+<ref id="bibr13-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Fogal</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Krüger</surname>
+<given-names>J</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Tuvok, an architecture for large scale volume rendering</article-title>. In <source>Proceedings of the 15th International Workshop on Vision, Modeling, and Visualization</source>, pp. <fpage>139</fpage>–<lpage>146</lpage>., <fpage>12</fpage> <ext-link ext-link-type="uri" xlink:href="http://www.sci.utah.edu/publications/fogal10/Fogal_Tuvok2010.pdf">http://www.sci.utah.edu/publications/fogal10/Fogal_Tuvok2010.pdf</ext-link>.</citation>
+</ref>
+<ref id="bibr14-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Foley</surname>
+<given-names>JD</given-names>
+</name>
+<name>
+<surname>van Dam</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Feiner</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Hughes</surname>
+<given-names>J</given-names>
+</name>
+</person-group> (<year>1990</year>) <source>Computer Graphics: Principles and Practice</source>, <edition>2nd edn</edition>. <publisher-loc>Reading, MA</publisher-loc>: <publisher-name>Addison-Wesley</publisher-name>.</citation>
+</ref>
+<ref id="bibr15-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Gobbetti</surname>
+<given-names>E</given-names>
+</name>
+<name>
+<surname>Marton</surname>
+<given-names>F</given-names>
+</name>
+<name>
+<surname>Guitián</surname>
+<given-names>JAI</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>A single-pass GPU ray casting framework for interactive out-of-core rendering of massive volumetric datasets</article-title>. <source>The Visual Computer</source> <volume>24</volume>: <fpage>797</fpage>–<lpage>806</lpage>.</citation>
+</ref>
+<ref id="bibr16-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Grim</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Bruckner</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Kanistar</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Gröller</surname>
+<given-names>E</given-names>
+</name>
+</person-group> (<year>2004</year>) <article-title>A refined data addressing and processing scheme to accelerlate volume raycasting</article-title>. <source>Computers and Graphics</source> <volume>5</volume>: 719--729.</citation>
+</ref>
+<ref id="bibr17-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Hollingsworth</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Tiwari</surname>
+<given-names>A</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>End-to-end auto-tuning with active harmony</article-title>. In <person-group person-group-type="editor">
+<name>
+<surname>Bailey</surname>
+<given-names>DH</given-names>
+</name>
+<name>
+<surname>Lucas</surname>
+<given-names>RF</given-names>
+</name>
+<name>
+<surname>Williams</surname>
+<given-names>SW</given-names>
+</name>
+</person-group> (eds), <source>Performance Tuning of Scientific Applications</source>. <publisher-loc>Boca Raton, FL</publisher-loc>: <publisher-name>CRC Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr18-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Howison</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Bethel</surname>
+<given-names>EW</given-names>
+</name>
+<name>
+<surname>Childs</surname>
+<given-names>H</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>MPI-hybrid parallelism for volume rendering on large, multi-core systems</article-title>. In <source>Eurographics Symposium on Parallel Graphics and Visualization (EGPVG)</source>, <publisher-loc>Norrköping</publisher-loc>, <publisher-name>Sweden</publisher-name>.</citation>
+</ref>
+<ref id="bibr19-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Howison</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Bethel</surname>
+<given-names>EW</given-names>
+</name>
+<name>
+<surname>Childs</surname>
+<given-names>H</given-names>
+</name>
+</person-group> (<year>2011</year>) <article-title>Hybrid parallelism for volume rendering on large, multi- and many-core systems</article-title>. <source>IEEE Transactions on Visualization and Computer Graphics</source> <volume>99</volume>(<issue>preprints</issue>).</citation>
+</ref>
+<ref id="bibr20-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Hsu</surname>
+<given-names>WM</given-names>
+</name>
+</person-group> (<year>1993</year>) <article-title>Segmented ray casting for data parallel volume rendering</article-title>. In <source>PRS ’93: Proceedings of the 1993 Symposium on Parallel Rendering</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, pp. <fpage>7</fpage>–<lpage>14</lpage>.</citation>
+</ref>
+<ref id="bibr21-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Kamil</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Chan</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Oliker</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Shalf</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Williams</surname>
+<given-names>S</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>An auto-tuning framework for parallel multicore stencil computations</article-title>. In <source>International Parallel and Distributed Processing Symposium (IPDPS)</source>.</citation>
+</ref>
+<ref id="bibr22-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Krüger</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Westermann</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>2003</year>) <article-title>Acceleration techniques for GPU-based volume rendering</article-title>. In <source>Proceedings IEEE Visualization 2003</source>.</citation>
+</ref>
+<ref id="bibr23-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Law</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Yagel</surname>
+<given-names>R</given-names>
+</name>
+</person-group> (<year>1996</year>) <article-title>Multi-frame thrashless ray casting with advancing ray-front</article-title>. In <source>GI ’96: Proceedings of the conference on Graphics interface '96</source>. <publisher-loc>Toronton, ON</publisher-loc>: <publisher-name>Canadian Information Processing Society</publisher-name>, pp. <fpage>70</fpage>–<lpage>77</lpage>.</citation>
+</ref>
+<ref id="bibr24-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Levoy</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>1988</year>) <article-title>Display of surfaces from volume data</article-title>. <source>IEEE Computer Graphics and Applications</source> <volume>8</volume>(<issue>3</issue>): <fpage>29</fpage>–<lpage>37</lpage>.</citation>
+</ref>
+<ref id="bibr25-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Ma</surname>
+<given-names>K-L</given-names>
+</name>
+</person-group> (<year>1995</year>) <article-title>Parallel volume ray-casting for unstructured-grid data on distributed-memory architectures</article-title>. In <source>PRS ’95: Proceedings of the IEEE Symposium on Parallel Rendering</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, pp. <fpage>23</fpage>–<lpage>30</lpage>.</citation>
+</ref>
+<ref id="bibr26-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Ma</surname>
+<given-names>K-L</given-names>
+</name>
+<name>
+<surname>Painter</surname>
+<given-names>JS</given-names>
+</name>
+<name>
+<surname>Hansen</surname>
+<given-names>CD</given-names>
+</name>
+<name>
+<surname>Krogh</surname>
+<given-names>MF</given-names>
+</name>
+</person-group> (<year>1993</year>) <article-title>A data distributed, parallel algorithm for ray-traced volume rendering</article-title>. In <source>Proceedings of the 1993 Parallel Rendering Symposium</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, pp. <fpage>15</fpage>–<lpage>22</lpage>.</citation>
+</ref>
+<ref id="bibr27-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Marsalek</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Hauber</surname>
+<given-names>A</given-names>
+</name>
+<name>
+<surname>Slusallek</surname>
+<given-names>P</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>High-speed volume ray casting with CUDA</article-title>. In <source>IEEE Symposium on Interactive Ray Tracing</source>.</citation>
+</ref>
+<ref id="bibr28-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Müller</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Strengert</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Ertl</surname>
+<given-names>T</given-names>
+</name>
+</person-group> (<year>2006</year>) <article-title>Optimized volume raycasting for graphics-hardware-based cluster systems</article-title>. In <source>Proceedings of Eurographics Parallel Graphics and Visualization</source>, pp. <fpage>59</fpage>–<lpage>66</lpage>.</citation>
+</ref>
+<ref id="bibr29-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Nieh</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Levoy</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>1992</year>) <article-title>Volume rendering on scalable shared-memory MIMD architectures</article-title>. In <source>Proceedings of the 1992 Workshop on Volume Visualization</source>, pp. <fpage>17</fpage>–<lpage>24</lpage>.</citation>
+</ref>
+<ref id="bibr30-1094342012440466">
+<citation citation-type="book">
+<collab collab-type="author">NVIDIA Corporation</collab> (<year>2010</year>) <source>NVIDIA CUDA<sup>TM</sup> Programming Guide Version 3.2 RC</source>. <ext-link ext-link-type="uri" xlink:href="http://developer.nvidia.com/object/cuda_3_2_toolkit_rc.html">http://developer.nvidia.com/object/cuda_3_2_toolkit_rc.html</ext-link>.</citation>
+</ref>
+<ref id="bibr31-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Palmer</surname>
+<given-names>ME</given-names>
+</name>
+<name>
+<surname>Totty</surname>
+<given-names>B</given-names>
+</name>
+<name>
+<surname>Taylor</surname>
+<given-names>S</given-names>
+</name>
+</person-group> (<year>1998</year>) <article-title>Ray casting on shared-memory architectures: memory-hierarchy considerations in volume rendering</article-title>. <source>IEEE Concurrency</source> <volume>6</volume>: <fpage>20</fpage>–<lpage>35</lpage>.</citation>
+</ref>
+<ref id="bibr32-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Pascucci</surname>
+<given-names>V</given-names>
+</name>
+<name>
+<surname>Frank</surname>
+<given-names>RJ</given-names>
+</name>
+</person-group> (<year>2001</year>) <article-title>Global static indexing for real-time exploration of very large regular grids</article-title>. In <source>Proceedings of the 2001 ACM/IEEE Conference on Supercomputing (CDROM), Supercomputing ’01</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr33-1094342012440466">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name>
+<surname>Sabella</surname>
+<given-names>P</given-names>
+</name>
+</person-group> (<year>1988</year>) <article-title>A rendering algorithm for visualizing 3D scalar fields</article-title>. <source>SIGGRAPH Computer Graphics</source> <volume>22</volume>(<issue>4</issue>): <fpage>51</fpage>–<lpage>58</lpage>.</citation>
+</ref>
+<ref id="bibr34-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Stegmaier</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Strengert</surname>
+<given-names>M</given-names>
+</name>
+<name>
+<surname>Klein</surname>
+<given-names>T</given-names>
+</name>
+<name>
+<surname>Ertl</surname>
+<given-names>T</given-names>
+</name>
+</person-group> (<year>2005</year>) <article-title>A simple and flexible volume rendering framework for graphics-hardware-based raycasting</article-title>. In <source>Proceedings of the International Workshop on Volume Graphics ’05</source>, pp. <fpage>187</fpage>–<lpage>195</lpage>.</citation>
+</ref>
+<ref id="bibr35-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Stuart</surname>
+<given-names>JA</given-names>
+</name>
+<name>
+<surname>Owens</surname>
+<given-names>JD</given-names>
+</name>
+</person-group> (<year>2011</year>) <article-title>Multi-GPU MapReduce on GPU clusters</article-title>. In <source>Proceedings of the 25th IEEE International Parallel and Distributed Processing Symposium</source>, pp. <fpage>1068</fpage>–<lpage>1079</lpage>.</citation>
+</ref>
+<ref id="bibr36-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Tiwari</surname>
+<given-names>R</given-names>
+</name>
+<name>
+<surname>Huntsberger</surname>
+<given-names>TL</given-names>
+</name>
+</person-group> (<year>1994</year>) <article-title>A distributed memory algorithm for volume rendering</article-title>. In <source>Scalable High Performance Computing Conference</source>, <publisher-loc>Knoxville, TN</publisher-loc>, <publisher-name>USA</publisher-name>.</citation>
+</ref>
+<ref id="bibr37-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Upson</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Keeler</surname>
+<given-names>M</given-names>
+</name>
+</person-group> (<year>1988</year>) <article-title>V-buffer: visible volume rendering</article-title>. In <source>SIGGRAPH ’88: Proceedings of the 15th Annual Conference on Computer Graphics and Interactive Techniques</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM Press</publisher-name>, pp. <fpage>59</fpage>–<lpage>64</lpage>.</citation>
+</ref>
+<ref id="bibr38-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Williams</surname>
+<given-names>S</given-names>
+</name>
+<name>
+<surname>Datta</surname>
+<given-names>K</given-names>
+</name>
+<name>
+<surname>Oliker</surname>
+<given-names>L</given-names>
+</name>
+<name>
+<surname>Carter</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Shalf</surname>
+<given-names>J</given-names>
+</name>
+<name>
+<surname>Yelick</surname>
+<given-names>K</given-names>
+</name>
+</person-group> (<year>2010</year>) <article-title>Auto-tuning memory-intensive kernels for multicore</article-title>. In <person-group person-group-type="editor">
+<name>
+<surname>Bailey</surname>
+<given-names>DH</given-names>
+</name>
+<name>
+<surname>Lucas</surname>
+<given-names>RF</given-names>
+</name>
+<name>
+<surname>Williams</surname>
+<given-names>SW</given-names>
+</name>
+</person-group> (eds), <source>Performance Tuning of Scientific Applications</source>. <publisher-loc>Boca Raton, FL</publisher-loc>: <publisher-name>CRC Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr39-1094342012440466">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name>
+<surname>Yu</surname>
+<given-names>H</given-names>
+</name>
+<name>
+<surname>Wang</surname>
+<given-names>C</given-names>
+</name>
+<name>
+<surname>Ma</surname>
+<given-names>K-L</given-names>
+</name>
+</person-group> (<year>2008</year>) <article-title>Massively parallel volume rendering using 2–3 swap image compositing</article-title>. In <source>SC ’08: Proceedings of the 2008 ACM/IEEE conference on Supercomputing</source>. <publisher-loc>Piscataway, NJ</publisher-loc>: <publisher-name>IEEE Press</publisher-name>, pp. <fpage>1</fpage>–<lpage>11</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

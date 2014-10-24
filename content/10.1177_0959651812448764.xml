@@ -1,0 +1,5492 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PII</journal-id>
+<journal-id journal-id-type="hwp">sppii</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part I: Journal of Systems and Control Engineering</journal-title>
+<issn pub-type="ppub">0959-6518</issn>
+<issn pub-type="epub">2041-3041</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0959651812448764</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0959651812448764</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Model-based control of wind turbines: look-ahead approach</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Stotsky</surname><given-names>Alexander</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Egardt</surname><given-names>Bo</given-names></name>
+</contrib>
+<aff id="aff1-0959651812448764">Department of Signals and Systems, Chalmers University of Technology, Sweden</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0959651812448764">Alexander Stotsky, Department of Signals and Systems, Chalmers University of Technology, Gothenburg, SE-41296, Sweden. Email: <email>alexander.stotsky@chalmers.se</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>9</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>8</issue>
+<fpage>1029</fpage>
+<lpage>1038</lpage>
+<history>
+<date date-type="received">
+<day>26</day>
+<month>3</month>
+<year>2012</year>
+</date>
+<date date-type="accepted">
+<day>26</day>
+<month>4</month>
+<year>2012</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>A new composite turbine control architecture that consists of feedforward and feedback parts based on the upwind speed measurements and wind speed measurements at the turbine site, respectively, is described. The algorithm starts with preprocessing of a low-rate sampled upwind speed via the spline interpolation method. A run-ahead model driven by the signals from a preprocessing block models the turbine response and produces the feedforward part of turbine controller. The turbine control system is driven by both the feedforward part that comes from the run-ahead model and feedback part based on the wind speed measured at the turbine site. It is proved that the controller is stable despite the difference between the time-shifted preview measurements (expected wind speed) and the actual wind speed measured at the turbine site. Existing industrial proportional–integral–derivative turbine controllers can easily be upgraded with the preview part of the control architecture described in this article. Improved blade load regulation via the blade pitch angle control guarantees a hard upper bound on the flapwise bending moment. The results are confirmed by simulation with a wind speed record from the <italic>Hönö</italic> turbine outside Gothenburg, Sweden.</p>
+</abstract>
+<kwd-group>
+<kwd>Wind turbine</kwd>
+<kwd>preview control</kwd>
+<kwd>look-ahead modeling</kwd>
+<kwd>feedforward</kwd>
+<kwd>spline interpolation</kwd>
+<kwd>load mitigation</kwd>
+<kwd>wind turbine model reduction</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0959651812448764" sec-type="intro">
+<title>Introduction</title>
+<p>The uncontrollable stochastic nature of the wind necessitates prediction of wind speed to achieve the high-performance turbine regulation. Two control architectures that use the preview of wind speed are known. The first one is based on wind speed measurements at the turbine site and prediction of the future changes of wind speed using a time-series model (see Kusiak et al.<sup><xref ref-type="bibr" rid="bibr1-0959651812448764">1</xref></sup> for a one-step-ahead prediction). The second (see literature<sup><xref ref-type="bibr" rid="bibr2-0959651812448764">2</xref><xref ref-type="bibr" rid="bibr3-0959651812448764"/><xref ref-type="bibr" rid="bibr4-0959651812448764"/><xref ref-type="bibr" rid="bibr5-0959651812448764"/><xref ref-type="bibr" rid="bibr6-0959651812448764"/><xref ref-type="bibr" rid="bibr7-0959651812448764"/><xref ref-type="bibr" rid="bibr8-0959651812448764"/><xref ref-type="bibr" rid="bibr9-0959651812448764"/><xref ref-type="bibr" rid="bibr10-0959651812448764"/>–<xref ref-type="bibr" rid="bibr11-0959651812448764">11</xref></sup> and references therein) requires equipment for measuring wind speed at a distance in front of the turbine. New laser sensor technologies are the most promising techniques of measuring upwind speed that open new opportunities for the development of forward-looking turbine control strategies with their subsequent integration into existing turbine control system.</p>
+<p>The first strategy suffers from modeling/prediction errors, and the advantages of the second might be diminished by the difference between upwind speed and the speed that arrives at the turbine site.</p>
+<p>The second prediction scheme gives more opportunities for performance improvement but requires the installation of additional measurement equipment, which might be expensive. Preview-based control strategies are usually based on an assumption that the same wind speed that is measured at a distance in front of the turbine comes to the turbine. This assumption is often not valid in practice. Moreover, a classical frozen turbulence assumption<sup><xref ref-type="bibr" rid="bibr12-0959651812448764">12</xref></sup> used for the calculation of expected wind speed at the turbine site introduces additional inaccuracies in preview information.<sup><xref ref-type="bibr" rid="bibr13-0959651812448764">13</xref>,<xref ref-type="bibr" rid="bibr14-0959651812448764">14</xref></sup></p>
+<p>Besides, the laser preview measurements of wind speed are usually provided at a relatively low sampling rate.<sup><xref ref-type="bibr" rid="bibr11-0959651812448764">11</xref></sup> As a rule, the laser update rates do not exceed 10 Hz, and the most common rate is 1 Hz, although higher sample rates will be available at low cost in the future. Measurement rates of other system variables such as generator speed are much higher. Such a low sampling rate applied to a turbulent wind results in filtering of a fast varying wind speed due to aliasing effect, where the high frequencies are aliased to a low-frequency range. Such an effect is accompanied by errors/inaccuracies in preview measurements and increases the difference between upwind speed measurements and measurements of the speed that arrives at the turbine site. This, in turn, necessitates the development of a new control architecture driven by both upwind speed and wind speed measurements at the turbine site (provided by the cup anemometer installed on the nacelle or by laser that measures wind speed at a relatively short distance in front of the turbine) for improvement of the control accuracy.</p>
+<p>The wind speed signal measured at a distance in front of the turbine allows preprocessing and generation of the high-quality feedforward control signal. A feedback control loop is usually based on the wind speed measurements at the turbine site. An integration of the feedforward part driven by the upwind speed and feedback part driven by the wind speed at the turbine site into the control system is an issue since those parts might result in conflicting control actions. This article offers the design method for a new control architecture that successfully integrates these feedback and feedforward parts.</p>
+<p>The main contribution of this article is a new control architecture that integrates (a) a signal processing block for preprocessing of the wind speed signal, (b) a run-ahead model that models the turbine response driven by the preview measurements and exports the feedforward part to the turbine controller, and (c) a feedback part driven by the wind speed measurements at the turbine site.</p>
+<p>Blade load mitigation is achieved via enhanced pitch angle regulation. A block diagram of the proposed control structure is shown in <xref ref-type="fig" rid="fig1-0959651812448764">Figure 1</xref>, where upwind speed <inline-formula id="inline-formula1-0959651812448764">
+<mml:math display="inline" id="math1-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, measured at a distance in front of the turbine, is an input to preprocessing block that cleans the signal and calculates a high-quality wind speed signal <inline-formula id="inline-formula2-0959651812448764">
+<mml:math display="inline" id="math2-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and its derivative <inline-formula id="inline-formula3-0959651812448764">
+<mml:math display="inline" id="math3-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mover>
+<mml:mi>V</mml:mi>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> with some time delay. A run-ahead model driven by the signals from a preprocessing block models the turbine response and produces feedforward parts of the controller: generator torque <inline-formula id="inline-formula4-0959651812448764">
+<mml:math display="inline" id="math4-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gf</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and blade pitch angle <inline-formula id="inline-formula5-0959651812448764">
+<mml:math display="inline" id="math5-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. Turbine control system is driven by both feedforward part that comes from the run-ahead model and feedback part based on the wind speed <inline-formula id="inline-formula6-0959651812448764">
+<mml:math display="inline" id="math6-0959651812448764">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> measured at the turbine site.</p>
+<fig id="fig1-0959651812448764" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Block diagram that describes the structure of the turbine control system with run-ahead model in the loop.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812448764-fig1.tif"/>
+</fig>
+<p>A satisfactory performance of the closed-loop system despite a mismatch between the speed expected and measured at the turbine site is shown using measured wind speed data and simple turbine model. Moreover, the stability of the closed-loop system is proved for the case of constant mismatch between those speeds.</p>
+<p>The article is organized as follows: the turbine model and problem statement are described in “Turbine model”. A composite controller that contains a preview-based part presented in “Preview-based control” is then described and verified by simulations in “Composite turbine speed control: integration of feedforward and feedback parts”. The article is finished with brief conclusions.</p>
+</sec>
+<sec id="section2-0959651812448764">
+<title>Turbine model</title>
+<p>The description of the turbine model begins with an aerodynamical part, and drive train and pitch actuator models. The steady-state blade operational loads and trajectory tracking problem statement are carried over from Stotsky and Egardt.<sup><xref ref-type="bibr" rid="bibr10-0959651812448764">10</xref></sup> The model is completed with the wind speed measurements made in front of the <italic>Hönö</italic> turbine.</p>
+<sec id="section3-0959651812448764">
+<title>Aerodynamic model</title>
+<p>A wind turbine converts energy from the wind to the rotor shaft that rotates at a speed <inline-formula id="inline-formula7-0959651812448764">
+<mml:math display="inline" id="math7-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. The power of the wind <inline-formula id="inline-formula8-0959651812448764">
+<mml:math display="inline" id="math8-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wind</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>ρ</mml:mi>
+<mml:mi>A</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> depends on the wind speed <inline-formula id="inline-formula9-0959651812448764">
+<mml:math display="inline" id="math9-0959651812448764">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>, the air density <inline-formula id="inline-formula10-0959651812448764">
+<mml:math display="inline" id="math10-0959651812448764">
+<mml:mrow>
+<mml:mi>ρ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>, and the swept area <inline-formula id="inline-formula11-0959651812448764">
+<mml:math display="inline" id="math11-0959651812448764">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>π</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math></inline-formula>, where <inline-formula id="inline-formula12-0959651812448764">
+<mml:math display="inline" id="math12-0959651812448764">
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is the rotor radius. The uniform distribution of the wind speed across the rotor swept area is assumed. From the available power in the swept area, the power on the rotor <inline-formula id="inline-formula13-0959651812448764">
+<mml:math display="inline" id="math13-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is given based on the power coefficient <inline-formula id="inline-formula14-0959651812448764">
+<mml:math display="inline" id="math14-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wind</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, which in turn depends on the pitch angle of the blades <inline-formula id="inline-formula15-0959651812448764">
+<mml:math display="inline" id="math15-0959651812448764">
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> and the tip-speed ratio <inline-formula id="inline-formula16-0959651812448764">
+<mml:math display="inline" id="math16-0959651812448764">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>R</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula></p>
+<p><disp-formula id="disp-formula1-0959651812448764">
+<label>(1)</label>
+<mml:math display="block" id="math17-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>wind</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mi>ρ</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0959651812448764" xlink:href="10.1177_0959651812448764-eq1.tif"/>
+</disp-formula>
+</p>
+<p>The aerodynamic torque applied to the rotor is given as</p>
+<p><disp-formula id="disp-formula2-0959651812448764">
+<label>(2)</label>
+<mml:math display="block" id="math18-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mi>ρ</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0959651812448764" xlink:href="10.1177_0959651812448764-eq2.tif"/>
+</disp-formula>
+</p>
+</sec>
+<sec id="section4-0959651812448764">
+<title>Reduced-order modeling of the drive train</title>
+<p>The drive train model consists of a low-speed shaft rotating with a speed <inline-formula id="inline-formula17-0959651812448764">
+<mml:math display="inline" id="math19-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and a high-speed shaft rotating with a speed <inline-formula id="inline-formula18-0959651812448764">
+<mml:math display="inline" id="math20-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, having inertias <inline-formula id="inline-formula19-0959651812448764">
+<mml:math display="inline" id="math21-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula20-0959651812448764">
+<mml:math display="inline" id="math22-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, respectively. The shafts are interconnected by a gear with the ratio <inline-formula id="inline-formula21-0959651812448764">
+<mml:math display="inline" id="math23-0959651812448764">
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. A torsion stiffness <inline-formula id="inline-formula22-0959651812448764">
+<mml:math display="inline" id="math24-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> together with a torsion damping <inline-formula id="inline-formula23-0959651812448764">
+<mml:math display="inline" id="math25-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> results in a torsion angle <inline-formula id="inline-formula24-0959651812448764">
+<mml:math display="inline" id="math26-0959651812448764">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> that describes the twist of the flexible shaft. This leads to the following drive train model<sup><xref ref-type="bibr" rid="bibr15-0959651812448764">15</xref></sup></p>
+<p><disp-formula id="disp-formula3-0959651812448764">
+<label>(3)</label>
+<mml:math display="block" id="math27-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mo>−</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>α</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>torque</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>shared</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>by</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>the</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>shafts</mml:mi>
+</mml:mrow>
+</mml:munder>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0959651812448764" xlink:href="10.1177_0959651812448764-eq3.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula4-0959651812448764">
+<label>(4)</label>
+<mml:math display="block" id="math28-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>α</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0959651812448764" xlink:href="10.1177_0959651812448764-eq4.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula5-0959651812448764">
+<label>(5)</label>
+<mml:math display="block" id="math29-0959651812448764">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0959651812448764" xlink:href="10.1177_0959651812448764-eq5.tif"/>
+</disp-formula>
+</p>
+<p>Multiplication of both sides of <xref ref-type="disp-formula" rid="disp-formula4-0959651812448764">equation (4)</xref> by <inline-formula id="inline-formula25-0959651812448764">
+<mml:math display="inline" id="math30-0959651812448764">
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> and subsequent summation with <xref ref-type="disp-formula" rid="disp-formula3-0959651812448764">equation (3)</xref> yields</p>
+<p><disp-formula id="disp-formula6-0959651812448764">
+<label>(6)</label>
+<mml:math display="block" id="math31-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0959651812448764" xlink:href="10.1177_0959651812448764-eq6.tif"/>
+</disp-formula>
+</p>
+<p>where the term <inline-formula id="inline-formula26-0959651812448764">
+<mml:math display="inline" id="math32-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>α</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math></inline-formula> that represents the torque between the shafts is canceled. The torsion rate <inline-formula id="inline-formula27-0959651812448764">
+<mml:math display="inline" id="math33-0959651812448764">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math></inline-formula> is several dozen times smaller than the turbine speed <inline-formula id="inline-formula28-0959651812448764">
+<mml:math display="inline" id="math34-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. Therefore, the generator speed divided by the gear ratio is an acceptable approximation of the turbine speed, <inline-formula id="inline-formula29-0959651812448764">
+<mml:math display="inline" id="math35-0959651812448764">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. Finally, a one-mass nonlinear model of the drive train with the loading torque from generator <inline-formula id="inline-formula30-0959651812448764">
+<mml:math display="inline" id="math36-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> as a control action, with a turbine power <inline-formula id="inline-formula31-0959651812448764">
+<mml:math display="inline" id="math37-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> as an input, and with a rotational speed <inline-formula id="inline-formula32-0959651812448764">
+<mml:math display="inline" id="math38-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> as an output can be presented as follows</p>
+<p><disp-formula id="disp-formula7-0959651812448764">
+<label>(7)</label>
+<mml:math display="block" id="math39-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0959651812448764" xlink:href="10.1177_0959651812448764-eq7.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula8-0959651812448764">
+<label>(8)</label>
+<mml:math display="block" id="math40-0959651812448764">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:munder>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0959651812448764" xlink:href="10.1177_0959651812448764-eq8.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula33-0959651812448764">
+<mml:math display="inline" id="math41-0959651812448764">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:msub>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is the lumped rotational inertia of the system.</p>
+<p>The nomenclature and parameters of the turbine model described earlier are presented in Stotsky and Egardt.<sup><xref ref-type="bibr" rid="bibr10-0959651812448764">10</xref></sup></p>
+</sec>
+<sec id="section5-0959651812448764">
+<title>Pitch actuator model</title>
+<p>Pitch actuator is modeled as a first-order lag with the rate and range constraints</p>
+<p><disp-formula id="disp-formula9-0959651812448764">
+<label>(9)</label>
+<mml:math display="block" id="math42-0959651812448764">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>β</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0959651812448764" xlink:href="10.1177_0959651812448764-eq9.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula10-0959651812448764">
+<label>(10)</label>
+<mml:math display="block" id="math43-0959651812448764">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0959651812448764" xlink:href="10.1177_0959651812448764-eq10.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula34-0959651812448764">
+<mml:math display="inline" id="math44-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is an actuator control input, <inline-formula id="inline-formula35-0959651812448764">
+<mml:math display="inline" id="math45-0959651812448764">
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is a time constant, <inline-formula id="inline-formula36-0959651812448764">
+<mml:math display="inline" id="math46-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is a communication delay, and <inline-formula id="inline-formula37-0959651812448764">
+<mml:math display="inline" id="math47-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula38-0959651812448764">
+<mml:math display="inline" id="math48-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are positive constants that define the range and rate constraints, respectively.</p>
+</sec>
+<sec id="section6-0959651812448764">
+<title>Steady-state blade operational loads</title>
+<p>The steady-state flapwise and edgewise blade root bending moments can be described as look-up tables (the surfaces in three-dimensional (3D) space) with the tip-speed ratio and blade pitch angle as input variables.<sup><xref ref-type="bibr" rid="bibr10-0959651812448764">10</xref>,<xref ref-type="bibr" rid="bibr16-0959651812448764">16</xref></sup> Such a sandwiched surface that describes the flapwise blade bending moment as a function of tip-speed ratio and blade pitch angle for different turbine speeds is plotted in <xref ref-type="fig" rid="fig2-0959651812448764">Figure 2</xref>.</p>
+<fig id="fig2-0959651812448764" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Flapwise bending moment as a function of tip-speed ratio and pitch angle for different values of the turbine speed.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812448764-fig2.tif"/>
+</fig>
+</sec>
+<sec id="section7-0959651812448764">
+<title>Wind speed measurements</title>
+<p>The wind speed measurements made on the <italic>Hönö</italic> wind turbine outside Gothenburg, Sweden,<sup><xref ref-type="bibr" rid="bibr17-0959651812448764">17</xref></sup> with the sampling rate of 1 Hz are directly used in simulations. The wind speed measurement setup is shown in <xref ref-type="fig" rid="fig3-0959651812448764">Figure 3</xref>, and measured data are plotted in <xref ref-type="fig" rid="fig4-0959651812448764">Figure 4</xref>.</p>
+<fig id="fig3-0959651812448764" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Wind speed measurements with WXT520 Vaisala wind speed sensor located in front of the <italic>Hönö</italic> wind turbine outside Gothenburg, Sweden. The sensor has an array of three equally spaced ultrasonic transducers on a horizontal plane. The wind speed and direction are determined by measuring the time it takes for the ultrasound to travel from each transducer to the other two.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812448764-fig3.tif"/>
+</fig>
+<fig id="fig4-0959651812448764" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Numerical differentiation of the upwind speed signal via spline interpolation method.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812448764-fig4.tif"/>
+</fig>
+</sec>
+<sec id="section8-0959651812448764">
+<title>A turbine control problem statement</title>
+<p>The turbine control problem is to choose a desired generator torque <inline-formula id="inline-formula39-0959651812448764">
+<mml:math display="inline" id="math49-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and pitch actuator input <inline-formula id="inline-formula40-0959651812448764">
+<mml:math display="inline" id="math50-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> in order to maximize a turbine power <inline-formula id="inline-formula41-0959651812448764">
+<mml:math display="inline" id="math51-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> under the constraints on the flapwise and edgewise bending moments</p>
+<p><disp-formula id="disp-formula11-0959651812448764">
+<label>(11)</label>
+<mml:math display="block" id="math52-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>→</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmax</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0959651812448764" xlink:href="10.1177_0959651812448764-eq11.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula12-0959651812448764">
+<label>(12)</label>
+<mml:math display="block" id="math53-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>V</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0959651812448764" xlink:href="10.1177_0959651812448764-eq12.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula13-0959651812448764">
+<label>(13)</label>
+<mml:math display="block" id="math54-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>V</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0959651812448764" xlink:href="10.1177_0959651812448764-eq13.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula42-0959651812448764">
+<mml:math display="inline" id="math55-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmax</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is the maximum turbine power available under the constraints (12) and (13), and <inline-formula id="inline-formula43-0959651812448764">
+<mml:math display="inline" id="math56-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula44-0959651812448764">
+<mml:math display="inline" id="math57-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are positive constants. Moments <inline-formula id="inline-formula45-0959651812448764">
+<mml:math display="inline" id="math58-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula46-0959651812448764">
+<mml:math display="inline" id="math59-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mo>·</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> are the steady-state flapwise and edgewise bending moments, respectively.</p>
+<p>This problem statement, described in Stotsky and Egardt,<sup><xref ref-type="bibr" rid="bibr10-0959651812448764">10</xref></sup> can be converted to a driveline control problem, that is, to choose a desired generator torque <inline-formula id="inline-formula47-0959651812448764">
+<mml:math display="inline" id="math60-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and pitch actuator input <inline-formula id="inline-formula48-0959651812448764">
+<mml:math display="inline" id="math61-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> to track a desired turbine speed <inline-formula id="inline-formula49-0959651812448764">
+<mml:math display="inline" id="math62-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and blade pitch angle <inline-formula id="inline-formula50-0959651812448764">
+<mml:math display="inline" id="math63-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula></p>
+<p><disp-formula id="disp-formula14-0959651812448764">
+<label>(14)</label>
+<mml:math display="block" id="math64-0959651812448764">
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mo>lim</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:mi>∞</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0959651812448764" xlink:href="10.1177_0959651812448764-eq14.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula15-0959651812448764">
+<label>(15)</label>
+<mml:math display="block" id="math65-0959651812448764">
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mo>lim</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:mi>∞</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mspace width="0.25em"/>
+<mml:mi>β</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0959651812448764" xlink:href="10.1177_0959651812448764-eq15.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula51-0959651812448764">
+<mml:math display="inline" id="math66-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula52-0959651812448764">
+<mml:math display="inline" id="math67-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are chosen to maximize the power coefficient <inline-formula id="inline-formula53-0959651812448764">
+<mml:math display="inline" id="math68-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> in the presence of constraints on the blade bending moments.</p>
+<p>This problem statement does not describe the typical division of wind turbine control into operating regions, where wind speed is the below- or above-rated speed<sup><xref ref-type="bibr" rid="bibr18-0959651812448764">18</xref></sup> and provides a unified description for both regions. The case where the wind speed is above rated is accounted for via constraints on the blade bending moments (12) and (13). Indeed, above-rated wind speed implies high loads on the blades that exceed desired limits. Pitch actuation, similar to that used in Burton et al.,<sup><xref ref-type="bibr" rid="bibr18-0959651812448764">18</xref></sup> is applied in this case to keep the loads under constraints. Constraints on blade loads are not violated, if the wind speed is below rated. Pitch actuation is not applied in this case, maximizing the power output of the turbine.</p>
+<p>Moreover, even if the wind speed is below rated, an additional pitch actuation might be introduced within this problem statement framework via tougher constraints on the blade loads. Additional bounding of the blade loads might be required (a) in the case of aging and wearing of the turbine components, (b) for offshore turbines in the case of nasty sea states, (c) in the case of surface roughness on the blades, arising from turbine icing in cold climate, and (d) in many other cases.<sup><xref ref-type="bibr" rid="bibr10-0959651812448764">10</xref></sup></p>
+</sec>
+</sec>
+<sec id="section9-0959651812448764">
+<title>Preview-based control</title>
+<p>The description of a preview-based control strategy starts with the spline interpolation preprocessing of the wind speed signal and look-ahead modeling of the turbine response. A preview-based control results in the feedforward part of the turbine controller.</p>
+<sec id="section10-0959651812448764">
+<title>Preprocessing of the wind speed signal</title>
+<p>The wind speed signal <inline-formula id="inline-formula54-0959651812448764">
+<mml:math display="inline" id="math69-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> measured at a distance in front of the turbine with a relatively low sampling rate (compared to other signals of the system) should properly be processed to achieve high-performance regulation. Preprocessing of the wind speed signal includes estimation of the derivative of the signal for further inclusion in the control system. The backward difference method, which is well known as the simplest numerical differentiator, gives the derivative that is accompanied with peaking phenomena due to the low sampling rate of the signal. Spline interpolation method (see Stotsky and Forgo<sup>19</sup> and references therein) that is based on on-line least-squares polynomial fitting over the moving in time window of a size <inline-formula id="inline-formula55-0959651812448764">
+<mml:math display="inline" id="math70-0959651812448764">
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is proposed in this article for calculation of the derivative of the wind speed signal. The idea for the spline interpolation method is to fit a polynomial of a certain order as a function of time to the measured upwind speed signal <inline-formula id="inline-formula56-0959651812448764">
+<mml:math display="inline" id="math71-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula></p>
+<p><disp-formula id="disp-formula16-0959651812448764">
+<label>(16)</label>
+<mml:math display="block" id="math72-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mo>⋯</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msup>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula16-0959651812448764" xlink:href="10.1177_0959651812448764-eq16.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula57-0959651812448764">
+<mml:math display="inline" id="math73-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is an estimate of the signal, <inline-formula id="inline-formula58-0959651812448764">
+<mml:math display="inline" id="math74-0959651812448764">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is a continuous time, <inline-formula id="inline-formula59-0959651812448764">
+<mml:math display="inline" id="math75-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, <inline-formula id="inline-formula60-0959651812448764">
+<mml:math display="inline" id="math76-0959651812448764">
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>,</mml:mo><mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> are the coefficients to be found, in a least-squares sense and take the derivatives analytically. The sum to be minimized at every step is the following</p>
+<p><disp-formula id="disp-formula17-0959651812448764">
+<label>(17)</label>
+<mml:math display="block" id="math77-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>S</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pj</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mo>⋯</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula17-0959651812448764" xlink:href="10.1177_0959651812448764-eq17.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula61-0959651812448764">
+<mml:math display="inline" id="math78-0959651812448764">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo><mml:mo>…</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. The recursive and computationally efficient version of the spline interpolation method is described in Stotsky and Forgo.<sup><xref ref-type="bibr" rid="bibr19-0959651812448764">19</xref></sup></p>
+<p>A preview-based measurement strategy allows preprocessing of the wind speed signal, and the derivatives of the signal can be taken in the middle of the moving window. This essentially improves the estimation accuracy and hence the performance of the control system. Application of the spline interpolation method with the second-order spline is illustrated in <xref ref-type="fig" rid="fig4-0959651812448764">Figure 4</xref>, where a high-performance derivative signal is created from the upwind speed signal with a low-rate sampling. The wind speed signal in meter per second is measured with the frequency of 1 Hz and plotted with a blue line, where the constant offset of 5 m/s is subtracted at each step. The second-order polynomial (plotted with a black line) as a function of time is fitted to the measured signal in the least-squares sense in a window that is moving in time. The derivative (plotted with a red line) is calculated in the middle of this window.</p>
+<p>Notice that the spline interpolation method provides also higher order derivatives.</p>
+</sec>
+<sec id="section11-0959651812448764">
+<title>Look-ahead modeling of the turbine response</title>
+<p>Upwind speed measurements allow look-ahead modeling (premodeling) of the turbine response and generation of the high-quality (almost noise-free) feedforward control signal.</p>
+<sec id="section12-0959651812448764">
+<title>Run-ahead model</title>
+<p>Run-ahead turbine model is introduced as follows</p>
+<p><disp-formula id="disp-formula18-0959651812448764">
+<label>(18)</label>
+<mml:math display="block" id="math79-0959651812448764">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula18-0959651812448764" xlink:href="10.1177_0959651812448764-eq18.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula19-0959651812448764">
+<label>(19)</label>
+<mml:math display="block" id="math80-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mi>ρ</mml:mi>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula19-0959651812448764" xlink:href="10.1177_0959651812448764-eq19.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula20-0959651812448764">
+<label>(20)</label>
+<mml:math display="block" id="math81-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula20-0959651812448764" xlink:href="10.1177_0959651812448764-eq20.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula21-0959651812448764">
+<label>(21)</label>
+<mml:math display="block" id="math82-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>md</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula21-0959651812448764" xlink:href="10.1177_0959651812448764-eq21.tif"/>
+</disp-formula>
+</p>
+<p>that models a virtual turbine located at a distance in front of real turbine with the wind speed <inline-formula id="inline-formula62-0959651812448764">
+<mml:math display="inline" id="math83-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, turbine power <inline-formula id="inline-formula63-0959651812448764">
+<mml:math display="inline" id="math84-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, turbine speed <inline-formula id="inline-formula64-0959651812448764">
+<mml:math display="inline" id="math85-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, tip-speed ratio <inline-formula id="inline-formula65-0959651812448764">
+<mml:math display="inline" id="math86-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, and desired and actual blade pitch angles <inline-formula id="inline-formula66-0959651812448764">
+<mml:math display="inline" id="math87-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>md</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula67-0959651812448764">
+<mml:math display="inline" id="math88-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> with rate and range constraints on <inline-formula id="inline-formula68-0959651812448764">
+<mml:math display="inline" id="math89-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula69-0959651812448764">
+<mml:math display="inline" id="math90-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. The model is driven by a generator torque <inline-formula id="inline-formula70-0959651812448764">
+<mml:math display="inline" id="math91-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> to achieve the desired closed-loop performance of the virtual turbine. To this end, the desired values of the tip-speed ratio <inline-formula id="inline-formula71-0959651812448764">
+<mml:math display="inline" id="math92-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and blade pitch angle <inline-formula id="inline-formula72-0959651812448764">
+<mml:math display="inline" id="math93-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are calculated first using the approach described in Stotsky and Egardt.<sup><xref ref-type="bibr" rid="bibr10-0959651812448764">10</xref></sup> It is assumed that the rotational inertia of the system <inline-formula id="inline-formula73-0959651812448764">
+<mml:math display="inline" id="math94-0959651812448764">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is unknown due to a turbine icing in cold climate, for example. The constant a priori value of inertia <inline-formula id="inline-formula74-0959651812448764">
+<mml:math display="inline" id="math95-0959651812448764">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math></inline-formula> is used in model (18).</p>
+</sec>
+<sec id="section13-0959651812448764">
+<title>Torque control</title>
+<p>The generator torque</p>
+<p><disp-formula id="disp-formula22-0959651812448764">
+<label>(22)</label>
+<mml:math display="block" id="math96-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>feedforward</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>part</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mo>+</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>feedback</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>part</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mo>−</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>predictive</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>part</mml:mi>
+</mml:mrow>
+</mml:munder>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula22-0959651812448764" xlink:href="10.1177_0959651812448764-eq22.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula75-0959651812448764">
+<mml:math display="inline" id="math97-0959651812448764">
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> guarantees a satisfactory closed-loop tracking performance of the desired speed of the virtual turbine, <inline-formula id="inline-formula76-0959651812448764">
+<mml:math display="inline" id="math98-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>, where <inline-formula id="inline-formula77-0959651812448764">
+<mml:math display="inline" id="math99-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is calculated via the spline interpolation method as it is described in the section entitled “Preprocessing of the wind speed signal.” This generator torque control consists of three parts: the feedback and feedforward parts as well as the derivative-driven part for accounting of the fast changes of the wind speed.</p>
+<p>Main idea of this controller becomes clear when substituting <xref ref-type="disp-formula" rid="disp-formula22-0959651812448764">equation (22)</xref> in <xref ref-type="disp-formula" rid="disp-formula18-0959651812448764">equation (18)</xref>. This results in the following exponentially stable closed-loop dynamics of virtual turbine</p>
+<p><disp-formula id="disp-formula23-0959651812448764">
+<label>(23)</label>
+<mml:math display="block" id="math100-0959651812448764">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula23-0959651812448764" xlink:href="10.1177_0959651812448764-eq23.tif"/>
+</disp-formula>
+</p>
+<p>Notice that the generator torque can be made adaptive with an adjustable parameter multiplied by the derivative of the desired turbine speed <inline-formula id="inline-formula78-0959651812448764">
+<mml:math display="inline" id="math101-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. Such an adaptation law compensates for estimation errors in the derivative of upwind speed. This case is not considered in this article for the sake of simplicity.</p>
+</sec>
+<sec id="section14-0959651812448764">
+<title>Regulation of the flapwise bending moment</title>
+<p>Mechanical loads of virtual turbine are regulated via pitch angle <inline-formula id="inline-formula79-0959651812448764">
+<mml:math display="inline" id="math102-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. The controller for pitch angle is based on the look-up tables that are inverse to the flapwise bending moment look-up tables <inline-formula id="inline-formula80-0959651812448764">
+<mml:math display="inline" id="math103-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, as shown in <xref ref-type="fig" rid="fig2-0959651812448764">Figure 2</xref>. Those inverse look-up tables <inline-formula id="inline-formula81-0959651812448764">
+<mml:math display="inline" id="math104-0959651812448764">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> have two inputs: the tip-speed ratio <inline-formula id="inline-formula82-0959651812448764">
+<mml:math display="inline" id="math105-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and the desired flapwise bending moment <inline-formula id="inline-formula83-0959651812448764">
+<mml:math display="inline" id="math106-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. Pitch regulator is defined as <inline-formula id="inline-formula84-0959651812448764">
+<mml:math display="inline" id="math107-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>md</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> for the turbine speed <inline-formula id="inline-formula85-0959651812448764">
+<mml:math display="inline" id="math108-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, regulated by the control algorithm (22). As a desired value of the flapwise bending moment <inline-formula id="inline-formula86-0959651812448764">
+<mml:math display="inline" id="math109-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, its desired upper bound can be taken. In other words, the flapwise bending moment is directly regulated to keep this moment bounded.</p>
+</sec>
+<sec id="section15-0959651812448764">
+<title>Exporting feedforward signals</title>
+<p>Cleaned and sampled with a high frequency, the generator control signal <inline-formula id="inline-formula87-0959651812448764">
+<mml:math display="inline" id="math110-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, calculated via <xref ref-type="disp-formula" rid="disp-formula22-0959651812448764">equation (22)</xref> guarantees the high-performance regulation of the speed of virtual turbine to the desired one, which is driven by the upwind speed measurements. The high performance of the regulation is achieved due to the possibility of preprocessing of the wind speed signal, where a low-rate sampled signal is saved in the buffer, approximated via a polynomial as a function of time with continuous calculation of the derivative with the delayed time instant. The generator torque signal <inline-formula id="inline-formula88-0959651812448764">
+<mml:math display="inline" id="math111-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> that guarantees the closed-loop performance of virtual turbine is delayed and exported as a feedforward part to the controller for real turbine. Notice that any other run-ahead model might be used instead of model (<xref ref-type="disp-formula" rid="disp-formula18-0959651812448764">equations (18)</xref><xref ref-type="disp-formula" rid="disp-formula19-0959651812448764"/><xref ref-type="disp-formula" rid="disp-formula20-0959651812448764"/>–<xref ref-type="disp-formula" rid="disp-formula21-0959651812448764">(21)</xref>). However, low-order-look-ahead modeling of the turbine response that captures the low-frequency component of the response is preferable. That in turn minimizes the errors due to a possible mismatch between the upwind speed and the speed that comes to the turbine.</p>
+<p>Blade pitch angle <inline-formula id="inline-formula89-0959651812448764">
+<mml:math display="inline" id="math112-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> as a function of time taken from run-ahead model (21) can also be exported as feedforward part to the blade pitch regulator of real turbine. A slowly varying (measured with 1-Hz sampling frequency) upwind speed profile allows the high-performance tracking of the desired speed of virtual turbine and regulation of tip-speed ratio to an optimal value <inline-formula id="inline-formula90-0959651812448764">
+<mml:math display="inline" id="math113-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. This in turn results in small variations of pitch angle <inline-formula id="inline-formula91-0959651812448764">
+<mml:math display="inline" id="math114-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, regulated via the algorithm described in the section entitled “Regulation of the flapwise bending moment,” around the desired value <inline-formula id="inline-formula92-0959651812448764">
+<mml:math display="inline" id="math115-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. Therefore, the desired blade pitch angle is exported as the feedforward part to the controller for real turbine.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section16-0959651812448764">
+<title>Composite turbine speed control: integration of feedforward and feedback parts</title>
+<p>This section starts with an integration of feedback and feedforward parts into a composite turbine speed control architecture, where the feedforward part is imported from “Preview-based control”. Simulation results of the composite turbine speed control with improved blade load regulation are presented in the end of this section.</p>
+<sec id="section17-0959651812448764">
+<title>Turbine speed control</title>
+<p>The wind speed measured at a distance in front of the turbine and delayed for processing <inline-formula id="inline-formula93-0959651812448764">
+<mml:math display="inline" id="math116-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> with the derivative <inline-formula id="inline-formula94-0959651812448764">
+<mml:math display="inline" id="math117-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> comes to the turbine at a time <inline-formula id="inline-formula95-0959651812448764">
+<mml:math display="inline" id="math118-0959651812448764">
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> and denoted as <inline-formula id="inline-formula96-0959651812448764">
+<mml:math display="inline" id="math119-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> with the derivative <inline-formula id="inline-formula97-0959651812448764">
+<mml:math display="inline" id="math120-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, where <inline-formula id="inline-formula98-0959651812448764">
+<mml:math display="inline" id="math121-0959651812448764">
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> is the elapsed time required for an upwind speed profile to reach the turbine.</p>
+<p>Notice that Taylor’s frozen turbulence concept assumes that the wind speed fluctuations are not affected by the mean flow and merely advected.<sup><xref ref-type="bibr" rid="bibr12-0959651812448764">12</xref></sup> It means that the turbulent wind travels toward the turbine with the average wind speed. A time constant <inline-formula id="inline-formula99-0959651812448764">
+<mml:math display="inline" id="math122-0959651812448764">
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> can be calculated via this mean wind speed and a measurement preview distance.<sup><xref ref-type="bibr" rid="bibr13-0959651812448764">13</xref></sup></p>
+<p>The wind speed measured at the turbine site <inline-formula id="inline-formula100-0959651812448764">
+<mml:math display="inline" id="math123-0959651812448764">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is composed of two components: the first one is the measured upwind speed that reached the turbine <inline-formula id="inline-formula101-0959651812448764">
+<mml:math display="inline" id="math124-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> (expected wind speed) and the second one represents the deviation of expected speed from actual one <inline-formula id="inline-formula102-0959651812448764">
+<mml:math display="inline" id="math125-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, that is, <inline-formula id="inline-formula103-0959651812448764">
+<mml:math display="inline" id="math126-0959651812448764">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. This presentation of the turbine wind speed justifies the composite structure of controller that is composed of two components: the first component is a feedforward one driven by the upwind speed <inline-formula id="inline-formula104-0959651812448764">
+<mml:math display="inline" id="math127-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and run-ahead model <inline-formula id="inline-formula105-0959651812448764">
+<mml:math display="inline" id="math128-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gf</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and the second one is the feedback component driven by the wind speed mismatch <inline-formula id="inline-formula106-0959651812448764">
+<mml:math display="inline" id="math129-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>Assuming that the wind speed mismatch <inline-formula id="inline-formula107-0959651812448764">
+<mml:math display="inline" id="math130-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is constant, the desired turbine speed and its derivative are defined as follows</p>
+<p><disp-formula id="disp-formula24-0959651812448764">
+<label>(24)</label>
+<mml:math display="block" id="math131-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mo>+</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mi>const</mml:mi>
+</mml:mrow>
+</mml:munder>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula24-0959651812448764" xlink:href="10.1177_0959651812448764-eq24.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula25-0959651812448764">
+<label>(25)</label>
+<mml:math display="block" id="math132-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula25-0959651812448764" xlink:href="10.1177_0959651812448764-eq25.tif"/>
+</disp-formula>
+</p>
+<p>which show that the derivative of the desired turbine speed coincides with the derivative of the desired turbine speed of run-ahead model for a constant <inline-formula id="inline-formula108-0959651812448764">
+<mml:math display="inline" id="math133-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>*</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>The simplest control strategy (similar to <xref ref-type="disp-formula" rid="disp-formula22-0959651812448764">equation (22))</xref> that uses a calculated-ahead derivative of the wind speed signal can be written as follows</p>
+<p><disp-formula id="disp-formula26-0959651812448764">
+<label>(26)</label>
+<mml:math display="block" id="math134-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mi>J</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula26-0959651812448764" xlink:href="10.1177_0959651812448764-eq26.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula109-0959651812448764">
+<mml:math display="inline" id="math135-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula110-0959651812448764">
+<mml:math display="inline" id="math136-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> are defined in <xref ref-type="disp-formula" rid="disp-formula24-0959651812448764">equations (24)</xref> and <xref ref-type="disp-formula" rid="disp-formula25-0959651812448764">(25)</xref>, respectively, with the derivative <inline-formula id="inline-formula111-0959651812448764">
+<mml:math display="inline" id="math137-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, cleaned from the noise in the preprocessing, <inline-formula id="inline-formula112-0959651812448764">
+<mml:math display="inline" id="math138-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>&gt;</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula>, when assuming that the inertia of the system <inline-formula id="inline-formula113-0959651812448764">
+<mml:math display="inline" id="math139-0959651812448764">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is known. This strategy, when combining <xref ref-type="disp-formula" rid="disp-formula8-0959651812448764">equation (8)</xref> with <xref ref-type="disp-formula" rid="disp-formula26-0959651812448764">equation (26)</xref>, results in the following exponentially stable closed-loop dynamics</p>
+<p><disp-formula id="disp-formula27-0959651812448764">
+<label>(27)</label>
+<mml:math display="block" id="math140-0959651812448764">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula27-0959651812448764" xlink:href="10.1177_0959651812448764-eq27.tif"/>
+</disp-formula>
+</p>
+<p>despite a constant mismatch between <inline-formula id="inline-formula114-0959651812448764">
+<mml:math display="inline" id="math141-0959651812448764">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula115-0959651812448764">
+<mml:math display="inline" id="math142-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>However, physical look-ahead modeling of the wind turbine response gives more sophisticated control strategy based on the high-quality signal of the generator torque <inline-formula id="inline-formula116-0959651812448764">
+<mml:math display="inline" id="math143-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> sampled with a high frequency that guarantees the high-performance regulation driven by the upwind speed measurements only. The generator torque <inline-formula id="inline-formula117-0959651812448764">
+<mml:math display="inline" id="math144-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, obtained from look-ahead modeling of the virtual turbine response and imported as feedforward part of the controller, can be seen as a control that is tolerant to the wind/turbine speed sensor faults since this torque depends on the upwind speed measurements only.</p>
+<p>The composite generator torque control strategy can be presented in the following form</p>
+<p><disp-formula id="disp-formula28-0959651812448764">
+<label>(28)</label>
+<mml:math display="block" id="math145-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>feedforward</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>part</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mo>+</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>feedback</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>part</mml:mi>
+</mml:mrow>
+</mml:munder>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>composite</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>controller</mml:mi>
+</mml:mrow>
+</mml:munder>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula28-0959651812448764" xlink:href="10.1177_0959651812448764-eq28.tif"/>
+</disp-formula>
+</p>
+<p>where feedforward torque <inline-formula id="inline-formula118-0959651812448764">
+<mml:math display="inline" id="math146-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is given by <xref ref-type="disp-formula" rid="disp-formula22-0959651812448764">equation (22)</xref> and driven by the upwind measurements. Proportional–integral (PI) feedback part with positive coefficients <inline-formula id="inline-formula119-0959651812448764">
+<mml:math display="inline" id="math147-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula120-0959651812448764">
+<mml:math display="inline" id="math148-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is driven by the wind speed measured at the turbine site. A closed-loop dynamics is examined via a substitution of <xref ref-type="disp-formula" rid="disp-formula22-0959651812448764">equation (22)</xref> in <xref ref-type="disp-formula" rid="disp-formula8-0959651812448764">equations (8)</xref> and <xref ref-type="disp-formula" rid="disp-formula28-0959651812448764">(28)</xref></p>
+<p><disp-formula id="disp-formula29-0959651812448764">
+<label>(29)</label>
+<mml:math display="block" id="math149-0959651812448764">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mi>γ</mml:mi>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>→</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:munder>
+<mml:mo>+</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>gm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>imported</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>feedforward</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>part</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:munder>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>−</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>feedback</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>part</mml:mi>
+</mml:mrow>
+</mml:munder>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula29-0959651812448764" xlink:href="10.1177_0959651812448764-eq29.tif"/>
+</disp-formula>
+</p>
+<p>The term <inline-formula id="inline-formula121-0959651812448764">
+<mml:math display="inline" id="math150-0959651812448764">
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is vanishing, since the speed of run-ahead model <inline-formula id="inline-formula122-0959651812448764">
+<mml:math display="inline" id="math151-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> converges to desired speed <inline-formula id="inline-formula123-0959651812448764">
+<mml:math display="inline" id="math152-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and can be neglected for the sake of simplicity. The difference between actual and modeled turbine torques and inertia moment can be presented as follows: <inline-formula id="inline-formula124-0959651812448764">
+<mml:math display="inline" id="math153-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula125-0959651812448764">
+<mml:math display="inline" id="math154-0959651812448764">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:mi>J</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. It can be shown that the difference <inline-formula id="inline-formula126-0959651812448764">
+<mml:math display="inline" id="math155-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rm</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rmd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> is approximately constant around an operating point. The term <inline-formula id="inline-formula127-0959651812448764">
+<mml:math display="inline" id="math156-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>J</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> can be treated as a constant around an operating point, assuming a piecewise linear wind speed. Therefore, <xref ref-type="disp-formula" rid="disp-formula29-0959651812448764">equation (29)</xref> can be written as follows</p>
+<p><disp-formula id="disp-formula30-0959651812448764">
+<label>(30)</label>
+<mml:math display="block" id="math157-0959651812448764">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mi>J</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula30-0959651812448764" xlink:href="10.1177_0959651812448764-eq30.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula128-0959651812448764">
+<mml:math display="inline" id="math158-0959651812448764">
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is a lumped constant. The error model (30) can be rewritten in the following form</p>
+<p><disp-formula id="disp-formula31-0959651812448764">
+<label>(31)</label>
+<mml:math display="block" id="math159-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mover>
+<mml:mi>ω</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula31-0959651812448764" xlink:href="10.1177_0959651812448764-eq31.tif"/>
+</disp-formula>
+</p>
+<p><disp-formula id="disp-formula32-0959651812448764">
+<label>(32)</label>
+<mml:math display="block" id="math160-0959651812448764">
+<mml:mrow>
+<mml:mi>J</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mover>
+<mml:mi>ω</mml:mi>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula32-0959651812448764" xlink:href="10.1177_0959651812448764-eq32.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula129-0959651812448764">
+<mml:math display="inline" id="math161-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>rd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. This model represents a stable dynamics with a performance regulated by the coefficients <inline-formula id="inline-formula130-0959651812448764">
+<mml:math display="inline" id="math162-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula131-0959651812448764">
+<mml:math display="inline" id="math163-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>γ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. Therefore, the turbine speed converges to the desired speed with guaranteed performance.</p>
+<p>The error model (31) and (32) shows that a constant mismatch between the wind speed measured at a distance in front of the turbine (and expected at the turbine site after some time) and the wind speed measured at the turbine site can be well compensated via an integral part of the controller (28), which treats this mismatch as a constant disturbance.</p>
+<p>The resulting torque controller (28) is naturally composed of feedback and feedforward parts and represents a flexible and easy-to-upgrade structure, where the run-ahead model-based feedforward part driven by the upwind speed measurements can easily be integrated into existing industrial feedback PI or proportional–integral–derivative (PID) turbine speed controller. Moreover, a constant or slowly varying tracking error offset due to mismatch between upwind and wind speeds can be well compensated via integral part of existing industrial controller.</p>
+<p>The tracking performance of generator torque control (28) is illustrated in <xref ref-type="fig" rid="fig5-0959651812448764">Figures 5</xref> and <xref ref-type="fig" rid="fig6-0959651812448764">6</xref>. <xref ref-type="fig" rid="fig5-0959651812448764">Figure 5</xref> shows the tracking performance for different mismatches between the upwind and wind speed measurements <inline-formula id="inline-formula132-0959651812448764">
+<mml:math display="inline" id="math164-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. An expected desired turbine speed calculated via the upwind speed signal <inline-formula id="inline-formula133-0959651812448764">
+<mml:math display="inline" id="math165-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is plotted with a blue line, a desired turbine speed calculated via actual wind speed signal <inline-formula id="inline-formula134-0959651812448764">
+<mml:math display="inline" id="math166-0959651812448764">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is plotted with a black line, and finally, the actual turbine speed regulated by controller (28) is plotted with a red line. The first subplot shows the case where <inline-formula id="inline-formula135-0959651812448764">
+<mml:math display="inline" id="math167-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> (upwind and wind speeds are the same), the second subplot represents the case with a constant offset between the upwind and wind speeds <inline-formula id="inline-formula136-0959651812448764">
+<mml:math display="inline" id="math168-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>const</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>, and finally, the third subplot shows the case of stochastic and normally distributed <inline-formula id="inline-formula137-0959651812448764">
+<mml:math display="inline" id="math169-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<fig id="fig5-0959651812448764" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Time chart of the turbine speed tracking performance for different mismatches <inline-formula id="inline-formula138-0959651812448764">
+<mml:math display="inline" id="math170-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> between the wind speed measured at a distance in front of the turbine <inline-formula id="inline-formula139-0959651812448764">
+<mml:math display="inline" id="math171-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> (and expected at the turbine site after some time) and the wind speed measured at the turbine site <inline-formula id="inline-formula140-0959651812448764">
+<mml:math display="inline" id="math172-0959651812448764">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812448764-fig5.tif"/>
+</fig>
+<fig id="fig6-0959651812448764" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Time chart of the turbine speed tracking performance for a normally distributed stochastic mismatch <inline-formula id="inline-formula141-0959651812448764">
+<mml:math display="inline" id="math173-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> between the wind speed measured at a distance in front of the turbine (and expected at the turbine site after some time) and the wind speed measured at the turbine site.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812448764-fig6.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig6-0959651812448764">Figure 6</xref> shows the time chart of the turbine speed tracking performance for a normally distributed stochastic mismatch <inline-formula id="inline-formula142-0959651812448764">
+<mml:math display="inline" id="math174-0959651812448764">
+<mml:mrow>
+<mml:mi>Δ</mml:mi>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> between the wind speed measured at a distance in front of the turbine (and expected at the turbine site after some time) and the wind speed measured at the turbine site. The first subplot shows the expected and measured wind speeds at the turbine site. Expected wind speed is plotted with a blue line, and actual wind speed is plotted with a black line. The second subplot shows the tracking performance of the turbine speed. The expected desired turbine speed calculated via upwind speed signal <inline-formula id="inline-formula143-0959651812448764">
+<mml:math display="inline" id="math175-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is plotted with a blue line, the desired turbine speed calculated via actual wind speed signal <inline-formula id="inline-formula144-0959651812448764">
+<mml:math display="inline" id="math176-0959651812448764">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is plotted with a black line, and finally, the actual turbine speed regulated by controller (28) is plotted with a red line. The third subplot shows the resulting generator torque calculated via <xref ref-type="disp-formula" rid="disp-formula28-0959651812448764">equation (28)</xref>, plotted with a black line with the feedforward part driven by the upwind speed measurements plotted with a red line.</p>
+<p>A satisfactory tracking performance is observed for zero, constant, and stochastic offsets between the speed expected at the turbine and the actual speed.</p>
+<p>The flapwise bending moment together with the blade pitch regulation described in the next section is shown in <xref ref-type="fig" rid="fig7-0959651812448764">Figure 7</xref>, where a pitch angle regulation performance with the algorithm described in the section “Blade pitch angle control and load regulation” is plotted in the first subplot. Desired pitch angle <inline-formula id="inline-formula145-0959651812448764">
+<mml:math display="inline" id="math177-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is plotted with a black line and actual pitch angle <inline-formula id="inline-formula146-0959651812448764">
+<mml:math display="inline" id="math178-0959651812448764">
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is plotted with a red line. The flapwise bending moment with its desired upper bound is plotted on the second subplot with black and red lines, respectively.</p>
+<fig id="fig7-0959651812448764" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Time chart of the pitch angle and flapwise bending moment in addition to <xref ref-type="fig" rid="fig6-0959651812448764">Figure 6</xref>.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812448764-fig7.tif"/>
+</fig>
+<p>Finally, <xref ref-type="fig" rid="fig8-0959651812448764">Figure 8</xref> shows that inclusion of the feedforward part to the controller improves tracking performance of the turbine speed control that in turn implies improvement of the power coefficient tracking performance and hence the turbine power production. <xref ref-type="fig" rid="fig8-0959651812448764">Figure 8</xref> shows the turbine speed control with and without feedforward part. Turbine speed that corresponds to control system with feedforward part is plotted with a red line on the first subplot. A blue line corresponds to control system without the feedforward part. Desired turbine speed is plotted with a black line. Power coefficients as a function of tip-speed ratio and blade pitch angle are plotted with the same lines on the second subplot. The desired power coefficient is plotted with a black line.</p>
+<fig id="fig8-0959651812448764" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Comparison of the tracking performance of the two control systems: system with and without feedforward part.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812448764-fig8.tif"/>
+</fig>
+</sec>
+<sec id="section18-0959651812448764">
+<title>Blade pitch angle control and load regulation</title>
+<p>The pitch angle <inline-formula id="inline-formula147-0959651812448764">
+<mml:math display="inline" id="math179-0959651812448764">
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is associated with the control of mechanical loads of the turbine. The controller for the pitch angle is based on the look-up tables that are inverse to the flapwise bending moment look-up tables <inline-formula id="inline-formula148-0959651812448764">
+<mml:math display="inline" id="math180-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> defined for a number of turbine speeds in <xref ref-type="fig" rid="fig2-0959651812448764">Figure 2</xref>. The pitch angle associated with the desired flapwise bending moment <inline-formula id="inline-formula149-0959651812448764">
+<mml:math display="inline" id="math181-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is defined as <inline-formula id="inline-formula150-0959651812448764">
+<mml:math display="inline" id="math182-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>λ</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fd</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, for the turbine speed <inline-formula id="inline-formula151-0959651812448764">
+<mml:math display="inline" id="math183-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, regulated via control algorithm (28). As a desired value of the flapwise bending moment <inline-formula id="inline-formula152-0959651812448764">
+<mml:math display="inline" id="math184-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>fd</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, its desired upper bound can be taken. In other words, the flapwise bending moment is directly regulated to keep this moment bounded.</p>
+<p>For a transient performance improvement, the desired blade pitch angle as an input to pitch actuator (9) is defined as <inline-formula id="inline-formula153-0959651812448764">
+<mml:math display="inline" id="math185-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, where <inline-formula id="inline-formula154-0959651812448764">
+<mml:math display="inline" id="math186-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is an estimate of the derivative of <inline-formula id="inline-formula155-0959651812448764">
+<mml:math display="inline" id="math187-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>, calculated via the spline interpolation method mentioned in the section “Preprocessing of the wind speed signal.” Substituting <inline-formula id="inline-formula156-0959651812448764">
+<mml:math display="inline" id="math188-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> in <xref ref-type="disp-formula" rid="disp-formula9-0959651812448764">equation (9)</xref> yields the following exponentially stable closed-loop dynamics <inline-formula id="inline-formula157-0959651812448764">
+<mml:math display="inline" id="math189-0959651812448764">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>β</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, when neglecting a communication delay. Usually, a desired/command pitch angle <inline-formula id="inline-formula158-0959651812448764">
+<mml:math display="inline" id="math190-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is sent only to the pitch actuator <inline-formula id="inline-formula159-0959651812448764">
+<mml:math display="inline" id="math191-0959651812448764">
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, which implies a slow response of the actuator. Introduction of the derivative term <inline-formula id="inline-formula160-0959651812448764">
+<mml:math display="inline" id="math192-0959651812448764">
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> is equivalent to the prediction of the future state of command pitch angle <inline-formula id="inline-formula161-0959651812448764">
+<mml:math display="inline" id="math193-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> with a simple predictor based on the first difference method</p>
+<p><disp-formula id="disp-formula33-0959651812448764">
+<mml:math display="block" id="math194-0959651812448764">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:munder>
+<mml:mrow>
+<mml:munder>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>τ</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mo stretchy="true">︸</mml:mo>
+</mml:munder>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>≈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:munder>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mo>≈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>τ</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula33-0959651812448764" xlink:href="10.1177_0959651812448764-eq33.tif"/>
+</disp-formula>
+</p>
+<p>This prediction improves the transient performance of the blade pitch actuation as illustrated in <xref ref-type="fig" rid="fig7-0959651812448764">Figure 7</xref>.</p>
+</sec>
+</sec>
+<sec id="section19-0959651812448764" sec-type="conclusions">
+<title>Conclusion</title>
+<p>A new concept of look-ahead modeling of the wind turbine response that results in the feedforward part of the turbine controller is introduced. The concept creates an easy-to-upgrade control architecture where the run-ahead model–based feedforward part driven by the upwind speed measurements can easily be integrated into an existing industrial feedback PI or PID turbine speed controller, driven by the wind speed measurements on the turbine site. Moreover, the blade load regulation with improved performance can also be easily integrated into the proposed control architecture.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work was supported by the Swedish Wind Power Technology Center (SWPTC). The authors are grateful to Magnus Ellsen and Ola Carlson from the SWPTC for providing wind speed measurements from the <italic>Hönö</italic> turbine outside Gothenburg, Sweden.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0959651812448764">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kusiak</surname><given-names>A</given-names></name>
+<name><surname>Song</surname><given-names>Z</given-names></name>
+<name><surname>Zheng</surname><given-names>H</given-names></name>
+</person-group>. <article-title>Anticipatory control of wind turbines with data-driven predictive models</article-title>. <source>IEEE T Energy Conver</source> <year>2009</year>; <volume>24</volume>(<issue>3</issue>): <fpage>766</fpage>–<lpage>774</lpage>.</citation>
+</ref>
+<ref id="bibr2-0959651812448764">
+<label>2.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Biegel</surname><given-names>B</given-names></name>
+<name><surname>Juelsgaard</surname><given-names>M</given-names></name>
+<name><surname>Kraning</surname><given-names>M</given-names></name><etal/>
+</person-group>. <article-title>Wind turbine pitch optimization</article-title>. In: <conf-name>IEEE international conference on control applications (CCA), part of 2011 IEEE multi-conference on systems and control</conf-name>, <conf-loc>Denver, CO</conf-loc>, <conf-date>28–30 September 2011</conf-date>, pp.<fpage>1327</fpage>–<lpage>1334</lpage>.</citation>
+</ref>
+<ref id="bibr3-0959651812448764">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bossanyi</surname><given-names>E</given-names></name>
+<name><surname>Savini</surname><given-names>B</given-names></name>
+<name><surname>Iribas</surname><given-names>M</given-names></name><etal/>
+</person-group>. <article-title>Advanced controller research for multi-MW wind turbines in the UPWIND project</article-title>. <source>Wind Energy</source> <year>2012</year>; <volume>15</volume>(<issue>1</issue>): <fpage>119</fpage>–<lpage>145</lpage>.</citation>
+</ref>
+<ref id="bibr4-0959651812448764">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Frehlich</surname><given-names>R</given-names></name>
+<name><surname>Kelley</surname><given-names>N</given-names></name>
+</person-group>. <article-title>Measurements of wind and turbulence profiles with scanning Doppler Lidar for wind energy applications</article-title>. <source>IEEE J Sel Top Appl</source> <year>2008</year>; <volume>1</volume>: <fpage>42</fpage>–<lpage>47</lpage>.</citation>
+</ref>
+<ref id="bibr5-0959651812448764">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Johnson</surname><given-names>K</given-names></name>
+<name><surname>Pao</surname><given-names>L</given-names></name>
+<name><surname>Balas</surname><given-names>M</given-names></name><etal/>
+</person-group>. <article-title>Control of variable-speed wind turbines: standard and adaptive techniques for maximizing energy capture</article-title>. <source>IEEE Contr Syst Mag</source> <year>2006</year>; <volume>26</volume>: <fpage>70</fpage>–<lpage>81</lpage>.</citation>
+</ref>
+<ref id="bibr6-0959651812448764">
+<label>6.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Henriksen</surname><given-names>L</given-names></name>
+<name><surname>Poulsen</surname><given-names>N</given-names></name>
+</person-group>. <article-title>Model predictive control of a wind turbine with constraints</article-title>. In: <conf-name>Proceedings of EWEC 2008</conf-name>, <conf-loc>Brussels, Belgium</conf-loc>, <conf-date>31 March–3 April 2008</conf-date>.</citation>
+</ref>
+<ref id="bibr7-0959651812448764">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Laks</surname><given-names>J</given-names></name>
+<name><surname>Pao</surname><given-names>L</given-names></name>
+<name><surname>Wright</surname><given-names>A</given-names></name><etal/>
+</person-group>. <article-title>The use of preview wind measurements for blade pitch control</article-title>. <source>Mechatronics</source> <year>2011</year>; <volume>21</volume>: <fpage>668</fpage>–<lpage>681</lpage>.</citation>
+</ref>
+<ref id="bibr8-0959651812448764">
+<label>8.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pao</surname><given-names>L</given-names></name>
+<name><surname>Johnson</surname><given-names>K</given-names></name>
+</person-group>. <article-title>A tutorial on the dynamics and control of wind turbines and wind farms</article-title>. In: <conf-name>Proceedings of the American control conference</conf-name>, <conf-loc>St. Louis, MO</conf-loc>, <conf-date>10–12 June 2009</conf-date>.</citation>
+</ref>
+<ref id="bibr9-0959651812448764">
+<label>9.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Soltani</surname><given-names>M</given-names></name>
+<name><surname>Wisniewski</surname><given-names>R</given-names></name>
+<name><surname>Brath</surname><given-names>P</given-names></name>
+<etal/>
+</person-group>. <article-title>Load reduction of wind turbines using receding horizon control</article-title>. In: <conf-name>IEEE conference on control applications (CCA)</conf-name>, <conf-loc>Denver, CO</conf-loc>, <conf-date>28–30 September 2011</conf-date>, pp.<fpage>852</fpage>–<lpage>857</lpage>. <publisher-loc>Washington DC, USA</publisher-loc>: <publisher-name>IEEE</publisher-name>.</citation>
+</ref>
+<ref id="bibr10-0959651812448764">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Stotsky</surname><given-names>A</given-names></name>
+<name><surname>Egardt</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Proactive control of wind turbine with blade load constraints</article-title>. <source>Proc IMechE, Part I: J Systems and Control Engineering</source>. <comment>Epub ahead of print 27 March 2012</comment>. DOI: 10.1177/0959651812439976<pub-id pub-id-type="doi">10.1177/0959651812439976</pub-id>.</citation>
+</ref>
+<ref id="bibr11-0959651812448764">
+<label>11.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wang</surname><given-names>N</given-names></name>
+<name><surname>Johnson</surname><given-names>K</given-names></name>
+<name><surname>Wright</surname><given-names>A</given-names></name>
+</person-group>. <article-title>LIDAR-based FX-RLS feedforward control for wind turbine load mitigation</article-title>. In: <conf-name>American control conference</conf-name>, <conf-loc>San Francisco, CA</conf-loc>, <conf-date>29 June 2011 to 1 July 2011</conf-date>, pp.<fpage>1910</fpage>–<lpage>1915</lpage>. <publisher-loc>Washington DC, USA</publisher-loc>: <publisher-name>IEEE</publisher-name>.</citation>
+</ref>
+<ref id="bibr12-0959651812448764">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Taylor</surname><given-names>G</given-names></name>
+</person-group>. <article-title>The spectrum of turbulence</article-title>. <source>P R Soc London</source> <year>1938</year>; <volume>164</volume>: <fpage>476</fpage>–<lpage>490</lpage>.</citation>
+</ref>
+<ref id="bibr13-0959651812448764">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Simleyz</surname><given-names>E</given-names></name>
+<name><surname>Pao</surname><given-names>L</given-names></name>
+<name><surname>Kelley</surname><given-names>N</given-names></name>
+<etal/>
+</person-group>. <article-title>LIDAR wind speed measurements of evolving wind fields</article-title>. In: <conf-name>The 50th AIAA aerospace sciences meeting including the new horizons forum and aerospace exposition, AIAA 2012-0656</conf-name>, <conf-loc>Nashville, TN</conf-loc>, <conf-date>9–12 January 2012</conf-date>, pp.<fpage>1</fpage>–<lpage>19</lpage>. <publisher-loc>Reston, Virginia, USA</publisher-loc>: <publisher-name>American Institute of Aeronautics and Astronautics</publisher-name>.</citation>
+</ref>
+<ref id="bibr14-0959651812448764">
+<label>14.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Bossanyi</surname><given-names>E</given-names></name>
+</person-group>. <article-title>Un-freezing the turbulence: improved wind field modelling for investigating Lidar-assisted wind turbine control</article-title>. In: <conf-name>Proceedings of EWEA 2012</conf-name>, <conf-loc>Copenhagen, Denmark</conf-loc>, <conf-date>16–19 April 2012</conf-date>.</citation>
+</ref>
+<ref id="bibr15-0959651812448764">
+<label>15.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Sloth</surname><given-names>C</given-names></name>
+<name><surname>Esbensen</surname><given-names>T</given-names></name>
+<name><surname>Niss</surname><given-names>M</given-names></name>
+<etal/>
+</person-group>. <article-title>Robust LMI-based control of wind turbines with parametric uncertainties</article-title>. In: <conf-name>Proceedings of the 18th IEEE international conference on control applications</conf-name>, <conf-loc>Saint Petersburg, Russia</conf-loc>, <conf-date>8–10 July 2009</conf-date>, pp.<fpage>776</fpage>–<lpage>781</lpage>. <publisher-loc>Washington DC, USA</publisher-loc>: <publisher-name>IEEE</publisher-name>.</citation>
+</ref>
+<ref id="bibr16-0959651812448764">
+<label>16.</label>
+<citation citation-type="book">
+<article-title>IEC 61400-1 Ed.3</article-title>. <source>Wind turbines, part 1: design requirements</source>. <publisher-loc>Geneva</publisher-loc>: <publisher-name>International Electrotechnical Commission</publisher-name>, <year>2005-08</year>.</citation>
+</ref>
+<ref id="bibr17-0959651812448764">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ellsen</surname><given-names>M</given-names></name>
+<name><surname>Carlson</surname><given-names>O</given-names></name>
+</person-group>. <article-title>Drift, Utveckling och Dokumentation vid Chalmers Provstation för Vindenergiforskning</article-title>. <source>Chalmers Technical Report</source>, <month>January</month> <year>2009</year> (in Swedish).</citation>
+</ref>
+<ref id="bibr18-0959651812448764">
+<label>18.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Burton</surname><given-names>T</given-names></name>
+<name><surname>Sharpe</surname><given-names>D</given-names></name>
+<name><surname>Jenkins</surname><given-names>N</given-names></name><etal/>
+</person-group>. <source>Wind energy handbook</source>. <publisher-loc>Hoboken, New Jersey, USA</publisher-loc>: <publisher-name>Wiley</publisher-name>, <year>2001</year>.</citation>
+</ref>
+<ref id="bibr19-0959651812448764">
+<label>19.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Stotsky</surname><given-names>A</given-names></name>
+<name><surname>Forgo</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Recursive spline interpolation method for real-time engine control applications</article-title>. <source>Control Eng Pract</source> <year>2004</year>; <volume>12</volume>: <fpage>409</fpage>–<lpage>416</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

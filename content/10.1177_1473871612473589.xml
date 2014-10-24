@@ -1,0 +1,1074 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">IVI</journal-id>
+<journal-id journal-id-type="hwp">spivi</journal-id>
+<journal-title>Information Visualization</journal-title>
+<issn pub-type="ppub">1473-8716</issn>
+<issn pub-type="epub">1473-8724</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1473871612473589</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1473871612473589</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Visualizing offscreen elements of node-link diagrams</article-title>
+</title-group>
+<contrib-group content-type="issue">
+<contrib contrib-type="guest-editor">
+<name><surname>Telea</surname><given-names>Alexandru C.</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Görg</surname><given-names>Carsten</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Reiss</surname><given-names>Steven</given-names></name>
+</contrib>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Frisch</surname><given-names>Mathias</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Dachselt</surname><given-names>Raimund</given-names></name>
+</contrib>
+<aff id="aff1-1473871612473589">Interactive Media Lab, Technische Universität Dresden, Dresden, Germany</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-1473871612473589">Mathias Frisch, Interactive Media Lab, Technische Universitat Dresden, Nöthnitzer Str. 46, 01062 Dresden, Germany. Email: <email>mahtias.frisch@tu-dresden.de</email>
+</corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>12</volume>
+<issue>2</issue>
+<issue-title>Special issue: Software Visualization</issue-title>
+<fpage>133</fpage>
+<lpage>162</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2013</copyright-statement>
+<copyright-year>2013</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Visual representations of node-link diagrams are very important for the software development process. In many situations, large diagrams have to be explored, whereby diagram elements of interest are often clipped from the viewport and are therefore not visible. Thus, in state-of-the-art modeling tools, navigation is accompanied by time-consuming panning and zooming. One solution to this problem is offscreen visualization techniques. Usually, they indicate the existence and direction of clipped elements by overlays at the border of the viewport. In this article, we contribute the application of offscreen visualization techniques to the domain of node-link diagrams in general and to Unified Modeling Language class diagrams in particular. The basic idea of our approach is to represent offscreen nodes by proxy elements located within an interactive border region around the viewport. The proxies show information of the associated offscreen nodes and can be used to quickly navigate to the respective node. In addition, we contribute techniques that preserve the routing of edges during panning and zooming and present strategies to make our approach scalable to large diagrams. We conducted a formative pilot study of our first prototype. Based on the observations made during the evaluation, we suggest how particular techniques should be combined. Finally, we ran a user evaluation to compare our technique with a traditional zoom+pan interface. The results showed that our approach is significantly faster for exploring relationships within diagrams than state-of-the-art interfaces. We also found that the offscreen visualization combined with an additional overview window did not improve the orientation within an unknown diagram. However, an overview should be offered as a cognitive support.</p>
+<sec id="section1-1473871612473589" sec-type="intro">
+<title>CR categories:</title>
+<p>D.2.2 [Software Engineering]: Design Tools and Techniques—<italic>User Interface</italic>; H.5.2 [Information Interfaces and Presentation]: User Interfaces—<italic>Graphical User Interfaces</italic></p>
+</sec>
+<sec id="section2-1473871612473589" sec-type="intro">
+<title>General terms:</title>
+<p>Design, Human Factors</p>
+</sec>
+</abstract>
+<kwd-group>
+<kwd>Offscreen visualization</kwd>
+<kwd>Unified Modeling Language</kwd>
+<kwd>contextual view</kwd>
+<kwd>interaction</kwd>
+<kwd>node-link diagrams</kwd>
+<kwd>navigation</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section3-1473871612473589" sec-type="intro">
+<title>Introduction</title>
+<p>Visual representations of node-link diagrams play a very important role in nearly all phases of the software development process. They are used to design the architecture of systems, and they are applied to understand and communicate problems.<sup><xref ref-type="bibr" rid="bibr1-1473871612473589">1</xref></sup> Over the last 15 years, the Unified Modeling Language (UML)<sup><xref ref-type="bibr" rid="bibr2-1473871612473589">2</xref></sup> has been established as a common standard for designing and modeling software systems. In many situations, UML diagrams can become large with hundreds of nodes and edges. Moreover, within one diagram, there can be different elements with a variety of properties. During the design and development process, these diagrams have to be explored, created from scratch and properties have to be added or changed. In many situations, these activities are accomplished in a manual way by developers and software designers.</p>
+<p>In this work, we focus on UML class diagrams as an application example. Class diagrams are most widely applied<sup><xref ref-type="bibr" rid="bibr3-1473871612473589">3</xref>,<xref ref-type="bibr" rid="bibr4-1473871612473589">4</xref></sup> and feature all the aforementioned characteristics. There are different types of nodes such as classes and interfaces and different types of edges such as associations, generalizations and aggregations. These elements possess a variety of properties such as labels and multiplicities that have to be set or changed.</p>
+<p>During the editing process, users need to navigate within the diagram. They must be able to focus on a particular node or move to a certain part of the diagram. Basically, navigation can take place in two ways. On the one hand, in familiar diagrams, users orient themselves in a “geographic way” similar to map navigation. This means that they know, for example, the spatial position of a class, the routing of an edge or the direction where a particular class is located. This information is applied to perform navigation. On the other hand, knowledge about the diagram topology and structure can be applied for navigation. For example, users often know which nodes are connected, which classes belong to an inheritance hierarchy or which class is at the top of a hierarchy. The actual spatial location of diagram elements or the concrete edge routing is less important in this case. However, contextual information such as properties of relationships (e.g. their types, labels or multiplicities) and types of connected nodes must be available when navigation based on this knowledge should be supported.</p>
+<p>Usually, state-of-the-art modeling tools (e.g. IBM Rational Rose,<sup><xref ref-type="bibr" rid="bibr5-1473871612473589">5</xref></sup> Microsoft Visio<sup><xref ref-type="bibr" rid="bibr6-1473871612473589">6</xref></sup> and Sparx Systems<sup><xref ref-type="bibr" rid="bibr7-1473871612473589">7</xref></sup>) only support the map navigation approach. They offer a so-called overview+detail interface. The viewport shows details and is navigated by manual zooming and panning. In addition, a separate window shows the whole information space in miniature to provide an overview.<sup><xref ref-type="bibr" rid="bibr8-1473871612473589">8</xref></sup></p>
+<p>However, for large diagrams, the overview visualization becomes very small and unreadable, which is hardly helpful. In addition, when zoomed in on a particular element, other elements move offscreen, which means they are clipped from the viewport. They are not visible anymore and can only be reached by cumbersome and time-consuming panning and zooming. For example, the class diagram depicted in <xref ref-type="fig" rid="fig1-1473871612473589">Figure 1</xref> consists of 51 classes. Three particular classes are zoomed in to be able to read their properties, all others are clipped. Thus, important contextual information such as which offscreen nodes are connected with the visible nodes or the types of relationships leading to offscreen nodes is not visible.</p>
+<fig id="fig1-1473871612473589" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Principle of our solution: the viewport of our UML class diagram editor with offscreen visualization (center). Classes clipped from the viewport (shown outside in gray) are represented by proxy elements located within the interactive border region.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig1.tif"/>
+</fig>
+<p>To overcome this problem, focus+context techniques have been developed. Overview and detail views are no longer spatially separated but integrated into a single viewport,<sup><xref ref-type="bibr" rid="bibr8-1473871612473589">8</xref></sup> wherein the content of the focused region is displayed in detail. It is surrounded by the context that is shown less detailed, according to a degree of interest (DOI) function.<sup><xref ref-type="bibr" rid="bibr9-1473871612473589">9</xref></sup> Often the context information is distorted in a geometric way,<sup><xref ref-type="bibr" rid="bibr10-1473871612473589">10</xref></sup> for example, by applying a fish-eye visualization. In this way, all information is on-screen. However, distortion can make the access and comprehension of the context difficult. Moreover, traditional focus+context techniques provide little or no information about diagram structures and topologies.</p>
+<p>In this article (which is an extended version of our previous work<sup><xref ref-type="bibr" rid="bibr11-1473871612473589">11</xref></sup>), we investigate offscreen visualization techniques for node-link diagrams. Such techniques provide cues concerning elements currently clipped from the viewport. They can be seen as an alternative to traditional overview+detail or distortion-oriented focus+context techniques, but can also be combined with them. Up to now, offscreen visualization techniques were mainly applied to mobile devices.<sup><xref ref-type="bibr" rid="bibr12-1473871612473589">12</xref>,<xref ref-type="bibr" rid="bibr13-1473871612473589">13</xref></sup> However, we conceive it as a promising technique to improve diagram navigation as well and extend it for this domain. Our approach offers a zoomable user interface combined with a contextual view displaying offscreen nodes by means of proxy elements. These elements are arranged within an interactive border region of the viewport (see <xref ref-type="fig" rid="fig1-1473871612473589">Figure 1</xref>). They offer spatial information as well as structural and topological information about elements currently clipped (e.g. the type of clipped nodes or the members of a hierarchy located offscreen). Furthermore, proxy elements serve as links providing automatic navigation to the associated offscreen node. In this way, our technique supports both map-oriented navigation and navigation based on the diagram structure.</p>
+<p>In this research, we describe how offscreen visualization techniques can be applied to node-link diagrams in general and to UML class diagrams in particular. We discuss the respective design space of the approach concerning visualization and interaction techniques. More precisely, we contribute techniques that preserve the routing of edges during panning and zooming and present strategies to make our approach scalable for large node-link diagrams. This comprises filtering and clustering of proxy elements not only according to geometric rules but also according to rules based on the structure of a diagram. We implemented a prototype for navigating and editing a selected subset of UML class diagrams. This application was used to conduct two user studies. In a formative pilot study, we collected observations and comments from participants. These results led to suggestions which concrete techniques of the design space should be combined and were used to improve our prototype. In the second study, we compared the performance of the offscreen visualization to a state-of-the-art zoom+pan interface with overview. The results showed that participants performed significantly faster using our technique for given navigation tasks. Furthermore, we found that the offscreen visualization combined with an additional overview window did not improve the orientation within an unknown diagram. However, our results indicate that participants perceived an overview as a beneficial cognitive support.</p>
+<p>The article is structured as follows: section “Related work” presents related work. In section “Offscreen visualization approach,” we give an overview of our approach and discuss particular challenges. In sections “Visualization details” and “Interaction techniques,” visualization and interaction techniques are presented in detail. Section “Prototype” describes our prototype for editing and navigating class diagrams. The formative pilot evaluation and the comparative user study are described in sections “Pilot study” and “User evaluation.” Finally, we give a conclusion and an outline of future work.</p>
+</sec>
+<sec id="section4-1473871612473589">
+<title>Related work</title>
+<p>There are several approaches to support users in navigation tasks for huge information spaces such as node-link diagrams. In general, these approaches comprise zoomable user interfaces and overview+detail and focus+context techniques. A comprehensive overview of these kinds of interfaces is given by Cockburn et al.<sup><xref ref-type="bibr" rid="bibr8-1473871612473589">8</xref></sup> In the following sections, we will discuss their application to the domain of node-link diagrams.</p>
+<sec id="section5-1473871612473589">
+<title>Overview+detail and zoom+pan</title>
+<p>The overview+detail technique combined with zoom+pan is certainly the most established approach in the state-of-the-art diagram modeling tools such as IBM Rational Rose,<sup><xref ref-type="bibr" rid="bibr5-1473871612473589">5</xref></sup> Microsoft Visio<sup><xref ref-type="bibr" rid="bibr6-1473871612473589">6</xref></sup> and Sparx Systems.<sup><xref ref-type="bibr" rid="bibr7-1473871612473589">7</xref></sup> Usually, an overview is shown in an interactive separated area at the border of the workspace. It shows the whole diagram in miniature and uses a viewfinder rectangle to indicate which part is currently observed in detail. Users are able to move this viewfinder for panning or can select a certain part of the overview to navigate to this location in the detailed view. There are some approaches that try to improve overview+detail techniques.</p>
+<p>In the work of Dwyer et al.,<sup><xref ref-type="bibr" rid="bibr14-1473871612473589">14</xref></sup> a slower but high-quality layout algorithm is applied to the detailed view of the currently focused part of the diagram. For the overview, a fast but less accurate approach is used. The authors applied their approach also to UML class diagrams and offer semantic zooming<sup><xref ref-type="bibr" rid="bibr15-1473871612473589">15</xref></sup> by showing different representations of nodes according to the level of detail. In the previous work,<sup><xref ref-type="bibr" rid="bibr16-1473871612473589">16</xref></sup> we also investigated semantic zooming techniques for UML, whereby we considered nested diagrams. By zooming in a node, a nested diagram becomes visible, which describes this node in more detail. Sharp and Rountev<sup><xref ref-type="bibr" rid="bibr17-1473871612473589">17</xref></sup> present several techniques to support the interactive exploration of UML sequence diagrams. For instance, different kinds of filters can be applied to the overview of the diagram. The filters result in graying out or culling of certain parts. Furthermore, if a particular message is selected in the overview, the detail view shows the source and target object and the respective call stack.</p>
+<p>Concerning overview+detail techniques, two general problems exist: the overview window occupies additional screen space and some studies indicated that there may be more cognitive load, as users have to switch between both views.<sup><xref ref-type="bibr" rid="bibr8-1473871612473589">8</xref></sup> In addition, Nekrasovski et al.<sup><xref ref-type="bibr" rid="bibr18-1473871612473589">18</xref></sup> compared zoom+pan to focus+context for a huge tree structure. They applied both conditions with and without overview and found that showing an additional overview window had no influence on the users’ performance.</p>
+<p>Tominski et al.<sup><xref ref-type="bibr" rid="bibr19-1473871612473589">19</xref></sup> and Moscovich et al.<sup><xref ref-type="bibr" rid="bibr20-1473871612473589">20</xref></sup> presented techniques called “edge-based traveling” and “link sliding,” respectively. They focus on reducing the effort of manually panning for navigating to adjacent nodes in graphs. To achieve this, they apply automatic navigation along edges. With our approach, we also support automatic navigation. However, in contrast to Tominski et al. and Moskovich et al. automatic navigation is possible between arbitrary nodes, not only between connected ones. Furthermore, with our technique, no manual mode switch is necessary to get a preview of the target node.</p>
+</sec>
+<sec id="section6-1473871612473589">
+<title>Focus+context</title>
+<p>In contrast to overview+detail, focus+context techniques integrate both views in one view, whereby elements in focus are shown at a high level of detail, and those in the context area are condensed according to certain strategies. For example, elements beyond a particular DOI are blended out as in fish-eye views presented by Furnas<sup><xref ref-type="bibr" rid="bibr9-1473871612473589">9</xref></sup> or context elements are geometrically distorted.<sup><xref ref-type="bibr" rid="bibr10-1473871612473589">10</xref></sup> Existing focus+context techniques can be categorized as approaches with global distortion (distortion affects the whole information space) and approaches with local distortion (only some objects of the information space are distorted). Both have been applied to node-link diagrams and graphs.</p>
+<sec id="section7-1473871612473589">
+<title>Global distortion techniques</title>
+<p>Global geometrical fish-eye views have been applied to graphs by Sarkar and Brown.<sup><xref ref-type="bibr" rid="bibr10-1473871612473589">10</xref></sup> The focused node is magnified, and all other nodes are geometrically distorted. The authors developed two different approaches to achieve distortion: Cartesian and polar mapping. Turetken et al.<sup><xref ref-type="bibr" rid="bibr21-1473871612473589">21</xref></sup> and Reinhard et al.<sup><xref ref-type="bibr" rid="bibr22-1473871612473589">22</xref></sup> seize on this approach and apply it to visualize hierarchical nesting of nodes. Particular nodes, for example, of business process models and data flow diagrams,<sup><xref ref-type="bibr" rid="bibr21-1473871612473589">21</xref></sup> can be expanded to show nested nodes of a finer level. This technique is also applied in ShriMP.<sup><xref ref-type="bibr" rid="bibr23-1473871612473589">23</xref></sup> Besides fish-eye techniques, ShriMP also offers semantic zooming and multifocus visualization. It has been applied to visualize the structure of ontologies and programs, for example, by means of call graphs. Jacobs and Musial<sup><xref ref-type="bibr" rid="bibr24-1473871612473589">24</xref></sup> use a fish-eye technique in conjunction with UML object diagrams. It serves for visual debugging and dynamically changes the levels of detail of objects according to a DOI function.</p>
+<p>Kagdi and Maletic<sup><xref ref-type="bibr" rid="bibr25-1473871612473589">25</xref></sup> apply a focus+context approach to classes of inheritance hierarchies in UML class diagrams. In contrast to aforementioned works, they do not use graphical distortion. Instead, context nodes are represented as an onion graph notation.</p>
+</sec>
+<sec id="section8-1473871612473589">
+<title>Local distortion techniques</title>
+<p>Another way for graph exploration is the application of lenses.<sup><xref ref-type="bibr" rid="bibr26-1473871612473589">26</xref></sup> Lenses can show additional information<sup><xref ref-type="bibr" rid="bibr27-1473871612473589">27</xref></sup> or can support graph exploration by local distortion of the layout of the graph. For example, Tominski et al.<sup><xref ref-type="bibr" rid="bibr28-1473871612473589">28</xref></sup> presented graph lenses such as the <italic>bring neighbors lens</italic>. It can be used to bring connected neighbors of a selected node toward the focused area. Other graph lenses such as the ones presented by Wong et al.<sup><xref ref-type="bibr" rid="bibr29-1473871612473589">29</xref></sup> or Panagiotidis et al.<sup><xref ref-type="bibr" rid="bibr30-1473871612473589">30</xref></sup> locally distort the routing of edges to create clutter-free areas. This type of lens was also applied on multitouch-enabled displays by Schmidt et al.<sup><xref ref-type="bibr" rid="bibr31-1473871612473589">31</xref></sup></p>
+<p>Another technique—called <italic>bring &amp; go</italic>—was presented by Moscovich et al.<sup><xref ref-type="bibr" rid="bibr20-1473871612473589">20</xref></sup> It moves proxies of adjacent nodes close to the selected node and can be applied in an incremental way (<italic>bring &amp; go</italic> can also be invoked on proxies). Furthermore, Spritzer and Freitas<sup><xref ref-type="bibr" rid="bibr33-1473871612473589">33</xref></sup> apply a physics-based approach to change the graph layout for exploration. Their prototype allows the placement of magnets that attract nodes with specific attributes.</p>
+<p>Tominski et al.<sup><xref ref-type="bibr" rid="bibr19-1473871612473589">19</xref></sup> developed a radar view mode for graphs. During navigation by means of a pan wheel, offscreen nodes are projected to the border of the current viewport. This gives the user the possibility to look ahead during panning. In contrast to offscreen visualization, as we propose it in this article, this technique does not use proxies, does not show offscreen nodes permanently and does not allow interaction with offscreen nodes.</p>
+</sec>
+</sec>
+<sec id="section9-1473871612473589">
+<title>Cue-based techniques</title>
+<p>In addition to the aforementioned approaches, cue-based techniques do not distort or modify the size of elements to realize a focus+context visualization.<sup><xref ref-type="bibr" rid="bibr8-1473871612473589">8</xref></sup> One option is to show proxies as contextual cues for elements located in the offscreen area. These proxies are often shown as overlays at the border of the viewport. In this way, a contextual view on elements currently clipped is given. In recent years, several cue-based offscreen visualization techniques have been developed. They range from arrows (e.g. applied in computer games) to techniques such as halo<sup><xref ref-type="bibr" rid="bibr12-1473871612473589">12</xref></sup> or wedge.<sup><xref ref-type="bibr" rid="bibr13-1473871612473589">13</xref></sup> The latter were mainly developed for map navigation on small displays of mobile devices. They are designed to indicate parameters such as the existence and the direction of offscreen elements as well as their distance. This is achieved by graphical overlays visualizing the respective parameters. However, in contrast to our proxy-based approach, they do not show further information about the offscreen element such as its type, and they are not interactive.</p>
+<p>City lights<sup><xref ref-type="bibr" rid="bibr34-1473871612473589">34</xref></sup> is a first sketch for an offscreen visualization approach that uses proxy elements instead of graphical overlays. It realizes contextual views for hypertext systems. For proxy elements, different graphical dimensions such as points, lines and two-dimensional (2D) objects are discussed. Furthermore, Irani et al.<sup><xref ref-type="bibr" rid="bibr35-1473871612473589">35</xref></sup> presented Hop, which allows users to navigate to offscreen elements by means of automatic panning. The technique applies a rotating laser beam to create proxy elements near the focused item. An extension is WinHop.<sup><xref ref-type="bibr" rid="bibr36-1473871612473589">36</xref></sup> It opens an inset that shows the offscreen region around an item represented by a selected proxy element. In this way, the inset serves as a portal into the offscreen area. Recently, an approach similar to WinHop was developed by Ghani et al.<sup><xref ref-type="bibr" rid="bibr32-1473871612473589">32</xref></sup> It also applies insets, whereby offscreen locations are shown in small separate views arranged along the border of the viewport. The insets provide information about the local neighborhood of offscreen elements and allow panning and zooming. This is similar to the technique developed by Karnick et al.<sup><xref ref-type="bibr" rid="bibr37-1473871612473589">37</xref></sup> They applied insets for route visualizations on geographical maps.</p>
+<p>User studies on mobile devices were conducted to compare different overlay techniques. The results showed that halos perform very well, but the performance is lowered if the amount of offscreen target increases.<sup><xref ref-type="bibr" rid="bibr38-1473871612473589">38</xref>,<xref ref-type="bibr" rid="bibr39-1473871612473589">39</xref></sup> A further study by Burigat and Chittaro<sup><xref ref-type="bibr" rid="bibr40-1473871612473589">40</xref></sup> showed that wedges are beneficial for more complex spatial tasks, such as ordering offscreen location according to their distance.</p>
+<p>The study conducted by Nekrasovski et al.<sup><xref ref-type="bibr" rid="bibr18-1473871612473589">18</xref></sup> compared zoom+pan with focus+context (a rectangular rubber sheet) for navigation tasks within a large binary tree on a common personal computer (PC). Halos were used to indicate the position of already visited nodes. The results showed that the zoom+pan interface was faster and demanded less mental effort than the focus+context interface.</p>
+<p>These findings encouraged us to apply offscreen visualizations to node-link diagrams. In contrast to Nekrasovski et al., we do not only visualize the geometric location of an offscreen node by graphical overlays. We go beyond this rather simple adaption of already existing approaches and present a technique that applies proxy elements. This can be understood as a combination of focus+context techniques (such as bifocal views<sup><xref ref-type="bibr" rid="bibr41-1473871612473589">41</xref></sup>) and cue-based approaches. Furthermore, we contribute techniques such as clustering strategies for proxy elements, for example, based on the diagram structure, two different ways of projecting offscreen nodes and visualizing a variety of additional information.</p>
+</sec>
+</sec>
+<sec id="section10-1473871612473589">
+<title>Offscreen visualization approach</title>
+<p>The visualization techniques presented in this article are based on the offscreen approaches discussed in section “Cue-based techniques.” We apply them to node-link diagrams in general and to UML class diagrams in particular. This section describes the general idea of our approach and discusses additional challenges that occur when offscreen visualization techniques are applied to the domain of node-link diagrams.</p>
+<p>The proposed user interface is structured as follows: the currently focused part of the diagram is shown within a rectangular viewport. This is done in the same way as in common diagram editors. Within this view, navigation takes place by panning and zooming. The viewport is surrounded by an interactive border region (see gray area in <xref ref-type="fig" rid="fig1-1473871612473589">Figure 1</xref>). It is used to show proxy elements that represent nodes located offscreen. According to Zellweger et al.,<sup><xref ref-type="bibr" rid="bibr34-1473871612473589">34</xref></sup> there are four different types of information about unseen objects: awareness, identification, navigation and interaction. We interpret them as requirements and consider them in the following way.</p>
+<sec id="section11-1473871612473589">
+<title>Awareness</title>
+<p>The existence of offscreen nodes should be indicated by the visualization technique, so that users are aware of the nodes currently clipped. As mentioned above, we achieve that by applying proxy elements that are displayed within a border region surrounding the viewport. The position of proxy elements is determined by projecting the position of the clipped nodes to the border of the viewport. Different ways of projection are presented in section “Projection.” The edges between offscreen nodes are not visualized within the border region to prevent clutter.</p>
+</sec>
+<sec id="section12-1473871612473589">
+<title>Identification</title>
+<p>Commonly, diagrams consist of elements of various types. For example, in UML class diagrams, different types of nodes such as classes, abstract classes and interfaces exist. For offscreen nodes, the respective proxy elements should allow identifying them in an easy way. Thus, we map existing node types to the color and the labeling of proxy elements (see section “Proxy elements and clustering” and <xref ref-type="fig" rid="fig5-1473871612473589">Figure 5</xref> for details). Furthermore, we propose that edges connecting visible nodes and offscreen nodes are attached to the respective proxy elements. This technique ensures that properties such as arrow heads are always visible and the type of the edge can be easily identified. In addition, further properties such as edge labels or multiplicities located offscreen are rearranged accordingly to ensure their visibility.</p>
+</sec>
+<sec id="section13-1473871612473589">
+<title>Navigation</title>
+<p>With our technique, we support manual navigation. The position of a proxy element is dynamically updated during manual panning and zooming according to the position of its associated offscreen node. In this way, the direction of the offscreen nodes is always indicated. The dynamic update is based on the projection mentioned above. In particular, we implemented two algorithms: radial and orthogonal projections (see section “Projection”). Besides manual navigation, we also support automatic navigation. If a proxy is clicked, automatic zooming and panning is started to navigate to the respective offscreen node. This technique allows for a fast and targeted navigation to a clipped node (details can be found in section “Interaction techniques”).</p>
+<p>In contrast to approaches such as halo<sup><xref ref-type="bibr" rid="bibr12-1473871612473589">12</xref></sup> or wedge,<sup><xref ref-type="bibr" rid="bibr13-1473871612473589">13</xref></sup> we do not focus on visualizing the distance to an offscreen element. For most of the diagram notations, we consider this information as less important compared to other information such as the type of a clipped node or its location in relation to other nodes.</p>
+</sec>
+<sec id="section14-1473871612473589">
+<title>Interaction</title>
+<p>Offscreen visualizations should also include interaction techniques. Besides supporting manual and automatic navigation, our proxy elements are interactive and can give further information about associated offscreen nodes on demand, such as previews. These and further interaction techniques are also discussed in section “Interaction techniques.” Besides the mentioned requirements, several new challenges have to be taken into account when offscreen techniques are applied to the domain of node-link diagrams. This includes scalability, the shape of proxies and the diagram layout and edge routing.</p>
+</sec>
+<sec id="section15-1473871612473589">
+<title>Scalability</title>
+<p>Offscreen visualization techniques usually suffer from cluttered proxies if a large amount of offscreen elements exists. To address this problem, we propose automatic clustering and interactive filtering of proxy elements. Different clustering strategies are presented in section “Proxy elements and clustering” and filtering is presented in section “Interactive filtering.” A user study (presented in section “User evaluation”) showed that our clustering techniques are applicable at least for diagrams with up to 100 nodes. However, the results made us confident that our approach will also support larger diagrams with several hundred nodes. For larger diagrams, we propose a specific technique called <italic>Area of Influence</italic> (see section “Area of influence”).</p>
+</sec>
+<sec id="section16-1473871612473589">
+<title>Shape of proxies</title>
+<p>Indicators such as arrows, halos or wedges are hard to distinguish from edges and their visual properties (e.g. arrow heads). We decided to apply proxies that resemble the concrete visual syntax of the diagram notation. Therefore, for class diagrams, we use proxies with a squared shape (see section “Proxy elements and clustering”).</p>
+</sec>
+<sec id="section17-1473871612473589">
+<title>Diagram layout and edge routing</title>
+<p>The diagram layout and the routing of edges should be preserved by the visualization technique. For many types of diagrams, the layout of nodes and edges can express a special meaning. It is used as a secondary notation<sup><xref ref-type="bibr" rid="bibr42-1473871612473589">42</xref></sup> and is an important visual guide for users to build a mental map of the diagram. Several layout guidelines for particular types of diagrams exist (to produce aesthetic layouts). For UML class diagrams, for example, within inheritance hierarchies, general classes should be arranged above their subclasses. Further aesthetic rules are presented by Eichelberger and Schmid.<sup><xref ref-type="bibr" rid="bibr43-1473871612473589">43</xref></sup> As previously mentioned, edges leading to the offscreen area are attached to proxy elements. This can result in layout changes during panning and zooming. We investigated several solutions for this problem; they are presented in detail in section “Projection.”</p>
+</sec>
+</sec>
+<sec id="section18-1473871612473589">
+<title>Visualization details</title>
+<p>In this section, we investigate several design alternatives for all parts of our offscreen visualization technique. We contribute promising solutions and discuss their benefits and drawbacks. We start with issues occurring within the viewport. Then, we discuss the appearance of the proxy elements. Finally, we present different possible designs for the interactive border region.</p>
+<sec id="section19-1473871612473589">
+<title>Projection</title>
+<p>Proxy elements are created within the interactive border region by means of projecting the positions of offscreen nodes to the border of the viewport. Edges between visible nodes and clipped nodes are attached to the respective proxy elements. In this way, the type of the edge is always visible. Furthermore, we suggest applying two border colors for proxy elements. Proxy elements with attached edges have a darker border color than proxies with no edges (see <xref ref-type="fig" rid="fig4-1473871612473589">Figure 4</xref>). In addition, proxies with attached edges are rendered always in the foreground above other proxies and are never aggregated in geometric clusters (see section “Geometric clustering”). In this way, proxies representing the next connected offscreen neighbors of visible nodes are easy to perceive and are always directly accessible.</p>
+<p>In <xref ref-type="fig" rid="fig2-1473871612473589">Figure 2</xref>, Classes C1 and C2 are both on-screen and connected with Class C3 by generalization relationships. Class C3 is located offscreen and represented by the proxy element 3′. Both generalizations are attached to this proxy element, denoted by the black generalization arrows. Otherwise, the arrow heads would be located offscreen and not be visible for the user (see gray generalization arrows). The edge is automatically released from the proxy element and attached back to the respective node when the node becomes visible due to zooming or panning.</p>
+<fig id="fig2-1473871612473589" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Proxy elements are created by projecting offscreen classes onto the interactive border region (gray area). For edges connected with proxy elements, the routing is changed (see aggregation between C2 and C4).</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig2.tif"/>
+</fig>
+<p>Next, we discuss how projecting nodes in a geometric way affects edge routing and present solutions to make these effects as comprehensible as possible. Then, we present a technique that preserves edge routing completely.</p>
+<sec id="section20-1473871612473589">
+<title>Geometric projection</title>
+<p>The two most obvious and natural ways of projecting nodes onto the border of the viewport are <italic>orthogonal</italic> and <italic>radial</italic> projections. We subsume these two possibilities as geometric projection. For orthogonal projection, nodes are projected perpendicular to the border of the viewport. For radial projection, nodes are projected toward the center of the viewport. Both ways clearly indicate the direction of an offscreen node. An example for both approaches is shown for Class C6 in <xref ref-type="fig" rid="fig2-1473871612473589">Figure 2</xref>. Orthogonal projection results in the proxy element 6′ and radial projection in proxy element 6″. All other nodes in <xref ref-type="fig" rid="fig2-1473871612473589">Figure 2</xref> are projected in the orthogonal way only. A special case occurs if classes are located in one of the four offscreen areas toward the corners of the viewport (see Class C5 in <xref ref-type="fig" rid="fig2-1473871612473589">Figure 2</xref>). They cannot be projected onto an edge of the viewport by orthogonal projection. Thus, respective proxies are created in the corner of the viewport. Clusters are created if several proxies appear in a corner (for details, see section “Proxy elements and clustering”).</p>
+<p>When geometric projection is applied, the edge routing is changed dynamically during pan and zoom interaction. This happens because edges stick to the proxy elements as described above. In particular, this becomes problematic if an edge is bent and consists of several segments. This can be observed in <xref ref-type="fig" rid="fig2-1473871612473589">Figure 2</xref> for the generalization between Classes C1 and C5 and for the aggregation between Classes C2 and C4. The edges are bent, and inflection points are located in the offscreen area. In the depicted example, a <italic>proxy edge</italic> is inserted from the last on-screen inflection point to the proxy element. This approach does not change the entire edge routing but still changes the route significantly. We suggest rendering <italic>proxy edges</italic> in a different color than actual edges to signal that they do not represent the original edge (see <xref ref-type="fig" rid="fig2-1473871612473589">Figures 2</xref> and <xref ref-type="fig" rid="fig4-1473871612473589">4</xref> where <italic>proxy edges</italic> have a black color).</p>
+<p>A permanent change of the edge routing during panning and zooming can be hard to comprehend for the user. Furthermore, guidelines for aesthetic diagram layouts<sup><xref ref-type="bibr" rid="bibr43-1473871612473589">43</xref></sup> can be violated, as edges crossing each other or edges crossing nodes can occur. In the following, we present solutions to make the change of edge routing as comprehensible as possible. A second goal is to preserve at least the routing of the visible part of the edges. To address these problems, we came up with two different solutions: <italic>animated inflection points</italic> and <italic>routing along the border</italic>.</p>
+<sec id="section21-1473871612473589">
+<title>Animated inflection points</title>
+<p>In order to make the change of edge routing more comprehensible, we suggest animating the inflection points toward the <italic>proxy edge</italic>. The animation starts when the respective node moves offscreen. When the node becomes visible again, the inflection points are animated back to their original position. The drawback of this approach is that even visible parts of an edge are changed. In addition, <italic>proxy edges</italic> can cross other edges or even nodes.</p>
+</sec>
+<sec id="section22-1473871612473589">
+<title>Routing along the border</title>
+<p>Our second solution is to route offscreen edges along the border of the viewport. With this approach, the visible part of an edge maintains its routing completely. <italic>Proxy edges</italic> start at the intersection point of the original edge and the border of the viewport and lead to the proxy element (see <xref ref-type="fig" rid="fig3-1473871612473589">Figure 3(a)</xref>). The <italic>proxy edge</italic> is routed according to the original edge (in <xref ref-type="fig" rid="fig3-1473871612473589">Figure 3</xref> first downward and then to the left). Another variation of this approach is depicted in <xref ref-type="fig" rid="fig3-1473871612473589">Figure 3(b)</xref>. Here, the <italic>proxy edge</italic> is rendered as a smooth curve, for example, by means of a Bezier curve. It can bend dynamically in a rubber band style during panning. This makes the appearance of a <italic>proxy edge</italic> more comprehensible. The general drawback of this solution is that edge clutter can occur along the border of the viewport if an offscreen node has many edges.</p>
+<fig id="fig3-1473871612473589" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Concept sketch for routing edges along the border of the viewport: (a) rerouting by proxy edges with straight segments and (b) rendered in a rubber band style.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig3.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section23-1473871612473589">
+<title>Projection along edges</title>
+<p>To avoid the change of edge routing completely, we suggest <italic>along edge projection</italic>. In this approach, offscreen nodes that are connected with visible nodes are projected along their edges. In this way, proxy elements appear at the first intersection point of the edge and the border of the viewport. Thus, the layout of edges is maintained. <xref ref-type="fig" rid="fig4-1473871612473589">Figure 4</xref> depicts the same example diagram as in <xref ref-type="fig" rid="fig2-1473871612473589">Figure 2</xref> but with <italic>along edge projection</italic>. Offscreen nodes are projected by means of orthogonal projection if they are not connected with visible nodes. Otherwise, they are projected along the edge (e.g. 4′ and 5′). There are two further characteristics of this technique. An offscreen node can be represented by more than one proxy element, if the node has several edges. In this case, one proxy is created for each edge. This can be observed in <xref ref-type="fig" rid="fig4-1473871612473589">Figure 4</xref>: for Class C3, a proxy element appears for each generalization relationship (3′ and 3″). Furthermore, if nodes are connected by means of bent edges, the location of the proxy element does not correspond to the offscreen position of the associated node. In <xref ref-type="fig" rid="fig4-1473871612473589">Figure 4</xref>, the proxy element 4′ (representing Class C4) appears at the right border, but Class C4 is located at the bottom. This can be confusing for the user, as when the proxy element is clicked, the viewport does not move in the expected direction.</p>
+<fig id="fig4-1473871612473589" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Proxy elements are created by <italic>along edge projection</italic>: proxies appear where an edge crosses the viewport (see proxies 5′ and 4′). An offscreen node can be represented by several proxies (see proxies 3′ and 3″; both represent Class C3). Temporal geometric projection: if proxy 4′ is hovered, 4″ appears to indicate the proper direction of Class C4.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig4.tif"/>
+</fig>
+<p>We address this problem by applying a temporal geometric projection. It is performed only when a node projected by means of <italic>along edge projection</italic> is hovered with the mouse cursor. The associated node is additionally projected geometrically. This results in a second proxy element, which indicates the actual direction of the node. In <xref ref-type="fig" rid="fig4-1473871612473589">Figure 4</xref>, the proxy 4″ is a temporal proxy for 4′, which appears only when 4′ is hovered. However, it has to be clarified whether <italic>along edge projection</italic> and temporal projection are comprehensible for the users.</p>
+</sec>
+</sec>
+<sec id="section24-1473871612473589">
+<title>Proxy elements and clustering</title>
+<p>In our current implementation, we distinguish between four different types of offscreen nodes. For the respective proxy elements, we use rectangular shapes with different coloring and labeling. Thus, the chosen colors comply with the colors of the associated nodes. The applied shapes are depicted in <xref ref-type="fig" rid="fig5-1473871612473589">Figure 5(a)</xref>: proxies for classes are yellow rectangles; proxies for abstract classes are less saturated and additionally labeled with “A” and proxies for interfaces have a higher saturation and are labeled with “I.”</p>
+<fig id="fig5-1473871612473589" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>(a) Different shapes for proxy elements, from left to right: class, abstract class, interface and a cluster of four nodes and (b) proxy for a class and attached edges.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig5.tif"/>
+</fig>
+<p>Attaching edges to proxy elements can result in clutter. For example, if several edges with arrow heads are attached, the arrow heads can occlude each other. To prevent this problem, each proxy owns a so-called edge port. An edge port is a small semicircular extension of a proxy element and provides more space for attaching edges. It has the same color and reaches from the interactive border region into the workspace (see <xref ref-type="fig" rid="fig5-1473871612473589">Figure 5(b)</xref>). Edge ports only appear when the associated offscreen node is connected with visible nodes. We decided that edge ports should be present even if the attached edges have no arrow heads and even if just one edge is attached to the proxy. This clearly visualizes that the edge is attached and makes our visualization more consistent.</p>
+<p>To avoid clutter within the interactive border region, we suggest clustering of proxy elements. In this way, a scalable technique can be realized for large diagrams. In the following sections “Geometric clustering” and “Structural clustering,” we present two different ways of clustering proxy elements: geometric and structural clustering. Both can be applied simultaneously and are applicable for diagrams with several hundred nodes. The user evaluation presented in section “User evaluation” shows that the clustering techniques work well with diagrams up to 100 nodes. However, we are confident that these techniques will also be beneficial for diagrams with several hundred nodes. For diagrams with even more nodes, we suggest to apply an <italic>area of influence</italic>. Details of this technique are presented in section “Area of influence.”</p>
+<sec id="section25-1473871612473589">
+<title>Geometric clustering</title>
+<p>Geometric clustering is applied if several proxy elements are overlapping by more than 30% of their width or height, as they are created at positions very close to each other. In this case, the actual proxies are replaced by a single cluster proxy. For an example, see <xref ref-type="fig" rid="fig6-1473871612473589">Figure 6(a)</xref>, where the Classes C3 and C4 are represented by a cluster proxy. They are depicted as an icon that indicates aggregated elements in a stacked way (see <xref ref-type="fig" rid="fig5-1473871612473589">Figure 5</xref>). Furthermore, cluster proxies show the number of aggregated elements ((2) in <xref ref-type="fig" rid="fig6-1473871612473589">Figure 6(a)</xref>). The number is incremented if an associated node moves from the viewport to offscreen and decremented when a respective node becomes visible. Furthermore, for orthogonal projection, cluster proxy elements are created for nodes located in the offscreen areas toward the corners of the viewport (see Classes C6 and C7 in <xref ref-type="fig" rid="fig6-1473871612473589">Figure 6</xref>).</p>
+<fig id="fig6-1473871612473589" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>(a) Geometric clustering and (b) structural clustering of an inheritance hierarchy.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig6.tif"/>
+</fig>
+<p>With geometric clustering, proxies are clustered even if there is free space available in the surrounding area. For example, in <xref ref-type="fig" rid="fig6-1473871612473589">Figure 6(a)</xref>, there is free space above and below the cluster proxy for C3 and C4. For this case, we implemented an algorithm that checks the neighborhood of an existing proxy element. If another proxy element is going to be placed at the same position and free space is available in the immediate vicinity, the proxy element is placed at the free position instead of being hidden in a cluster. Proxies positioned in this way could slightly overlap to indicate that they belong to a cluster.</p>
+<p>Whether an <italic>avoid cluster algorithm</italic> is useful depends on the type of diagram. For instance, in state charts or activity diagrams, this kind of clustering is certainly not beneficial. For these kinds of diagrams, arranging nodes in a vertical or horizontal layout is part of the secondary notation.<sup><xref ref-type="bibr" rid="bibr42-1473871612473589">42</xref></sup> For example, it can be confusing to place proxy elements above each other, although their associated nodes are arranged in a horizontal line.</p>
+</sec>
+<sec id="section26-1473871612473589">
+<title>Structural clustering</title>
+<p>Besides geometric clustering, proxy elements can also be clustered according to structural relationships based on the visual syntax of the particular diagram notation. For UML class diagrams, we propose the clustering of inheritance hierarchies. Further possibilities would be to cluster elements belonging to the same package or classes connected by means of aggregation or composition relationships. <xref ref-type="fig" rid="fig6-1473871612473589">Figure 6(b)</xref> shows an example for this technique. The visible class C1 is part of a hierarchy located offscreen. All classes that are directly or indirectly subclassed from Class C2 are aggregated into one cluster.</p>
+<p>According to geometric clusters, structural cluster elements show the amount of clustered classes by means of a number (in this case, (6)). Again, the number is incremented or decremented when a clustered node becomes visible or invisible, respectively. Structural cluster proxies are located at the place where the next connected offscreen node of the cluster is projected. In <xref ref-type="fig" rid="fig6-1473871612473589">Figure 6(b)</xref>, C1 is connected with offscreen class C4, and the cluster proxy appears at the position where C4 is projected by means of orthogonal projection.</p>
+<p>If additional meta-information or semantic information is available, this can also be applied for creating clusters. For example, proxies could be clustered if they belong to a certain part of a class hierarchy or to a subgraph with associated semantic meaning. Another example is the application of meta-information for feature-oriented software development (see <ext-link ext-link-type="uri" xlink:href="http://fosd.de/">http://fosd.de/</ext-link> for further information on feature-oriented software development). Thus, classes attributed to a certain feature could be clustered.</p>
+</sec>
+<sec id="section27-1473871612473589">
+<title>Area of influence</title>
+<p>If diagrams with hundreds or even thousands of nodes are visualized, even the clustering strategies mentioned before may not be applicable. In this case, we suggest that the currently visible part of the diagram within the viewport (e.g. the editor window) is surrounded by a virtual <italic>area of influence</italic> (see <xref ref-type="fig" rid="fig7-1473871612473589">Figure 7</xref>). The <italic>area of influence</italic> is part of the offscreen area and can have arbitrary shape. Typically, rectangular or circular shapes will be used. Only offscreen nodes residing within this <italic>area of influence</italic> are represented as proxies. All other further away offscreen nodes are ignored and filtered. Further filter techniques are described in section “Interactive filtering.” The <italic>area of influence</italic> moves with the viewport during panning and grows and shrinks during zooming (proportional to the applied zoom factor). To always show a predefined maximum number of proxies, the size of the <italic>area of influence</italic> can also vary according to the amount of offscreen nodes located within the area. It gets bigger if the viewport is located in a sparse region of the diagram and becomes smaller if it is located in a dense region. Finally, if the offscreen visualization technique is combined with a traditional overview+detail interface, the <italic>area of influence</italic> can also be indicated within the overview window.</p>
+<fig id="fig7-1473871612473589" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>A rectangular virtual <italic>area of influence</italic> is located around the viewport (typically, the screen). All nodes within this area are represented as proxy elements. Nodes outside the area are ignored.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig7.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section28-1473871612473589">
+<title>Design of the interactive border region</title>
+<p>For the appearance of a proxy element, there are different design variants conceivable. They depend on the dimension of the border region (see <xref ref-type="fig" rid="fig8-1473871612473589">Figure 8</xref>). For a one-dimensional (1D) border, proxy elements can be drawn as symbols with different colors, shapes or labels. Their spatial layout and how they are positioned with respect to each other on the 2D canvas is not considered by this representation. In particular, approaches such as the onion graph notation<sup><xref ref-type="bibr" rid="bibr25-1473871612473589">25</xref></sup> can be applied for clustered inheritance hierarchies in class diagrams. Thus, proxy elements can be put inside each other to visualize the clustering.</p>
+<fig id="fig8-1473871612473589" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Different dimensions of the border region: (a) 1D, (b) 1.5D and (c) 2D, and (d) border region with rounded corners.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig8.tif"/>
+</fig>
+<p>Furthermore, we propose to stack proxies according to their position within the diagram layout. This could be seen as a 1.5D solution, as the spatial position of nodes would be recognizable without a complete 2D layout. Finally, the border region could allow a 2D arrangement of proxy elements according to the geometric layout of the associated nodes. This would result in a bifocal view<sup><xref ref-type="bibr" rid="bibr41-1473871612473589">41</xref></sup> providing a condensed view of the remaining diagram within the border. Furthermore, we propose to use rounded corners for the interactive border. This approach can avoid clustering of proxy elements in the corners of the display if orthogonal projection is applied. In addition, for radial projection, rounded corners can avoid an abrupt change of direction of proxy elements during panning. These solutions are subjects for further investigation.</p>
+</sec>
+</sec>
+<sec id="section29-1473871612473589">
+<title>Interaction techniques</title>
+<p>The previous section provided a detailed description of the visualization techniques of our approach. In this section, we present how users can interact with the offscreen visualization and how it reacts on user input. As in common diagram editors, we support manual panning (e.g. by mouse dragging) and zooming (e.g. by using the mouse wheel). Thus, the positions of proxy elements are constantly updated. The update takes place according to the position of the associated offscreen nodes and the applied projection algorithm. Furthermore, when a node crosses the border of the viewport, the respective proxy element is blended smoothly in and out to make the relation of node and proxy comprehensible. Besides this manual navigation, our system also realizes automatic navigation, which is described in the following. We start with the appearance of node previews, and then the automatic navigation itself is explained. Finally, we present further techniques such as inserting edges via proxies and interactive filtering.</p>
+<sec id="section30-1473871612473589">
+<title>Preview of offscreen nodes</title>
+<p>Hovering with the mouse cursor over a proxy results in a preview of the associated node. The preview is shown as an overlay within the diagram workspace and is located close to the border region at the side of the respective proxy element. For cluster proxies, a list of previews appears consisting of one preview for each clustered node (see <xref ref-type="fig" rid="fig9-1473871612473589">Figure 9(a)</xref>). In our prototype, a preview shows the label of the class or interface. Each preview has the same color as the associated proxy element. The previews are blended out smoothly when the mouse cursor is leaving the proxy element. Besides this, if a visible node is selected, the proxy elements that are directly connected with the selected node could show their previews automatically. In this way, a user can easily get more information about nodes connected with the currently selected node.</p>
+<fig id="fig9-1473871612473589" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>(a) A list of previews is shown if a proxy is hovered over. (b) Expandable previews can give further information about the content of an offscreen node and (c) allow in situ editing.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig9.tif"/>
+</fig>
+<p>Showing the label of the associated offscreen node is certainly the simplest version of a preview. Previews could also show further details of the content of a node as in semantic zooming.<sup><xref ref-type="bibr" rid="bibr15-1473871612473589">15</xref></sup> In addition, the relationships of nodes could be visualized by previews. Concepts for these approaches are presented in the following sections.</p>
+<sec id="section31-1473871612473589">
+<title>Content previews</title>
+<p>Expanding the previews can give access to the content of the respective node. <xref ref-type="fig" rid="fig9-1473871612473589">Figure 9(b)</xref> shows a preview label that is equipped with a “+” button. If it is pressed, the preview is expanded and attributes and methods of the associated class become visible (<xref ref-type="fig" rid="fig9-1473871612473589">Figure 9(c)</xref>). With these previews, it is possible to edit offscreen nodes in situ without time-consuming zooming and panning. For example, content can be added, deleted, or changed by interacting with the expanded preview as with a normal class. If previews become too big due to too much content, several levels of detail could be used.</p>
+</sec>
+<sec id="section32-1473871612473589">
+<title>Topological previews</title>
+<p>Besides details concerning the content of an offscreen node, previews can also show relationships between nodes. Thus, the topology of an offscreen subgraph is visualized but not its actual layout. <xref ref-type="fig" rid="fig10-1473871612473589">Figure 10</xref> shows the topological preview for the example of <xref ref-type="fig" rid="fig6-1473871612473589">Figure 6</xref>. The list of previews for a cluster is equipped with a button (<xref ref-type="fig" rid="fig10-1473871612473589">Figure 10(a)</xref>). If it is pressed, the previews are dynamically rearranged and the complete inheritance hierarchy is visualized within a dedicated area (<xref ref-type="fig" rid="fig10-1473871612473589">Figure 10(b)</xref>). Furthermore, the area can be changed to arbitrary size by dragging its border. Of course, both approaches—<italic>content</italic> and <italic>topological previews</italic>—can be used at the same time. Preview labels shown in a topological preview can be expanded to edit their content.</p>
+<fig id="fig10-1473871612473589" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>(a) Topological preview of clustered nodes. (b) The preview shows how the nodes are connected.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig10.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section33-1473871612473589">
+<title>Automatic navigation</title>
+<p>In addition to traditional navigation by manual panning and zooming, we offer automatic navigation. This is achieved by clicking a proxy element or a preview, which results in an automatic zoom+pan animation to the respective offscreen node. With this technique, it is possible to focus on a particular node in a targeted and fast way. In particular, users are able to explore the topology of the diagram by hopping from node to node. In UML class diagrams, for example, this technique can be applied to navigate within inheritance hierarchies along generalization relationships by clicking proxies that represent connected classes. To make the automatic navigation as smooth and comprehensible as possible, we applied simultaneous panning and zooming according to the algorithm introduced by Van Wijk and Nuij.<sup><xref ref-type="bibr" rid="bibr44-1473871612473589">44</xref></sup></p>
+<p>If a cluster proxy is clicked, the viewport is animated in a way that all clustered nodes are focused. To navigate to a specific node that is aggregated within a cluster proxy, there are two options. Either the respective node is chosen from the list of previews or a double click is performed on the cluster proxy. By means of the double click, the cluster proxy is expanded in an animated way, showing all clustered elements as single proxies. For geometric clusters, the expanded proxies are distributed evenly in the neighborhood of the cluster. For structural clusters, all associated nodes are projected by means of geometric projection resulting in proxy elements at the respective location.</p>
+</sec>
+<sec id="section34-1473871612473589">
+<title>Inserting edges</title>
+<p>Besides providing a context visualization and quick navigation to clipped nodes, our technique also supports basic editing. Edges can be created between visible nodes and offscreen nodes. Thus, an edge is dragged from the respective node to a proxy element of the border region. As a result, it is connected automatically with the associated offscreen node. Therefore, the inserted edge is connected with an already existing edge port or the edge port appears when the edge is dragged on top of the proxy element. In this way, labels and other properties such as multiplicities can be edited in place without further panning and zooming. If the edge is dragged on top of a cluster proxy, previews for all containing nodes are shown. An edge can be created by dragging it to the particular preview. However, other nodes can be located in the way of the inserted edge. Therefore, an automatic edge routing that avoids the crossing of nodes such as described by Wybrow et al.<sup><xref ref-type="bibr" rid="bibr45-1473871612473589">45</xref></sup> should be applied.</p>
+</sec>
+<sec id="section35-1473871612473589">
+<title>Interactive filtering</title>
+<p>In addition to automatic clustering, we propose interactive filtering of proxy elements to prevent clutter and to make our technique scalable to large diagrams. Filter criteria can be adjusted interactively by means of user interface widgets. As a result, proxies not meeting the applied criteria are blended out. There is a variety of filter criteria conceivable. For example, proxies can be filtered according to their type (e.g. only proxies representing abstract classes are shown), according to their topological distance from the focused node (e.g. only proxies of directly connected classes are shown) or according to particular metrics (e.g. only proxies of good classes<sup><xref ref-type="bibr" rid="bibr46-1473871612473589">46</xref></sup> with a huge amount of attributes and methods are shown).</p>
+</sec>
+</sec>
+<sec id="section36-1473871612473589">
+<title>Prototype</title>
+<p>We implemented the offscreen visualization approach as a prototype for navigating and editing UML class diagrams. <xref ref-type="fig" rid="fig11-1473871612473589">Figure 11</xref> shows two screenshots of the prototype as it was also used for the user studies presented in sections “Pilot study” and “User evaluation.” In the following section, we describe the implemented features and the basic algorithmic approach for the offscreen visualization.</p>
+<fig id="fig11-1473871612473589" position="float">
+<label>Figure 11.</label>
+<caption>
+<p>Two screenshots of our prototype: (a) A particular part of the class diagram is focused. (b) The position of the proxies is dynamically updated during panning and zooming. For example, panning the view to the left and down (indicated by the dashed line and the arrows, added to the figure for illustration) results in this screenshot.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig11.tif"/>
+</fig>
+<sec id="section37-1473871612473589">
+<title>Implemented features</title>
+<p>The application is written in Java, whereby the graphical user interface is based on Qt Jambi. For keeping a consistent graph structure, the open source toolkit jGraph<sup><xref ref-type="bibr" rid="bibr47-1473871612473589">47</xref></sup> is used. Furthermore, the prototype is based on the Eclipse UML model<sup><xref ref-type="bibr" rid="bibr48-1473871612473589">48</xref></sup> and diagrams can be imported by means of XML Metadata Interchange (XMI). Besides creating layouts in a manual way, it is also possible to apply automatic layout algorithms offered by jGraph and Zest.<sup><xref ref-type="bibr" rid="bibr49-1473871612473589">49</xref></sup> The layout of a diagram is stored in a separate file, using our own XML format.</p>
+<p>The class diagram is shown in the center region. Proxy elements for offscreen nodes are placed within the interactive border region (depicted with light gray background in <xref ref-type="fig" rid="fig11-1473871612473589">Figure 11</xref>). Users are able to pan by dragging with the mouse (holding the left mouse button pressed) and to zoom with the mouse wheel. Proxy elements are dynamically updated during interaction.</p>
+<p>Our prototype is capable of visualizing class diagrams consisting of classes, abstract classes and interfaces. Concerning relationships, associations (directed and undirected), generalizations and realizations can be shown. However, edge labels and multiplicities are not yet visualized. All nodes are represented by respective proxy elements. Their appearance is shown in <xref ref-type="fig" rid="fig5-1473871612473589">Figure 5</xref>. We realized both ways of geometric projection (orthogonal and radial) and <italic>along edge projection</italic> as explained in section “Projection along edges.” For geometric projection, the change of edge routing is performed by inserting a <italic>proxy edge segment</italic> from the last visible inflection point to the respective proxy. Proxy elements are clustered when two or more proxies are created at the same position (see <xref ref-type="fig" rid="fig5-1473871612473589">Figure 5</xref> for cluster icon). Furthermore, we implemented a simple algorithm for avoiding clusters (see section “Geometric clustering”). If there is enough space available, proxies are placed side by side until a certain distance threshold is reached. Besides this, we implemented structural clustering for inheritance hierarchies. If parts of a hierarchy are located offscreen, they are aggregated in a cluster. When proxies are hovered with the mouse cursor, labels of the associated classes or interfaces are shown as previews. The previews are blended out smoothly with a 1-s delay after the mouse has left the proxy or they disappear immediately if the background is clicked. We also realized temporal geometric projection for <italic>along edge projection</italic> (as described in section “Projection along edges”).</p>
+</sec>
+<sec id="section38-1473871612473589">
+<title>Implementation details</title>
+<p>In our prototype, the border for the offscreen visualization is a separate user interface component, which encapsulates the algorithms for visualizing the proxy elements. As an initial step, all nodes are determined, which are currently rendered completely (with their whole bounding rectangle) in the viewport. They are marked as on-screen. Furthermore, nodes intersecting the viewport and all nodes currently not rendered are labeled as offscreen. Then, proxy elements are created for each offscreen node. The position of the proxy is determined by projecting the center of the respective node onto the border of the viewport. This is achieved by intersecting the border with the line through the nodes’ center to the center of the viewport (for radial projection) or perpendicular to the viewport (for orthogonal projection). The basic algorithm is divided into three steps: determining on-screen and offscreen nodes, updating the positions of the proxies and creating and updating the clusters.</p>
+<sec id="section39-1473871612473589">
+<title>Determining on-screen and offscreen nodes</title>
+<p>For each viewport update (panning and zooming) at step <italic>n</italic>, the currently visible nodes are determined. This snapshot is compared to the visible nodes of step <italic>n</italic> − 1. Nodes that are completely visible at step <italic>n</italic> but were not visible at step <italic>n</italic> − 1 moved from the offscreen area to the on-screen area. Their proxies are deleted (possibly removed from clusters), and they are marked as on-screen. In contrast to this, nodes that are not visible anymore or just partly visible are marked as offscreen.</p>
+</sec>
+<sec id="section40-1473871612473589">
+<title>Updating the positions of the proxies</title>
+<p>As a next step, the positions of the proxies are updated by performing the respective projection. In our algorithm, proxies with attached edges (associated to nodes connected with on-screen nodes) are updated first. They are preferred, as lagging is particularly noticeable for them when they fall behind their faster moving edges. During this step, <italic>along edge projection</italic> is performed, whereby the proxy is positioned at the location where the edge intersects the viewport.</p>
+<p>Then, all unconnected proxies are updated. If geometric clustering is enabled and orthogonal projection is applied, it is not necessary to move every single proxy. If proxies are clustered, it is sufficient to update the position of the whole cluster (as proxies once clustered never leave the cluster and move along with it).</p>
+<p>For radial projection, proxies associated to nodes located closer to the viewport move faster than proxies for nodes positioned further away. Therefore, proxies that were overlapping at step <italic>n</italic> − 1 do not necessarily have to overlap at step <italic>n</italic>. Therefore, geometrical clusters can change and the position of each proxy has to be updated separately. This makes radial projection more computationally expensive.</p>
+</sec>
+<sec id="section41-1473871612473589">
+<title>Creating and updating the clusters</title>
+<p>Proxies for nodes that moved offscreen are added to structural clusters if certain conditions are met (e.g. the node is part of an inheritance hierarchy). If the proxy is not part of a structural cluster and if it is not connected with an on-screen node, the system checks whether it overlaps with other proxies. If an overlap exists, the proxies are aggregated in a geometrical cluster. The offscreen visualization component runs in its own thread to allow smooth interaction. With the approach described above, we are able to navigate diagrams with up to 400 nodes without performance issues.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section42-1473871612473589">
+<title>Pilot study</title>
+<p>We conducted two studies. First, we ran a pilot study with our early prototype. Our goal was to collect feedback at an early stage of development, to come to decisions for further design iterations. Then, we conducted a controlled user evaluation with the prototype modified according to the results of the pilot study. It is presented in section “User evaluation.”</p>
+<p>In particular, with the pilot study we wanted to clarify the following questions: Are people able to understand the visualization technique spontaneously? Which kind of geometric projection is preferred—orthogonal or radial projection? Are the proxies properly designed and distinguishable from each other? Is <italic>along edge projection</italic> comprehensible? We applied a think-aloud approach in combination with user observations and a questionnaire.</p>
+<sec id="section43-1473871612473589">
+<title>Design of the study</title>
+<sec id="section44-1473871612473589">
+<title>Apparatus</title>
+<p>The evaluation was conducted with the prototype mentioned in section “Prototype” and ran on a PC with 2.5 GHz and 3 GB RAM under Windows XP. The display had a resolution of 1680 × 1050 pixels and a screen size of 20″ because we considered this as common for average workplaces.</p>
+</sec>
+<sec id="section45-1473871612473589">
+<title>Participants</title>
+<p>Eight participants (six males and two females, aged from 24 to 35 years) took part in the evaluation (six employees of the computer science department and two graduate students). They all have a solid background in computer science, visualization or human–computer interaction (HCI). They were not modeling experts but knew UML class diagram notation and used respective editors from time to time.</p>
+</sec>
+<sec id="section46-1473871612473589">
+<title>Tasks and procedure</title>
+<p>Before the evaluation procedure started, the basic approach of the offscreen visualization was explained. This was done by means of the prototype and a small example diagram consisting of 10 nodes and 6 edges. We explained the zoom+pan navigation, the meaning and appearance of proxy elements and the interaction with proxies (hovering and automatic navigation). However, we did not explain further details such as projection or clustering strategies. Orthogonal projection for unconnected nodes and <italic>along edge projection</italic> for connected nodes were used. The whole introduction took about 5–10 min.</p>
+<p>The evaluation procedure was structured in two parts. Part 1 consisted of a guided navigation within a smaller class diagram. This means, we asked the participants to navigate to particular nodes by clicking on proxies and guided them on a way through the diagram. During the procedure, we asked them about their opinions concerning certain design issues and logged their comments and behavior.</p>
+<p>Before they started to use the prototype, a printout of the UML class diagram was handed to the participants. The structure of the diagram was explained to them, and they were asked to memorize the spatial layout of the diagram for 1–2 min. To make its content easily understandable, the diagram modeled the structure of a theater. For example, there were classes named <italic>actor</italic> and <italic>stage play</italic>. An <italic>actor</italic> plays a role within a <italic>stage play</italic>, which was expressed by an association. Furthermore, a stage play is a special kind of <italic>event</italic>—expressed by a generalization. The diagram consisted of 31 classes (3 of them abstract) and 35 relationships (18 associations and 17 generalizations). The diagram was laid out manually according to aesthetic rules.<sup><xref ref-type="bibr" rid="bibr43-1473871612473589">43</xref></sup> For instance, general classes were always located above their subclasses, crossing of edges was avoided and classes belonging together on a semantic level were also located close together in the layout.</p>
+<p>Every participant started the guided navigation at the same position and followed the same navigation path given by our instructions. In particular, we asked the participants to perform several smaller tasks. We asked them to estimate the direction of a class located offscreen, to indicate an offscreen class on the printout without using the previews and to navigate to a certain class and tell its directly connected neighbors. Furthermore, we asked them to count abstract classes to see whether proxies are distinguishable from each other. At a certain point of the navigation, a temporal projection (see section “Projection along edges”) occurred, as the respective class was connected by means of a bent edge. We asked the participants whether they could explain this behavior spontaneously and discussed this technique. At the end of part 1, participants were asked to explicitly compare geometric projection and <italic>along edge projection</italic>. For this, they were asked to navigate freely in both modes. To clearly demonstrate the creation of several proxies for one class in <italic>along edge projection</italic> mode, a class with eight edges was used. For each edge, one proxy was created.</p>
+<p>In part 2, the participants were asked to freely explore an unknown UML class diagram consisting of 72 classes, 8 interfaces and 89 relationships (30 associations, 45 generalizations and 14 realizations). The exploration had a duration of approximately 5 min. Subsequently, we demonstrated the <italic>avoid cluster algorithm</italic> and asked the participants whether it is comprehensible to them.</p>
+<p>During both parts, we took notes about our observations and the participants’ comments and suggestions. In addition, at the end, we handed a questionnaire to them with four questions. For example, they were asked to rate the discriminability of proxy elements and the comprehension of automatic zoom+pan on 5-point Likert scales (from 1 = “completely disagree” to 5 = “completely agree”).</p>
+</sec>
+</sec>
+<sec id="section47-1473871612473589">
+<title>Results of the pilot study</title>
+<sec id="section48-1473871612473589">
+<title>Navigation</title>
+<p>All participants quickly understood the basic approach of the offscreen visualization technique. However, for the first navigation task, most of them spontaneously applied traditional zooming and panning. After an additional hint that navigation is also possible by clicking on respective proxy elements, participants mainly applied this approach. Especially, two participants emphasized that they liked the idea of “navigating the diagram step-by-step” by clicking proxies and jumping from node to node.</p>
+<p>Participants commented that zoom+pan animation was too quick and should zoom out more during panning to give a decent overview. Hence, the comprehensibility of the animation was rated with a rather low mean value (M = 1.6, see <xref ref-type="fig" rid="fig12-1473871612473589">Figure 12</xref>). However, the animation parameters can be easily adjusted. Furthermore, two participants remarked that they would not need a smooth animation at all, as their only attempt is to quickly navigate to the associated node.</p>
+<fig id="fig12-1473871612473589" position="float">
+<label>Figure 12.</label>
+<caption>
+<p>Results of the pilot study questionnaire.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig12.tif"/>
+</fig>
+</sec>
+<sec id="section49-1473871612473589">
+<title>Projection</title>
+<p>Most of the participants (six of eight) expected radial projection and were not able to identify offscreen nodes correctly without using the preview function. The question whether offscreen nodes were located at the expected position was rated with a mean value of 3.0 (see <xref ref-type="fig" rid="fig12-1473871612473589">Figure 12</xref>). Furthermore, after explaining, the principle of <italic>along edge projection</italic> was comprehensible to the participants. Most of them liked the idea of maintaining the routing of edges. However, many participants mentioned that the occurrence of several proxies for the same node is confusing and suggested a clearer indication that proxies are associated to the same node. Similar results were collected for the temporal projection. It was understood by the participants after explanation, but they suggested a clearer indication of temporal proxies.</p>
+</sec>
+<sec id="section50-1473871612473589">
+<title>Appearance of proxies</title>
+<p>Proxy elements representing classes directly connected with visible nodes were clearly distinguishable from other proxy elements. The discriminability of proxy elements was rated with a mean value of M = 2.3 (see <xref ref-type="fig" rid="fig12-1473871612473589">Figure 12</xref>). As mentioned in section “Proxy elements and clustering,” the color of the proxies matched with the color of the respective node. Many participants suggested using different colors that are more distinguishable from each other. However, all participants were able to identify the different types of proxy elements when they were asked to count proxies representing abstract classes and interfaces. Furthermore, five participants suggested adding more information to the proxies, such as the amount of methods or attributes of a class.</p>
+</sec>
+<sec id="section51-1473871612473589">
+<title>Further observations and comments</title>
+<p>One participant suggested a history function as suggested in the study by Shneiderman<sup><xref ref-type="bibr" rid="bibr50-1473871612473589">50</xref></sup> to navigate back to previously visited nodes. This can be beneficial if a proxy was clicked by accident or if navigating back is necessary during the editing process. Furthermore, three participants asked for a distance indication. As previously mentioned, we assumed this as less important for the domain of node-link diagrams. For which tasks distance indication is beneficial and how it can be achieved in combination with our approach are subjects for further investigation. Moreover, six participants asked for an overview, and we observed that all participants used the printout of the diagram for orientation. The orientation within the diagram was rated with a mean value of M = 3.1 (see <xref ref-type="fig" rid="fig12-1473871612473589">Figure 12</xref>). In fact, an overview was already implemented for the editor, but we turned it explicitly off for the evaluation. In which way an overview supports our approach is studied in the evaluation presented in section “User evaluation.”</p>
+</sec>
+</sec>
+<sec id="section52-1473871612473589">
+<title>Adoptions resulting from the pilot study</title>
+<p>Based on the observations and comments we collected during the pilot study, we changed our prototype in several ways.</p>
+<sec id="section53-1473871612473589">
+<title>Along edge projection</title>
+<p>Due to <italic>along edge projection</italic>, some nodes (with several edges) were represented by several proxies. As we have found in the pilot study, some participants were confused, especially when a node was represented by many proxies. To mitigate this problem, we slightly adopted the approach used in the pilot evaluation. Both projection techniques—geometric and <italic>along edge projection</italic>—are now applied simultaneously. An example is illustrated in <xref ref-type="fig" rid="fig13-1473871612473589">Figure 13</xref>. Geometric projection is used for nodes connected with straight edges such as the generalizations from C1 to C2 and C3. In this case, the change of edge routing is rather easy to comprehend, and it is ensured that there is just one proxy for the node (instead of two). <italic>Along edge projection</italic> is applied only for nodes connected with bended edges to prevent confusing changes of edge routing. In <xref ref-type="fig" rid="fig13-1473871612473589">Figure 13</xref>, this is the case for the association between Classes C1 and C4. Furthermore, proxies created by <italic>along edge projection</italic> are drawn in a semi-transparent style to distinguish them from geometrical projected proxies.</p>
+<fig id="fig13-1473871612473589" position="float">
+<label>Figure 13.</label>
+<caption>
+<p>Combination of along edge projection (for bended edges) and geometrical projection (for straight edges). Class C1 is represented by two proxies instead of three.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig13.tif"/>
+</fig>
+</sec>
+<sec id="section54-1473871612473589">
+<title>Temporal projection</title>
+<p>To indicate <italic>temporal projection</italic> more clearly, we decided to visualize the routing of edges temporally within the border region. An example for this is illustrated in <xref ref-type="fig" rid="fig14-1473871612473589">Figure 14(a)</xref>. If one of the proxies created by <italic>along edge projection</italic> (1′ or 1″) is hovered with the mouse cursor, a temporal projected proxy appears (1*) and the routing of edges is indicated by <italic>proxy edges</italic> leading to the temporal projected proxy. If the <italic>proxy edge</italic> crosses other proxies, they are grayed out to prevent clutter within the border region (see <xref ref-type="fig" rid="fig14-1473871612473589">Figure 14(b)</xref>). In this way, it is clearly visualized how the visible nodes are connected with offscreen nodes and which nodes are represented by several proxies.</p>
+<fig id="fig14-1473871612473589" position="float">
+<label>Figure 14.</label>
+<caption>
+<p>(a) If one of the proxies is hovered, proxy edges are shown within the border region to clearly indicate that one node is represented by several proxies. (b) Screenshot from the prototype. If a proxy edge crosses other proxies, they are grayed out to make the routing clearly visible.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig14.tif"/>
+</fig>
+</sec>
+<sec id="section55-1473871612473589">
+<title>Clustering</title>
+<p>We added animation to the proxies to make the creation of geometric clustering (see section “Geometric clustering”) more comprehensible. For this, we decoupled the movement of proxies during panning and the creation of clusters from each other. During the panning process, the position of proxies is dynamically updated and proxies can overlap or even occlude each other when they move within the border region (see <xref ref-type="fig" rid="fig15-1473871612473589">Figure 15(a)</xref> and <xref ref-type="fig" rid="fig15-1473871612473589">(b)</xref>). This happens especially when radial projection is applied as proxies representing nodes closer to the viewport move faster than proxies of nodes located farther from the viewport. A drop shadow was added to proxies to make the overlapping clearer. When the user stops panning, overlapping proxies are animated toward each other. When they completely overlap, they are deleted and a cluster icon is blended in smoothly (see <xref ref-type="fig" rid="fig15-1473871612473589">Figure 15</xref> (right)). In this way, updating the position of proxies during panning and the creation of clusters are decoupled from each other.</p>
+<fig id="fig15-1473871612473589" position="float">
+<label>Figure 15.</label>
+<caption>
+<p>Screenshot of the prototype: (a) During panning proxy elements (b) can overlap. (c) If the user stops panning, the overlapping proxies are animated toward each other and a cluster proxy appears.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig15.tif"/>
+</fig>
+</sec>
+<sec id="section56-1473871612473589">
+<title>History function</title>
+<p>We also added a history function for the automatic navigation by clicking on proxies. In contrast to traditional undo functions (e.g. Ctrl+z), it can be applied to quickly navigate back to previous views. Other activities such as creating or editing diagram elements are not affected. The history function can be invoked by holding a keyboard shortcut (e.g. the shift key in our prototype). As a result, the proxies for the last five visited nodes are highlighted; all other proxies are grayed out. In this way, users are able to quickly see the recently visited nodes and to jump back to them directly by clicking. After they have navigated back to a particular node, the history function can be invoked again (and the last five visited nodes are highlighted again). This technique allows going back in navigation history with a maximum step size of five steps. We chose to initially visualize the last five nodes to reduce the cognitive burden of the user. However, we suggest setting the amount of highlighted proxies (and thereby the maximum step size) dynamically by mouse dragging. For example, by activating the history mode, pressing a mouse button and dragging the mouse horizontally, users could adjust the number of highlighted proxies. Moving the cursor from left to right blends in more proxies of the recently visited nodes according to their position in the history. This can be done until all proxies are highlighted or the end of the complete history is reached. Moving the cursor in the opposite direction reduces the amount of highlighted proxies.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section57-1473871612473589">
+<title>User evaluation</title>
+<p>With the improved prototype, we conducted a controlled experiment to evaluate the performance of our approach more deeply. Our goal was to investigate to what extent the offscreen visualization improves diagram navigation concerning speed and user satisfaction. In addition, we wanted to find out whether users are able to stay oriented within an unknown diagram while navigating by clicking on proxies. Therefore, we ran a study with three conditions (see <xref ref-type="fig" rid="fig16-1473871612473589">Figure 16</xref>). We compared a zoom+pan interface with overview+detail as applied in the state-of-the-art diagram editors (condition <italic>OD</italic>, <xref ref-type="fig" rid="fig16-1473871612473589">Figure 16(a)</xref>) and the offscreen visualization technique without overview (condition <italic>OS</italic>, <xref ref-type="fig" rid="fig16-1473871612473589">Figure 16(b)</xref>). We expected that <italic>OS</italic> users will be faster than <italic>OD</italic> users due to automatic navigation by clicking proxies. Furthermore, we expected that the automatic zoom+pan animation will support the participants’ orientation as good as manual navigation. In addition to this, we ran the evaluation with a user interface realizing the offscreen visualization technique combined with an overview window (condition <italic>OS</italic>+<italic>OD</italic>, <xref ref-type="fig" rid="fig16-1473871612473589">Figure 16(c)</xref>). We expected that the presence of an overview window will improve the orientation within an unknown diagram as participants have an additional view to easily spot their location. However, we did not expect that an additional overview will lead to a better performance concerning navigation. This was based on the expectation that users will stick to navigation by proxy elements even if an overview is present. Furthermore, we investigated how precisely users can navigate to a given offscreen node by using automatic navigation.</p>
+<fig id="fig16-1473871612473589" position="float">
+<label>Figure 16.</label>
+<caption>
+<p>Screenshots of the interfaces for the three conditions: (a) <italic>OD</italic>, (b) <italic>OS</italic> and (c) <italic>OS</italic>+<italic>OD</italic>. A red viewfinder rectangle indicates the position of the viewport within the overview.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig16.tif"/>
+</fig>
+<p>To summarize, our hypotheses were as follows:</p>
+<list id="list1-1473871612473589" list-type="simple">
+<list-item><p><bold>H1</bold>: Using the offscreen visualization (conditions <italic>OS</italic> and <italic>OS</italic>+<italic>OD</italic>) is faster than using the overview+detail interface (condition <italic>OD</italic>).</p></list-item>
+<list-item><p><bold>H2</bold>: For the offscreen interface, navigation task completion time is not influenced by the presence of an additional overview window (see conditions <italic>OS</italic> and <italic>OS</italic>+<italic>OD</italic>).</p></list-item>
+<list-item><p><bold>H3</bold>: With regard to orientation tasks (OTs), there is no influence of the <italic>OS</italic> interface (with automatic zoom+pan animation) compared to the OD interface (with manual zoom+pan and overview).</p></list-item>
+<list-item><p><bold>H4</bold>: The offscreen visualization combined with an additional overview window (condition <italic>OS</italic>+<italic>OD</italic>) improves the orientation in comparison to the <italic>OS</italic> and the <italic>OD</italic> interfaces.</p></list-item>
+</list>
+<sec id="section58-1473871612473589">
+<title>Design of the study</title>
+<p>For the study, we applied a between-subjects design. There were three groups of participants—one for each interface.</p>
+<sec id="section59-1473871612473589">
+<title>Participants</title>
+<p>Twenty-seven voluntary participants took part in the study (aged 23–39 years, 7 females, one left handed). Most of them are faculty members of the computer science department and six of them are advanced students of higher semesters. None of them took part in the pilot study, and none of them knew the UML diagrams and their content. They are no everyday modelers but only two of them had no knowledge of UML class diagrams. Two participants give lectures on software modeling and five participants stated that they are regular users of other notations (such as activity or data flow diagrams) and respective editors. UML and diagram editor expertise was determined before the study by an online questionnaire with two 5-point Likert scales. We considered these results to equally assign participants according to their knowledge to the three conditions.</p>
+</sec>
+<sec id="section60-1473871612473589">
+<title>Apparatus and interfaces</title>
+<p>The study was conducted on a PC running with 3 GHz, 8 GB RAM and Windows 7 (64 bit). The display had a resolution of 1900 × 1200 pixels and a screen size of 24″. For both offscreen conditions, our prototype application was used, including the adoptions mentioned in section “Adoptions resulting from the pilot study” (just the history function was disabled). Based on the results of the pilot study, the proxy elements were created by radial projection, and the zoom+pan animation was adjusted. It was made slightly slower and zoomed out a bit more to show more of the diagram during animation. The three interfaces are shown in <xref ref-type="fig" rid="fig16-1473871612473589">Figure 16</xref>. The width of the border region was 45 pixels. For the <italic>OD</italic> and <italic>OS</italic>+<italic>OD</italic> interfaces, the overview window occupied about 15% of the whole display space (similar to the conditions in the study by Nekrasovski et al.<sup><xref ref-type="bibr" rid="bibr18-1473871612473589">18</xref></sup>). The representation of the diagram within the overview window was too small to read labels, but edges were still visible. Zoom+pan interaction was activated in all conditions. Panning was possible by dragging with the mouse on the background, and zooming could be achieved by scrolling the mouse wheel. Participants could also interact with the overview by dragging the viewfinder rectangle or by clicking at the respective position. In addition, the position and size of the viewfinder were smoothly animated during zoom+pan animation in the <italic>OS</italic>+<italic>OD</italic> interface.</p>
+</sec>
+<sec id="section61-1473871612473589">
+<title>Datasets</title>
+<p>Two UML class diagrams of similar size served as datasets for the study. The first diagram (D1, see <xref ref-type="fig" rid="fig19-1473871612473589">Figure 19</xref> in <xref ref-type="app" rid="app1-1473871612473589">Appendix 1</xref>) was a class diagram of a multitouch gesture recognizer developed in-house (90 nodes and 84 edges). The second diagram (D2, see <xref ref-type="fig" rid="fig20-1473871612473589">Figure 20</xref> in <xref ref-type="app" rid="app1-1473871612473589">Appendix 1</xref>) showed parts of the graph visualization toolkit <italic>mxGraph</italic><sup><xref ref-type="bibr" rid="bibr47-1473871612473589">47</xref></sup> (99 nodes and 103 edges). We used the same representation of class diagrams as in the pilot study: the diagrams consisted of classes, abstract classes (5 in D1 and 8 in D2, with labels in italics) and interfaces (5 in D1 and 10 in D2). Relationships were limited to associations, generalizations and realizations. Furthermore, there were no labels for relationships. Therefore, participants needed no deep expert knowledge in UML. We manually laid out the diagrams according to aesthetic rules<sup><xref ref-type="bibr" rid="bibr43-1473871612473589">43</xref></sup> as in the pilot study.</p>
+</sec>
+<sec id="section62-1473871612473589">
+<title>Tasks</title>
+<p>The tasks were divided into three blocks. The first block consisted of two simple <italic>comprehension tasks</italic> (SCTs) and two more complex <italic>comprehension tasks</italic> (CCTs). Thus, we asked the participants to analyze relationships within a UML class diagram. These tasks were followed by a second block of <italic>OTs</italic>. Participants were asked to go back to already visited nodes to find out whether they were able to stay oriented during navigation. Both task blocks were conducted with the two class diagrams (D1 and D2) mentioned before. With these tasks, we simulated the situation that a user wants to edit parts of an unknown diagram. For this, he or she has to understand several relationships starting from a particular node of interest (task block 1). Then, the user has to navigate back to the location he or she started from to edit the content (task block 2).</p>
+<p>The third block consisted of three <italic>locate tasks</italic> (LTs), which were performed only by participants doing the offscreen conditions (<italic>OS</italic> and <italic>OS+O</italic>). To automatically navigate to a particular offscreen node, participants had to choose the respective proxy. In contrast to the tasks of blocks 1 and 2, the <italic>LTs</italic> assumed that the participants had to orient themselves within a known diagram. As the applied diagram was unknown to them, we simulated this situation by telling them the name and direction of the requested offscreen node—all information users would have if they would be familiar with the diagram. The tasks are described in more detail in the following sections.</p>
+<p><italic>Comprehension tasks</italic> were divided into two simple and two complex tasks. For the SCTs, we asked which classes are implementing a focused interface (or vice versa: which interfaces implement the focused class). For this, the participants were asked to navigate to this node. Users then had to name the classes or interfaces connected by realizations and to navigate to a particular one of them. Both of these simple tasks differed in the amount and the distance of adjacent classes or interfaces. For the CCTs, we asked the participants to name all super classes of a focused class. So users had to navigate from the lowest level of the inheritance hierarchy to the top. Then, they were asked which interface implements the topmost class. Again, there were two of these complex tasks. They differed in the amount of super classes to find (four and five, respectively) and the amount of associations leading from the classes. For example, in one case, the root class was connected with several associations, so that participants had to check whether they already reached the top of the hierarchy.</p>
+<p>For the OTs, we asked the participants to navigate to two particular classes and one interface as fast as possible. All these nodes had been visited before and were classes or interfaces where the <italic>comprehension tasks</italic> started. Before they started with the respective task, we asked the participants whether they could remember the direction of the target node. We explained this task to them beforehand. However, we did not explicitly encourage them to memorize the navigation path while doing the tasks of the first block. In this way, we could see whether they were able to stay oriented spontaneously.</p>
+<p>For the three LTs (<italic>OS</italic> and <italic>OS</italic>+<italic>OD</italic> only), the participants were asked to choose the proxies for two offscreen classes and one interface. We told them the names of the respective target nodes and manually indicated their positions within the overview window. Participants had to estimate the direction and find the proper proxy element by hovering it with the mouse cursor. The two offscreen classes were located at the upper right and lower right, respectively. The offscreen interface was located toward the left of the current viewport.</p>
+</sec>
+<sec id="section63-1473871612473589">
+<title>Procedure</title>
+<p>At the beginning of the study, we explained the simplified UML class diagram notation to the participants. Then, we demonstrated the interaction techniques to them. For each condition, we explained zoom+pan and the functionality of the overview if present. For <italic>OS</italic> and <italic>OS</italic>+<italic>OD</italic> conditions, we explained the offscreen visualization in detail. This comprised types of proxies, docking of edges, zoom+pan animation, creation of clusters and along edge projection. Then, participants trained the <italic>comprehension tasks and OTs</italic> with a small class diagram consisting of 23 nodes and 25 edges. The duration of training was about 5 min.</p>
+<p><italic>Comprehension tasks and OTs</italic> were performed within a fixed order for each of the three conditions—first with diagram D1 and then with diagram D2. Then, participants of the <italic>OS</italic> and <italic>OS</italic>+<italic>OD</italic> conditions performed the three <italic>LTs</italic>. For the OS condition, the overview was activated to manually indicate the target classes and interface. For offscreen conditions (<italic>OS</italic> and <italic>OS</italic>+<italic>OD</italic>), a session had a mean duration of 30 min. For the <italic>OD</italic> condition, the duration was shorter (22 min) due to shorter explanation and training phases.</p>
+</sec>
+<sec id="section64-1473871612473589">
+<title>Measurements</title>
+<p>For blocks 1 and 2, we measured the completion time for each task. For block 3, we counted the attempts participants needed to find the proper proxy element. Furthermore, we noted comments and observations during the study. In the end, participants were asked to rate the difficulty of the tasks and the usability of the interface on 5-point Likert scales.</p>
+</sec>
+</sec>
+<sec id="section65-1473871612473589">
+<title>Results</title>
+<p>For the <italic>comprehension tasks</italic> and <italic>OTs</italic>, we ran one-way independent analyses of variance (ANOVAs). The Bonferroni adjustment was used for post hoc comparisons. For offscreen interfaces (conditions <italic>OS</italic> and <italic>OS</italic>+<italic>OD</italic>), some values were discarded as participants switched to manual panning and zooming instead of using automatic navigation by clicking proxies. This happened in only three cases. Furthermore, in two cases, tasks were not done correctly (participants clicked proxies instead of just reading the names). For nonhomogeneous variances, we performed Kruskal–Wallis tests (with Mann–Whitney post hoc tests). The results of the questionnaire were mapped to a scale ranging from 0 (completely disagree) to 4 (completely agree).</p>
+<sec id="section66-1473871612473589">
+<title>Comprehension tasks</title>
+<p>For the overall completion time of the <italic>comprehension tasks</italic> (see <xref ref-type="table" rid="table1-1473871612473589">Table 1</xref>, task block 1), we found significant effects for both diagrams (D1: F(2,24) = 10.869, <italic>p</italic> &lt; 0.001, D2: F(2,24) = 22.3, <italic>p</italic> &lt; 0.001). For D1 and D2, users with the offscreen interfaces were significantly faster than participants using the <italic>OD</italic> interface. However, there was no significant effect between the <italic>OS</italic> and <italic>OS</italic>+<italic>OD</italic> conditions for both diagrams. These results confirmed our hypotheses <bold>H1</bold> and <bold>H2</bold>. Furthermore, after comparing the completion times of D1 and D2, we did not find any learning effects between both diagrams. All tasks were solved correctly. The only exception was one participant who used the OS+OD interface. He announced the wrong class for CCT2 of D2. In addition, one OS user navigated to the wrong class for SCT2, but he recognized the mistake and corrected it.</p>
+<table-wrap id="table1-1473871612473589" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Summary of the tasks</p>
+</caption>
+<graphic alternate-form-of="table1-1473871612473589" xlink:href="10.1177_1473871612473589-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" colspan="2">Task block 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.1 SCT1 and SCT2</td>
+<td>Two sequential SCTs: Which classes implement the focused interface? (Or: Which interfaces realizes the focused class?) Name all of them and navigate to class/interface X.</td>
+</tr>
+<tr>
+<td>1.2 CCT1 and CCT2</td>
+<td>Two sequential CCTs: Name all super classes of the focused one. Which interface implements the topmost class? Name it and navigate to this interface.</td>
+</tr>
+<tr>
+<th align="left" colspan="2">Task block 2</th>
+</tr>
+<tr>
+<td>OT1, OT2 and OT3</td>
+<td>Three sequential OTs: Navigate back to class/interface X as fast as possible.</td>
+</tr>
+<tr>
+<th align="left" colspan="2">Task block 3</th>
+</tr>
+<tr>
+<td>LT1, LT2 and LT3</td>
+<td>Three sequential LTs: Choose the proxy element for the indicated class/interface.</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-1473871612473589">
+<p>CCT: complex comprehension task; LT: locate task; OT: orientation task; SCT: simple comprehension task.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>The task completion times for the individual <italic>comprehension tasks</italic> (condition × task) are shown in <xref ref-type="fig" rid="fig17-1473871612473589">Figure 17(a)</xref> and <xref ref-type="fig" rid="fig17-1473871612473589">17(b)</xref>. A closer look at the individual completion times revealed that for diagram D1, there were significant effects for SCT1 (F(2,22) = 10.397, <italic>p</italic> &lt; 0.001) (see 1.1 in <xref ref-type="table" rid="table1-1473871612473589">Table 1</xref>). This means, for both offscreen conditions, users were significantly faster (<italic>OS: p</italic> &lt; 0.001, <italic>OS+OD: p</italic> &lt; 0.003) than <italic>OD</italic> user. In addition, there was a significant effect for CCT2 (see 1.2 in <xref ref-type="table" rid="table1-1473871612473589">Table 1</xref>). However, the variances were nonhomogenous here: H(2) = 10.727, <italic>p</italic> &lt; 0.005. Users of the <italic>OS</italic>+<italic>OD</italic> (U = 10.0) and the <italic>OS</italic> (U = 5.0) interface were significantly faster than <italic>OD</italic> users.</p>
+<fig id="fig17-1473871612473589" position="float">
+<label>Figure 17.</label>
+<caption>
+<p>Task completion times for Diagram D1 (left) and Diagram D2 (right). (a) and (b): task completion times for task block 1 and (c) and (d): task completion times for task block 2. Asterisks mark significant effects compared to the OD interface.</p>
+<p>CCT: complex comprehension task; OT: orientation task; SCT: simple comprehension task.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig17.tif"/>
+</fig>
+<p>For diagram D2, we found three significant effects for both <italic>SCTs</italic> (see 1.1 in <xref ref-type="table" rid="table1-1473871612473589">Table 1</xref>). For SCT1 (F(2,24) = 7.784, <italic>p</italic> &lt; 0.002), users of both offscreen conditions performed faster (<italic>OS: p</italic> &lt; 0.01, <italic>OS+OD: p</italic> &lt; 0.004) than users of the <italic>OD</italic> interface. Similar results were found for SCT2 (F(2,22) = 39.034, <italic>p</italic> &lt; 0.001). Again, both offscreen conditions were significantly faster (<italic>OS: p</italic> &lt; 0.001, <italic>OS+OD: p</italic> &lt; 0.001). Finally, there was a significant effect for CCT2 (F(2,23) = 7.772, <italic>p</italic> &lt; 0.003) (see 1.2 in <xref ref-type="table" rid="table1-1473871612473589">Table 1</xref>). For this task, participants using the <italic>OS</italic> interface were significantly faster than the <italic>OD</italic> interface (<italic>OS: p</italic> &lt; 0.002). Concerning the results of the questionnaire, <italic>comprehension tasks</italic> were rated as relatively easy to solve for all three conditions: M = 3.8 (<italic>OD</italic>), M = 3.9 (<italic>OS</italic>), M = 4.0 (<italic>OS</italic>+<italic>OD</italic>). There were no noteworthy differences for the ratings of simple and complex tasks.</p>
+</sec>
+<sec id="section67-1473871612473589">
+<title>OTs</title>
+<p><xref ref-type="fig" rid="fig17-1473871612473589">Figure 17(c)</xref> and <xref ref-type="fig" rid="fig17-1473871612473589">17(d)</xref> shows the individual completion times for the <italic>OTs</italic>. We found a significant difference between the completion times of the <italic>OD</italic> and <italic>OS</italic> interface for OT1 in diagram D1 (H(2) = 9.348, <italic>p</italic> &lt; 0.009). In this case, the OD interface performed significantly faster (U = 5.0). All other differences were not significant. Furthermore, several participants did not complete all OTs. In most of the cases, they gave up on task OT3. For diagram D1, it was canceled three times for the <italic>OD</italic> interface. In addition, it was canceled once for the <italic>OS</italic> interface and twice for <italic>OS</italic>+<italic>OD</italic> interface. For diagram D2, the task OT3 was canceled twice for the <italic>OD</italic> interface and twice for the <italic>OS</italic>+<italic>OD</italic> interface. OT2 was canceled only once for D2 and the <italic>OS</italic>+<italic>OD</italic> interface.</p>
+<p>Completion times for the individual OTs show that for the <italic>OD</italic> interface participants became continuously slower for both diagrams. This is not surprising, as it was difficult for them to remember the locations of already visited diagram elements over time. For both offscreen conditions, the change of completion times is less extreme. However, their mean value is quite high with about 30 s. In contrast to the <italic>comprehension tasks</italic>, the <italic>OTs</italic> were rated as more difficult: M = 1.0 (<italic>OD</italic>), M = 1.8 (<italic>OS</italic>) and M = 1.7 (<italic>OS</italic>+<italic>OD</italic>). Many participants gave comments such as “I cannot remember where I have been” and searched at locations they never visited before. Altogether, these results falsify our hypotheses <bold>H3</bold> and <bold>H4</bold>.</p>
+<p>One exception is the <italic>OS</italic>+<italic>OD</italic> completion time of OT1 for diagram D1. In this case, five participants purposefully used the overview to jump to the target node directly. This lowered the task completion time. A rather low value can also be found for OT 3 (D2) of the <italic>OS</italic> condition. For this task, participants should navigate back to an interface. Three of them searched explicitly for interface proxies and ignored other types of proxies that resulted in lower task completion times. For the <italic>OS</italic>+<italic>OD</italic> interface, only one participant used this approach.</p>
+</sec>
+<sec id="section68-1473871612473589">
+<title>LT</title>
+<p>During the LTs of task block 3, we asked <italic>OS</italic>+<italic>OD</italic> and <italic>OS</italic> users to choose the proper proxy elements for indicated classes and interfaces. <xref ref-type="fig" rid="fig18-1473871612473589">Figure 18</xref> shows the mean values of attempts for solving these tasks. A dependent ANOVA revealed no significant effects. The overall mean value was 2.15 attempts.</p>
+<fig id="fig18-1473871612473589" position="float">
+<label>Figure 18.</label>
+<caption>
+<p>Number of attempts for the <italic>locate tasks</italic>.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig18.tif"/>
+</fig>
+</sec>
+<sec id="section69-1473871612473589">
+<title>Questionnaire and comments</title>
+<p>Concerning user satisfaction, the offscreen conditions were rated rather well. Participants stated that the technique was easy to learn (M = 3.4) and easy to use (M = 3.8). Furthermore, they had fun using the system (M = 3.6) and could imagine to apply it regularly (M = 3.6). Participants stated that our approach is a “good technique to handle the complexity of large diagrams” and that “it is better than zooming in and out manually.” In addition, the different types of proxy elements were clear to them (M = 3.1), the automatic zoom+pan animation was conceivable (M = 3.6) and the creation of clusters was comprehensible (M = 3.4). However, the current position within the diagram was not always clear to the participants using the <italic>OS</italic> interface (M = 1.6, <italic>OS</italic>+<italic>OD</italic>: M = 3.3), and they wished to have an overview (M = 3.9).</p>
+</sec>
+</sec>
+<sec id="section70-1473871612473589">
+<title>Discussion</title>
+<sec id="section71-1473871612473589">
+<title>Comprehension tasks</title>
+<p>The results of the study showed that for exploring relationships within an unknown diagram (<italic>comprehension tasks</italic>), our offscreen technique is at least as fast as state-of-the-art interfaces (zoom+pan in combination with an overview). In more difficult situations—where nodes have several edges of different type or relevant edges are rather long and bent several times—our technique outperforms traditional zoom+pan interfaces significantly. For example, this was the reason for the significant effects of the tasks CCT2 for both diagrams. For both tasks, users of the offscreen conditions were faster. This confirmed our hypothesis <bold>H1</bold>. Furthermore, the offscreen visualization was easily understood by the participants and the majority applied it successfully after a short period of training. For the first task—SCT1 of diagram D1—offscreen users were already significantly faster. An overview does not affect performance in this kind of tasks, which confirmed our hypothesis <bold>H2</bold>. Participants extensively applied our technique and did not pay attention to the overview.</p>
+</sec>
+<sec id="section72-1473871612473589">
+<title>OTs</title>
+<p>We rejected hypothesis <bold>H3</bold>. The completion times of the OTs and the respective results of the questionnaire revealed that it is quite difficult with our offscreen technique to stay oriented within the given diagrams. Initially, during the <italic>OTs</italic> (OT1–OT3) with the <italic>OD</italic> interface, participants were slightly faster in going back to an already visited location. We see the reason for this in the fact that when using a traditional zoom+pan interface, the navigation is performed by the users <italic>themselves</italic>. Therefore, at least the last navigation steps are easier to memorize. In contrast to this, our approach applies <italic>automatic navigation</italic> by animation. This means, users “are navigated” by the system that makes it difficult to recap former navigation steps. We see this as the reason for the rather high dropout rate for OT3 in both diagrams. However, results of the questionnaire showed that the zoom+pan animation is conceivable and participants stated that they found it beneficial. For example, one participant mentioned that he “would not trust the interface to navigate to the proper node” without animation.</p>
+<p>To solve the <italic>OTs</italic>, participants searched for the proper proxy, which can take quite some time depending on the size of the diagram. This behavior resulted in the rather high completion times. Altogether, only four participants utilized the different types of proxies and explicitly searched for an interface proxy when they were asked to navigate to an offscreen interface (which was the case in OT3 for both diagrams). Three of these participants were regular users of diagram editors. From these observations, we conclude that considering the types of proxies to speed up navigation needs more training but can be rather easily applied by experts.</p>
+<p>Furthermore, we also rejected hypothesis <bold>H4</bold>. Combining the offscreen visualization technique with an overview window does not seem to improve orientation. During the study, we observed that it is difficult for users to pay attention to both—overview and zoom+pan animation—at the same time during navigation. Nevertheless, participants appreciated the existence of an overview window, and it gave them the feeling of a better orientation. Corresponding to this, users of the <italic>OS</italic> interface wished to have an overview. From this, we recommend that an overview window should be available. According to the findings of Nekrasovski et al.,<sup><xref ref-type="bibr" rid="bibr18-1473871612473589">18</xref></sup> it can serve as a <italic>cognitive cushion</italic> and can relieve users from mental load.</p>
+<p>To improve orientation, we suggest visualizing the navigation path within the overview window. This can be combined with the history function presented in section “Adoptions resulting from the pilot study.” When the user invokes this function, not only the proxies of the last visited nodes are highlighted, but also the navigation path is shown in the overview. In this way, users can observe the chronological order in which they have visited particular locations of the diagram. How this path is visualized in detail (e.g. by a path of arrows or highlighting respective locations by colors) is subject for further research.</p>
+</sec>
+<sec id="section73-1473871612473589">
+<title>LTs</title>
+<p>In our opinion, the mean value of two attempts for finding the proper proxy for a given offscreen node is quite good for a rather short time of training. Two participants had problems finding the proper proxies for rather large offscreen classes. They stated that it was hard for them to estimate the location of the proxy according to the center of the class. Instead, they oriented themselves by the top or bottom border of the class and therefore chose the wrong proxy element.</p>
+</sec>
+</sec>
+<sec id="section74-1473871612473589">
+<title>Threats to validity</title>
+<p>For each controlled experiment, threats to validity and limitations occur. For our study, we see limitations in the UML and visual modeling experience of our participants, as they were no modeling practitioners. We reduced this threat by determining the participants’ experience beforehand and created groups with a similar mean experience. Furthermore, we applied class diagrams with a limited amount of types of elements to reduce the complexity for inexperienced participants. The experiment was run with class diagrams only. Thus, the results are not generalizable for other UML diagrams or further diagram notations. In addition, we see threats to validity concerning the scalability to larger diagrams and the prior knowledge of the participants about the given diagrams. These aspects are discussed in the following paragraphs.</p>
+<sec id="section75-1473871612473589">
+<title>Scalability</title>
+<p>Concerning scalability, the study showed that our offscreen visualization technique works well for class diagrams with up to 100 nodes. We are confident that our approach will also be beneficial for larger diagrams with several hundred nodes. Of course, a huge amount of nodes represented by a cluster leads to a long list of previews when the cluster is hovered. Exploring this list is time consuming and certainly increases the task completion times. However, it is hard to determine a concrete upper limitation concerning the number of nodes. Whether the offscreen technique is beneficial depends on several other factors, such as the given diagram layout, the density and connectivity of the diagram as well as the particular notation and given tasks. Moreover, in this study, we did not consider some of the other proposed techniques that address scalability such as the <italic>area of influence</italic> (see section “Area of influence”) or interactive filtering (see section “Interactive filtering”). In which way these factors and techniques will influence the performance of the offscreen visualization should be carefully studied in the future.</p>
+</sec>
+<sec id="section76-1473871612473589">
+<title>Prior knowledge</title>
+<p>Furthermore, in our study, we confronted the participants with a diagram that was completely unknown to them. They were familiar neither with the content nor with the diagram layout and structure. In the future, we plan to run studies that cover other situations as well. Of course, known diagrams with familiar content can serve as datasets, such as class diagrams that were created manually by software modelers. In addition, we also plan to conduct evaluations with unknown diagrams (unknown layout) but familiar content. For this, class diagrams automatically generated from a known code base can be applied. We expect that in these cases participants will have fewer problems concerning orientation. Of course, these studies should be conducted with modeling experts.</p>
+<p>Finally, further features and design alternatives can be added to the prototype and tested. Examples are the different representations of previews as described in section “Preview of offscreen nodes,” the techniques for showing further information within the border region as presented in section “Design of the interactive border region” or the visualization of the navigation path within the overview.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section77-1473871612473589" sec-type="conclusions">
+<title>Conclusion and future work</title>
+<p>In this article, we contributed the application of offscreen visualization to the domain of node-link diagrams in general and to UML class diagrams in particular. In contrast to most of the offscreen techniques presented so far, our approach uses interactive proxy elements instead of simple graphical overlays to represent offscreen nodes. The proxies are visualized within a border region surrounding the viewport. This provides a contextual view of diagram elements usually not visible. Besides navigation by manual zooming and panning, our approach also supports automatic navigation by clicking on proxies. In this way, it is possible to navigate in a map-oriented way as well as based on the syntactical structure of the diagram.</p>
+<p>We presented several approaches to make the change of edge routing as comprehensible as possible during panning and zooming. A preferable technique for that is <italic>along edge projection</italic>, which does not affect the routing of edges at all. Furthermore, we presented ways to make our technique scalable to large diagrams with several hundred nodes. As solutions for that problem, we propose filtering and clustering of proxy elements (according to geometric and structural rules). Furthermore, if diagrams become larger, we suggested a virtual <italic>area of influence</italic> around the viewport. It is utilized to filter nodes located further away.</p>
+<p>The results of a pilot evaluation showed that the offscreen visualization technique is easy to understand and that creating proxy elements by radial projection toward the center of the viewport was preferred. In a second controlled experiment, we found that for exploring relationships within unknown diagrams, our approach outperforms state-of-the-art interfaces. Furthermore, participants were able to navigate to offscreen nodes without effort. We also found that the presence of an overview did not improve orientation within an unknown diagram. However, participants requested an overview as additional cognitive support.</p>
+<p>For future work, we will improve the performance of our prototype and add further functionality. In addition to the features described in this article, the positioning of the proxies could be realized according to certain constraints by applying a mathematic optimization approach. In this way, the amount of geometric clusters could be minimized by translating proxies to the next free position, whereby the distance of a proxy to its original position is minimized as well.</p>
+<p>Other aspects for future work are follow-up user studies involving modeling experts and using larger diagrams. Therefore, tasks should be used that consider the content and semantics of the visualized diagrams. As our approach is applicable to node-link diagrams in general, we will also apply it to other graphical notations, such as business process models, biological networks or feature trees used in feature-oriented software development.<sup><xref ref-type="bibr" rid="bibr51-1473871612473589">51</xref></sup> In the previous work, we investigated techniques for diagram editing<sup><xref ref-type="bibr" rid="bibr52-1473871612473589">52</xref></sup> and graph exploration<sup><xref ref-type="bibr" rid="bibr31-1473871612473589">31</xref></sup> with multitouch and pen input on interactive surfaces. The prototype presented in this article is integrated in the same system and also runs on multitouch-enabled displays. Therefore, for future work, we also plan to investigate how multitouch interaction techniques can be utilized for our offscreen visualization.</p>
+</sec>
+</body>
+<back>
+<app-group>
+<app id="app1-1473871612473589">
+<title>Appendix 1</title>
+<fig id="fig19-1473871612473589" position="float">
+<label>Figure 19.</label>
+<caption>
+<p>Diagram D1 that was used for the comprehension, orientation and locate tasks.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig19.tif"/>
+</fig>
+<fig id="fig20-1473871612473589" position="float">
+<label>Figure 20.</label>
+<caption>
+<p>Diagram D2 that was used for the comprehension, orientation and locate tasks.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612473589-fig20.tif"/>
+</fig>
+</app>
+</app-group>
+<ack>
+<p>Most parts of the work were realized at the Institute of Simulation and Graphics at the Otto-von-Guericke University Magdeburg, Germany. We thank Sebastian Kleinau, Ricardo Langner and Anne Rott for their great support. We also thank the anonymous reviewers for their insightful comments. Finally, we thank all the participants of the studies for their time and efforts.</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work was funded by the German “Stifterverband für die Deutsche Wissenschaft” from funds of the Claussen-Simon-Endowment.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1473871612473589">
+<label>1.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Cherubini</surname><given-names>M</given-names></name>
+<name><surname>Venolia</surname><given-names>G</given-names></name>
+<name><surname>DeLine</surname><given-names>R</given-names></name><etal/>
+</person-group>. <article-title>Let’s go to the whiteboard: how and why software developers use drawings</article-title>. In: <conf-name>Proceedings of CHI ′07</conf-name>, <conf-date>28 April-3 May 2007</conf-date>, <conf-loc>San Jose, California, USA</conf-loc>, pp. <fpage>557</fpage>–<lpage>566</lpage>, <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr2-1473871612473589">
+<label>2.</label>
+<citation citation-type="web"><collab>Object Management Group</collab>, <ext-link ext-link-type="uri" xlink:href="http://www.uml.org/">http://www.uml.org/</ext-link></citation>
+</ref>
+<ref id="bibr3-1473871612473589">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Dobing</surname><given-names>B</given-names></name>
+<name><surname>Parsons</surname><given-names>J</given-names></name>
+</person-group>. <article-title>How UML is used</article-title>. <source>Commun ACM</source> <year>2006</year>; <volume>49</volume>(<issue>5</issue>): <fpage>109</fpage>–<lpage>113</lpage>.</citation>
+</ref>
+<ref id="bibr4-1473871612473589">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Soukup</surname><given-names>J</given-names></name>
+<name><surname>Soukup</surname><given-names>M</given-names></name>
+</person-group>. <article-title>The inevitable cycle: graphical tools and programming paradigms</article-title>. <source>Computer</source> <year>2007</year>; <volume>40</volume>(<issue>8</issue>): <fpage>24</fpage>–<lpage>30</lpage>.</citation>
+</ref>
+<ref id="bibr5-1473871612473589">
+<label>5.</label>
+<citation citation-type="web"><collab>IBM Rational Rose</collab>, <ext-link ext-link-type="uri" xlink:href="http://www.ibm.com/software/awdtools/developer/rose/">http://www.ibm.com/software/awdtools/developer/rose/</ext-link></citation>
+</ref>
+<ref id="bibr6-1473871612473589">
+<label>6.</label>
+<citation citation-type="web"><collab>Microsoft Visio</collab>, <ext-link ext-link-type="uri" xlink:href="http://office.microsoft.com/visio">http://office.microsoft.com/visio</ext-link></citation>
+</ref>
+<ref id="bibr7-1473871612473589">
+<label>7.</label>
+<citation citation-type="web"><collab>Sparx Systems</collab>, <ext-link ext-link-type="uri" xlink:href="http://www.sparxsystems.com/">http://www.sparxsystems.com/</ext-link></citation>
+</ref>
+<ref id="bibr8-1473871612473589">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cockburn</surname><given-names>A</given-names></name>
+<name><surname>Karlson</surname><given-names>A</given-names></name>
+<name><surname>Bederson</surname><given-names>BB</given-names></name>
+</person-group>. <article-title>A review of overview+detail, zooming, and focus+context interfaces</article-title>. <source>ACM Comput Surv</source> <year>2008</year>; <volume>41</volume>(<issue>1</issue>): <fpage>1</fpage>–<lpage>31</lpage>.</citation>
+</ref>
+<ref id="bibr9-1473871612473589">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Furnas</surname><given-names>GW</given-names></name>
+</person-group>. <article-title>Generalized fisheye views</article-title>. <source>SIGCHI Bull</source> <year>1986</year>; <volume>17</volume>(<issue>4</issue>): <fpage>16</fpage>–<lpage>23</lpage>.</citation>
+</ref>
+<ref id="bibr10-1473871612473589">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sarkar</surname><given-names>M</given-names></name>
+<name><surname>Brown</surname><given-names>MH</given-names></name>
+</person-group>. <article-title>Graphical fisheye views</article-title>. <source>Commun ACM</source> <year>1994</year>; <volume>37</volume>(<issue>12</issue>): <fpage>73</fpage>–<lpage>83</lpage>.</citation>
+</ref>
+<ref id="bibr11-1473871612473589">
+<label>11.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Frisch</surname><given-names>M</given-names></name>
+<name><surname>Dachselt</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Off-screen visualization techniques for class diagrams</article-title>. In: <conf-name>Proceedings of the 5th international symposium on software visualization 2010</conf-name>, <conf-date>25–26 October 2010</conf-date>, <conf-loc>Salt Lake City, Utah, USA</conf-loc>, pp. <fpage>163</fpage>–<lpage>172</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr12-1473871612473589">
+<label>12.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Baudisch</surname><given-names>P</given-names></name>
+<name><surname>Rosenholtz</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Halo: a technique for visualizing offscreen objects</article-title>. In: <conf-name>Proceedings of CHI ′03</conf-name>, <conf-loc>5–10 April 2003</conf-loc>, <conf-loc>Ft. Lauderdale, Florida, USA</conf-loc>, pp. <fpage>481</fpage>–<lpage>488</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr13-1473871612473589">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Gustafson</surname><given-names>S</given-names></name>
+<name><surname>Baudisch</surname><given-names>P</given-names></name>
+<name><surname>Gutwin</surname><given-names>C</given-names></name><etal/>
+</person-group>. <article-title>Wedge: clutter-free visualization of offscreen locations</article-title>. In: <conf-name>Proceedings of CHI ′08</conf-name>, <conf-date>5–10 April 2008</conf-date>, <conf-loc>Florence, Italy</conf-loc>, pp. <fpage>787</fpage>–<lpage>796</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr14-1473871612473589">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Dwyer</surname><given-names>T</given-names></name>
+<name><surname>Marriott</surname><given-names>K</given-names></name>
+<name><surname>Schreiber</surname><given-names>F</given-names></name><etal/>
+</person-group>. <article-title>Exploration of networks using overview+detail with constraint-based cooperative layout</article-title>. <source>IEEE T Vis Comput Gr</source> <year>2008</year>; <volume>14</volume>(<issue>6</issue>): <fpage>1293</fpage>–<lpage>1300</lpage>.</citation>
+</ref>
+<ref id="bibr15-1473871612473589">
+<label>15.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Perlin</surname><given-names>K</given-names></name>
+<name><surname>Fox</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Pad: an alternative approach to the computer interface</article-title>. In: <conf-name>Proceedings of SIGGRAPH ′93</conf-name>, <conf-date>1–6 August 1993</conf-date>, <conf-loc>Anaheim, CA</conf-loc>, pp. <fpage>57</fpage>–<lpage>64</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr16-1473871612473589">
+<label>16.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Frisch</surname><given-names>M</given-names></name>
+<name><surname>Dachselt</surname><given-names>R</given-names></name>
+<name><surname>Bröckmann</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Towards seamless semantic zooming techniques for UML diagrams</article-title>. In: <conf-name>Proceedings of the 4th ACM symposium on software visualization</conf-name>, <conf-date>2008, 16–17 September 2008</conf-date>, <conf-loc>Ammersee, Germany</conf-loc>, pp. <fpage>207</fpage>–<lpage>208</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr17-1473871612473589">
+<label>17.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Sharp</surname><given-names>R</given-names></name>
+<name><surname>Rountev</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Interactive exploration of UML sequence diagrams</article-title>. In: <conf-name>Proceedings of VISSOFT ’05</conf-name>, <conf-date>25 September 2005</conf-date>, <conf-loc>Budapest, Hungary</conf-loc>, p. 8. <publisher-name>IEEE Computer Society</publisher-name>, <publisher-loc>Washington, DC</publisher-loc>.</citation>
+</ref>
+<ref id="bibr18-1473871612473589">
+<label>18.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Nekrasovski</surname><given-names>D</given-names></name>
+<name><surname>Bodnar</surname><given-names>A</given-names></name>
+<name><surname>McGrenere</surname><given-names>J</given-names></name><etal/>
+</person-group>. <article-title>An evaluation of pan &amp; zoom and rubber sheet navigation with and without an overview</article-title>. In: <conf-name>Proceedings of CHI ’06</conf-name>, <conf-date>22–27 April 2006</conf-date>, <conf-loc>Montreal, Quebec, Canada</conf-loc>, pp.<fpage>11</fpage>–<lpage>20</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr19-1473871612473589">
+<label>19.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Tominski</surname><given-names>C</given-names></name>
+<name><surname>Abello</surname><given-names>J</given-names></name>
+<name><surname>Schumann</surname><given-names>H</given-names></name>
+</person-group>. <article-title>Two novel techniques for interactive navigation of graph layouts</article-title>. In: <conf-name>Proceedings of EuroVis’09</conf-name>, <conf-date>June 10–12, 2009</conf-date>, <conf-loc>Berlin, Germany</conf-loc>.</citation>
+</ref>
+<ref id="bibr20-1473871612473589">
+<label>20.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Moscovich</surname><given-names>T</given-names></name>
+<name><surname>Chevalier</surname><given-names>F</given-names></name>
+<name><surname>Henry</surname><given-names>N</given-names></name><etal/>
+</person-group>. <article-title>Topologyaware navigation in large networks</article-title>. In: <conf-name>Proceedings of CHI’09</conf-name>, <conf-date>4–9 April 2009</conf-date>, <conf-loc>Boston, MA, USA</conf-loc>, pp. <fpage>2319</fpage>–<lpage>2328</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr21-1473871612473589">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Turetken</surname><given-names>O</given-names></name>
+<name><surname>Schuff</surname><given-names>D</given-names></name>
+<name><surname>Sharda</surname><given-names>R</given-names></name><etal/>
+</person-group>. <article-title>Supporting systems analysis and design through fisheye views</article-title>. <source>Commun ACM</source> <year>2004</year>; <volume>47</volume>(<issue>9</issue>): <fpage>72</fpage>–<lpage>77</lpage>.</citation>
+</ref>
+<ref id="bibr22-1473871612473589">
+<label>22.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Reinhard</surname><given-names>T</given-names></name>
+<name><surname>Meier</surname><given-names>S</given-names></name>
+<name><surname>Glinz</surname><given-names>M</given-names></name>
+</person-group>. <article-title>An improved fisheye zoom algorithm for visualizing and editing hierarchical models</article-title>. In: <conf-name>Proceedings of the international workshop on requirements engineering visualization</conf-name>, <conf-date>15–19 October 2007</conf-date>, <conf-loc>New Delhi, India</conf-loc>. <publisher-name>IEEE</publisher-name>, <publisher-loc>Washington, DC, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr23-1473871612473589">
+<label>23.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wu</surname><given-names>J</given-names></name>
+<name><surname>Storey</surname><given-names>M-A</given-names></name>
+</person-group>. <article-title>A multi-perspective software visualization environment</article-title>. In: <conf-name>Proceedings of CASCON′ 00</conf-name>, <conf-date>1–4 November 2000</conf-date>, <conf-loc>Mississauga, Ontario, Canada</conf-loc>, pp. <fpage>41</fpage>–<lpage>50</lpage>. <publisher-name>IBM Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr24-1473871612473589">
+<label>24.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Jacobs</surname><given-names>T</given-names></name>
+<name><surname>Musial</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Interactive visual debugging with UML</article-title>. In: <conf-name>Proceedings of symposium on software visualization</conf-name>, <conf-date>11–13 June 2003</conf-date>, <conf-loc>San Diego, California</conf-loc>, pp. <fpage>115</fpage>–<lpage>122</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr25-1473871612473589">
+<label>25.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kagdi</surname><given-names>H</given-names></name>
+<name><surname>Maletic</surname><given-names>JI</given-names></name>
+</person-group>. <article-title>Onion graphs for focus+context views of UML class diagrams</article-title>. In: <conf-name>Proceedings of VISSOFT ′07</conf-name>, <conf-date>24–25 June 2007</conf-date>, <conf-loc>Banff, Alberta, Canada</conf-loc>, pp. <fpage>80</fpage>–<lpage>87</lpage>. <publisher-name>IEEE</publisher-name>, <publisher-loc>Washington, DC, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr26-1473871612473589">
+<label>26.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Bier</surname><given-names>EA</given-names></name>
+<name><surname>Stone</surname><given-names>MC</given-names></name>
+<name><surname>Pier</surname><given-names>K</given-names></name>
+<etal/>
+</person-group>. <article-title>Toolglass and magic lenses: the see-through interface</article-title>. In: <conf-name>Proceedings of SIGGRAPH ′93</conf-name>, <conf-date>1–6 August 1993</conf-date>, <conf-loc>Anaheim, CA</conf-loc>, pp. <fpage>73</fpage>–<lpage>80</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr27-1473871612473589">
+<label>27.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Jusufi</surname><given-names>I</given-names></name>
+<name><surname>Dingjie</surname><given-names>Y</given-names></name>
+<name><surname>Kerren</surname><given-names>A</given-names></name>
+</person-group>. <article-title>The network lens: interactive exploration of multivariate networks using visual filtering</article-title>. In: <conf-name>Proceedings of 14th conference information visualisation (IV ′10)</conf-name>, <conf-date>26–29 July 2010</conf-date>, <conf-loc>London, UK</conf-loc>, pp. <fpage>35</fpage>–<lpage>42</lpage>. <publisher-name>IEEE</publisher-name>, <publisher-loc>Washington, DC, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr28-1473871612473589">
+<label>28.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Tominski</surname><given-names>C</given-names></name>
+<name><surname>Abello</surname><given-names>J</given-names></name>
+<name><surname>Van Ham</surname><given-names>F</given-names></name><etal/>
+</person-group>. <article-title>Fisheye tree views and lenses for graph visualization</article-title>. In: <conf-name>Proceedings of the conference on information visualization</conf-name>, <conf-date>5–7 July 2006</conf-date>, <conf-loc>Baltimore, Maryland, USA</conf-loc>, pp. <fpage>17</fpage>–<lpage>24</lpage>. <publisher-name>IEEE</publisher-name>, <publisher-loc>Washington, DC, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr29-1473871612473589">
+<label>29.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wong</surname><given-names>N</given-names></name>
+<name><surname>Carpendale</surname><given-names>S</given-names></name>
+<name><surname>Greenberg</surname><given-names>S</given-names></name>
+</person-group>. <article-title>EdgeLens: an interactive method for managing edge congestion in graphs</article-title>. In: <conf-name>Proceedings of InfoVis</conf-name> <conf-date>2003, 21–21 October 2003</conf-date>, <conf-loc>Seattle, Washington</conf-loc>, pp. <fpage>51</fpage>–<lpage>58</lpage>. <publisher-name>IEEE</publisher-name>, <publisher-loc>Washington, DC, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr30-1473871612473589">
+<label>30.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Panagiotidis</surname><given-names>A</given-names></name>
+<name><surname>Bosch</surname><given-names>H</given-names></name>
+<name><surname>Koch</surname><given-names>S</given-names></name>
+<etal/>
+</person-group>. <article-title>EdgeAnalyzer: exploratory analysis through advanced edge interaction</article-title>. In: <conf-name>Proceedings of the Hawaii conference on system sciences</conf-name>, <conf-date>2011, 4–7 January 2011</conf-date> <conf-loc>Poipu, Kauai, Hawaii</conf-loc>, pp. <fpage>1</fpage>–<lpage>10</lpage>. <publisher-name>IEEE</publisher-name>, <publisher-loc>Washington, DC, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr31-1473871612473589">
+<label>31.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Schmidt</surname><given-names>S</given-names></name>
+<name><surname>Nacenta</surname><given-names>MA</given-names></name>
+<name><surname>Dachselt</surname><given-names>R</given-names></name><etal/>
+</person-group>. <article-title>A set of multi-touch graph interaction techniques</article-title>. In: <conf-name>Proceedings of international conference on interactive tabletops and surfaces (ITS ′10)</conf-name>, <conf-date>7–11 November 2010</conf-date>, <conf-loc>Saarbrocken, Germany</conf-loc>, pp. <fpage>113</fpage>–<lpage>116</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr32-1473871612473589">
+<label>32.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ghani</surname><given-names>S</given-names></name>
+<name><surname>Riche</surname><given-names>NH</given-names></name>
+<name><surname>Elmqvist</surname><given-names>N</given-names></name>
+</person-group>. <article-title>Dynamic insets for context-aware graph navigation</article-title>. <source>Comput Graph Forum</source> <year>2011</year>; <volume>30</volume>(<issue>3</issue>): <fpage>861</fpage>–<lpage>870</lpage>.</citation>
+</ref>
+<ref id="bibr33-1473871612473589">
+<label>33.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Spritzer</surname><given-names>AS</given-names></name>
+<name><surname>Freitas</surname><given-names>CMDS</given-names></name>
+</person-group>. <article-title>Design and evaluation of MagnetViz–a graph visualization tool</article-title>. <conf-name>IEEE Transactions on Visualization and Computer Graphics 2012</conf-name>; <volume>18</volume>: <fpage>822</fpage>–<lpage>835</lpage>. <conf-date>May 2012</conf-date>, <conf-loc>IEEE Educational Activities Department</conf-loc>.</citation>
+</ref>
+<ref id="bibr34-1473871612473589">
+<label>34.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zellweger</surname><given-names>PT</given-names></name>
+<name><surname>Mackinlay</surname><given-names>JD</given-names></name>
+<name><surname>Good</surname><given-names>L</given-names></name>
+<etal/>
+</person-group>. <article-title>City lights: contextual views in minimal space</article-title>. In: <conf-name>CHI ’03 extended abstracts on human factors in computing systems</conf-name>, <conf-date>5–10 April 2003</conf-date>, <conf-loc>Ft. Lauderdale, Florida, USA</conf-loc>, pp. <fpage>838</fpage>–<lpage>839</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr35-1473871612473589">
+<label>35.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Irani</surname><given-names>P</given-names></name>
+<name><surname>Gutwin</surname><given-names>C</given-names></name>
+<name><surname>Yang</surname><given-names>XD</given-names></name>
+</person-group>. <article-title>Improving selection of offscreen targets with hopping</article-title>. In: <conf-name>Proceedings of CHI ’06</conf-name>, <conf-date>22–27 April 2006</conf-date>, <conf-loc>Montreal, Quebec, Canada</conf-loc>, pp. <fpage>299</fpage>–<lpage>308</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr36-1473871612473589">
+<label>36.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Irani</surname><given-names>P</given-names></name>
+<name><surname>Gutwin</surname><given-names>C</given-names></name>
+<name><surname>Partridge</surname><given-names>G</given-names></name><etal/>
+</person-group>. <article-title>Techniques for interacting with off-screen content</article-title>. In: <conf-name>Proceedings of the 11th IFIP TC 13 international conference on human-computer interaction—volume part II</conf-name>, <conf-date>10–14 September 2007</conf-date>, <conf-loc>Rio de Janeiro, Brazil</conf-loc>, pp. <fpage>234</fpage>–<lpage>249</lpage>. <publisher-loc>Springer-Verlag</publisher-loc>, <publisher-name>Berlin and Heidelberg</publisher-name>.</citation>
+</ref>
+<ref id="bibr37-1473871612473589">
+<label>37.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Karnick</surname><given-names>P</given-names></name>
+<name><surname>Cline</surname><given-names>D</given-names></name>
+<name><surname>Jeschke</surname><given-names>S</given-names></name><etal/>
+</person-group>. <article-title>Route visualization using detail lenses</article-title>. <source>IEEE T Vis Comput Gr</source> <year>2010</year>; <volume>16</volume>(<issue>2</issue>): <fpage>235</fpage>–<lpage>247</lpage>.</citation>
+</ref>
+<ref id="bibr38-1473871612473589">
+<label>38.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Burigat</surname><given-names>S</given-names></name>
+<name><surname>Chittaro</surname><given-names>L</given-names></name>
+<name><surname>Gabrielli</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Visualizing locations of off-screen objects on mobile devices: a comparative evaluation of three approaches</article-title>. In: <conf-name>Proceedings of MobileHCI ’06, 2006</conf-name>, <conf-loc>Helsinki, Finland</conf-loc>, pp. <fpage>239</fpage>–<lpage>246</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr39-1473871612473589">
+<label>39.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Rohs</surname><given-names>M</given-names></name>
+<name><surname>Essl</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Which one is better? information navigation techniques for spatially aware handheld displays</article-title>. In: <conf-name>Proceedings of the 8th conference on multimodal interfaces (ICMI ’06)</conf-name>, <conf-date>2–4 November 2006</conf-date>, <conf-loc>Banff, Alberta, Canada</conf-loc>, pp. <fpage>100</fpage>–<lpage>107</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr40-1473871612473589">
+<label>40.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Burigat</surname><given-names>S</given-names></name>
+<name><surname>Chittaro</surname><given-names>L</given-names></name>
+</person-group>. <article-title>Visualizing references to off-screen content on mobile devices: a comparison of arrows, wedge, and overview + detail</article-title>. <source>Interact Comput</source> <year>2011</year>; <volume>23</volume>(<issue>2</issue>): <fpage>156</fpage>–<lpage>166</lpage>.</citation>
+</ref>
+<ref id="bibr41-1473871612473589">
+<label>41.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Spence</surname><given-names>R</given-names></name>
+<name><surname>Apperley</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Database navigation: an office environment for the professional</article-title>. <source>Behav Inform Technol</source> <year>1982</year>; <volume>1</volume>(<issue>1</issue>): <fpage>43</fpage>–<lpage>54</lpage>.</citation>
+</ref>
+<ref id="bibr42-1473871612473589">
+<label>42.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Petre</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Why looking isn’t always seeing: readership skills and graphical programming</article-title>. <source>Commun ACM</source> <year>1995</year>; <volume>38</volume>(<issue>6</issue>): <fpage>33</fpage>–<lpage>44</lpage>.</citation>
+</ref>
+<ref id="bibr43-1473871612473589">
+<label>43.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Eichelberger</surname><given-names>H</given-names></name>
+<name><surname>Schmid</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Guidelines on the aesthetic quality of UML class diagrams</article-title>. <source>Inform Software Tech</source> <year>2009</year>; <volume>51</volume>(<issue>12</issue>): <fpage>1686</fpage>–<lpage>1698</lpage>.</citation>
+</ref>
+<ref id="bibr44-1473871612473589">
+<label>44.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Van Wijk</surname><given-names>J</given-names></name>
+<name><surname>Nuij</surname><given-names>W</given-names></name>
+</person-group>. <article-title>A model for smooth viewing and navigation of large 2D information spaces</article-title>. <source>IEEE T Vis Comput Gr</source> <year>2004</year>; <volume>Vol. 10</volume>, <month>July</month> <year>2004</year>, pp. <fpage>447</fpage>–<lpage>458</lpage>. <publisher-name>IEEE Educational Activities Department</publisher-name>.</citation>
+</ref>
+<ref id="bibr45-1473871612473589">
+<label>45.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wybrow</surname><given-names>M</given-names></name>
+<name><surname>Marriott</surname><given-names>K</given-names></name>
+<name><surname>Stuckey</surname><given-names>PJ</given-names></name>
+</person-group>. <article-title>Incremental connector routing</article-title>. In: <conf-name>GD 2005, volume 3843 of LNCS</conf-name>, <conf-date>12–14 September 2006</conf-date>, <conf-loc>Limerick, Ireland</conf-loc>, pp. <fpage>446</fpage>–<lpage>457</lpage>. <publisher-loc>Springer-Verlag</publisher-loc>, <publisher-name>Berlin and Heidelberg</publisher-name>.</citation>
+</ref>
+<ref id="bibr46-1473871612473589">
+<label>46.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Riel</surname><given-names>A</given-names></name>
+</person-group>. <source>Object-oriented design heuristics</source>. <publisher-loc>Boston, MA</publisher-loc>: <publisher-name>Addison-Wesley</publisher-name>, <year>1996</year>, p. <fpage>32</fpage>.</citation>
+</ref>
+<ref id="bibr47-1473871612473589">
+<label>47.</label>
+<citation citation-type="web"><collab>mxGraph</collab>, <ext-link ext-link-type="uri" xlink:href="http://www.jgraph.com/">http://www.jgraph.com/</ext-link></citation>
+</ref>
+<ref id="bibr48-1473871612473589">
+<label>48.</label>
+<citation citation-type="web"><collab>Eclipse UML</collab>, <ext-link ext-link-type="uri" xlink:href="http://www.eclipse.org/uml2">http://www.eclipse.org/uml2</ext-link></citation>
+</ref>
+<ref id="bibr49-1473871612473589">
+<label>49.</label>
+<citation citation-type="web"><collab>Zest, Eclipse visualization toolkit</collab>, <ext-link ext-link-type="uri" xlink:href="http://www.eclipse.org/gef/zest/">http://www.eclipse.org/gef/zest/</ext-link></citation>
+</ref>
+<ref id="bibr50-1473871612473589">
+<label>50.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Shneiderman</surname><given-names>B</given-names></name>
+</person-group>. <article-title>The eyes have it: a task by data type taxonomy for information visualizations</article-title>. In: <conf-name>Proceedings of the IEEE symposium on visual languages (VL ’96)</conf-name>, <conf-date>3–6 September 1996</conf-date>, <conf-loc>Boulder, Colorado, USA</conf-loc>, p. <fpage>336</fpage>. <publisher-name>IEEE Computer Society</publisher-name>, <publisher-loc>Washington, DC</publisher-loc>.</citation>
+</ref>
+<ref id="bibr51-1473871612473589">
+<label>51.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Stengel</surname><given-names>M</given-names></name>
+<name><surname>Frisch</surname><given-names>M</given-names></name>
+<name><surname>Apel</surname><given-names>S</given-names></name><etal/>
+</person-group>. <article-title>View infinity: a zoomable interface for feature-oriented software development</article-title>. In: <conf-name>Proceedings of ICSE 2011</conf-name>, <conf-date>21–28 May 2011</conf-date>, <conf-loc>Waikiki, Honolulu, HI, USA</conf-loc>, pp. <fpage>1031</fpage>–<lpage>1033</lpage>. <publisher-name>ACM</publisher-name>, <publisher-loc>New York, NY, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr52-1473871612473589">
+<label>52.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Frisch</surname><given-names>M</given-names></name>
+<name><surname>Heydekorn</surname><given-names>J</given-names></name>
+<name><surname>Dachselt</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Diagram editing on interactive displays using multi-touch and pen gestures</article-title>. In: <conf-name>Proceedings of the 6th international conference on diagrammatic representation and inference (diagrams ’10)</conf-name>, <conf-date>9–11 August 2010</conf-date>, <conf-loc>Portland, OR, USA</conf-loc>, pp. <fpage>182</fpage>–<lpage>196</lpage>. <publisher-loc>Springer-Verlag</publisher-loc>, <publisher-name>Berlin and Heidelberg</publisher-name>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

@@ -1,0 +1,1934 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PII</journal-id>
+<journal-id journal-id-type="hwp">sppii</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part I: Journal of Systems and Control Engineering</journal-title>
+<issn pub-type="ppub">0959-6518</issn>
+<issn pub-type="epub">2041-3041</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0959651812450972</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0959651812450972</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Finite-state machine control of mechatronic systems</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Hanžič</surname><given-names>Franc</given-names></name>
+<xref ref-type="aff" rid="aff1-0959651812450972">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Jezernik</surname><given-names>Karel</given-names></name>
+<xref ref-type="aff" rid="aff2-0959651812450972">2</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-0959651812450972"><label>1</label>Doorson d.o.o, Slovenia</aff>
+<aff id="aff2-0959651812450972"><label>2</label>Faculty of Electrical Engineering and Computer Science, University of Maribor, Slovenia</aff>
+<author-notes>
+<corresp id="corresp1-0959651812450972">Franc Hanžič, Doorson d.o.o, Milenkova ulica 9, 2000 Maribor, Slovenia. Email: <email>franc.hanzic@doorson.si</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>11</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>10</issue>
+<fpage>1394</fpage>
+<lpage>1409</lpage>
+<history>
+<date date-type="received">
+<day>23</day>
+<month>1</month>
+<year>2012</year>
+</date>
+<date date-type="accepted">
+<day>16</day>
+<month>5</month>
+<year>2012</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>This paper describes the design of control concepts and algorithms for complex processes that are characterized more by the occurrence of discrete events than by differential equations representing the laws of physics. Such design is intended for process description in a symbolic, rather than numeric form. The goal is to combine concepts from both computer science and control, in order to develop a meaningful theory for controlling power electronics, process controllers, embedded systems and motion drive systems. Such design improves the firmware quality in a short development time. A designer would have only to specify the actions, events and transitions in terms of simple functions and tables. Generally, such design is highly structured and efficient, programming tasks are readily comprehended and fault diagnostics are easily included into the program structure. An application to the automatic sliding door illustrates the feasibility of this approach. The paper presents the modular finite-state machine, event–condition–action system, motion generation, motion control with load estimation and an example of a digital signal processor system. The limitations and attributes of each technique are discussed, and a state table format is presented with the capability of representing parallel asynchronous sequential processes.</p>
+</abstract>
+<kwd-group>
+<kwd>Modular finite-state machine</kwd>
+<kwd>software design</kwd>
+<kwd>state flow</kwd>
+<kwd>digital signal processor</kwd>
+<kwd>event–condition–action</kwd>
+<kwd>load estimation</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0959651812450972" sec-type="intro">
+<title>Introduction</title>
+<p>The control of mechatronic components covers the control of time-driven (usually continuous) physical process values (e.g. position, speed, pressure, temperature, etc.) and logical event-driven sequencing, synchronizing and decision-making operations.<sup><xref ref-type="bibr" rid="bibr1-0959651812450972">1</xref></sup> In the field of process automation, the term ‘event’ usually represents the fulfilment of certain process conditions, which causes an action within the process (e.g. starting a new operation, changing operation mode, starting a new step of the production sequence, etc.).<sup><xref ref-type="bibr" rid="bibr2-0959651812450972">2</xref></sup> This paper considers continuous (or discrete) time-driven physical process values as continuous (or synchronous discrete) data-flow within mechatronic systems. On the other hand, asynchronous event-driven process changes and logical condition checking are considered as event-flows. Systematic design and formal verification methods are key issues in the designing of proven, functionally comprehensive and technologically complex mechatronic modules. Within the domain of industrial automation systems, graphical design methods are highly accepted for the modelling of data- and event-flows within mechatronic components.</p>
+<p>Mechatronic systems, covering the heterogeneous continuous and discrete event nature of dynamic systems, are well known academic approaches.<sup><xref ref-type="bibr" rid="bibr3-0959651812450972">3</xref>,<xref ref-type="bibr" rid="bibr4-0959651812450972">4</xref></sup> They are characterized by the interaction of a continuous part, governed by differential or difference equations, and a discrete event part, traditionally described by finite-state machines (FSMs). Hybrid systems switch among many operating modes, where each mode is governed by its own characteristic dynamic laws.</p>
+<p>The sequential control is characterized by the event–condition–action (ECA) system that holds all information for the sequential control executions. The control is determined by their order of occurrence (states) and not just by the values of sensor signals.<sup><xref ref-type="bibr" rid="bibr5-0959651812450972">5</xref><xref ref-type="bibr" rid="bibr6-0959651812450972"/>–<xref ref-type="bibr" rid="bibr7-0959651812450972">7</xref></sup> The sequential control is viewed as a discrete (non-continuous) process.<sup><xref ref-type="bibr" rid="bibr8-0959651812450972">8</xref></sup> The discrete signals have a finite number of possible values from the various sensors. Such a control system can be expressed as a sequence of conditions and actions, rather than the algebraic differential equations as in continuous control. The sequential control is usually characterized by its complex cyclical behaviour, while continuous control tends to act in response to continuous input signals.</p>
+<p>An automatic sliding door (<xref ref-type="fig" rid="fig1-0959651812450972">Figure 1</xref>) is an example of a sequential control application. A door controller implements the programmed control algorithm by transmission of the discrete actuator signals to the door mechanism upon the discrete sensor signals received from the door’s sensors. The controller also supports those functions such as the timers and counters that are included in the sequential control algorithm.</p>
+<fig id="fig1-0959651812450972" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>The automatic sliding door.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig1.tif"/>
+</fig>
+</sec>
+<sec id="section2-0959651812450972">
+<title>The automatic sliding door system functionality</title>
+<p>The automatic sliding door (<xref ref-type="fig" rid="fig1-0959651812450972">Figure 1</xref>) will be used as an example to compare various synthesis techniques. It depicts an automatic door opening by the presence of a person, as currently used in buildings such as shops, hotels, offices, etc. The sensors are represented by squares and labelled with lower-case letters, while the actuators are depicted by circles and labelled with upper-case letters (<xref ref-type="table" rid="table1-0959651812450972">Table 1</xref>).</p>
+<table-wrap id="table1-0959651812450972" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Description of actuators, sensors and variables.</p>
+</caption>
+<graphic alternate-form-of="table1-0959651812450972" xlink:href="10.1177_0959651812450972-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Symbol</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Actuator signals</td>
+<td>O</td>
+<td>Move door-wing to open direction</td>
+</tr>
+<tr>
+<td/>
+<td>C</td>
+<td>Move door-wing to close direction</td>
+</tr>
+<tr>
+<td/>
+<td>E</td>
+<td>Turn on the buzzer and LED on the controller</td>
+</tr>
+<tr>
+<td>Sensor signals</td>
+<td>is</td>
+<td>Infrared sensor for person detection</td>
+</tr>
+<tr>
+<td/>
+<td>ps</td>
+<td>Position sensor</td>
+</tr>
+<tr>
+<td/>
+<td>ss</td>
+<td>Safety sensor</td>
+</tr>
+<tr>
+<td/>
+<td>cs</td>
+<td>Force sensing</td>
+</tr>
+<tr>
+<td/>
+<td>fs</td>
+<td>Fire signal input</td>
+</tr>
+<tr>
+<td/>
+<td>es</td>
+<td>End switch</td>
+</tr>
+<tr>
+<td/>
+<td>rb</td>
+<td>Reset button</td>
+</tr>
+<tr>
+<td>Controller internal variables</td>
+<td>st1</td>
+<td>Time delay for open state</td>
+</tr>
+<tr>
+<td/>
+<td>st2</td>
+<td>Time delay for error state</td>
+</tr>
+<tr>
+<td/>
+<td>sc1</td>
+<td>Counter for the door openings</td>
+</tr>
+<tr>
+<td/>
+<td>sc2</td>
+<td>Counter for errors</td>
+</tr>
+<tr>
+<td/>
+<td>verr</td>
+<td>Measured speed error from controller</td>
+</tr>
+<tr>
+<td/>
+<td>vacc</td>
+<td>Acceptable speed error</td>
+</tr>
+<tr>
+<td/>
+<td>iv</td>
+<td>Internal variable for previous state memorization</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The door begins to search for the reference point within a close direction (C) after a reset button (rb) is pushed or powered on. It stops (C/) when the door-wing activates an end switch(es). The door system begins to open for the person present by an infrared sensor (is) after the system’s initialization. The door-wing starts to move in an open direction (O) until a position sensor (ps) measures the open position condition. The system counter (sc1) increases and a system delay timer starts (st1) after reaching the open position. The door starts to close (C) until the position sensor (ps) measures the closed position condition after the delay timer (st1) has elapsed.</p>
+<p>The door system can stop the motion by opening and changing the motion to the close direction (C) by activation of a safety sensor (ss), an increased actuator current (cs) or a fire signal (fs). The door-wing stops closing and changes the direction to open (O) by activation of the infrared sensor (is) or by increased actuator current (cs). The motion starts in the inverted direction when the motion is stopped, which is measured using the position sensor (ps). An internal variable (iv) is used for the memorization of a previous state. This variable is only used for execution of the motion ‘stop’.</p>
+<p>Fault detection is implemented within the system timer (st2) if there is no position sensor change (ps) over a specified time when the door is in the opening state, closing state or the initialization state. The fault detection is also activated by the speed error (verr) crossing over the acceptable speed error limit (vacc). The error output (E) is activated and the error counter (sc2) is increased when the system timer (sc2) has elapsed. The controller has to be reset (rb) to clear the error flag (E/).</p>
+</sec>
+<sec id="section3-0959651812450972">
+<title>FSM design basics</title>
+<p>Over recent years, there has been considerable interest in the development of control concepts and algorithms for complex processes that are characterized more by the occurrence of discrete events than by differential equations representing the laws of physics. Such processes are typically man-made flexible manufacturing systems, computer networks, etc. and are often best described in a symbolic, rather than numeric form. Our goal in this area is aimed at combining concepts from both computer science and control, in order to develop a meaningful theory for controlling power electronic and motion drive systems. In particular, the models and formalisms used in this study come from the field of computer science (automata, FSMs, synchronous processes, etc.), while the problems and design paradigms come from control (stability, regulation, robustness, etc.).<sup><xref ref-type="bibr" rid="bibr2-0959651812450972">2</xref></sup></p>
+<p>The state transition techniques are widely used as a software code design and analysis method for the sequential control of discrete systems (computers, processors, microcontrollers, etc.). Unlike relay ladder-logic diagrams that use combinational methods to implement the sequential control, state transition techniques show the sequential behaviour explicitly. All the past behavioural information that is required for determining future behaviour is defined by the currently active state. The current system state has always been known for all state transition techniques. The state transition techniques are natural and highly structured synthesis methods for implementing sequential control.</p>
+<p>This section includes two techniques with additional improvements. The state transition diagram represents a graphical method and the transition matrix, which is a tabular representation of the sequential control algorithm. The additional improvement is presented as an ECA system that declares the state transition variables naturally as events (the semaphore red lamp has turned on), conditions (if the red light is turned on) and actions (stop the car). This system converts the information about the variables into logical names that are more understandable for people. The modular finite-state machine (MFSM) is used in more complex systems where two or more separate tasks can be executed within the state transition technique. These techniques are used in developing automatically translated door functionality software and a motion generator based on S-velocity profile. The state transition diagram technique is tested on a digital signal processor (DSP) system with a door mechanism having an actuator and sensors. A programming software MATLAB/Stateflow is used in a practical example.</p>
+<sec id="section4-0959651812450972">
+<title>The state transition diagram</title>
+<p>The state transition diagram (<xref ref-type="fig" rid="fig2-0959651812450972">Figure 2</xref>) consists of each state represented by a circle enclosing a state name (or state number) and an action list. Connections between the circles represent those transitions that occur if the conditions, given on each connection, are met (<xref ref-type="table" rid="table2-0959651812450972">Table 2</xref>). The action occurs by entering into the new state. Each action represents a change in the process which can be program-based (timer start, counter increase) or hardware-based (actuators). Entering into the ‘opening’ state turns the actuator on as indicated (O) or off (O/) by entering the state ‘open’. The actuator remains on or off unless it is toggled within a succeeding state. Only one state may be active at any time unless using the MFSM.</p>
+<fig id="fig2-0959651812450972" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>A state transition diagram example of the automatic sliding door.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig2.tif"/>
+</fig>
+<table-wrap id="table2-0959651812450972" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Transitions with conditions and descriptions.</p>
+</caption>
+<graphic alternate-form-of="table2-0959651812450972" xlink:href="10.1177_0959651812450972-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Transition</th>
+<th align="left">Condition</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1</td>
+<td>is =1 &amp;&amp; fs=0 (EV1)</td>
+<td>Person is detected and NO fire regime</td>
+</tr>
+<tr>
+<td>T2</td>
+<td>ps &gt;=OPEN_POSITION (EV2)</td>
+<td>Measured position is in open position</td>
+</tr>
+<tr>
+<td>T3</td>
+<td>st1=0 (EV3)</td>
+<td>Open timer is elapsed (timer resets if the person is detected – EV1)</td>
+</tr>
+<tr>
+<td>T4</td>
+<td>ps =CLOSE_POSITION (EV4)</td>
+<td>Measured position is in closed position</td>
+</tr>
+<tr>
+<td>T5</td>
+<td>ps=STOPPED &amp;&amp; iv=0 (EV5)</td>
+<td>No change in position measurement (velocity is near zero) and internal variable is zero (the motion is stopped from opening state)</td>
+</tr>
+<tr>
+<td>T6</td>
+<td>is=1 || c&gt;FORCE LIMIT (EV6)</td>
+<td>Person is detected or force on the door wing is increased to limit (unexpected collision)</td>
+</tr>
+<tr>
+<td>T7</td>
+<td>fs=1 || c&gt;FORCE LIMIT || ss=1 (EV7)</td>
+<td>Fire regime is activated or force on the door-wing is increased to limit (unexpected collision) or safety sensor is activated</td>
+</tr>
+<tr>
+<td>T8</td>
+<td>ps=STOPPED &amp;&amp; iv=1 (EV8)</td>
+<td>No change in position measurement (velocity is near zero) and internal variable is zero (the motion is stopped from closing state)</td>
+</tr>
+<tr>
+<td>T9</td>
+<td>st2=0 (EV9)||verr&gt;vacc</td>
+<td>Error timer is elapsed (timer stays reset if the position measurement changes – velocity is greater than zero) or increased speed error</td>
+</tr>
+<tr>
+<td>T10</td>
+<td>st2=0 (EV9) || verr&gt;vacc</td>
+<td>Error timer is elapsed (timer stays reset if the position measurement changes – velocity is greater than zero) or increased speed error</td>
+</tr>
+<tr>
+<td>T11</td>
+<td>end_switch=1 (EV10)</td>
+<td>The end switch is activated (door are ready)</td>
+</tr>
+<tr>
+<td>T12</td>
+<td>reset=1 (EV11)</td>
+<td>The program reset button is activated</td>
+</tr>
+<tr>
+<td>T13</td>
+<td>st2=0 (EV9) || verr&gt;vacc</td>
+<td>Error counter is elapsed (timer stays reset if the position measurement changes – velocity is greater than zero) or increased speed error</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The state transition diagram is a very explicit description method of the sequential control. The desired sequence is easily designed and debugged.<sup><xref ref-type="bibr" rid="bibr9-0959651812450972">9</xref></sup> The graphical approach makes it easy to interpret, especially for cases with several transitional paths between the states. Since only one active state exists at any time, the progression of the control is easily understood. Only those conditions that are specified for leaving the active state need to be executed by the sequential controller. The same goes for the MFSM system, where two or more active states exist but each state transition module is isolated from the others.</p>
+<p>A disadvantage of state transition diagrams is that algorithms requiring the crossing of transitional connections can become confusing. No formal method of representing parallel asynchronous process exists. It is fairly unsuitable for describing a global control.</p>
+</sec>
+<sec id="section5-0959651812450972">
+<title>The state table</title>
+<p>The state table (<xref ref-type="table" rid="table3-0959651812450972">Table 3</xref>) is a tabular representation of the control algorithm. The table’s appearance can be varied, depending on the designer’s technique. The first column represents the states and the first row represents the events. Other columns and rows represent an action and transition to the next state. Each action includes conditions. Some table cells represent an illegal transition as a horizontal line.</p>
+<table-wrap id="table3-0959651812450972" position="float">
+<label>Table 3.</label>
+<caption>
+<p>The state table.</p>
+</caption>
+<graphic alternate-form-of="table3-0959651812450972" xlink:href="10.1177_0959651812450972-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">EV1</th>
+<th align="left">EV2</th>
+<th align="left">EV3</th>
+<th align="left">EV4</th>
+<th align="left">EV5</th>
+<th align="left">EV6</th>
+<th align="left">EV7</th>
+<th align="left">EV8</th>
+<th align="left">EV9</th>
+<th align="left">EV10</th>
+<th align="left">EV11</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>A6/S7</td>
+<td>A1/S2</td>
+<td>–</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>A2/S3</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>–</td>
+<td>A3/S4</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>A5/S6</td>
+<td>–</td>
+<td>A6/S7</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>S4</td>
+<td>–</td>
+<td>–</td>
+<td>A4/S5</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>S5</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>A1/S2</td>
+<td>–</td>
+<td>A5/S6</td>
+<td>–</td>
+<td>–</td>
+<td>A6/S7</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>S6</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>A4/S5</td>
+<td>–</td>
+<td>–</td>
+<td>A2/S3</td>
+<td/>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>S7</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>A7/S1</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section6-0959651812450972">
+<title>ECA system</title>
+<p>The ECA system (<xref ref-type="table" rid="table4-0959651812450972">Table 4</xref>) is an additional improvement of the state transition diagram design and the state table design. The code design techniques not only represent the symbols of sensors and actuators, but also the event descriptions of the sensors’ state changes (the switch is turned on ‘EV1’, the person is detected ‘EV2’, etc.), the conditions’ description (if EV1 and EV2 then A1) and the action, which describes the activation of the actuator (turn on light ‘A1’, open the door ‘A2’, etc.).</p>
+<table-wrap id="table4-0959651812450972" position="float">
+<label>Table 4.</label>
+<caption>
+<p>The ECA system.</p>
+</caption>
+<graphic alternate-form-of="table4-0959651812450972" xlink:href="10.1177_0959651812450972-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2">States</td>
+</tr>
+<tr>
+<td>S1</td>
+<td>State of door initialization</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>Closed state</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>Opening state</td>
+</tr>
+<tr>
+<td>S4</td>
+<td>Open state</td>
+</tr>
+<tr>
+<td>S5</td>
+<td>Closing state</td>
+</tr>
+<tr>
+<td>S6</td>
+<td>Stop state</td>
+</tr>
+<tr>
+<td>S7</td>
+<td>Error state</td>
+</tr>
+<tr>
+<td colspan="2">Events</td>
+</tr>
+<tr>
+<td>EV1</td>
+<td>Person is detected with no fire regime</td>
+</tr>
+<tr>
+<td>EV2</td>
+<td>Measured position is in open position</td>
+</tr>
+<tr>
+<td>EV3</td>
+<td>Open timer is elapsed</td>
+</tr>
+<tr>
+<td>EV4</td>
+<td>Measured position is in close position</td>
+</tr>
+<tr>
+<td>EV5</td>
+<td>No change in position measurement (velocity is near zero) and previous state was opening state</td>
+</tr>
+<tr>
+<td>EV6</td>
+<td>Person is detected or too large force on the door-wing (unexpected collision)</td>
+</tr>
+<tr>
+<td>EV7</td>
+<td>Fire regime or too large force on the door-wing (unexpected collision) or obstacle detected</td>
+</tr>
+<tr>
+<td>EV8</td>
+<td>No change in position measurement (velocity is near zero) and previous state was closing state</td>
+</tr>
+<tr>
+<td>EV9</td>
+<td>Error timer is elapsed</td>
+</tr>
+<tr>
+<td>EV10</td>
+<td>The door system is ready from init state</td>
+</tr>
+<tr>
+<td>EV11</td>
+<td>The program reset button is activated</td>
+</tr>
+<tr>
+<td colspan="2">Conditions</td>
+</tr>
+<tr>
+<td>is=1 &amp;&amp; fs=0 (EV1)</td>
+<td>Infrared sensor is active</td>
+</tr>
+<tr>
+<td>ps &gt;=OPEN_POSITION (EV2)</td>
+<td>Measured position is greater that or equal to constant open position</td>
+</tr>
+<tr>
+<td>st1=0 (EV3)</td>
+<td>System timer is equal to zero</td>
+</tr>
+<tr>
+<td>ps &lt;=CLOSE_POSITION (EV4)</td>
+<td>Measured position is less that or equal to constant closed position</td>
+</tr>
+<tr>
+<td>ps=STOPPED &amp;&amp; iv=0 (EV5)</td>
+<td>Change of position is zero (velocity is near zero) and internal variable is zero (the motion is stopped from opening state)</td>
+</tr>
+<tr>
+<td>is=1 || c&gt;FORCE LIMIT (EV6)</td>
+<td>Infrared sensor is active or force is greater than constant force limit</td>
+</tr>
+<tr>
+<td>fs=1 || c&gt;FORCE LIMIT || ss=1 (EV7)</td>
+<td>Fire sensor is activated or force is greater than constant force limit or safety sensor is activated</td>
+</tr>
+<tr>
+<td>ps=STOPPED &amp;&amp; iv=1 (EV8)</td>
+<td>Change of position is zero (velocity is near zero) and internal variable is one (the motion is stopped from closing state)</td>
+</tr>
+<tr>
+<td>st2=0 || verr&gt;vacc (EV9)</td>
+<td>Error timer is equal to zero or speed error is greater than acceptable speed error</td>
+</tr>
+<tr>
+<td>end_switch=1 (EV10)</td>
+<td>End switch is activated</td>
+</tr>
+<tr>
+<td>reset=1 (EV11)</td>
+<td>Reset button is activated</td>
+</tr>
+<tr>
+<td>Actions</td>
+<td/>
+</tr>
+<tr>
+<td>A1</td>
+<td>Stop the closing motion – C/</td>
+</tr>
+<tr>
+<td>A2</td>
+<td>Start the opening motion – O, start error timer if no motion – st2</td>
+</tr>
+<tr>
+<td>A3</td>
+<td>Stop the closing motion – O/, increase opening counter – sc1</td>
+</tr>
+<tr>
+<td>A4</td>
+<td>Start the closing motion – C, start error timer if no motion – st2</td>
+</tr>
+<tr>
+<td>A5</td>
+<td>Stop the motion – C/, O/</td>
+</tr>
+<tr>
+<td>A6</td>
+<td>Stop the motion, indicate error, increase error counter – C/, O/, E, sc2</td>
+</tr>
+<tr>
+<td>A7</td>
+<td>Reset error, start the closing motion, start error timer if no motion – C, E/, st2</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The events typically represent the measurement change of the sensor, such as the sensor being triggered from OFF to ON. But such a description does not have any meaning regarding what this sensor is for. A description of events must have a meaning such as the doors are unlocked, the light is turned on, the counter has elapsed, etc. Such an event description represents a program design in a more natural way. Events can be directly triggered from the external sensors or by a conditional meeting of internal variables.</p>
+<p>Conditions consist of two or more events that are compared with each other or are compared with the internal variables in the digital controller. The action is executed by a condition being met followed by a transition to the new state. A typical condition consists of if–then–else statements. There are also different versions regarding the order of executing actions and transitions to the new states. One method describes a typical order with the condition met, the action execution and then transition to the new state. Another method is described with the condition met, the transition to the new state and the action in a new state. The latter method is used in MATLAB/Simulink/Stateflow where the action is executed in the new state.</p>
+<p>Actions represent manipulations in an external world that is connected to the digital controller. Typical action is expressed using an actuator manipulation. Actions can be described such as ‘turn on the light’, ‘unlock the door’, etc.</p>
+<p>The ECA system presents a table using symbol descriptions. These complex program descriptions with the state transition diagrams or state tables are described using symbols for a better overview.</p>
+</sec>
+<sec id="section7-0959651812450972">
+<title>MFSM</title>
+<p>MFSMs<sup><xref ref-type="bibr" rid="bibr10-0959651812450972">10</xref></sup> are a type of discrete event system (DES), like other state transition techniques. They react to and generate events, and are extensions of the FSMs, tailored to logical control, with added modularity. Let us take an automatic light system with an infrared sensor, for example (<xref ref-type="fig" rid="fig3-0959651812450972">Figure 3</xref>). The behaviour of the system is such that when the sensor detects a person, the light turns on for a set time. The light will stay turned on if the person is no longer detected within the time that is configured on the sensor. The light will turn off when a certain time has elapsed with no further detection of the person.</p>
+<fig id="fig3-0959651812450972" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>An example of a digital MFSM controller for a light system.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig3.tif"/>
+</fig>
+<p>A typical MFSM is designed as organized individual FSMs that perform given processes. Each FSM can produce a transition with regard to external events, or it can depend on the internal events generated from the FSMs. So, each module can execute an individual process or depend on the others. The modules are connected to each other via a data channel for exchange of internal events when the modules depend on each other. This data channel includes a first in first out (FIFO) buffer system between those modules with a high number of events.</p>
+<p>The software designer must know every detail of the process in order to build it, and such a modular system can become very complex and difficult to understand. An advantage of the MFSM system is its modular verification of the controller software.</p>
+</sec>
+<sec id="section8-0959651812450972">
+<title>Which technique to choose</title>
+<p>The state diagram or the state transition table can be used to synthesize sequential control algorithms. However, the better choice depends on the requirements of a particular application and the technique ‘know-how’ of the designer. The state table should be chosen as a technique for global control, with a state transition diagram preferred for local control. Graphical methods are preferred for simple applications, since the transfer of control is more obvious. However, as applications become more complex, the graphical methods become cumbersome and the state tables are the preferred approach. Let us consider a system with 50 or more states and 20 transitional paths between each of the states; the graphical approach would be confusing in this case, so the state table should be used. The solution for the graphical design methods within complex applications is the MFSM. The MFSM can parse application complexity into a modular design. Each MFSM module performs part of the functionality from the whole application and with it parses the application’s complexity. So, the graphical design method can be used in each FSM module.</p>
+<p>Some compilers support those state transition diagrams or state table design methods that can convert into a source code for the digital controller. MATLAB is one of the software tools that support graphical design in a state transition diagram. The graphical design is acceptable for the source code design but the level of functional flexibility is lower than in a basic software language such as C, C++, etc. The purpose of these techniques is to describe an application’s functionality in steps that are more logical to understand. These techniques are utilities for a better source code design in different programming languages. The technique is very popular because it is independent of the programming languages. A typical technique selection depends on the designer’s knowledge of the application’s functionality.</p>
+</sec>
+</sec>
+<sec id="section9-0959651812450972">
+<title>Practical example</title>
+<p>A practical application has been developed for presenting this mechatronic system (automatic sliding door system) and the state transition technique program design with MFSM. The door mechanism consists of an actuator (direct current (DC) motor) with a gear and a belt-pulley. A trolley moves along the guide and is connected to the belt-pulley. The door-wing is mounted on the trolley. The door-wings are unused in the practical example because the mechanism satisfies the application’s functionality with only the trolley, belt-pulley and a DC motor with gears.</p>
+<p>The DSP2 unit is used as the digital door controller with the graphical programming support of the MATLAB software tool. The DSP2 board is a high-performance, floating-point, DSP-based inverter controller designed primarily to control three-phase alternating current motors and DC motors. The board is based on a Texas Instruments TMS320C32 DSP and an XCS40-4PQ240C field-programmable gate array, a member of the Xilinx Spartan Family.</p>
+<p>This practical example is based on the state transition technique with a state transition diagram. The technique includes MFSM because the application is too complex and cumbersome using a graphical design without MFSM. The door’s functionality design and programming are used as one and the same procedure because MATLAB/Stateflow provides this option. So, MATLAB/Stateflow can directly generate the program code from the graphical design of the door’s functionality using the state transition diagram.</p>
+<sec id="section10-0959651812450972">
+<title>Control software design as a practical example</title>
+<p>The technique with MFSM as used in this practical example has been previously mentioned. The example was divided into two modular state transition diagrams. The first module represents the door’s basic functionality (initialization, open, closed, closing, opening, error and stop). The second module includes a motion technique. Actually, the doors did not open using only motor ON; there was a hidden velocity and position control behind the sequential control. The motion technique was based on the S-velocity profile and could generate position, velocity and acceleration curves depending on the input variables (maximum velocity, acceleration and jerk, position step, etc.). The application consisted of a combination with discrete time-space and continuous time-space (<xref ref-type="fig" rid="fig4-0959651812450972">Figure 4</xref>). So, this system type was the hybrid version because it used two different time-spaces. <xref ref-type="fig" rid="fig5-0959651812450972">Figure 5</xref> shows the detailed configuration of the control system with MFSMs. The continuous space includes the condition–event system and the motion controller. The condition–event system generates events to the MFSM by given conditions and measurement data. The motion controller is both time-driven and event-driven. The time-driven controller module consists of a motion controller with the proportional–integral (PI) estimator (<xref ref-type="fig" rid="fig6-0959651812450972">Figure 6</xref>) and the PI current controller. The event-driven controller module consists of an event switch for switching between the motion control (motion control by the door opening and closing) and the static current control (door-wing tightness control by the closed door). The event-driven space includes the door management MFSM and the motion generator MFSM. The door management MFSM is the basic door functionality algorithm. The motion generator MFSM takes orders from the door management MFSM and with given orders generates motion references (acceleration, velocity, position) for the motion controller. The event-driven space is designed in such way that additional MFSM modules can be added without affecting existing MFSM modules. The MFSM modules also include state status outputs for the algorithm diagnostic. The information about state transitions can be logged into the memory module (FLASH) or directly transferred to personal computer (PC) via communication (universal serial bus (USB)). The control system can be debugged and analysed with the state transitions’ information.</p>
+<fig id="fig4-0959651812450972" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Digital controller with hybrid control.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig4.tif"/>
+</fig>
+<fig id="fig5-0959651812450972" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Block diagram of the door motion control system.</p>
+<p>MFSM: modular finite-state machine.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig5.tif"/>
+</fig>
+<fig id="fig6-0959651812450972" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Motion controller with a PI estimator.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig6.tif"/>
+</fig>
+<sec id="section11-0959651812450972">
+<title>Motion control</title>
+<p>A mechatronic system with a second-order nonlinear differential equation is considered when designing a controller<sup><xref ref-type="bibr" rid="bibr11-0959651812450972">11</xref></sup></p>
+<p>
+<disp-formula id="disp-formula1-0959651812450972">
+<label>(1)</label>
+<mml:math display="block" id="math1-0959651812450972">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0959651812450972" xlink:href="10.1177_0959651812450972-eq1.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula1-0959651812450972"><mml:math display="inline" id="math2-0959651812450972"><mml:mrow><mml:mi>q</mml:mi><mml:mo>,</mml:mo><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>·</mml:mo></mml:mover><mml:mo>,</mml:mo><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>··</mml:mo></mml:mover><mml:mo>,</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>q</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>,</mml:mo><mml:mi>C</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>q</mml:mi><mml:mo>,</mml:mo><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>·</mml:mo></mml:mover><mml:mo stretchy="false">)</mml:mo><mml:mo>,</mml:mo><mml:mi>G</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>q</mml:mi><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula> and <italic>T</italic> are, respectively, the joint-angle vector, the joint-velocity vector, the joint-acceleration vector (only for reference and was not measured), the inertia matrix, the term of centripetal and Coriolis forces, the gravity and the joint torque. The joint torque <italic>T</italic> must satisfy the constraint</p>
+<p>
+<disp-formula id="disp-formula2-0959651812450972">
+<label>(2)</label>
+<mml:math display="block" id="math3-0959651812450972">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>min</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≤</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≤</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0959651812450972" xlink:href="10.1177_0959651812450972-eq2.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>i</italic> is the joint number if the system has multiple joints/actuators. The gravity is zero; a mechatronic system only moves horizontally (like the sliding door) and the actuator does not need to overcome the gravity effect.</p>
+<p>In order to obtain smooth mechanical motion of the door mechanism, continuously desired trajectories with values <inline-formula id="inline-formula2-0959651812450972"><mml:math display="inline" id="math4-0959651812450972"><mml:mrow><mml:msup><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mrow><mml:mi>d</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula>, <inline-formula id="inline-formula3-0959651812450972"><mml:math display="inline" id="math5-0959651812450972"><mml:mrow><mml:msup><mml:mrow><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>·</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>d</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula> and <inline-formula id="inline-formula4-0959651812450972"><mml:math display="inline" id="math6-0959651812450972"><mml:mrow><mml:msup><mml:mrow><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>··</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>d</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula> are prescribed (<xref ref-type="fig" rid="fig7-0959651812450972">Figure 7</xref>). The switching function, which determines the mechanical motion, is chosen as second order and a function of door-wing position, velocity and acceleration errors</p>
+<fig id="fig7-0959651812450972" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Reference S-speed profile generation.</p>
+<p>(j<sub>max</sub>: maximum jerk; a<sub>max</sub>; maximum acceleration; v<sub>max</sub>: maximum velocity; s<sub>des</sub>: desired position; T<sub>S</sub>: jerk time; T<sub>A</sub>; acceleration time; T<sub>0</sub>: time to deceleration).</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig7.tif"/>
+</fig>
+<p>
+<disp-formula id="disp-formula3-0959651812450972">
+<label>(3)</label>
+<mml:math display="block" id="math7-0959651812450972">
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0959651812450972" xlink:href="10.1177_0959651812450972-eq3.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>K</italic><sub><italic>v</italic></sub> and <italic>K</italic><sub><italic>p</italic></sub> are the control design parameters that, in the manifold mode (σ = 0), determine the prescribed dynamics of the second-order system.</p>
+<p>The position gain <italic>K</italic><sub><italic>p</italic></sub> and the velocity gain <italic>K</italic><sub><italic>v</italic></sub> influence the controller performance. The gains <italic>K</italic><sub><italic>p</italic></sub> and <italic>K</italic><sub><italic>v</italic></sub> depend on the desired control frequency ω<sub>0</sub> (<xref ref-type="disp-formula" rid="disp-formula4-0959651812450972">equation (4)</xref>) and damping <italic>D</italic> (<xref ref-type="disp-formula" rid="disp-formula5-0959651812450972">equation (5)</xref>)</p>
+<p>
+<disp-formula id="disp-formula4-0959651812450972">
+<label>(4)</label>
+<mml:math display="block" id="math8-0959651812450972">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0959651812450972" xlink:href="10.1177_0959651812450972-eq4.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula5-0959651812450972">
+<label>(5)</label>
+<mml:math display="block" id="math9-0959651812450972">
+<mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:msqrt>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:msqrt>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0959651812450972" xlink:href="10.1177_0959651812450972-eq5.tif"/>
+</disp-formula>
+</p>
+<p>For the practical control implementation, the measured quantities were state variables <italic>q</italic> and <inline-formula id="inline-formula5-0959651812450972"><mml:math display="inline" id="math10-0959651812450972"><mml:mrow><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>·</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula>. The acceleration signal <inline-formula id="inline-formula6-0959651812450972"><mml:math display="inline" id="math11-0959651812450972"><mml:mrow><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>··</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> was not measurable and could be obtained by double differentiation of the angular position <italic>q</italic>, but was contaminated by the measurement noise to such a degree that it could no longer be used. Consequently, the acceleration signal <inline-formula id="inline-formula7-0959651812450972"><mml:math display="inline" id="math12-0959651812450972"><mml:mrow><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>··</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> needed to be replaced by an estimated value <inline-formula id="inline-formula8-0959651812450972"><mml:math display="inline" id="math13-0959651812450972"><mml:mrow><mml:mover accent="true"><mml:mover accent="true"><mml:mi>q</mml:mi><mml:mo>¨</mml:mo></mml:mover><mml:mo>^</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula>, which was simply obtained from the differential equation of motion</p>
+<p>
+<disp-formula id="disp-formula6-0959651812450972">
+<label>(6)</label>
+<mml:math display="block" id="math14-0959651812450972">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mover>
+<mml:mover>
+<mml:mi>q</mml:mi>
+<mml:mo>¨</mml:mo>
+</mml:mover>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0959651812450972" xlink:href="10.1177_0959651812450972-eq6.tif"/>
+</disp-formula>
+</p>
+<p>where <inline-formula id="inline-formula9-0959651812450972"><mml:math display="inline" id="math15-0959651812450972"><mml:mrow><mml:mover><mml:mrow><mml:mi>J</mml:mi></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula> is the mean value of <italic>J</italic> where <italic>J</italic> is the moment of inertia (the inertia of a moving load), <italic>M</italic><sub><italic>e</italic></sub> is the active measurable drive torque developed by the actuator and <inline-formula id="inline-formula10-0959651812450972"><mml:math display="inline" id="math16-0959651812450972"><mml:mrow><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mo>^</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>b</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> is the estimated value of the load torque. <xref ref-type="disp-formula" rid="disp-formula6-0959651812450972">Equation (6)</xref> is inserted into the control scheme (3) by replacing the real load torque <inline-formula id="inline-formula11-0959651812450972"><mml:math display="inline" id="math17-0959651812450972"><mml:mrow><mml:msub><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mrow><mml:mi>b</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> with an estimated value <inline-formula id="inline-formula12-0959651812450972"><mml:math display="inline" id="math18-0959651812450972"><mml:mrow><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mo>^</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>b</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula>. An estimator of reduced order is</p>
+<p>
+<disp-formula id="disp-formula7-0959651812450972">
+<label>(7)</label>
+<mml:math display="block" id="math19-0959651812450972">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>h</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0959651812450972" xlink:href="10.1177_0959651812450972-eq7.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>h</italic> is a positive constant linked to the selected dynamics of the asymptotic load observer and <inline-formula id="inline-formula13-0959651812450972"><mml:math display="inline" id="math20-0959651812450972"><mml:mrow><mml:msup><mml:mrow><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>·</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>c</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula> is the calculated angular speed. The load estimation gain <italic>h</italic> is determined experimentally and is dependent on the velocity quality measurements. <italic>h</italic> has to be lower at higher velocity noise to compensate the noise on the controller output. The calculated angular acceleration signal <inline-formula id="inline-formula14-0959651812450972"><mml:math display="inline" id="math21-0959651812450972"><mml:mrow><mml:msup><mml:mrow><mml:mover><mml:mrow><mml:mi>q</mml:mi></mml:mrow><mml:mo>··</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>c</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula> is derived from <xref ref-type="disp-formula" rid="disp-formula3-0959651812450972">equation (3)</xref>, so the condition for the switching mode operation (σ = 0) of the system is fulfilled</p>
+<p>
+<disp-formula id="disp-formula8-0959651812450972">
+<label>(8)</label>
+<mml:math display="block" id="math22-0959651812450972">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0959651812450972" xlink:href="10.1177_0959651812450972-eq8.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula9-0959651812450972">
+<label>(9)</label>
+<mml:math display="block" id="math23-0959651812450972">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∫</mml:mo>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mi>dv</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0959651812450972" xlink:href="10.1177_0959651812450972-eq9.tif"/>
+</disp-formula>
+</p>
+<p>As a result, the control input is based on a modified switching function which contains the estimated acceleration and the estimated disturbance torque</p>
+<p>
+<disp-formula id="disp-formula10-0959651812450972">
+<label>(10)</label>
+<mml:math display="block" id="math24-0959651812450972">
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0959651812450972" xlink:href="10.1177_0959651812450972-eq10.tif"/>
+</disp-formula>
+</p>
+<p>where the desired trajectory of the angular position, velocity and acceleration are denoted by <inline-formula id="inline-formula15-0959651812450972"><mml:math display="inline" id="math25-0959651812450972"><mml:mrow><mml:msubsup><mml:mrow><mml:mover><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mo>^</mml:mo></mml:mover></mml:mrow><mml:mrow><mml:mi>b</mml:mi></mml:mrow><mml:mrow><mml:mi>d</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula>, the estimated disturbance torque. The asymptotic observer serves as a bypass for high-frequency components; therefore the non-modelled dynamics is not exceeded. Then the estimated load torque, <xref ref-type="disp-formula" rid="disp-formula7-0959651812450972">equation (7)</xref>, includes</p>
+<p>
+<disp-formula id="disp-formula11-0959651812450972">
+<label>(11)</label>
+<mml:math display="block" id="math26-0959651812450972">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>M</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>J</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>J</mml:mi>
+</mml:mrow>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>K</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>I</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>+</mml:mo>
+<mml:mi>C</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>q</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>G</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>q</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0959651812450972" xlink:href="10.1177_0959651812450972-eq11.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>K</italic><sub><italic>t</italic></sub> is a torque coefficient, <italic>K<sub>m</sub></italic> is the nominal torque coefficient, and <italic>I</italic><sub><italic>d</italic></sub> is the motor current’s reference value. By feedback of the estimated load torque, robust motion control (<xref ref-type="fig" rid="fig6-0959651812450972">Figure 6</xref>) is accomplished and ideal acceleration control is achieved.<sup><xref ref-type="bibr" rid="bibr12-0959651812450972">12</xref></sup> Typical door motion control is designed with PI velocity control design which is more vulnerable to disturbances and load changes than the control with load estimation. The task of the PI estimator is to estimate the actual load value. Such control is more robust to variable loads than standard velocity cascade control.</p>
+</sec>
+<sec id="section12-0959651812450972">
+<title>Door control</title>
+<p>The door control represents the same functionality as in previous explanations in the section about state transition techniques (<xref ref-type="fig" rid="fig2-0959651812450972">Figure 2</xref>). The only difference in the practical example was the use of simulated sensors. The infrared sensor for person detection was replaced with a push button. The safety sensor and fire regime was simulated by the software logical inputs. All other functions were the same.</p>
+</sec>
+<sec id="section13-0959651812450972">
+<title>Motion generator</title>
+<p>The S-speed profile (<xref ref-type="fig" rid="fig7-0959651812450972">Figure 7</xref>) was developed based on the FSM for continuous movement between speed crossings. The profile has to be adaptable to the motion length, maximum jerk, acceleration and speed, and the jerk control’s smoothness between the speed crossings. The smoothness decreases with the jerk increase. A trapezoidal profile can be generated by the high jerk. The maximum acceleration and velocity of the door must be controllable because of door safety. The acceleration and speed must be lower for heavier doors than for lighter doors. These rules are implemented because heavier doors are more dangerous and can lead to serious injury of a person by a collision. The motion length is initialized at the door start-up and depends on the door type.</p>
+<p>The S-speed profile is generated by the equations for acceleration, velocity and position.<sup><xref ref-type="bibr" rid="bibr13-0959651812450972">13</xref><xref ref-type="bibr" rid="bibr14-0959651812450972"/>–<xref ref-type="bibr" rid="bibr15-0959651812450972">15</xref></sup> The motion generator with 13 inputs (<xref ref-type="table" rid="table5-0959651812450972">Table 5</xref>) and five outputs (<xref ref-type="table" rid="table6-0959651812450972">Table 6</xref>) generates a motion reference curve needed for the motion control. An input PROMACHINE_IN is connected to the door motion control MFSM, which gives commands to the motion generator MFSM. All other inputs represent variables for calculation of the motion curves. On the other hand, the outputs include three motion references (acceleration, velocity and position), one debug output (PROMACHINE_OUT), and event output (status) for the door-control MFSM.</p>
+<table-wrap id="table5-0959651812450972" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Motion generator inputs.</p>
+</caption>
+<graphic alternate-form-of="table5-0959651812450972" xlink:href="10.1177_0959651812450972-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Input</th>
+<th align="left">Data type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MAXPOS</td>
+<td>number</td>
+<td>Travel position length (m)</td>
+</tr>
+<tr>
+<td>SETTIME</td>
+<td>number</td>
+<td>FSM motion generator timing interval (s)</td>
+</tr>
+<tr>
+<td>ACT_POS</td>
+<td>number</td>
+<td>Actual position (m)</td>
+</tr>
+<tr>
+<td>ACT_VEL</td>
+<td>number</td>
+<td>Actual velocity (m/s)</td>
+</tr>
+<tr>
+<td>MAX_VELP</td>
+<td>number</td>
+<td>Maximum velocity of positive profile (m/s)</td>
+</tr>
+<tr>
+<td>MAX_VELN</td>
+<td>number</td>
+<td>Maximum velocity of negative profile (m/s)</td>
+</tr>
+<tr>
+<td>MAXACC_P</td>
+<td>number</td>
+<td>Maximum acceleration of positive profile (m/s<sup>2</sup>)</td>
+</tr>
+<tr>
+<td>MAXACC_N</td>
+<td>number</td>
+<td>Maximum acceleration of negative profile (m/s<sup>2</sup>)</td>
+</tr>
+<tr>
+<td>JERK_P</td>
+<td>number</td>
+<td>Maximum jerk of positive profile (m/s<sup>3</sup>)</td>
+</tr>
+<tr>
+<td>JERK_N</td>
+<td>number</td>
+<td>Maximum jerk of negative profile (m/s<sup>3</sup>)</td>
+</tr>
+<tr>
+<td>PROMACHINE_IN</td>
+<td>number</td>
+<td>FSM motion generator command input (event)</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>»0«– stay idle</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>»1«– execute positive velocity profile</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>»2«– execute negative velocity profile</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>»3«– execute stopping</td>
+</tr>
+<tr>
+<td>JERK_S</td>
+<td>number</td>
+<td>Maximum jerk of stopping (m/s<sup>3</sup>)</td>
+</tr>
+<tr>
+<td>MAXACC_S</td>
+<td>number</td>
+<td>Maximum acceleration of stopping (m/s<sup>2</sup>)</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table6-0959651812450972" position="float">
+<label>Table 6.</label>
+<caption>
+<p>Motion generator outputs.</p>
+</caption>
+<graphic alternate-form-of="table6-0959651812450972" xlink:href="10.1177_0959651812450972-table6.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Output</th>
+<th align="left">Data type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ACC</td>
+<td>number</td>
+<td>Acceleration reference (m/s<sup>2</sup>)</td>
+</tr>
+<tr>
+<td>POS</td>
+<td>number</td>
+<td>Position reference (m)</td>
+</tr>
+<tr>
+<td>VEL</td>
+<td>number</td>
+<td>Velocity reference (m/s)</td>
+</tr>
+<tr>
+<td>PROMACHINE_OUT</td>
+<td>number</td>
+<td>FSM motion generator state information</td>
+</tr>
+<tr>
+<td>STATUS</td>
+<td>number</td>
+<td>FSM motion generator status information (event)</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>»0«– busy</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>»1«– successful generation of positive velocity profile</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>»2«– successful generation of negative velocity profile</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>»3«– successful generation of stopping</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The state flow diagram of the motion generator has five states (<xref ref-type="fig" rid="fig8-0959651812450972">Figure 8</xref>). The motion calculation is executed in the positive, negative and stop states. The state init calculates those parameters needed for the motion calculation. The last state idle is waiting for a new command event from the door-control MFSM. There are eight different transitions between the states of the motion generator. The transition executes to a new state when the condition (<xref ref-type="table" rid="table7-0959651812450972">Table 7</xref>) is met.</p>
+<fig id="fig8-0959651812450972" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>State transition diagram for main state layer and first state sub-layer of the motion generator.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig8.tif"/>
+</fig>
+<table-wrap id="table7-0959651812450972" position="float">
+<label>Table 7.</label>
+<caption>
+<p>Conditions of transitions start for main state layer of the motion generator.</p>
+</caption>
+<graphic alternate-form-of="table7-0959651812450972" xlink:href="10.1177_0959651812450972-table7.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Transition</th>
+<th align="left">Condition</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1</td>
+<td>PROMACHINE_IN=1 || PROMACHINE_IN=2 (EV1)</td>
+<td>Event input PROMACHINE_IN is 1 or 2</td>
+</tr>
+<tr>
+<td>T2</td>
+<td>PROMACHINE_IN=1 (EV2)</td>
+<td>Event input PROMACHINE_IN is 1</td>
+</tr>
+<tr>
+<td>T3</td>
+<td>PROMACHINE_IN=2 (EV3)</td>
+<td>Event input PROMACHINE_IN is 2</td>
+</tr>
+<tr>
+<td>T4</td>
+<td>PROMACHINE_IN=3 (EV4)</td>
+<td>Event input PROMACHINE_IN is 3</td>
+</tr>
+<tr>
+<td>T5</td>
+<td>PROMACHINE_IN=3 (EV4)</td>
+<td>Event input PROMACHINE_IN is 3</td>
+</tr>
+<tr>
+<td>T6</td>
+<td>stop_timer=0 (EV5)</td>
+<td>Stop timer is 0 (stop timer is calculated from motion parameters)</td>
+</tr>
+<tr>
+<td>T7</td>
+<td>positive_timer=0 (EV6)</td>
+<td>Positive timer is 0 (positive timer is calculated from motion parameters)</td>
+</tr>
+<tr>
+<td>T8</td>
+<td>negative_timer=0 (EV7)</td>
+<td>Negative timer is 0 (negative timer is calculated from motion parameters)</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The motion MFSM starts with the idle state. The transition T1 executes to the state ‘init’ after the command ‘positive or negative generation’ is reached via the PROMACHINE_IN input. The transition T2 executes by successful init and by the command ‘positive generation’ and transition T3 by the command ‘negative generation’. The transition T4 executes when the positive motion is in progress and the command ‘stop the motion’ is reached. The same goes for the transition T5 but here it executes the negative motion. The transitions T6, T7 and T8 are time-based, which depend on the motion parameters and profile calculation.</p>
+<p>The MFSM not only represents the MFSM of different tasks (<xref ref-type="fig" rid="fig4-0959651812450972">Figure 4</xref>) but also the modularity in state sub-layers. Complex processes, which require high number of states, can be designed in multiple sub-states. The MFSM motion generator is designed in multiple state layers. Such a design is included in this application. The motion generator is designed in one main state layer and two state sub-layers (<xref ref-type="fig" rid="fig8-0959651812450972">Figure 8</xref>). The main layer includes the basic states of the motion generator (basic door motions). The first state sub-layer, for example the state S2, includes eight states to separate the S-speed motion profile in eight sectors (<xref ref-type="fig" rid="fig7-0959651812450972">Figure 7</xref>). The second state sub-layer includes the states for motion calculation<sup><xref ref-type="bibr" rid="bibr13-0959651812450972">13</xref></sup> of each S-velocity profile sector, which is not shown in this paper. The MFSM can be designed as three-dimensional (3D) matrices with the main state layer and state sub-layers (<xref ref-type="fig" rid="fig9-0959651812450972">Figure 9</xref>).</p>
+<fig id="fig9-0959651812450972" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>MFSM with the state sub-layers.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig9.tif"/>
+</fig>
+</sec>
+<sec id="section14-0959651812450972">
+<title>Hardware configuration</title>
+<p>The door mechanism (<xref ref-type="fig" rid="fig10-0959651812450972">Figure 10</xref>) is wired with a DSP unit digital controller (<xref ref-type="fig" rid="fig11-0959651812450972">Figure 11</xref>), which was researched and developed by the Faculty of Electrical Engineering, Laboratory of Robotics, University of Maribor.<sup><xref ref-type="bibr" rid="bibr16-0959651812450972">16</xref></sup> The wiring is needed for the end position detection, position measurement and motor control. The push button is presented as an infrared sensor for person detection. A PC is used for the DSP programming (MATLAB/Simulink),<sup><xref ref-type="bibr" rid="bibr17-0959651812450972">17</xref></sup> monitoring the signals and responses, and processing the data for further analysis. This PC is also used for sensor simulation instead of real sensors. All data exchange between the PC and the DSP unit is held via USB communication.</p>
+<fig id="fig10-0959651812450972" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>Block diagram of the hardware configuration.</p>
+<p>DSP: digital signal processor; USB:universal serial bus; DC: direct current.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig10.tif"/>
+</fig>
+<fig id="fig11-0959651812450972" position="float">
+<label>Figure 11.</label>
+<caption>
+<p>Hardware configuration.</p>
+<p>DSP: digital signal processor; DC: direct current.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig11.tif"/>
+</fig>
+</sec>
+<sec id="section15-0959651812450972">
+<title>Experiment measurements</title>
+<p>The experiment was made on the door mechanism as described in ‘Hardware configuration’. The door had been started by pushing the start button, which presents the infrared sensor for people detection. The movement stopped after the actual position had reached the desired position. The mechanism was in still-stand for the desired wait time configured by the user. The mechanism started moving in a contrary direction after the wait time had elapsed. The mechanism stopped again after the actual position reached the desired position.</p>
+<p>The experiments showed three measurements for the complete motion cycle of the door mechanism (<xref ref-type="fig" rid="fig12-0959651812450972">Figure 12</xref>). The first measurement shows the motor’s current between the mechanism movements. The mechanism load was very small, so the current measurement not very high. The next measurement shows the reference velocity from the motion generator and the actual velocity from the motor encoder measurement. The reference velocity has an S-shaped profile. The velocity was limited to 0.2 m/s by the user. The belt was intentionally loosened for additional generation of disturbance on the mechanism. This disturbance was visible on the velocity measurement with an overshoot of 9.2%. The last measurement shows the motor position over one motion cycle of the door mechanism. The door mechanism was limited between 0.3 m and 0.4 m of the movement length. The rubber stopper mechanically stopped the motion in the case of the control malfunction. The reference position was generated to the desired position of 0.3 m. The motion control with the PI estimator controlled the motor for the actual measurements tracked to the reference values from the motion generator.</p>
+<fig id="fig12-0959651812450972" position="float">
+<label>Figure 12.</label>
+<caption>
+<p>Experiment measurements.</p>
+</caption>
+<graphic xlink:href="10.1177_0959651812450972-fig12.tif"/>
+</fig>
+</sec>
+</sec>
+</sec>
+<sec id="section16-0959651812450972" sec-type="conclusions">
+<title>Conclusion</title>
+<p>An integrated state sub-layer task-scheduling, action-planning and control method has been proposed for a mechatronic system. Through a unified action reference variable, the event-based planning and control schemes were extended to multi-segment tasks with MFSM. The use of the hybrid discrete event model along with the event-based planning and control provided a framework for the interaction of task scheduling, action planning and control. This facilitated the analytical integration of low-level system sensing and control with high-level system behaviour and preparation. As a result, the system was capable of coping with uncertainty and unexpected events, and achieved higher efficiency and robust and reliable performance for application to automated robotic manufacturing systems.</p>
+<p>A sequential control strategy was proposed for reducing the complexity of the control algorithm development, with graphical presentation of the MFSMs and the ECA system description allowing for better software development, software maintenance and software debugging. The use of MFSM included two different design techniques. The first design technique described how to execute two or more different tasks (<xref ref-type="fig" rid="fig4-0959651812450972">Figure 4</xref>) with MFSM.<sup><xref ref-type="bibr" rid="bibr18-0959651812450972">18</xref></sup> The additional door functionality MFSM algorithms can be added without affecting the original design by the task design with MFSM. The change of the MFSM original design by implementing additional functionality depends on the designer himself. It is an important focus in such design that the integration of new functionality will not influence the original design. The new function implementation (like door dynamics) represents an additional MFSM in the door motion control algorithm. The second design technique described the possibility to divide the basic state in additional state sub-layers (<xref ref-type="fig" rid="fig9-0959651812450972">Figure 9</xref>) in order to simplify the graphical state chart design of complex mechatronic systems. The transparency of such design depends on the software designer, who chooses the number of states and state sub-layers. The basic state layer describes only the basic functionality, for example the main state layer by the motion generator (<xref ref-type="fig" rid="fig8-0959651812450972">Figure 8</xref>). The complex functions are hidden in the state sub-layers. State transition programming and the state machine techniques provide an excellent man–machine interface, and the concept is structured in such way that the development of the control strategy is an understandable and methodical process.</p>
+<p>A sequential S-shaped motion profile generation strategy was proposed to reduce the motion-induced jerk and vibration. The motion shapes were adapted to the user parameter input to the motion generator (maximum jerk, velocity, position). The motion generator was designed in MATLAB/Simulink/Flowchart software, which is based on the FSM for rapid prototyping.<sup><xref ref-type="bibr" rid="bibr19-0959651812450972">19</xref></sup> The motion generator was designed with the help of modified mathematical models of the velocity S profile. The experiments on the DSP system with a door mechanism were executed to ensure the functionality of the proposed techniques. The proposed motion generator improved the door motion control, energy consumption, decreased mechanism vibrations, etc. The motion reference calculations included a deviation because of algorithm discretization. This deviation can be reduced with smaller time steps in driving algorithm execution. These deviations did not affect the door motion too much because the application did not have precise control. The deviations of the motion references during the experiment were 2×10<sup>–<xref ref-type="bibr" rid="bibr4-0959651812450972">4</xref></sup> m/s by the velocity reference and 4×10<sup>–<xref ref-type="bibr" rid="bibr4-0959651812450972">4</xref></sup> m by the position reference with an algorithm step time of 200×10<sup>–<xref ref-type="bibr" rid="bibr6-0959651812450972">6</xref></sup>. The variations in the motion references can be reduced with additional improvements in the motion calculations.</p>
+<p>A control method for torque/force estimation with feedback control was proposed for improving control on the mechanisms with variable load. Such a mechanism represents the sliding door where the door-wing dimension varies depending on the mounting surrounding.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work was partly supported by the European Union, European Social Fund. It was implemented in the framework of the Operational Programme for Human Resources Development for the Period 2007–2013, Priority axis 1: Promoting entrepreneurship and adaptability, Main type of activity 1.1.: Experts and researchers for competitive enterprises.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0959651812450972">
+<label>1.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Park</surname><given-names>E</given-names></name>
+<name><surname>Tilbury</surname><given-names>DM</given-names></name>
+<name><surname>Khargonekar</surname><given-names>PP</given-names></name>
+</person-group>. <article-title>A formal implementation of logic controllers for machining systems using Petri nets and sequential function chart</article-title>. In: <conf-name>1998 Japan–USA symposium on flexible automation</conf-name>, <conf-loc>Otsu, Japan</conf-loc>, <conf-date>July</conf-date> <year>1998</year>, pp.<fpage>683</fpage>–<lpage>690</lpage>.</citation>
+</ref>
+<ref id="bibr2-0959651812450972">
+<label>2.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Cassandras</surname><given-names>CG</given-names></name>
+<name><surname>Lafortune</surname><given-names>S</given-names></name>
+</person-group>. <source>Introduction to discrete event systems</source>. <edition>2nd ed.</edition> <publisher-loc>New Tork</publisher-loc>: <publisher-name>Springer</publisher-name>, <year>2008</year>.</citation>
+</ref>
+<ref id="bibr3-0959651812450972">
+<label>3.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Fan</surname><given-names>Z</given-names></name>
+<name><surname>Detlef</surname><given-names>M</given-names></name>
+<name><surname>Andreasen</surname><given-names>MM</given-names></name><etal/>
+</person-group>. <article-title>Teaching system integration of mechatronic systems</article-title>. In: <conf-name>DESIGN 2006 international design conference</conf-name>, <conf-loc>Dubrovnik, Croatia</conf-loc>, <conf-date>15–18 May</conf-date> <year>2006</year>.</citation>
+</ref>
+<ref id="bibr4-0959651812450972">
+<label>4.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Fan</surname><given-names>Z</given-names></name>
+<name><surname>Sørensen</surname><given-names>T</given-names></name>
+<name><surname>Conrad</surname><given-names>F</given-names></name><etal/>
+</person-group>. <article-title>Mechatronics education: conceptual prototype vs. physical realization</article-title>. In: <conf-name>6th international workshop on research and education in mechatronics (REM)</conf-name>, <year>2005</year>, pp.<fpage>397</fpage>–<lpage>402</lpage>.</citation>
+</ref>
+<ref id="bibr5-0959651812450972">
+<label>5.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Bryan</surname><given-names>EG</given-names></name>
+</person-group>. <article-title>Control logic requirements for complex manufacturing systems</article-title>. In: <conf-name>NSF workshop on logic control for manufacturing systems</conf-name>, <year>2000</year>.</citation>
+</ref>
+<ref id="bibr6-0959651812450972">
+<label>6.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Wagner</surname><given-names>F</given-names></name>
+<name><surname>Schmuki</surname><given-names>R</given-names></name>
+<name><surname>Wagner</surname><given-names>T</given-names></name><etal/>
+</person-group>. <source>Modeling software with finite state machines – a practical approach</source>. <publisher-loc>Boca Raton</publisher-loc>: <publisher-name>CRC Press</publisher-name>, <year>2006</year>.</citation>
+</ref>
+<ref id="bibr7-0959651812450972">
+<label>7.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Tinder</surname><given-names>RF</given-names></name>
+</person-group>. <source>Asynchronous sequential machine design and analysis: A comprehensive development of the design and analysis of clock-independent state machines and systems</source>. <publisher-loc>USA</publisher-loc>: <publisher-name>Morgan &amp; Claypool Publishers</publisher-name>, <year>2009</year>.</citation>
+</ref>
+<ref id="bibr8-0959651812450972">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ramadge</surname><given-names>PJ</given-names></name>
+<name><surname>Wonham</surname><given-names>WM</given-names></name>
+</person-group>. <article-title>Supervisory control of a class of discrete event process</article-title>. <source>SIAM J Contr Optim</source> <year>1987</year>; <volume>25</volume>(<issue>1</issue>): <fpage>206</fpage>–<lpage>230</lpage>.</citation>
+</ref>
+<ref id="bibr9-0959651812450972">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Harel</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Statecharts: a visual formalism for complex systems</article-title>. <source>Sci Comput Program</source> <year>1987</year>; <volume>8</volume>(<issue>3</issue>): <fpage>231</fpage>–<lpage>274</lpage>.</citation>
+</ref>
+<ref id="bibr10-0959651812450972">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Almeida</surname><given-names>EE</given-names></name>
+<name><surname>Luntz</surname><given-names>JE</given-names></name>
+<name><surname>Tilbury</surname><given-names>DM</given-names></name>
+</person-group>. <article-title>Event–condition–action systems for reconfigurable logic control</article-title>. <source>IEEE Trans Autom Sci Eng</source> <year>2007</year>; <volume>4</volume>: <fpage>167</fpage>–<lpage>181</lpage>.</citation>
+</ref>
+<ref id="bibr11-0959651812450972">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jezernik</surname><given-names>K</given-names></name>
+<name><surname>Rodic</surname><given-names>M</given-names></name>
+</person-group>. <article-title>High precision motion control of servo drives</article-title>. <source>IEEE Trans Ind Electron</source> <year>2009</year>; <volume>56</volume>: <fpage>3810</fpage>–<lpage>3816</lpage>.</citation>
+</ref>
+<ref id="bibr12-0959651812450972">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Natori</surname><given-names>K</given-names></name>
+<name><surname>Tsuji</surname><given-names>T</given-names></name>
+<name><surname>Ohnishi</surname><given-names>K</given-names></name><etal/>
+</person-group>. <article-title>Time-delay compensation by communication disturbance observer for bilateral teleoperation under time-varying delay</article-title>. <source>IEEE Trans Ind Electron</source> <year>2010</year>; <volume>57</volume>(<issue>3</issue>): <fpage>1050</fpage>–<lpage>1062</lpage>.</citation>
+</ref>
+<ref id="bibr13-0959651812450972">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kim</surname><given-names>DN</given-names></name>
+<name><surname>I-Ming</surname><given-names>C</given-names></name>
+<name><surname>Teck-Chew</surname><given-names>N</given-names></name>
+</person-group>. <article-title>Planning algorithms for S-curve trajectories</article-title>. In: <conf-name>2007 IEE/ASME international conference on advanced intelligent mechatronics</conf-name>, <conf-date>4–7 September</conf-date> <year>2007</year>.</citation>
+</ref>
+<ref id="bibr14-0959651812450972">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Macfarlane</surname><given-names>S</given-names></name>
+<name><surname>Croft</surname><given-names>E</given-names></name>
+</person-group>. <article-title>A jerk-bounded manipulator trajectory planning: design for real-time applications</article-title>. <source>IEEE Trans Robot Autom</source> <year>2003</year>; <volume>19</volume>(<issue>1</issue>): <fpage>42</fpage>–<lpage>52</lpage>.</citation>
+</ref>
+<ref id="bibr15-0959651812450972">
+<label>15.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>HZ</given-names></name><etal/>
+</person-group>. <article-title>A new motion control approach for jerk and transient vibration suppression</article-title>. In: <conf-name>IEEE international conference on industrial informatics</conf-name>, <year>2006</year>, pp.<fpage>676</fpage>–<lpage>681</lpage>.</citation>
+</ref>
+<ref id="bibr16-0959651812450972">
+<label>16.</label>
+<citation citation-type="web">
+<collab>Faculty of Electrical Engineering and Computer Science, Institute of Robotics</collab>. Web page, <ext-link ext-link-type="uri" xlink:href="http://www.ro.feri.uni-mb.si/portal/index.php">http://www.ro.feri.uni-mb.si/portal/index.php</ext-link> (<year>2012</year>).</citation>
+</ref>
+<ref id="bibr17-0959651812450972">
+<label>17.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Hercog</surname><given-names>D</given-names></name>
+<name><surname>Curkovic</surname><given-names>M</given-names></name>
+<name><surname>Edelbaher</surname><given-names>G</given-names></name><etal/>
+</person-group>. <article-title>Programming of the DSP2 board with the Matlab/Simulink</article-title>. In: <conf-name>2003 IEEE international conference on industrial technology</conf-name>, <conf-date>10–12 December</conf-date> <year>2003</year>.</citation>
+</ref>
+<ref id="bibr18-0959651812450972">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Brooks</surname><given-names>RA</given-names></name>
+</person-group>. <article-title>A robust layered control system for a mobile robot</article-title>. <source>IEEE J Robot Autom</source> <year>1986</year>; <volume>RA-2</volume>(<issue>1</issue>): <fpage>14</fpage>–<lpage>23</lpage>.</citation>
+</ref>
+<ref id="bibr19-0959651812450972">
+<label>19.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Hercog</surname><given-names>D</given-names></name>
+<name><surname>Curkovic</surname><given-names>M</given-names></name>
+<name><surname>Jezernik</surname><given-names>K</given-names></name>
+</person-group>. <article-title>DSP based rapid control prototyping systems for engineering education and research</article-title>. In: <conf-name>2006 IEEE international conference on computer aided control system design</conf-name>, <conf-date>4–6 October</conf-date> <year>2006</year>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

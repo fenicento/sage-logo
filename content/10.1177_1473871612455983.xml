@@ -1,0 +1,1605 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">IVI</journal-id>
+<journal-id journal-id-type="hwp">spivi</journal-id>
+<journal-title>Information Visualization</journal-title>
+<issn pub-type="ppub">1473-8716</issn>
+<issn pub-type="epub">1473-8724</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1473871612455983</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1473871612455983</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Visual comparison of software architectures</article-title>
+</title-group>
+<contrib-group content-type="issue">
+<contrib contrib-type="guest-editor">
+<name><surname>Telea</surname><given-names>Alexandru C.</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Görg</surname><given-names>Carsten</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Reiss</surname><given-names>Steven</given-names></name>
+</contrib>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Beck</surname><given-names>Fabian</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Diehl</surname><given-names>Stephan</given-names></name>
+</contrib>
+<aff id="aff1-1473871612455983">Computer Science Department, University of Trier, Trier, Germany</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-1473871612455983">Fabian Beck, FB IV - Computer Science, University of Trier, 54286 Trier, Germany. Email: <email>beckf@uni-trier.de</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>12</volume>
+<issue>2</issue>
+<issue-title>Special issue: Software Visualization</issue-title>
+<fpage>178</fpage>
+<lpage>199</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">SAGE Publications</copyright-holder>
+</permissions>
+<abstract>
+<p>Reverse engineering methods produce different descriptions of software architectures. In this article we address the task of exploring and comparing these descriptions. We present a novel visualization technique to compare architectures consisting of a decomposition of the software system and the dependencies among the code entities. This technique uses a visual representation of an adjacency matrix to provide a scalable analysis tool. Advanced layout features such as an automatic level of detail algorithm and sorting strategies improve the readability of the visualization. Using a case study, we show how this technique can be applied in practice.</p>
+</abstract>
+<kwd-group>
+<kwd>Software architecture</kwd>
+<kwd>hierarchy comparison</kwd>
+<kwd>graph visualization</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1473871612455983" sec-type="intro">
+<title>Introduction</title>
+<p>Understanding the architecture of a software system is important for maintaining and evolving the system. The architecture is often described in manually created documents and diagrams. But there is no guarantee that these files match the architecture that is actually implemented. The only reliable data source of this factual architecture is the source code itself. However, it contains the architecture only implicitly – in the form of the code structure and its dependencies.</p>
+<p>There exist different methods to extract the implicit architecture from the code. We can just take the directory or package structure of a project. We might ask an expert to manually decompose the system.<sup><xref ref-type="bibr" rid="bibr1-1473871612455983">1</xref></sup> Or we can apply a software clustering algorithm<sup><xref ref-type="bibr" rid="bibr2-1473871612455983">2</xref></sup> to generate a hierarchical structure of the source code. These methods provide different decompositions of the system as a partial description of its architecture.</p>
+<p>Dependencies between code entities reflect another important part of the architecture. For instance, inheritance represents a dependency between two classes, while method calls for dependencies between methods. Dependencies can be retrieved from the static source code or observed dynamically at runtime. However, there could also be hidden dependencies: two code entities might be related by their common evolution – they might have changed together frequently.<sup><xref ref-type="bibr" rid="bibr3-1473871612455983">3</xref></sup> Documenting these dependencies on a high level of abstraction also makes implicitly contained architecture information explicit.</p>
+<p>There are many possible descriptions of an architecture in the form of different software decompositions and dependency types – there does not exist <italic>the</italic> architecture description of a system. It is important to compare these different descriptions because this:</p>
+<list id="list1-1473871612455983" list-type="bullet">
+<list-item>
+<p>could approach the factual architecture of the system;</p>
+</list-item>
+<list-item>
+<p>might hint at high-level differences between two versions, for instance, detecting architectural drifts; and</p>
+</list-item>
+<list-item>
+<p>may help create more reliable architecture descriptions.</p>
+</list-item>
+</list>
+<p>For instance, comparing the initial architecture of a system to the architecture at a later point of development could reveal architectural drifts. Checking the implemented architecture against the documented one may identify architecture violations. Or contrasting the architectures automatically extracted by different algorithms might enable us to combine the advantages of the algorithms.</p>
+<p>There are many tools that visualize software architectures.<sup><xref ref-type="bibr" rid="bibr4-1473871612455983">4</xref></sup> But these tools only show one description of an architecture. The goal of this work is to develop a visualization approach that enables the comparison of two software architectures, each consisting of a hierarchical decomposition of the system and a dependency graph. Our approach is based on an adjacency matrix representation of the graphs with attached hierarchy diagrams. Visual features and interactions support the users in finding similarities and differences in the hierarchical structures as well as in the graphs.</p>
+<p>At first, we need to identify concrete tasks that support such a comparison of software architectures (‘Comparing architectures’ section). We introduce our visualization technique to explore and compare architectures based on software decompositions and code dependencies (‘Visualization technique’ section) and present advanced layout features (‘Advanced layout’ section). In a case study we apply this visualization technique to analyse package structures and clustering results (‘Case study’ section). Finally, we compare our approach with related techniques (‘Related work’ section), discuss application scenarios (‘Applications in software visualization and beyond’ section) and draw some conclusions (‘Conclusion’ section).</p>
+<p>This paper is an extended version of a paper presented at SoftVis ’10.<sup><xref ref-type="bibr" rid="bibr5-1473871612455983">5</xref></sup> The main extensions are improved interactions (‘Interaction’ section), an evaluation of the adaptive level of detail algorithm (‘Evaluation’ section), an elaborate global sorting strategy (‘Global sorting’ section) and a broader discussion of possible application scenarios for the presented visualization approach (‘Applications in software visualization and beyond’ section).</p>
+</sec>
+<sec id="section2-1473871612455983">
+<title>Comparing architectures</title>
+<p>In a previous study<sup><xref ref-type="bibr" rid="bibr6-1473871612455983">6</xref></sup> we compared the capabilities of different data sources to recover the architectures of software systems. In particular, we used different dependency types and applied a clustering algorithm that produced a hierarchical decomposition of the system. To assess the quality of the automatically generated decompositions, we had to compare them to a reference decomposition. There exist different metrics that implement such a comparison of software decompositions<sup><xref ref-type="bibr" rid="bibr2-1473871612455983">2</xref></sup>– we used MoJoFM,<sup><xref ref-type="bibr" rid="bibr7-1473871612455983">7</xref></sup> a metric that counts the minimum number of move and join operations necessary to transform one decomposition into the other. This metric-based approach solved the problem of assessing the quality of the decompositions but left some questions unanswered:</p>
+<list id="list2-1473871612455983" list-type="bullet">
+<list-item>
+<p>What are the matching and non-matching parts of the decompositions?</p>
+</list-item>
+<list-item>
+<p>What are the reasons for clustering together certain parts of the software project?</p>
+</list-item>
+<list-item>
+<p>How can we explain the different results when applying the algorithm to different software projects?</p>
+</list-item>
+</list>
+<p>Using these questions as a starting point, we felt that there is a need for understanding the differences of software decompositions and code dependencies. The experience gained from our previous study helped us to identify important tasks that support the comparison of software architectures. Later, we return and apply our visualization technique to the data set of our previous study (‘Case study’ section).</p>
+<sec id="section3-1473871612455983">
+<title>Decompositions and dependencies</title>
+<p>Our work is based on extracting the architecture of the software system from source code. The extracted architecture consists of two parts: the decomposition of the system and the dependencies among the parts of the system.</p>
+<p>To provide a widely applicable visualization, we do not limit those data structures to particular concepts, such as components and connectors or classes and inheritance. In this paper, only as an example, we use classes that are organized in packages connected by different types of dependencies. As long as the data match the following definitions, they can be visualized using our visualization technique.</p>
+<p>We call the elementary code units of the system <italic>code entities</italic>. Depending on the particular application, these entities could be methods, classes, packages or components. Let <inline-formula id="inline-formula1-1473871612455983">
+<mml:math display="inline" id="math1-1473871612455983">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> be the set of all code entities. The <italic>dependency structure</italic> of the system is a directed graph on the set of code entities <inline-formula id="inline-formula2-1473871612455983">
+<mml:math display="inline" id="math2-1473871612455983">
+<mml:mrow>
+<mml:mi>G</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>V</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> where the set of edges <inline-formula id="inline-formula3-1473871612455983">
+<mml:math display="inline" id="math3-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>⊆</mml:mo>
+<mml:mi>V</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> represents the dependencies between the entities <inline-formula id="inline-formula4-1473871612455983">
+<mml:math display="inline" id="math4-1473871612455983">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. A <italic>software decomposition</italic> divides these entities into groups or clusters of entities, which are usually hierarchically organized (e.g. in a package structure or as a result of a hierarchical clustering algorithm). Thus, a <italic>software decomposition</italic> is a hierarchy (i.e. a tree) <inline-formula id="inline-formula5-1473871612455983">
+<mml:math display="inline" id="math5-1473871612455983">
+<mml:mrow>
+<mml:mi>H</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>H</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula> where <inline-formula id="inline-formula6-1473871612455983">
+<mml:math display="inline" id="math6-1473871612455983">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mo>=</mml:mo>
+<mml:mi>V</mml:mi>
+<mml:mo>∪</mml:mo>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> consists of all code entities <inline-formula id="inline-formula7-1473871612455983">
+<mml:math display="inline" id="math7-1473871612455983">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> and all clusters <inline-formula id="inline-formula8-1473871612455983">
+<mml:math display="inline" id="math8-1473871612455983">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>, and the tree edges <inline-formula id="inline-formula9-1473871612455983">
+<mml:math display="inline" id="math9-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>H</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>⊂</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mover>
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+<mml:mo>^</mml:mo>
+</mml:mover>
+</mml:mrow>
+</mml:math></inline-formula> express the containment relation such that <inline-formula id="inline-formula10-1473871612455983">
+<mml:math display="inline" id="math10-1473871612455983">
+<mml:mrow>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> contains all leaf nodes and <inline-formula id="inline-formula11-1473871612455983">
+<mml:math display="inline" id="math11-1473871612455983">
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> all intermediate nodes of the hierarchy <inline-formula id="inline-formula12-1473871612455983">
+<mml:math display="inline" id="math12-1473871612455983">
+<mml:mrow>
+<mml:mi>H</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. In terms of graph theory, such a combination of a graph and a hierarchy is called a <italic>compound graph</italic>.</p>
+<p>Since our approach aims at the comparison of these data structures, we want to contrast at least two such compound graphs on the same set of code entities.</p>
+<p>Clustering algorithms need characteristic data about the artifacts to cluster. Usually, these data are expressed either as the similarity of artifacts in a similarity matrix or as dependencies between the artifacts in a dependency graph. Since our previous study used a graph-based clustering approach, we will focus on the latter case of dependency data. However, a similarity matrix is equivalent to a weighted graph and, if all matrix cells have non-zero values, a complete weighted graph.</p>
+</sec>
+<sec id="section4-1473871612455983">
+<title>Tasks</title>
+<p>Before actually designing a tool that supports a user to compare software architectures based on software decompositions and code dependencies, we first need to analyse the comparison process in greater detail. To this end, we will identify key tasks. Since the user should be able to solve these tasks, they form the requirements for a comparison tool. Following the taxonomy of Chikofsky and Cross,<sup><xref ref-type="bibr" rid="bibr8-1473871612455983">8</xref></sup> the tasks are part of <italic>reverse engineering</italic> (in particular, <italic>design recovery</italic>) and <italic>restructuring</italic> on the abstraction level of design.</p>
+<list id="list3-1473871612455983" list-type="simple">
+<list-item>
+<p>
+<bold>Task 1</bold>. Analyse and compare different types of code dependencies.</p>
+</list-item>
+</list>
+<p>When we look only at the dependency structure of a system, some interesting questions already arise. For instance, dependency information might only sparsely cover the entities, or there might be clusters of entities, outliers or hubs. Such characteristics emerge, in particular, when comparing different dependency types. For example, static structural dependencies such as method calls can be compared with dynamic dependencies. One type of dependencies provides points of reference to better analyse the other.</p>
+<list id="list4-1473871612455983" list-type="simple">
+<list-item>
+<p>
+<bold>Task 2</bold>. Relate a software decomposition to the dependency structure.</p>
+</list-item>
+</list>
+<p>Software decompositions are supposed to follow the concept of high cohesion and low coupling;<sup><xref ref-type="bibr" rid="bibr9-1473871612455983">9</xref></sup> the code entities of a cluster should be linked by many dependencies (high cohesion) whereas there should only be few dependencies that cross-cluster borders (low coupling). Thus, a decomposition of the software might be closely related to the dependency structure. Making the connection between both explicit, we may find clusters of dependencies that explain why certain code entities are grouped together. For instance, a part of the system belongs together because of many method calls that connect the code entities it contains. Moreover, we may compare the cohesion of a cluster to its coupling to other clusters. Such information might explain the relation between a dependency type and the decomposition. If the decomposition is created automatically, it could show how the dependencies influence the clustering results.</p>
+<list id="list5-1473871612455983" list-type="simple">
+<list-item>
+<p>
+<bold>Task 3</bold>. Compare different software decompositions at a matching level of detail.</p>
+</list-item>
+</list>
+<p>Finally, we look at the different software decompositions. Two decompositions are similar if the clusters of one decomposition match the clusters of the other decomposition. Metrics such as MoJoFM<sup><xref ref-type="bibr" rid="bibr7-1473871612455983">7</xref></sup> can be used to exactly measure this similarity. But finding out which clusters actually match each other and which clusters do not have any match in the other decomposition is more interesting from the perspective of a software engineer who, for instance, wants to restructure the system.</p>
+<p>Another aspect is the level of detail of a decomposition. The hierarchical structure of the decompositions allows considering clusters on different levels. The two decompositions presented in <xref ref-type="fig" rid="fig1-1473871612455983">Figure 1(a)</xref> – one above the entities, one below – look significantly different at first glance. But when collapsing particular clusters of the decompositions as depicted in <xref ref-type="fig" rid="fig1-1473871612455983">Figure 1(b)</xref>, the partition of code entities is identical in both decompositions. Finding such matching levels of detail might, however, be difficult for larger decompositions. A tool that supports the user in this process would be necessary.</p>
+<fig id="fig1-1473871612455983" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Two different decompositions on the same set of code entities: (a) totally expanded decompositions; (b) grey clusters collapsed.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612455983-fig1.tif"/>
+</fig>
+<p>With respect to comparing software decompositions, we require such a tool to show the similarities and differences between decompositions and to support finding matching levels of detail.</p>
+<p>Since these tasks focus on an explorative, qualitative – not quantitative – analysis, we believe visualization is the most suitable technique. A metric-based approach or a textual representation would not provide sufficient overview and flexibility.</p>
+</sec>
+</sec>
+<sec id="section5-1473871612455983">
+<title>Visualization technique</title>
+<p>A visual technique that supports the user to solve the three tasks is required to:</p>
+<list id="list6-1473871612455983" list-type="bullet">
+<list-item>
+<p>concurrently display dependency graphs and software decompositions;</p>
+</list-item>
+<list-item>
+<p>reveal similarities and differences in graphs and decompositions; and</p>
+</list-item>
+<list-item>
+<p>support finding matching levels of detail in different software decompositions.</p>
+</list-item>
+</list>
+<p>To simplify these requirements somewhat, we decided to allow only two dependency graphs and two software decompositions at maximum. Nonetheless, multiple comparisons could be realized by several pairwise comparisons.</p>
+<p>
+<xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> provides a preview of how our novel visualization looks. It shows a representation of the Azureus (now called Vuze) system, a BitTorrent client. The following sections introduce the visualization step by step. We discuss the representation of the dependency graphs and the software decompositions, introduce a metric to find matching clusters and explain the interactive features of our implementation. Finally, we provide a comprehensive example about how to read the resulting images as presented in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref>.</p>
+<fig id="fig2-1473871612455983" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Example of the novel matrix-based visualization technique to compare different dependency graphs and software decompositions.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612455983-fig2.tif"/>
+</fig>
+<sec id="section6-1473871612455983">
+<title>Dependency representation</title>
+<p>Our visualization technique is based on an adjacency matrix representation of graphs; it represents code entities as rows and columns of a matrix, and it depicts dependencies as cells of the matrix. A coloured box at the intersection of row <inline-formula id="inline-formula13-1473871612455983">
+<mml:math display="inline" id="math13-1473871612455983">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> and column <inline-formula id="inline-formula14-1473871612455983">
+<mml:math display="inline" id="math14-1473871612455983">
+<mml:mrow>
+<mml:mi>B</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> thus encodes a dependency from code entity <inline-formula id="inline-formula15-1473871612455983">
+<mml:math display="inline" id="math15-1473871612455983">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> to code entity <inline-formula id="inline-formula16-1473871612455983">
+<mml:math display="inline" id="math16-1473871612455983">
+<mml:mrow>
+<mml:mi>B</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. Hence, all code entities are represented twice, once as a row and once as a column. In a usual adjacency matrix, rows and columns are ordered equally so that self-dependencies form the diagonal of the matrix. However, our visualization deviates from this paradigm; we explain why later on.</p>
+<p>We preferred a matrix representation over a node–link approach (diagrams where nodes represent the code entities and visual links between these nodes represent code dependencies) for several reasons:</p>
+<list id="list7-1473871612455983" list-type="simple">
+<list-item>
+<p>
+<bold>Scalability</bold> Node–link diagrams suffer from occlusion problems when it comes to visualizing larger and denser graphs. Elaborate layout algorithms may ease the problem, but cannot eliminate it. In contrast, no visual elements overlap in matrix visualizations by definition. Ghoniem et al.<sup><xref ref-type="bibr" rid="bibr10-1473871612455983">10</xref></sup> provide empirical evidence for the superiority of matrix representations of larger graphs in many applications.</p>
+</list-item>
+<list-item>
+<p>
+<bold>Edges</bold> Since we want to analyse differences in dependency graphs, we are interested in the existence of particular edges (i.e. dependencies). In contrast, tracking paths over several edges and code entities – an obvious shortcoming of matrix-based graph visualizations – is less important for our application because path-related tasks are not required to identify clusters. A matrix visualization focuses on edges; it explicitly shows existing and non-existing edges.</p>
+</list-item>
+<list-item>
+<p>
+<bold>Clusters</bold> Depending on a good layout, both node–link and matrix diagrams are able to reveal clusters. But as Henry et al.<sup><xref ref-type="bibr" rid="bibr11-1473871612455983">11</xref></sup> point out, in dense clusters, matrix representations still provide detailed information whereas node–link representations produce clutter.</p>
+</list-item>
+</list>
+<p>
+<xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> shows the complete visualization consisting of an adjacency matrix as the central part. The matrix is attached with two hierarchy representations and other supplementary diagrams. In this example, we used 477 classes as code entities, which results in a matrix of 477 rows and 477 columns. These rows and columns are too narrow to be indicated by a border line. Thus, each cell representing a dependency (an intersection of a row and column of the matrix) has only a few pixels on screen, but we can still see and discern these small points. Moreover, we observe that these coloured cells are not evenly distributed over the image. The visual clusters formed by these cells hint at clusters in the dependency structure.</p>
+<p>Our matrix-based approach is able to visualize two graphs on the same set of code entities in the same diagram. The dependencies just need to be drawn in different colours – one colour for each graph and a third colour to represent duplicate dependencies (i.e. dependencies that occur in both graphs). <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> provides an example with two such types of dependencies. The legend depicts the colour scheme: blue for the first type, purple for the second type and red for the duplicate dependencies. Concurrently visualizing more than two graphs with this approach is possible, but the ambiguous colours would probably confuse the user. A comparison of <inline-formula id="inline-formula17-1473871612455983">
+<mml:math display="inline" id="math17-1473871612455983">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> graphs would need <inline-formula id="inline-formula18-1473871612455983">
+<mml:math display="inline" id="math18-1473871612455983">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> different colours plus a background colour.</p>
+<p>If we work on weighted graphs instead, the matrix-based representation needs some adaptations; since we already used the colour to encode the different data sources, we have to encode the values of the similarity metric otherwise. We decided to use opaqueness and draw weaker edges less opaquely than stronger ones, which is very intuitive. For edges included in both graphs, we summed up the weights of both edges and accordingly chose the degree of opaqueness.</p>
+</sec>
+<sec id="section7-1473871612455983">
+<title>Decomposition representation</title>
+<p>We consider software decompositions as hierarchies. A visual representation of a hierarchy can be easily attached to the sides of the matrix. We use a layered icicle plot<sup><xref ref-type="bibr" rid="bibr12-1473871612455983">12</xref></sup> to depict this hierarchy. Such an icicle plot lays out the nodes similar to a usual tree diagram, but depicts each node as a box that fills the available space around the node. It is more space-efficient and easier to label than an equivalent tree diagram.</p>
+<p>The visualization in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> displays a software decomposition in form of the package structure on the left-hand side of the diagram. Soft shadows separate the clusters, not only in the hierarchy but also continuously in the matrix. If enough screen space is available, labels identify the clusters. We align the leaves of the hierarchy, which represent the code entities, in a bar. This entity bar can be used for displaying additional information on the entities (see ‘Interaction’ section and ‘Local diagonals’ section).</p>
+<p>Since the rows and columns of the matrix can be sorted independently, we are able to add a second software decomposition on top of the diagram. Additional to the package structure on the left, the example in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> depicts a decomposition automatically generated by a clustering algorithm (details on clustering are explained in the ‘Application example’ section).</p>
+<p>The hierarchical structure of each decomposition implies some constraints on the order of the code entities; only sibling entities or clusters are allowed to be switched without destroying the representation of the decomposition. Hence, in the general case, code entities have to be sorted differently with respect to rows than with respect to columns.</p>
+<sec id="section8-1473871612455983">
+<title>Cluster similarity</title>
+<p>The task of comparing the two decompositions consists of finding similarities and differences in the cluster structure. But without assistance, this would be a time-consuming and strenuous task; considering a particular cluster, it is hard to identify its most similar correspondent because it has to be manually compared with every cluster in the other decomposition. A metric that is able to rank the possible correspondents in respect of their similarity to a selected node might solve the problem.</p>
+<p>A cluster consists of a set of code entities. Thus, comparing two clusters is equivalent to comparing two sets <inline-formula id="inline-formula19-1473871612455983">
+<mml:math display="inline" id="math19-1473871612455983">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula20-1473871612455983">
+<mml:math display="inline" id="math20-1473871612455983">
+<mml:mrow>
+<mml:mi>B</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. To get a similarity measure, we are interested in how many entities concurrently belong to both clusters in relation to the size of both clusters. This can be expressed as the size of the intersection of the two sets divided by the size of the union of the sets – the Jaccard coefficient</p>
+<disp-formula id="disp-formula1-1473871612455983">
+<mml:math display="block" id="math21-1473871612455983">
+<mml:mrow>
+<mml:mtext>sim</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>:</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo>∩</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo>∪</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>.</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1473871612455983" xlink:href="10.1177_1473871612455983-eq1.tif"/>
+</disp-formula>
+<p>We integrate the similarity information based on the Jaccard coefficients in the background of the matrix representation. The clusters form a matrix-like meta-structure where the cluster, not the code entities, represents the rows and columns. Each comparison of two clusters can be represented as a cell of this matrix. We use the background brightness of the cells to encode the Jaccard similarity value of the according cluster: dark backgrounds visualize high similarity values. Colouring each possible pair of clusters like this would, however, lead to overlapping cells and thus ambiguous shadings. Hence, this approach enables comparing two decompositions only at one level of detail for each decomposition. In our case the background structure always shows the cluster similarity at the lowest levels; however, by temporarily collapsing clusters in the hierarchy, this lowest level can be adapted with our tool. By default this is done manually by clicking on the clusters, but we also implemented an algorithm to support the task of finding matching levels (see ‘Adaptive level of detail’ section).</p>
+</sec>
+</sec>
+<sec id="section9-1473871612455983">
+<title>Interaction</title>
+<p>Our implementation of the approach follows the information visualization mantra:<sup><xref ref-type="bibr" rid="bibr13-1473871612455983">13</xref></sup><italic>overview fist, zoom and filter, then details on demand</italic>.</p>
+<sec id="section10-1473871612455983">
+<title>Overview</title>
+<p>The matrix shows the whole data set without the need to scroll or manipulate the view. Hence, overview is provided by the default view of the visualization at any time. Nevertheless, the similarity metric, which is visualized in the background, allows comparing the clusters at only the lowest level of the hierarchy. To support the comparison of clusters on higher levels, the visualization allows the user to collapse (and expand) clusters by clicking on their visual representations. A collapsed cluster does not change its size, but its subclusters temporarily disappear. The collapsed cluster now directly contains all leaf nodes of the subclusters. Larger greyscale background boxes display the cluster similarity metric values on this higher level. Furthermore, slim markers on the side of the hierarchy enable the user to collapse or expand whole hierarchy levels (<xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref>, top left). These markers also indicate which levels are currently totally collapsed (light grey), partially collapsed (grey) or fully expanded (dark grey).</p>
+</sec>
+<sec id="section11-1473871612455983">
+<title>Zoom</title>
+<p>A matrix is a table where zooming can be implemented such as is demonstrated by the Table Lens visualization using multiple focuses;<sup><xref ref-type="bibr" rid="bibr14-1473871612455983">14</xref></sup> rows and columns can be focused independently by zooming: a selected row gets higher, a column gets broader. In our visualization, zooming an element of the hierarchy means that the respective rows or columns get larger (or smaller). Zooming is triggered by using the mouse wheel while hovering the cursor on a cluster. This can be done for clusters in the first as well as in the second hierarchy independently. Our goal is that the total size of the visualization does not change while zooming, which is implemented by reducing the size of the remaining clusters accordingly. Zooming different clusters hence creates a set of multiple focuses in the matrix: areas where rows are enlarged, columns are enlarged, and both rows and columns are enlarged.</p>
+</sec>
+<sec id="section12-1473871612455983">
+<title>Filter</title>
+<p>Discerning the three different colours that encode the type of an edge gets harder for larger graphs when the respective cell consists of only a few pixels on screen. Interactively switching on and off the edges of a certain colour facilitates this comparison in a more scalable way. Additionally, some details presented on demand include a certain filtering aspect as the following paragraph explains.</p>
+</sec>
+<sec id="section13-1473871612455983">
+<title>Details on demand</title>
+<p>When moving the mouse over a coloured matrix cell representing a dependency, the labels of both related code entities appear. Moving the mouse over a code entity or a cluster, the tool shows its name as a tooltip. Besides these basic features, it is possible to filter the graph structure on demand (<xref ref-type="fig" rid="fig3-1473871612455983">Figure 3</xref>): when an entity or cluster is hovered, all adjacent entities are highlighted at the leaf level in the entity bars of the hierarchies. Small coloured stripes indicate the adjacent entities while their colour encodes the type of adjacency. The alignment of the stripes (left or right in the vertical entity bar, top or bottom in the horizontal entity bar) discerns incoming edges from outgoing edges.</p>
+<fig id="fig3-1473871612455983" position="float">
+<label>Figure 3.</label>
+<caption><p>By highlighting a package or entity, small coloured stripes indicate adjacent entities (detail).</p></caption><graphic xlink:href="10.1177_1473871612455983-fig3.tif"/></fig>
+</sec>
+</sec>
+<sec id="section14-1473871612455983">
+<title>Application example</title>
+<p>Next, we provide a first application example to give an impression on how to use the introduced visualization technique (this example is illustrated in more detail in the supplementary materials). <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> depicts the 477 classes of the core of the Azureus project in our matrix visualization approach. It shows the package structure of the system on the left and a hierarchical structure derived by clustering on the top. The clustering was created by the graph-based software clustering tool Bunch.<sup><xref ref-type="bibr" rid="bibr15-1473871612455983">15</xref></sup> The tool follows a search-based approach and optimizes a clustering quality metric by using a hill climbing algorithm. Applying the clustering algorithm recursively, a hierarchy of clusters is created. The two graphs encode two types of dependencies automatically detected in the project. The first type consists of structural static code dependencies (method calls, aggregation, inheritance, etc.). The latter one is represented by co-change couplings (also known as logical couplings or evolutionary couplings). These are couplings that indicate that two classes have been changed frequently together in the past. The union of both graphs, which is defined as the union of the sets of edges, is used as the input for the clustering algorithm.</p>
+<p>The visualization enables the user to identify similar clusters at a glance: with the help of the background structure, we can immediately detect the most similar cluster combinations. Moreover, non-matched clusters result in rows or columns consisting only of a set of light-grey boxes without any darker ones. <xref ref-type="table" rid="table1-1473871612455983">Table 1</xref> lists some examples of such matched and non-matched clusters. For instance, the dark box in the lower right corner in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> shows that the <italic>disk</italic> package nearly matches the <italic>0.0.0</italic> cluster. The only light-coloured boxes in the row of the <italic>util.#</italic> package provide an example of a non-matched package. But there are significant differences between types of non-matched clusters. For example, while the <italic>util.#</italic> package is far from having a matching counterpart, the <italic>0.1.1</italic> cluster is just mainly distributed over two packages (<italic>peer</italic> and <italic>download</italic>). This union of two packages in one of the clusters, which is indicated by two horizontal mid-grey boxes, suggests that the <italic>peer</italic> and <italic>download</italic> packages are related and that an aggregation to a common parent package may improve the architecture of the software. Analogously, two vertical mid-grey boxes are an indicator that splitting a package could be recommendable in this application scenario (e.g. the <italic>client</italic> package).</p>
+<table-wrap id="table1-1473871612455983" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Examples of matched and non-matched clusters in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref>.</p>
+</caption>
+<graphic alternate-form-of="table1-1473871612455983" xlink:href="10.1177_1473871612455983-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Package decomposition</th>
+<th align="left">Clustered decomposition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>disk</td>
+<td>0.0.0</td>
+</tr>
+<tr>
+<td>tracker.prot.udp</td>
+<td>0.1.2.6.24</td>
+</tr>
+<tr>
+<td>ipfilter</td>
+<td>0.1.3.3</td>
+</tr>
+<tr>
+<td>util.#</td>
+<td>−</td>
+</tr>
+<tr>
+<td>−</td>
+<td>0.1.1</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The graphs consist of 2362 edges (structural) and 302 edges respectively (co-change). The size of the data set prohibits encoding an edge in much more than one pixel on the screen. Nevertheless, we can get a rough overview of the two graphs by just looking at the visualization presented in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref>. When we want to retrieve details on the graph structure, we may zoom in on one of the packages or clusters. For instance, in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref>, the <italic>tracker.server</italic> package and the l0.1.6 cluster are enlarged. An alternative way to reveal detailed information is to use the detail on demand and filtering functionality, as also demonstrated in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref>. The <italic>tracker.server</italic> package is also highlighted, which not only marks all contained entities but also shows the adjacency relations of these contained entities in the entity bars of the hierarchies as coloured stripes as explained in the section ‘Interaction’ and <xref ref-type="fig" rid="fig3-1473871612455983">Figure 3</xref>. In this example, we are able to state that the <italic>tracker.server</italic> package is significantly related to the <italic>logging, tracker.host, tracker.prot.udp</italic> and <italic>util</italic> packages. We can even retrieve the direction of the dependency by the alignment of the stripes: mostly the <italic>tracker.server</italic> package depends on the mentioned other packages (not vice versa) because the stripes are aligned to the left border of the entity bar (see also <xref ref-type="fig" rid="fig3-1473871612455983">Figure 3</xref>).</p>
+</sec>
+</sec>
+<sec id="section15-1473871612455983">
+<title>Advanced layout</title>
+<p>In the basic visualization technique described so far, there is room for some advanced layout improvements. One aspect is the level of detail of the two hierarchies: in large hierarchies it could be hard to manually find a matching level of both hierarchies. Another aspect concerns the ordering of the vertices: an optimized order might reveal additional insights. Next, we will introduce an adaptive level of detail algorithm and two sorting strategies and demonstrate the improvements in two small evaluations. In <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> we already applied these improvements to provide a more readable visualization.</p>
+<sec id="section16-1473871612455983">
+<title>Adaptive level of detail</title>
+<p>When comparing two decompositions, it is necessary to choose an appropriate level of detail. The greyscale matrix in the background is the most important criterion to assess the similarity of the two decompositions at a particular level. Roughly speaking, few black boxes and many white boxes indicate a high conformance whereas many low-contrast grey boxes indicate a low conformance. The interactive expand and collapse mechanism allows the user to explore different levels, but for larger data sets this could become tedious. Clustered decompositions tend to be deep and fine-grained hierarchies whereas, for instance, package structures are normally flat and more coarse-grained. Hence, an automatic or semi-automatic algorithm that helps finding two matching levels of detail would be of great help.</p>
+<p>We define a level of detail to be appropriate if the following conditions are true:</p>
+<list id="list8-1473871612455983" list-type="simple">
+<list-item>
+<p>
+<bold>Conformance</bold> The decompositions match as far as possible with respect to a measure of similarity.</p>
+</list-item>
+<list-item>
+<p>
+<bold>Significance</bold> The structure of both decompositions is preserved (i.e. not too many clusters should be collapsed).</p>
+</list-item>
+</list>
+<p>It is always possible to reach maximum conformance by totally collapsing both decompositions; however, this obviously violates the condition of significance. Hence, these two conditions usually must be traded off against each other.</p>
+<p>
+<xref ref-type="fig" rid="fig4-1473871612455983">Figure 4</xref> gives an example of how important the level of detail is. While in the default visualization on the left-hand side, the background patterns are much too fine-grained to easily find differences and similarities in both decompositions, the right-hand side image is much more readable because it has an appropriately chosen level of detail.</p>
+<fig id="fig4-1473871612455983" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>The example from <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> without and with an appropriately chosen level of detail.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612455983-fig4.tif"/>
+</fig>
+<sec id="section17-1473871612455983">
+<title>Optimization criterion</title>
+<p>To implement an automatic algorithm, we had to find a formal optimization criterion that assesses the quality of a particular level of detail state. Such a state consists of the partially collapsed decompositions. Each collapsed decomposition implies a partition of the code entities such as is presented in <xref ref-type="fig" rid="fig1-1473871612455983">Figure 1</xref>. Hence, an optimization criterion is a real-valued objective function defined on two partitions.</p>
+<p>We propose an objective function that counts the number of matching clusters of the two partitions <inline-formula id="inline-formula21-1473871612455983">
+<mml:math display="inline" id="math22-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula22-1473871612455983">
+<mml:math display="inline" id="math23-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>. The degree of similarity could be again computed by the Jaccard similarity coefficient. Adding these similarity coefficients for all possible cluster combinations, we come up with the following objective function.</p>
+<disp-formula id="disp-formula2-1473871612455983">
+<mml:math display="block" id="math24-1473871612455983">
+<mml:mrow>
+<mml:mi>f</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mspace width="0.25em"/>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>B</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>B</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:mtext>sim</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-1473871612455983" xlink:href="10.1177_1473871612455983-eq2.tif"/>
+</disp-formula>
+<p>To consider the different sizes of the cluster, we added a weighting coefficient <inline-formula id="inline-formula23-1473871612455983">
+<mml:math display="inline" id="math25-1473871612455983">
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. For two clusters <inline-formula id="inline-formula24-1473871612455983">
+<mml:math display="inline" id="math26-1473871612455983">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> and <inline-formula id="inline-formula25-1473871612455983">
+<mml:math display="inline" id="math27-1473871612455983">
+<mml:mrow>
+<mml:mi>B</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>, the coefficient sums up the number of elements of both clusters: <inline-formula id="inline-formula26-1473871612455983">
+<mml:math display="inline" id="math28-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>ω</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>B</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>:</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:mi>B</mml:mi>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>. It is independent of the similarity of the clusters and gives larger cluster combinations a higher weight.</p>
+</sec>
+<sec id="section18-1473871612455983">
+<title>Significance level thresholds</title>
+<p>This objective function, however, only evaluates the level of detail with respect to conformance and does not consider significance. But it is difficult to balance significance and conformance in a single objective function. An appropriate balance might also depend on the concrete application the user has in mind.</p>
+<p>To allow high conformance on different levels of significance, we introduce a significance level threshold for each of the two decompositions. This threshold prevents collapsing clusters beyond this level while optimizing the conformance.</p>
+<p>The grid pattern in the upper left corner of the visualization displays the two significance level thresholds. The user is able to set both levels with a single click. For instance, in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> the user has clicked on the grid element at the intersection of the third column and the third row, indicated by a black box. This means that both decompositions have to stay expanded up to the third level while optimizing the conformance of the decompositions.</p>
+</sec>
+<sec id="section19-1473871612455983">
+<title>Optimization algorithm</title>
+<p>The two decompositions, the objective function and the two significance level thresholds form a constrained maximization problem. As an optimization strategy for this problem an exhaustive search, however, is not applicable for non-trivial data sets. The number of possible partitions induced by a single hierarchy might already grow exponentially with the number of leaf nodes <inline-formula id="inline-formula27-1473871612455983">
+<mml:math display="inline" id="math29-1473871612455983">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>: in the worst case – a binary hierarchy – at least the <inline-formula id="inline-formula28-1473871612455983">
+<mml:math display="inline" id="math30-1473871612455983">
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math></inline-formula> intermediate nodes of the lowest collapsable level can be independently switched. This leads to at least <inline-formula id="inline-formula29-1473871612455983">
+<mml:math display="inline" id="math31-1473871612455983">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math></inline-formula> different partitions.</p>
+<p>Instead, we use a hill climbing algorithm to find a local maximum of the optimization problem. As an initialization, the algorithm expands the two decompositions to the minimal level, which is defined by the two significance level thresholds. Then it tries to maximize the objective function as follows (expand operations that improve the objective function persist while all other expand operations are directly undone):</p>
+<list id="list9-1473871612455983" list-type="order">
+<list-item>
+<p>Expand each collapsed node of the first hierarchy one by one.</p>
+</list-item>
+<list-item>
+<p>Repeat step (1) for all collapsed nodes of the second hierarchy.</p>
+</list-item>
+<list-item>
+<p>If nothing has improved in step 1 and 2, try to expand two nodes concurrently, one in the first and one in the second hierarchy (systematically over the quadratic number of all possible combinations).</p>
+</list-item>
+</list>
+<p>These three steps are repeated until they cannot provide any further improvement. The third step turned out to be helpful to skip local maxima because some pairs of clusters already match on a higher level, but even better on a lower level: only expanding one of the clusters does not lead to a better match, but concurrently expanding both does.</p>
+<p>Thus, our optimization strategy provides an interactively selectable level of detail with an adaptive refinement to underline matching parts of the two decompositions. Clicking on a grid element of the threshold visualization (the grid pattern in the upper left corner of the diagram), the algorithm automatically produces a layout of a few black boxes surrounded by many white ones. <xref ref-type="fig" rid="fig4-1473871612455983">Figure 4</xref> illustrates this process: while the image on the left-hand side shows two totally expanded hierarchies, the image on the right-hand side is actually created by applying the optimization algorithm (this image is also depicted in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> in larger size).</p>
+</sec>
+<sec id="section20-1473871612455983">
+<title>Evaluation</title>
+<p>Our impression from using the visualization technique is that the adaptive level of detail algorithm drastically reduces the time to find an appropriate level of detail. In a brief evaluation we want to substantiate that the algorithm finds useful solutions and reduces the number of necessary interactions. We employ the real-world data set that is later also used in the case study (‘Case study’ section). The data set consists of six software projects. To test the algorithm, we try to find a matching level of detail between the package structure and a clustered decomposition of the systems created with the clustering tool Bunch.</p>
+<p>We first identify an appropriately matching level by manually collapsing and expanding packages and clusters without using the adaptive algorithm. In particular, guided by the similarity metric that is encoded in the background of the matrix, we try to find a matching cluster for each of the major packages. When the solution satisfies our subjective assessment, we save the result and try to retrieve it by only using:</p>
+<list id="list10-1473871612455983" list-type="order">
+<list-item>
+<p>the collapse and expand mechanism for single clusters;</p>
+</list-item>
+<list-item>
+<p>the level collapse mechanism together with the collapse and expand mechanism for single clusters; or</p>
+</list-item>
+<list-item>
+<p>the adaptive level of detail algorithm (‘Optimization algorithm’ section) together with the collapse and expand mechanism for single clusters.</p>
+</list-item>
+</list>
+<p>For each condition, we compute the optimal solution starting at the totally expanded hierarchy. The conditions are assessed by measuring the minimal number of interactions the user would need to retrieve the result. We repeat this procedure for every of the six software projects.</p>
+<p><italic>Results</italic>: On average, the users would at least have to perform 36.7 interactions in condition (1), 16.0 in condition (2) and 7.3 in condition (3) to retrieve the manually derived level of detail. This means that the algorithm in (3) dramatically decreases the number of necessary interactions: the user would have to use only 20% of the interactions required when exclusively using the standard collapse and expand interactions (1) or only 46% required when also including the level collapse mechanism (2). Moreover, the low number of interactions in (3) shows that the algorithm produces results close to the meaningful manual solution.</p>
+</sec>
+</sec>
+<sec id="section21-1473871612455983">
+<title>Sorting</title>
+<p>The linear ordering of the rows and columns is elementary for the readability of a matrix graph visualization.<sup><xref ref-type="bibr" rid="bibr16-1473871612455983">16</xref></sup> With a random ordering no structure would be visible, whereas a good ordering would reveal important graph structures such as clusters, hub vertices or outliers. Different approaches and algorithms exist to create a reasonable layout; Mueller et al.,<sup><xref ref-type="bibr" rid="bibr16-1473871612455983">16</xref></sup> as well as Henry and Fekete,<sup><xref ref-type="bibr" rid="bibr17-1473871612455983">17</xref></sup> survey these techniques in detail.</p>
+<p>The hierarchical representation of the two software decompositions, however, constrains and partially defines this ordering in our visualization. If the decomposition follows a certain semantic, this mandatory sorting may already help to reveal the structure of the dependency graphs. Nevertheless, the ordering still leaves some degree of freedom: the positions of sibling clusters and code entities can be switched without violating the constraints.</p>
+<sec id="section22-1473871612455983">
+<title>Local diagonals</title>
+<p>When interpreting matrix diagrams, the diagonal is an important reference line.<sup><xref ref-type="bibr" rid="bibr18-1473871612455983">18</xref></sup> In a typical matrix representation of a graph, the cells on the diagonal represent self-edges. Our visualization depicts two decompositions at the same time. Thus, in contrast to most matrix graph visualizations, it uses different vertical and horizontal entity orders. A side-effect is that the former diagonal entries, which we call <italic>self-referencing cells</italic> in the following, are scattered all over the diagram. To regain a local diagonal structure, the tool sorts sibling code entities without destroying the hierarchical structure.</p>
+<p>If all self-referencing cells in a matrix are on the diagonal, an imaginary link between an arbitrary pair of self-referencing cells always forms a descending line (from left to right). This condition only holds globally for a perfect diagonal and thus usually cannot be established in our case due to the two different hierarchies. But we are able to fulfil the condition locally for each of the clusters on the lowest level of the hierarchies. We implemented an algorithm that aims at eliminating all ascending lines in those local clusters thereby creating local diagonal structures. <xref ref-type="fig" rid="fig5-1473871612455983">Figure 5</xref> illustrates the algorithm: in the first decomposition every pair of code entities in the same cluster is switched if the two self-referencing cells define an ascending line. The same procedure is applied to the second decomposition. Finally, all lines between sibling elements are descending and form local diagonals.</p>
+<fig id="fig5-1473871612455983" position="float">
+<label>Figure 5.</label>
+<caption><p>Sorting algorithm on leaf level. Black boxes mark self-referencing cells; ascending lines are dotted; descending lines are dashed; arrows indicate the transformations.</p></caption><graphic xlink:href="10.1177_1473871612455983-fig5.tif"/></fig>
+<p>Besides the locally regained diagonal structure, results of this local sorting algorithm are blocks of neighbouring entities in the one decomposition that all belong to the same cluster in the other decomposition. These <italic>mutual blocks</italic> reveal additional important information for comparing the two decompositions: they show how a cluster in one decomposition is spread over the other decomposition.</p>
+<p>The mutual blocks are encoded as boxes in the entity bars of the two decompositions. They look like a barcode and form the border lines between the icicle plots and the adjacency matrix (<xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref>). Each box represents a mutual block, which relates two clusters from the two decompositions. The brightness of the box corresponds to the Jaccard similarity of the two associated clusters: a black box stands for a good match whereas a grey or white box represents mutual blocks that only partially cover the two clusters.</p>
+<p>Although the similarity of clusters is already encoded in the matrix background, these mutual blocks help detect further interesting phenomena. Comparing the two forms of encoding, we observe that both are important because they support different tasks.</p>
+<list id="list11-1473871612455983" list-type="simple">
+<list-item>
+<p><bold>Matrix background</bold> From the background encoding of the similarity metric, users are able to retrieve which cluster in one hierarchy is most similar to which cluster in the other hierarchy. The background colour gives a rough impression of the extent of similarity.</p>
+</list-item>
+<list-item>
+<p><bold>Mutual blocks</bold> The mutual blocks are a kind of summary of the similarity information with respect to one hierarchy. For the particular hierarchy, they provide a better overview on which clusters are matched: the user only has to look at the hierarchy and its mutual blocks and does not need to search the whole matrix. Moreover, details can be retrieved in the mutual blocks with higher precision because the similarity is not only encoded in the colour but also in the size of the blocks. For instance, we see at a glance that the <italic>torrent</italic> package in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref> is only half matched. On the other hand, small differences in mostly matching clusters become visible, as is the case for the <italic>disk</italic> package in <xref ref-type="fig" rid="fig2-1473871612455983">Figure 2</xref>. This ability is very important for analysing evolving decomposition structures including only small changes.</p>
+</list-item>
+</list>
+</sec>
+<sec id="section23-1473871612455983">
+<title>Global sorting</title>
+<p>We usually cannot reconstruct the global diagonal because the two hierarchies constrain the ordering of vertices. Nevertheless, we may try to retrieve parts of it by placing the self-referencing cells as near as possible to the global diagonal. Analogously to local sorting, this goal can be expressed through minimizing the global number of ascending lines that connect the self-referencing cells.</p>
+<p>We found that this optimization problem is equivalent to the problem of minimizing edge crossings in a corresponding node–link-based hierarchy comparison, which is called the <italic>tanglegram layout problem</italic><sup><xref ref-type="bibr" rid="bibr19-1473871612455983">19</xref></sup> or the <italic>two-tree crossing minimization problem</italic>,<sup><xref ref-type="bibr" rid="bibr20-1473871612455983">20</xref></sup> an NP-hard problem . <xref ref-type="fig" rid="fig6-1473871612455983">Figure 6</xref> (top) provides an example of the corresponding visualizations for a graph consisting of five vertices. The diagram on the left shows our matrix-based comparison together with the ascending lines between the self-referencing cells, which measure the deviation from the global diagonal. The diagram in the middle depicts a transition step where the vertices in the matrix are connected by edges like in a node–link diagram; the number of edge crossings is equal to the number of ascending lines. Finally, the diagram on the right reflects the node–link-based hierarchy comparison, which can be created by distorting the node–link diagram from the transition step. The distortion does not change the number of edge crossings.</p>
+<fig id="fig6-1473871612455983" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Global sorting: Superfluous space character. The equivalence of minimizing ascending lines between self-referencing cells in our matrix-based hierarchy comparison and minimizing edge crossings in a corresponding node–link diagram.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612455983-fig6.tif"/>
+</fig>
+<p>This example already suggests the equivalence of the two problems, but the equivalence can also be proofed by induction as sketched in <xref ref-type="fig" rid="fig6-1473871612455983">Figure 6</xref> (bottom). We want to show that the number of ascending lines <inline-formula id="inline-formula30-1473871612455983">
+<mml:math display="inline" id="math32-1473871612455983">
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> in the matrix is equal to the number of edge crossings <inline-formula id="inline-formula31-1473871612455983">
+<mml:math display="inline" id="math33-1473871612455983">
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> in the transition step, is equal to the number of edge crossings <inline-formula id="inline-formula32-1473871612455983">
+<mml:math display="inline" id="math34-1473871612455983">
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> in the node–link comparison, i.e. <inline-formula id="inline-formula33-1473871612455983">
+<mml:math display="inline" id="math35-1473871612455983">
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>. The situation is trivial for <inline-formula id="inline-formula34-1473871612455983">
+<mml:math display="inline" id="math36-1473871612455983">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> vertices, where neither ascending lines <inline-formula id="inline-formula35-1473871612455983">
+<mml:math display="inline" id="math37-1473871612455983">
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> nor edge crossings <inline-formula id="inline-formula36-1473871612455983">
+<mml:math display="inline" id="math38-1473871612455983">
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> exist. In the following we will show that, if the assumption holds for <inline-formula id="inline-formula37-1473871612455983">
+<mml:math display="inline" id="math39-1473871612455983">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> vertices (<inline-formula id="inline-formula38-1473871612455983">
+<mml:math display="inline" id="math40-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>), it also holds for <inline-formula id="inline-formula39-1473871612455983">
+<mml:math display="inline" id="math41-1473871612455983">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> vertices: without loss of generality, we assume that the new vertex is added at the last position of the first hierarchy. Then, <inline-formula id="inline-formula40-1473871612455983">
+<mml:math display="inline" id="math42-1473871612455983">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>≤</mml:mo>
+<mml:mi>k</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math></inline-formula> vertices are positioned after the corresponding new vertex in the second hierarchy. As <xref ref-type="fig" rid="fig6-1473871612455983">Figure 6</xref> shows, this means that the number of ascending lines increases by <inline-formula id="inline-formula41-1473871612455983">
+<mml:math display="inline" id="math43-1473871612455983">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> because of <inline-formula id="inline-formula42-1473871612455983">
+<mml:math display="inline" id="math44-1473871612455983">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> self-referencingcells in the respective block (<inline-formula id="inline-formula43-1473871612455983">
+<mml:math display="inline" id="math45-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>); in the transition step, the number of edge crossings increases by <inline-formula id="inline-formula44-1473871612455983">
+<mml:math display="inline" id="math46-1473871612455983">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> because of <inline-formula id="inline-formula45-1473871612455983">
+<mml:math display="inline" id="math47-1473871612455983">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> horizontal lines (<inline-formula id="inline-formula46-1473871612455983">
+<mml:math display="inline" id="math48-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>); and in the final node–link diagram, the number of edge crossings increases by <inline-formula id="inline-formula47-1473871612455983">
+<mml:math display="inline" id="math49-1473871612455983">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> because of <inline-formula id="inline-formula48-1473871612455983">
+<mml:math display="inline" id="math50-1473871612455983">
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> skipped vertices (<inline-formula id="inline-formula49-1473871612455983">
+<mml:math display="inline" id="math51-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula>). Hence, <inline-formula id="inline-formula50-1473871612455983">
+<mml:math display="inline" id="math52-1473871612455983">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math></inline-formula>.</p>
+<p>Though the problem is NP-hard, there exist efficient heuristics. We implemented the hierarchy sort heuristic by Holten and van Wijk,<sup><xref ref-type="bibr" rid="bibr21-1473871612455983">21</xref></sup> which is also able to handle non-binary hierarchies and runs in <inline-formula id="inline-formula51-1473871612455983">
+<mml:math display="inline" id="math53-1473871612455983">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>·</mml:mo>
+<mml:mi>H</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math></inline-formula>, where <inline-formula id="inline-formula52-1473871612455983">
+<mml:math display="inline" id="math54-1473871612455983">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is the number of leave vertices and <inline-formula id="inline-formula53-1473871612455983">
+<mml:math display="inline" id="math55-1473871612455983">
+<mml:mrow>
+<mml:mi>H</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> is the maximum hierarchy height (and the number of collapse and expand cycles is constant).<sup><xref ref-type="bibr" rid="bibr19-1473871612455983">19</xref></sup></p>
+<p>The algorithm is based on collapse and expand operations, which allow a level by level sorting of the hierarchies (as described in detail by Nöllenburg et al.<sup><xref ref-type="bibr" rid="bibr19-1473871612455983">19</xref></sup>). A collapse–expand phase starts with the totally expanded hierarchies, optimizes the ordering of the leaf vertices for both hierarchies and then collapses the two hierarchies to the next lower level. This process continues until the root vertex is reached and is then reverted by expanding the hierarchies again level by level while sorting the leaf vertices. The collapse–expand phases are repeated until no further improvements can be reached.</p>
+<p>The optimization of leaf vertices is based on the barycentric method originally proposed by Sugiyama et al.<sup><xref ref-type="bibr" rid="bibr22-1473871612455983">22</xref></sup> to lay out the levels of a hierarchical graph: the leaf vertices that are siblings in the hierarchy are ordered according to the barycentres of the set of vertices they are connected with in the other hierarchy. This is done for the first hierarchy while the second hierarchy is fixed and then repeated vice versa.</p>
+<p>We perform global sorting once at start-up on the inner vertices of the completely expanded hierarchies. Since the procedure to retrieve the local diagonals is exact and simple, we still apply the local sorting algorithm to the code entities afterwards. Every time a hierarchy element is expanded or collapsed, local sorting is reapplied to always preserve local diagonals and mutual blocks. In contrast, global sorting does not need to be reapplied because expanding or collapsing a particular hierarchy element has only local effects and does not change the situation with respect to the other hierarchy elements.</p>
+</sec>
+<sec id="section24-1473871612455983">
+<title>Evaluation</title>
+<p>To estimate the effect of sorting, <xref ref-type="fig" rid="fig7-1473871612455983">Figure 7</xref> provides four examples: (a) and (b) illustrate the effect of local sorting, (c) and (d) show the importance of global sorting.</p>
+<fig id="fig7-1473871612455983" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>The effect of local sorting on mutual blocks: without sorting (a), with local sorting (b). The effect of global sorting on the background structure: without global sorting (c), with global sorting (d).</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612455983-fig7.tif"/>
+</fig>
+<p>Skipping local sorting as demonstrated in (a) has negative consequences for the mutual blocks in the entity bars of the hierarchies. The blocks are scattered among the leaves of the respective hierarchy element. Comparing (a) with (b) reveals that local sorting creates homogeneous mutual blocks, which help when analysing how the contained entities of a hierarchy element are distributed over the other hierarchy. Additionally, local sorting is necessary to reconstruct the local diagonals.</p>
+<p>The effect of global sorting is that the self-referencing cells, which are distributed over the whole diagram without global sorting in (c), move closer to the diagonal of the matrix, as shown in (d). The black and dark-grey rectangles, which contain many self-referencing cells, are thereby also aligned. This has some major advantages for comparing the two hierarchies: first, it is easier to get an overview on all matching clusters as we just have to follow the diagonal and do not have to search the whole diagram as necessary in (c). Second, gaps in the diagonal easily reveal outliers. These outliers could be packages that are not well matched and hence produce only light-grey boxes. Or we could find the missing dark box somewhere off the diagonal. This indicates that the two hierarchies indeed match at the current level of detail, but may conflict at a higher level because otherwise the algorithm would have been able to arrange the respective box near the diagonal. Third, the mid-grey boxes belonging to the same hierarchy element are placed near to each other. This reduces the effort to find the hierarchy elements that are united or split in the other hierarchy.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section25-1473871612455983" sec-type="cases">
+<title>Case study</title>
+<p>The visualization approach was motivated by the application of studying software clustering results. Hence, the following visual analysis will apply our visualization technique to the previous study on software clustering.<sup><xref ref-type="bibr" rid="bibr6-1473871612455983">6</xref></sup> The study incorporated the software clustering tool Bunch,<sup><xref ref-type="bibr" rid="bibr15-1473871612455983">15</xref></sup> an approach based on the principle of high cohesion and low coupling of modules, to compare different data sources for software clustering. We assessed the clustered software decompositions retrieved from six sample projects by comparing them with a reference decomposition: the actual package structure of the project. As discussed in the section ‘Comparing architectures’, this quantitative assessment left some questions unanswered.</p>
+<p>In the following we will analyse the software decompositions again, but now in a more qualitative and explorative approach. The tasks defined in the section ‘Tasks’ provide different views on the data sources and clustering results.</p>
+<p>In general, our analyses consider all six sample projects of the study, namely, Azureus, JEdit, JFreeChart, JFtp, JUnit and Tomcat. For practical reasons, we depict only the resulting visualizations for JFtp, the smallest of the sample projects, in the paper and provide respective visualizations of the other systems as supplementary material. Observations and findings that supplement the original analysis of the clustering results are reported in the following.</p>
+<sec id="section26-1473871612455983">
+<title>Compare dependencies (Task 1)</title>
+<p>The dependency graphs are the basis for the clustering process: they are the input for the clustering algorithm. On the one hand we used static code dependencies, such as inheritance, aggregation and usage, to represent a traditional software clustering approach; these dependencies form the Structural Class Dependency Graph (SCDG). On the other hand, we used co-change couplings, which form the Evolutionary Class Dependency Graph (ECDG), to represent hidden dependencies. These co-change couplings relate two classes if these classes have been frequently changed together in the evolution of the software project. The dependency strength consists of a support value, the absolute number of co-changes, and a confidence value, a relative number of co-changes. To reduce the noise in the data set, a filter eliminates weak dependencies: we consider only two classes as coupled by co-change if the confidence value is higher than 0.8. This threshold value was derived from the empirical results in our previous study<sup><xref ref-type="bibr" rid="bibr6-1473871612455983">6</xref></sup> where this setup tends to produce good clustering results. However, in this first example unrelated to clustering we wanted to analyse the raw data and therefore did not apply a filtering for co-change couplings.</p>
+<p>The first phase of the case study uses the visualization as a graph comparison tool (Task 1). Since clustered decompositions are not yet relevant, the package structure is employed as default decomposition. The background structure thus does not carry any further information here. The graph visualization, however, reveals significant differences in the graph structures, as illustrated for JFtp in <xref ref-type="fig" rid="fig8-1473871612455983">Figure 8</xref>.</p>
+<fig id="fig8-1473871612455983" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Graph comparison between the SCDG and the unfiltered ECDG for the JFtp project; the package structure provides a default decomposition.</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612455983-fig8.tif"/>
+</fig>
+<list id="list12-1473871612455983" list-type="simple">
+<list-item>
+<p>
+<bold>SCDG (blue and red dependencies)</bold> Sparse graphs, but with dependencies that cover most of the nodes at least once. Some outstanding nodes with many incoming or outgoing dependencies form kind of hub nodes.</p>
+</list-item>
+<list-item>
+<p>
+<bold>ECDG (purple and red dependencies)</bold> Dense graphs (without filtering as shown in <xref ref-type="fig" rid="fig8-1473871612455983">Figure 8</xref>) up to very sparse ones (with a strong filtering). Local concentrations of edges form dense clusters, but many nodes are not covered by any dependency.</p>
+</list-item>
+</list>
+<p>These results show two main drawbacks of the ECDG: the local concentration of dependency information and the overall low density of the dependency graph, especially for stronger filtering setups.</p>
+<p>Furthermore, the intersection of the dependencies (red dependencies) of both graphs is small and mostly relates classes of the same package. Since those dependencies that do not cross package borders help retrieving the package structure this tendency explains why it is beneficial to give those dependencies more weight in the clustering process.</p>
+</sec>
+<sec id="section27-1473871612455983">
+<title>Decompositions and dependencies (Task 2)</title>
+<p>In this second stage of our analysis, we also consider software decompositions produced by the employed clustering approach. We use the vertical axis to depict the clustered decomposition based on the structural code dependencies (SCDG) and the horizontal axis for the one based on the co-change dependencies (ECDG). <xref ref-type="fig" rid="fig9-1473871612455983">Figure 9</xref> shows such a visualization for the JFtp project.</p>
+<fig id="fig9-1473871612455983" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>Two different clustered decompositions, one based on structural dependencies (vertical), the other based on co-change dependencies (horizontal).</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612455983-fig9.tif"/>
+</fig>
+<p>In the evolutionary software decomposition (<xref ref-type="fig" rid="fig9-1473871612455983">Figure 9</xref>, top), cluster <italic>x</italic> looks interesting: it roughly covers a third of the hierarchy, but is not subdivided further. There also exists a cluster <italic>x</italic> in the structural software decomposition (<xref ref-type="fig" rid="fig9-1473871612455983">Figure 9</xref>, left), but it is much smaller. This cluster <italic>x</italic> represents all elements that could not be clustered because there was not any dependency information available for them. Thus, there are no co-change dependencies available for about a third of the classes of the software system, and the clustering algorithm could only cluster the other two-thirds of the system. This situation is even worse in the other sample projects. This sparse coverage seems to be the main problem of clustering a software system exclusively with co-change information (ECDG).</p>
+<p>Admittedly, we already uncovered this fact in the previous study. But there we needed a metric to measure the coverage, in contrast to the visualization, where we were able to grasp the same fact without even intentionally looking for it.</p>
+<p>Analysing the relation of the hierarchies and the graphs in more detail, we observe in the visualization that deeper hierarchies come along with clearly identifiable clusters indicated by visual clusters in the dependency graphs. The clustering algorithm seems to produce flatter hierarchies when the clusters in the dependency graphs are less clear. However, we are not able to find any significant difference between structural and evolutionary decompositions with respect to this effect.</p>
+<p>All in all, our case study confirms that the conformance between the structural and evolutionary decompositions is low. This might indicate that both data sources actually cover different dimensions of code dependencies – a combination of both data sources combines these two dimensions. Actually, this led to slightly better clustering results than we found in our previous study.</p>
+</sec>
+<sec id="section28-1473871612455983">
+<title>Compare decompositions (Task 3)</title>
+<p>With our visualization the user is able to detect matching clusters at first glance – perhaps the most striking feature of the technique. For instance, in <xref ref-type="fig" rid="fig10-1473871612455983">Figure 10</xref> the <italic>event</italic> package is almost perfectly matched by cluster <italic>0.0.2</italic>, as we learn from the background shading of the matrix. The precondition is an appropriate level of detail, which could be easily gained by the level of detail optimization algorithm.</p>
+<fig id="fig10-1473871612455983" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>Clustered software decomposition based on the combined structural and evolutionary graphs compared with the reference decomposition (package structure).</p>
+</caption>
+<graphic xlink:href="10.1177_1473871612455983-fig10.tif"/>
+</fig>
+<p>We use this ability of detecting well-matched packages to identify those packages that are either fairly matched or non-matched. In most cases, nearly perfectly matched packages possess a high structural cohesion, in other words, many structural dependencies connect the classes. Concurrently, those well-matched packages are sometimes, but less often supported by good co-change cohesion: the classes of the cluster were frequently changed together. In contrast, matching clusters predominantly based on high co-change cohesion are rare. This explains why combining structural and co-change data improved the clustering quality in the quantitative study and using exclusively co-change data was only partly successful.</p>
+<p>In contrast, utility packages, packages that provide some global functionality, could hardly be retrieved by our clustering approach. The visualization supports identifying those packages, even when they are not named <italic>utility</italic> or <italic>util</italic>, by their characteristic structure: utility packages do not have outgoing dependencies to other non-utility packages, but many incoming ones from diverse packages. We are able to gain this information either by looking at the adjacency matrix or by using the interactive details on demand that highlight all adjacent classes (including the direction of adjacency) for a package as demonstrated in <xref ref-type="fig" rid="fig3-1473871612455983">Figure 3</xref>. Once we identified these utility packages, the visually encoded cluster similarity revealed no significant correspondence to the clustered packages. This problem is a known problem of dependency-based clustering approaches.<sup><xref ref-type="bibr" rid="bibr23-1473871612455983">23</xref></sup> A preprocessing that detects such packages before the actual clustering, such as that proposed by Mancoridis et al.,<sup><xref ref-type="bibr" rid="bibr15-1473871612455983">15</xref></sup> might improve the clustering results.</p>
+<p>Our visualization also showed that in some setups, in particular those involving the larger projects, the clustering algorithm was not able to create a decomposition with at least a roughly matching granularity: all possible levels were much too fine-grained in contrast to the reference decomposition. Repairing this weakness of the algorithm (e.g. by forcing the algorithms to produce more levels) might also result in much better clustering results for these setups.</p>
+</sec>
+<sec id="section29-1473871612455983">
+<title>Threats to validity</title>
+<p>The presented case study is a qualitative, task-orientated evaluation of the visualization tool, and, as a consequence, does not quantitatively or comparatively measure the performance or effectiveness of the visualization. The case study was performed by the authors themselves and did not involve other users. For discussing the validity of this study in detail, we follow the criteria for judging qualitative research introduced by Lincoln and Guba.<sup><xref ref-type="bibr" rid="bibr24-1473871612455983">24</xref></sup></p>
+<list id="list13-1473871612455983" list-type="simple">
+<list-item>
+<p>
+<bold>Credibility</bold> Using a data set derived from real-world software projects and analysing the results of a published study on software clustering increases the credibility of the case study. On the other hand, the authors being the only participants of the case study limits its credibility.</p>
+</list-item>
+<list-item>
+<p>
+<bold>Transferability</bold> By analysing the results of the clustering experiment, the case study is focused on a specific example of comparing software architectures; in general, it cannot be assumed that the visualization technique works in other scenarios. Some aspects, however, suggest a certain transferability: different software projects and tasks are analysed, which shows a certain flexibility of the approach. The results include multiple kinds of observations, each kind having the potential to be transferable to other scenarios. Moreover, the data model is defined in detail, which enables the reader to rate the transferability at least from a technical point of view.</p>
+</list-item>
+<list-item>
+<p>
+<bold>Dependability</bold> The case study is dependable as it could be replicated by reimplementing the visualization approach, which is described in sufficient detail, and applying it to a data set. When aiming at a close replication, the data set can be retrieved from open sources; the full process is described in previous work.<sup><xref ref-type="bibr" rid="bibr6-1473871612455983">6</xref></sup> Nevertheless, interpreting visualizations has a strong subjective component: even a close replicate may come to different conclusions.</p>
+</list-item>
+<list-item>
+<p>
+<bold>Confirmability</bold> Through describing the observations in detail and providing all visualizations as supplementary material, the results of the case study become confirmable. Sometimes, however, some additional knowledge on the original clustering experiment<sup><xref ref-type="bibr" rid="bibr6-1473871612455983">6</xref></sup> could be necessary to validate the particular conclusions.</p>
+</list-item>
+</list>
+<p>The case study shows, with some limitations of validity, how the visualization can be leveraged to interpret software clustering results in different tasks and software projects. However, it does not allow direct conclusions on the applicability and effectiveness of the approach in a real-world software development scenario.</p>
+</sec>
+</sec>
+<sec id="section30-1473871612455983">
+<title>Related work</title>
+<p>Software architecture visualization is an established discipline in software visualization research.<sup><xref ref-type="bibr" rid="bibr25-1473871612455983">25</xref>,<xref ref-type="bibr" rid="bibr4-1473871612455983">4</xref></sup> Many tools from this area visualize software decompositions and code dependencies: <italic>SHriMP</italic>,<sup><xref ref-type="bibr" rid="bibr26-1473871612455983">26</xref></sup><italic>Software Landscapes</italic><sup><xref ref-type="bibr" rid="bibr27-1473871612455983">27</xref></sup> or <italic>Class Blueprints</italic>,<sup><xref ref-type="bibr" rid="bibr28-1473871612455983">28</xref></sup> to name just a few. Most of these visualizations employ the node–link metaphor to represent a dependency graph structure. But matrix-based visualizations of graphs seem to gain importance because of their advantages when it comes to visualizing larger graphs.<sup><xref ref-type="bibr" rid="bibr10-1473871612455983">10</xref></sup> They have already been employed to analyse dependencies of software projects, for example, method calls<sup><xref ref-type="bibr" rid="bibr29-1473871612455983">29</xref></sup> or co-change couplings.<sup><xref ref-type="bibr" rid="bibr30-1473871612455983">30</xref></sup> Originating from the analysis of manufacturing processes, so-called <italic>Dependency Structure Matrices</italic> are also able to visualize software architectures in a matrix structure.<sup><xref ref-type="bibr" rid="bibr31-1473871612455983">31</xref></sup> Owing to a specialized sorting, these matrices help to detect cyclic dependencies and architecture violations. Recently, Zeckzer<sup><xref ref-type="bibr" rid="bibr32-1473871612455983">32</xref></sup> presented an approach that is similar to ours as it aims at comparing different dependency types in software projects. Additional to using different colours, this approach splits each cell of the matrix into <inline-formula id="inline-formula54-1473871612455983">
+<mml:math display="inline" id="math56-1473871612455983">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math></inline-formula> pieces, whereby each piece represents a certain dependency type. This allows comparing more than two types of dependencies, but also reduces the scalability of the visualization.</p>
+<p>Visualization has also played a role in software clustering and has helped to present single clustering decompositions in a readable way. Hierarchical decompositions have been depicted in a form of tree diagrams,<sup><xref ref-type="bibr" rid="bibr33-1473871612455983">33</xref></sup> code dependencies have been represented as graph visualizations<sup><xref ref-type="bibr" rid="bibr34-1473871612455983">34</xref></sup> and similarity of code entities in high-dimensional feature spaces have been visualized as similarity matrices.<sup><xref ref-type="bibr" rid="bibr35-1473871612455983">35</xref></sup> Other clustering related research communities use similar forms of cluster visualizations.</p>
+<p>These visualizations are able to present a single software architecture description or a single clustering result. However, to the best of our knowledge, no approach uses a matrix visualization to concurrently compare different graphs and hierarchies, neither in the domain of software architecture visualization nor in clustering-related visualizations.</p>
+<p>Nevertheless, there exist specialized visualizations to compare different hierarchies (without a graph structure). A straightforward approach is to place two hierarchies face to face with each other and connect related leaves by visual links; however, edge crossings reduce the readability of such visualization. There exist heuristics that alleviate this problem by minimizing the number of crossings.<sup><xref ref-type="bibr" rid="bibr19-1473871612455983">19</xref></sup> We employ one of these algorithms to globally order the entities of our matrix (‘Global sorting’ section). Holten and van Wijk<sup><xref ref-type="bibr" rid="bibr21-1473871612455983">21</xref></sup> follow a different strategy and enhance the approach by bundling links into meaningful groups. Furthermore, brushing is another paradigm to express similarities of hierarchy nodes. For instance, TreeJuxtaposer<sup><xref ref-type="bibr" rid="bibr36-1473871612455983">36</xref></sup> displays similar sub-tree structures interactively by highlighting the best corresponding node based on the Jaccard coefficient. Many other visualizations that compare hierarchical structures exist; Graham and Kennedy<sup><xref ref-type="bibr" rid="bibr37-1473871612455983">37</xref></sup> provide a more exhaustive survey.</p>
+<p>In the field of bioinformatics, <italic>cluster heat maps</italic> are a popular visualization technique to analyse large clustered genome data sets.<sup><xref ref-type="bibr" rid="bibr38-1473871612455983">38</xref></sup> These heat maps consist, first, of a colour-coded matrix that usually relates genes (objects) to a set of conditions (attributes), and second, of an attached hierarchy retrieved by clustering. Not only the objects can be clustered, but also the attributes: a second hierarchy groups the attributes of the matrix. Concurrently finding an optimal clustering of objects and attributes is known as <italic>biclustering</italic> (e.g. Madeira and Oliveira<sup><xref ref-type="bibr" rid="bibr39-1473871612455983">39</xref></sup> give an overview). These cluster heat maps, indeed, look similar to our approach, especially with two hierarchies attached. Nonetheless, the fundamental difference is that the cluster maps do not compare two hierarchies on the same set of objects, but help concurrently clustering two independent sets: objects and attributes.</p>
+<p>Software clustering results are often evaluated by comparing them to a reference decomposition of approved quality. As applied in our previous study, a metric provides a similarity value. These metrics usually work on flattened decomposition. But there exist first approaches that additionally regard the hierarchical structure of the decompositions.<sup><xref ref-type="bibr" rid="bibr33-1473871612455983">33</xref>,<xref ref-type="bibr" rid="bibr40-1473871612455983">40</xref></sup> These metric-based approaches may be sufficient to get a quality measure for an automatically created decomposition, but do not explain the difference.</p>
+<p>Other tools allow the user to visually compare graph structures. For instance, Andrews et al.<sup><xref ref-type="bibr" rid="bibr41-1473871612455983">41</xref></sup> present a node–link approach to compare business processes and surveys related to node–link approaches. Beside these specialized tools, every dynamic graph visualization approach enables graph comparisons: the two contrasting graphs form a sequence of changing graphs. There even exist dynamic compound graph visualizations, which are able to concurrently display a changing hierarchy.<sup><xref ref-type="bibr" rid="bibr42-1473871612455983">42</xref></sup> These visualizations, however, are more suitable for evolving graphs and hierarchies, but not to contrast two totally different data sets like those discussed in this paper.</p>
+</sec>
+<sec id="section31-1473871612455983">
+<title>Applications in software visualization and beyond</title>
+<p>The introduced visualization technique was originally motivated by the need to compare software decompositions and different code dependency types in our research project. Hence, the primary users of the visualization are the authors themselves. The visualization provided additional insights as discussed in the ‘Case study’ section. Nevertheless, the approach might be applied to the following more general visualization problems. These scenarios, however, represent only an outlook as they are not backed by the case study or other empirical evidence.</p>
+<p>In the area of software visualization, the introduced technique might be directly used by software developers. The different graphs that a developer might want to compare could be call or aggregation graphs, inheritance dependency graphs or other graphs consisting of code couplings such as co-change or code clones. A project is usually decomposed by a dominating hierarchy, for instance the directory or package structure of the system. Other hierarchies might not stem only from clustering, but could also be a different version of the package structure, a hierarchy induced by the cross-cutting concern in an aspect-orientated system, or the layers of the software architecture.</p>
+<p>For instance, the growth of a software project might have led to a flawed architecture of a software system; the developers want to improve the design of the system by regrouping the classes. They apply a clustering algorithm, but the proposed result is too far from their original design, which is a common problem when applying software clustering.<sup><xref ref-type="bibr" rid="bibr43-1473871612455983">43</xref></sup> The visualization now helps comparing the original package structure and the clustering result; it links the hierarchy to the graphs by revealing the clusters that the algorithm detected. The background pattern shows non-matched packages, which could be candidates for restructuring because the clustering algorithm was not able to confirm them. The algorithm might propose to split them or unite them with other packages. Later on, developers who did not take part in the remodularization phase could track the changes by comparing the original decomposition of the system to the current one by also using the visualization technique.</p>
+<p>The underlying data structure of the visualization – graphs and hierarchies – are not specific to software analysis. Basically, all hierarchical clustering approaches produce similar data: one or more hierarchies, which might be compared with each other or with a reference hierarchy, and one or more graph structures or similarity matrices that provide the clustering criterion. Hence, the visualization might be of interest in general for people who are researching or applying clustering algorithms. Related to clustering, classification algorithms, another data mining technique, work with similar structures.</p>
+<p>The three tasks that we derived from our application scenario (‘Tasks’ section) are specializations of more general tasks. Abstracting the tasks allows looking for other areas of application, not limited to only software visualization and clustering research.</p>
+<list id="list14-1473871612455983" list-type="bullet">
+<list-item>
+<p>Task 1 is based on the general task of <italic>comparing graphs</italic>.</p>
+</list-item>
+<list-item>
+<p>Task 2 is based on the general task of <italic>analysing compound graphs</italic>.</p>
+</list-item>
+<list-item>
+<p>Task 3 is based on the general task of <italic>comparing hierarchies</italic>.</p>
+</list-item>
+</list>
+<p>In summary, the three general tasks describe the problem of comparing compound graphs. Hence, the visualization could be applied in every application where compound graphs evolve or could be retrieved from different data sources. To give an example, when analysing co-authorship in digital libraries, authors are connected by joint publications and hierarchically organized into communities. This compound graph structure changes over time, which can be analysed using our visualization. Moreover, different community extraction algorithms may propose different results or competing hierarchical structures, such as the assignment to working groups, faculties and universities, and could be of interest. Furthermore, every application scenario of a hierarchy comparison<sup><xref ref-type="bibr" rid="bibr37-1473871612455983">37</xref></sup> can be a potential application for the introduced visualization technique: in bioinformatics, different variants of phylogenetic trees classify species or, in ontology research, different hierarchical structures have to be mapped.</p>
+</sec>
+<sec id="section32-1473871612455983" sec-type="conclusions">
+<title>Conclusion</title>
+<p>In this paper we analysed how to compare software architectures with respect to software decompositions and code dependencies. To this end, we developed a novel visualization technique based on an adjacency matrix representation of graphs. The visual analysis of the results of a previous quantitative study on software clustering shows that the visualization supports the analysis tasks introduced in the ‘Tasks’ section in this scenario. The main capabilities of the visualization are:</p>
+<list id="list15-1473871612455983" list-type="bullet">
+<list-item>
+<p>concurrently contrasting software decompositions and code dependencies (‘Dependency representation’ section and ‘Decomposition representation’ section);</p>
+</list-item>
+<list-item>
+<p>detecting matching and non-matching parts in software decompositions (‘Decomposition representation’ section); and</p>
+</list-item>
+<list-item>
+<p>semi-automatically finding a matching level of detail comparing two software decompositions (‘Adaptive level of detail’ section).</p>
+</list-item>
+</list>
+<p>Our visualization technique is the first approach towards visually comparing architecture descriptions that consist of a decomposition of the software and code dependencies. While it has been a valuable research tool for our application, its effectiveness in other software engineering applications, however, is still to be verified (‘Case study’ section). In general, the visualization contrasts compound graph structures and might be of use in applications beyond software visualization such as data mining, digital libraries research, bioinformatics or ontology research (‘Applications in software visualization and beyond’ section).</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This work was supported by the Deutsche Forschungsgemeinschaft (DFG) [grant number DI 728/8-1/2].</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1473871612455983">
+<label>1.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Bowman</surname><given-names>IT</given-names></name>
+<name><surname>Holt</surname><given-names>RC</given-names></name>
+<name><surname>Brewster</surname><given-names>NV.</given-names></name>
+</person-group> <article-title>Linux as a case study: its extracted software architecture</article-title>. In: <conf-name>ICSE ’99: proceedings of the 21st international conference on software engineering</conf-name>, <conf-loc>Los Angeles, CA, USA</conf-loc>, <conf-date>22-22 May 1999</conf-date>, pp. <fpage>555</fpage>–<lpage>563</lpage>. <conf-loc>New York, NY, USA: ACM</conf-loc>.</citation>
+</ref>
+<ref id="bibr2-1473871612455983">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Maqbool</surname><given-names>O</given-names></name>
+<name><surname>Babri</surname><given-names>HA.</given-names></name>
+</person-group>
+<article-title>Hierarchical clustering for software architecture recovery</article-title>. <source>IEEE T Software Eng</source> <year>2007</year>; <volume>33</volume>: <fpage>759</fpage>–<lpage>780</lpage>.</citation>
+</ref>
+<ref id="bibr3-1473871612455983">
+<label>3.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zimmermann</surname><given-names>T</given-names></name>
+<name><surname>Diehl</surname><given-names>S</given-names></name>
+<name><surname>Zeller</surname><given-names>A</given-names></name>
+</person-group>. <article-title>How history justifies system architecture (or not)</article-title>. In: <conf-name>IWPSE ’03: proceedings of the 6th international workshop on principles of software evolution</conf-name>, <conf-loc>Helsinki, Finland</conf-loc>, <conf-date>1–2 September 2003</conf-date>, pp. <fpage>73</fpage>-<lpage>83</lpage>, <conf-loc>Los Alamitos, CA, USA:IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr4-1473871612455983">
+<label>4.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Ghanam</surname><given-names>Y</given-names></name>
+<name><surname>Carpendale</surname><given-names>S</given-names></name>
+</person-group>. <article-title>A survey paper on software architecture visualization</article-title>. Technical Report 2008-906-19, <publisher-name>University of Calgary, Canada.</publisher-name></citation>
+</ref>
+<ref id="bibr5-1473871612455983">
+<label>5.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Beck</surname><given-names>F</given-names></name>
+<name><surname>Diehl</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Visual comparison of software architectures</article-title>. In: <conf-name>SoftVis ’10: proceedings of the ACM 2010 symposium on software visualization</conf-name>, <conf-loc>Salt Lake City, Utah, USA</conf-loc>, <conf-date>25-26 October 2010</conf-date>, pp. <fpage>183</fpage>–<lpage>192</lpage>. <conf-loc>New York, NY, USA: ACM</conf-loc></citation>
+</ref>
+<ref id="bibr6-1473871612455983">
+<label>6.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Beck</surname><given-names>F</given-names></name>
+<name><surname>Diehl</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Evaluating the impact of software evolution on software clustering</article-title>. In: <conf-name>WCRE ’10: proceedings of the 17th working conference on reverse engineering</conf-name>, <conf-loc>Beverly, MA, USA</conf-loc>, <conf-date>13-16 October 2010</conf-date>, pp. <fpage>99</fpage>–<lpage>108</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr7-1473871612455983">
+<label>7.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wen</surname><given-names>Z</given-names></name>
+<name><surname>Tzerpos</surname><given-names>V</given-names></name>
+</person-group>. <article-title>An effectiveness measure for software clustering algorithms</article-title>. In: <conf-name>IWPC ’04: proceedings of the 12th international workshop on program comprehension</conf-name>, <conf-loc>Bari, Italy</conf-loc>, <conf-date>24-26 June 2004</conf-date>, pp. <fpage>194</fpage>–<lpage>203</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr8-1473871612455983">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chikofsky</surname><given-names>EJ</given-names></name>
+<name><surname>Cross</surname><given-names>JH.</given-names></name>
+</person-group>
+<article-title>Reverse engineering and design recovery: a taxonomy</article-title>. <source>IEEE Software</source> <year>1990</year>; <volume>7</volume>: <fpage>13</fpage>–<lpage>17</lpage>.</citation>
+</ref>
+<ref id="bibr9-1473871612455983">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Stevens</surname><given-names>WP</given-names></name>
+<name><surname>Myers</surname><given-names>GJ</given-names></name>
+<name><surname>Constantine</surname><given-names>LL.</given-names></name>
+</person-group>
+<article-title>Structured design</article-title>. <source>IBM Syst J</source> <year>1974</year>; <volume>13</volume>: <fpage>115</fpage>–<lpage>139</lpage>.</citation>
+</ref>
+<ref id="bibr10-1473871612455983">
+<label>10.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Ghoniem</surname><given-names>M</given-names></name>
+<name><surname>Fekete</surname><given-names>JD</given-names></name>
+<name><surname>Castagliola</surname><given-names>P</given-names></name>
+</person-group>. <article-title>A comparison of the readability of graphs using node–link and matrix-based representations</article-title>. In: <conf-name>INFOVIS ’04: IEEE symposium on information visualization</conf-name>, <conf-loc>Austin, TX, USA</conf-loc>, <conf-date>10-12 October 2004</conf-date>, pp. <fpage>17</fpage>–<lpage>24</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society.</conf-loc></citation>
+</ref>
+<ref id="bibr11-1473871612455983">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Henry</surname><given-names>N</given-names></name>
+<name><surname>Fekete</surname><given-names>JD</given-names></name>
+<name><surname>Mcguffin</surname><given-names>MJ.</given-names></name>
+</person-group>
+<article-title>Nodetrix: a hybrid visualization of social networks</article-title>. <source>IEEE T Vis Comput Gr</source> <year>2007</year>; <volume>13</volume>: <fpage>1302</fpage>–<lpage>1309</lpage>.</citation>
+</ref>
+<ref id="bibr12-1473871612455983">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kruskal</surname><given-names>JB</given-names></name>
+<name><surname>Landwehr</surname><given-names>JM.</given-names></name>
+</person-group>
+<article-title>Icicle plots: better displays for hierarchical clustering</article-title>. <source>Am Stat</source> <year>1983</year>; <volume>37</volume>: <fpage>162</fpage>–<lpage>168</lpage>.</citation>
+</ref>
+<ref id="bibr13-1473871612455983">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Shneiderman</surname><given-names>B.</given-names></name>
+</person-group>
+<article-title>The eyes have it: a task by data type taxonomy for information visualizations</article-title>. In: <conf-name>VL ’96: proceedings of the 1996 IEEE symposium on visual languages</conf-name>, <conf-loc>Boulder, Colorado, USA</conf-loc>, <conf-date>3–6 September 1996</conf-date>. <conf-loc>Washington, DC, USA: IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr14-1473871612455983">
+<label>14.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Rao</surname><given-names>R</given-names></name>
+<name><surname>Card</surname><given-names>SK</given-names></name>
+</person-group>. <article-title>The table lens: merging graphical and symbolic representations in an interactive focus + context visualization for tabular information</article-title>. In: <conf-name>CHI ’94: proceedings of the SIGCHI conference on Human factors in computing systems</conf-name>, <conf-loc>Boston, MA, USA</conf-loc>, <conf-date>24-28 April 1994</conf-date>, pp. <fpage>318</fpage>–<lpage>322</lpage>. <conf-loc>New York, NY: ACM</conf-loc>.</citation>
+</ref>
+<ref id="bibr15-1473871612455983">
+<label>15.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Mancoridis</surname><given-names>S</given-names></name>
+<name><surname>Mitchell</surname><given-names>BS</given-names></name>
+<name><surname>Chen</surname><given-names>Y</given-names></name>
+<etal/>
+</person-group>. <article-title>Bunch: a clustering tool for the recovery and maintenance of software system structures</article-title>. In: <conf-name>ICSM ’99: proceedings of the IEEE international conference on software maintenance</conf-name>, <conf-loc>Oxford, England, UK</conf-loc>, <conf-date>30 August-3 September1999</conf-date>, pp. <fpage>50</fpage>–<lpage>59</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr16-1473871612455983">
+<label>16.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Mueller</surname><given-names>C</given-names></name>
+<name><surname>Martin</surname><given-names>B</given-names></name>
+<name><surname>Lumsdaine</surname><given-names>A</given-names></name>
+</person-group>. <article-title>A comparison of vertex ordering algorithms for large graph visualization</article-title>. In: <conf-name>APVIS ’07: proceedings of the 6th international Asia-Pacific symposium on visualization</conf-name>, <conf-loc>Sydney, Australia</conf-loc>, <conf-date>5-7 February 2007</conf-date>, pp. <fpage>141</fpage>–<lpage>148</lpage>. <conf-loc>Washington, DC, USA: IEEE</conf-loc></citation>
+</ref>
+<ref id="bibr17-1473871612455983">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Henry</surname><given-names>N</given-names></name>
+<name><surname>Fekete</surname><given-names>J-D.</given-names></name>
+</person-group>
+<article-title>Matrixexplorer: a dual-representation system to explore social networks</article-title>. <source>IEEE T Vis Comput Gr</source> <year>2006</year>; <volume>12</volume>: <fpage>677</fpage>–<lpage>684</lpage>.</citation>
+</ref>
+<ref id="bibr18-1473871612455983">
+<label>18.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Mueller</surname><given-names>C</given-names></name>
+<name><surname>Martin</surname><given-names>B</given-names></name>
+<name><surname>Lumsdaine</surname><given-names>A.</given-names></name>
+</person-group>
+<article-title>Interpreting large visual similarity matrices</article-title>. In: <conf-name>APVIS ’07: proceedings of the 6th international Asia-Pacific symposium on visualization</conf-name>, <conf-loc>Sydney, Australia</conf-loc>, <conf-date>5-7 February 2007</conf-date>, pp. <fpage>149</fpage>–<lpage>152</lpage>. <conf-loc>Washington, DC, USA: IEEE</conf-loc></citation>
+</ref>
+<ref id="bibr19-1473871612455983">
+<label>19.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Kevin</surname><given-names>B</given-names></name>
+<name><surname>Maike</surname><given-names>B</given-names></name>
+<name><surname>Jaroslaw</surname><given-names>B</given-names></name>
+<etal/>
+</person-group>. <article-title>Drawing (Complete) Binary Tanglegrams</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Ioannis</surname><given-names>T</given-names></name>
+<name><surname>Maurizio</surname><given-names>P</given-names></name>
+</person-group> (eds) <source>Graph Drawing</source>, <volume>vol. 5417</volume>, <publisher-name>Springer Berlin/Heidelberg</publisher-name>, <year>2009</year>, pp. <fpage>324</fpage>-<lpage>335</lpage>.</citation>
+</ref>
+<ref id="bibr20-1473871612455983">
+<label>20.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Fernau</surname><given-names>H</given-names></name>
+<name><surname>Kaufmann</surname><given-names>M</given-names></name>
+<name><surname>Poths</surname><given-names>M.</given-names></name>
+</person-group>
+<article-title>Comparing trees via crossing minimization</article-title>. In: <person-group person-group-type="editor"><name><surname>Ramaswamy</surname><given-names>R</given-names></name><name><surname>Sandeep</surname><given-names>S</given-names></name>
+</person-group> <day>8-12</day> <month>November</month> <source>FSTTCS ’05: foundations of software technology and theoretical computer science</source>, <volume>vol. 3821</volume> (Lecture Notes in Computer Science). <publisher-loc>Berlin/Heidelberg, Germany</publisher-loc>:<publisher-name>Springer</publisher-name>, <year>2005</year>, pp. <fpage>457</fpage>–<lpage>469</lpage>.</citation>
+</ref>
+<ref id="bibr21-1473871612455983">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Holten</surname><given-names>D</given-names></name>
+<name><surname>Van Wijk</surname><given-names>JJ.</given-names></name>
+</person-group>
+<article-title>Visual comparison of hierarchically organized data</article-title>. <source>Comput Graph Forum</source> <year>2008</year>; <volume>27</volume>: <fpage>759</fpage>–<lpage>766</lpage>.</citation>
+</ref>
+<ref id="bibr22-1473871612455983">
+<label>22.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sugiyama</surname><given-names>K</given-names></name>
+<name><surname>Tagawa</surname><given-names>S</given-names></name>
+<name><surname>Toda</surname><given-names>M.</given-names></name>
+</person-group>
+<article-title>Methods for visual understanding of hierarchical system structures</article-title>. <source>IEEE T Syst Man Cyb</source> <year>1981</year>; <volume>11</volume> <fpage>109</fpage>–<lpage>125</lpage>.</citation>
+</ref>
+<ref id="bibr23-1473871612455983">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Andritsos</surname><given-names>P</given-names></name>
+<name><surname>Tzerpos</surname><given-names>V.</given-names></name>
+</person-group>
+<article-title>Information – theoretic software clustering</article-title>. <source>IEEE T Software Eng</source> <year>2005</year>; <volume>31</volume>: <fpage>150</fpage>–<lpage>165</lpage>.</citation>
+</ref>
+<ref id="bibr24-1473871612455983">
+<label>24.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Lincoln</surname><given-names>Y</given-names></name>
+<name><surname>Guba</surname><given-names>E.</given-names></name>
+</person-group>, <source>Naturalistic inquiry</source>. <article-title>Sage focus editions</article-title>. <publisher-name>SAGE</publisher-name> <year>1985</year>: <publisher-loc>Beverly Hills, CA, USA</publisher-loc>.</citation>
+</ref>
+<ref id="bibr25-1473871612455983">
+<label>25.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Diehl</surname><given-names>S.</given-names></name>
+</person-group>
+<source>Software visualization: visualizing the structure, behaviour, and evolution of software</source>, <year>2007</year>. <publisher-loc>Berlin/Heidelberg, Germany</publisher-loc>:<publisher-name>Springer</publisher-name>.</citation>
+</ref>
+<ref id="bibr26-1473871612455983">
+<label>26.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Storey</surname><given-names>MA</given-names></name>
+<name><surname>Best</surname><given-names>C</given-names></name>
+<name><surname>Michaud</surname><given-names>J</given-names></name>
+</person-group>. <article-title>SHriMP views: an interactive environment for exploring java programs</article-title>. In: <conf-name>IWPC ’01: proceedings of the Ninth international conference on program comprehension</conf-name>, <conf-loc>Toronto, Canada</conf-loc>, <conf-date>12-13 May 2001</conf-date>, pp. <fpage>111</fpage>–<lpage>112</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society</conf-loc></citation>
+</ref>
+<ref id="bibr27-1473871612455983">
+<label>27.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Balzer</surname><given-names>M</given-names></name>
+<name><surname>Noack</surname><given-names>A</given-names></name>
+<name><surname>Deussen</surname><given-names>O</given-names></name>
+<etal/>
+</person-group>. <article-title>Software landscapes: visualizing the structure of large software systems</article-title>. In: <conf-name>VisSym ’04: proceedings of the Joint Eurographics – IEEE TCVG symposium on visualization</conf-name>, <conf-loc>Konstanz, Germany</conf-loc>, <conf-date>19-21 May 2004</conf-date>, pp. <fpage>261</fpage>–<lpage>266</lpage>, <conf-loc>Geneve, Switzerland: Eurographics Association</conf-loc>.</citation>
+</ref>
+<ref id="bibr28-1473871612455983">
+<label>28.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ducasse</surname><given-names>S</given-names></name>
+<name><surname>Lanza</surname><given-names>M.</given-names></name>
+</person-group>
+<article-title>The class blueprint: visually supporting the understanding of classes</article-title>. <source>IEEE T Software Eng</source> <year>2005</year>; <volume>31</volume>: <fpage>75</fpage>–<lpage>90</lpage>.</citation>
+</ref>
+<ref id="bibr29-1473871612455983">
+<label>29.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Van Ham</surname><given-names>F</given-names></name>
+</person-group>. <article-title>Using multilevel call matrices in large software projects</article-title>. In: <conf-name>INFOVIS ’03: proceedings of the IEEE symposium on information visualization</conf-name>, <conf-loc>Seattle, WA, USA</conf-loc>, <conf-date>20-21 October 2003</conf-date>, pp. <fpage>227</fpage>–<lpage>232</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society</conf-loc></citation>
+</ref>
+<ref id="bibr30-1473871612455983">
+<label>30.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Burch</surname><given-names>M</given-names></name>
+<name><surname>Diehl</surname><given-names>S</given-names></name>
+<name><surname>Weißgerber</surname><given-names>P.</given-names></name>
+</person-group>
+<year>2005</year>; <article-title>Visual data mining in software archives</article-title>. In: <conf-name>SoftVis ’05: proceedings of the 2005 ACM symposium on software visualization</conf-name>, <conf-loc>Saint Louis, Missouri, USA</conf-loc>, <conf-date>14-15 May 2005</conf-date>, pp. <fpage>37</fpage>–<lpage>46</lpage>. <conf-loc>New York, NY, USA: ACM Press</conf-loc>.</citation>
+</ref>
+<ref id="bibr31-1473871612455983">
+<label>31.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Sangal</surname><given-names>N</given-names></name>
+<name><surname>Jordan</surname><given-names>E</given-names></name>
+<name><surname>Sinha</surname><given-names>V</given-names></name>
+<etal/>
+</person-group>. <article-title>Using dependency models to manage complex software architecture</article-title>. In: <conf-name>OOPSLA ’05: proceedings of the 20th annual ACM SIGPLAN conference on Object-oriented programming, systems, languages, and applications</conf-name>, <conf-loc>San Diego, CA, USA</conf-loc>, <conf-date>16-20 October 2005</conf-date>, <volume>vol. 40</volume>, pp. <fpage>167</fpage>–<lpage>176</lpage>. <conf-loc>New York, NY, USA: ACM</conf-loc>.</citation>
+</ref>
+<ref id="bibr32-1473871612455983">
+<label>32.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zeckzer</surname><given-names>D.</given-names></name>
+</person-group>
+<article-title>Visualizing software entities using a matrix layout</article-title>. In: <conf-name>SOFTVIS ’10: proceedings of the 5th international symposium on software visualization</conf-name>, <conf-loc>Salt Lake City, Utah, USA</conf-loc>, <conf-date>25-26 October 2010</conf-date>, pp. <fpage>207</fpage>–<lpage>208</lpage>. <conf-loc>New York, NY, USA: ACM</conf-loc>.</citation>
+</ref>
+<ref id="bibr33-1473871612455983">
+<label>33.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Shtern</surname><given-names>M</given-names></name>
+<name><surname>Tzerpos</surname><given-names>V</given-names></name>
+</person-group>. <article-title>A framework for the comparison of nested software decompositions</article-title>. In: <conf-name>WCRE ’04: proceedings of the 11th working conference on reverse engineering</conf-name>, <conf-loc>Delft, the Netherlands</conf-loc>, <conf-date>8-12 November 2004</conf-date>, pp. <fpage>284</fpage>–<lpage>292</lpage>. <conf-loc>Washington, DC, USA: IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr34-1473871612455983">
+<label>34.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Mancoridis</surname><given-names>S</given-names></name>
+<name><surname>Mitchell</surname><given-names>BS</given-names></name>
+<name><surname>Rorres</surname><given-names>C</given-names></name>
+<etal/>
+</person-group>. <year>1998</year>; <source>Using automatic clustering to produce high-level system organizations of source code</source>. <conf-name>IWPC ’98: Proceedings of the 6th International Workshop on Program Comprehension</conf-name>. <conf-loc>Ischia, Italy</conf-loc>, <conf-date>24-26 June 1998</conf-date>, pp. <fpage>45</fpage>–<lpage>52</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr35-1473871612455983">
+<label>35.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Kuhn</surname><given-names>A</given-names></name>
+<name><surname>Ducasse</surname><given-names>S</given-names></name>
+<name><surname>Gîrba</surname><given-names>T.</given-names></name>
+</person-group>
+<year>2005</year>; <article-title>Enriching reverse engineering with semantic clustering</article-title>. In: <conf-name>WCRE ’05: proceedings of the 12th working conference on reverse engineering</conf-name>, <conf-loc>Pittsburgh, PA, USA</conf-loc>, <conf-date>7-11 November 2005</conf-date>, pp. <fpage>133</fpage>–<lpage>142</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr36-1473871612455983">
+<label>36.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Munzner</surname><given-names>T</given-names></name>
+<name><surname>Guimbretière</surname><given-names>F</given-names></name>
+<name><surname>Tasiran</surname><given-names>S</given-names></name>
+<etal/>
+</person-group>. <article-title>Treejuxtaposer: scalable tree comparison using focus + context with guaranteed visibility</article-title>. <source>ACM T Graphic</source> <year>2003</year>; <volume>22</volume>: <fpage>453</fpage>–<lpage>462</lpage>.</citation>
+</ref>
+<ref id="bibr37-1473871612455983">
+<label>37.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Graham</surname><given-names>M</given-names></name>
+<name><surname>Kennedy</surname><given-names>J.</given-names></name>
+</person-group>
+<article-title>A survey of multiple tree visualisation</article-title>. <source>Inf Vis</source> <year>2009</year>; <volume>9</volume>: <fpage>235</fpage>–<lpage>252</lpage>.</citation>
+</ref>
+<ref id="bibr38-1473871612455983">
+<label>38.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wilkinson</surname><given-names>L</given-names></name>
+<name><surname>Friendly</surname><given-names>M.</given-names></name>
+</person-group>
+<article-title>The history of the cluster heat map</article-title>. <source>Am Stat</source> <year>2009</year>; <volume>63</volume>: <fpage>179</fpage>–<lpage>184</lpage>.</citation>
+</ref>
+<ref id="bibr39-1473871612455983">
+<label>39.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Madeira</surname><given-names>SC</given-names></name>
+<name><surname>Oliveira</surname><given-names>AL.</given-names></name>
+</person-group>
+<article-title>Biclustering algorithms for biological data analysis: a survey</article-title>. <source>IEEE-ACM T Comput Bi</source> <year>2004</year>; <volume>1</volume>: <fpage>24</fpage>–<lpage>45</lpage>.</citation>
+</ref>
+<ref id="bibr40-1473871612455983">
+<label>40.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Shtern</surname><given-names>M</given-names></name>
+<name><surname>Tzerpos</surname><given-names>V</given-names></name>
+</person-group>. <article-title>Lossless comparison of nested software decompositions</article-title>. In: <conf-name>WCRE ’07: proceedings of the 14th working conference on reverse engineering</conf-name>, <conf-loc>Vancouver, BC, Canada</conf-loc>, <conf-date>28-31 October 2007</conf-date>, pp. <fpage>249</fpage>–<lpage>258</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr41-1473871612455983">
+<label>41.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Andrews</surname><given-names>K</given-names></name>
+<name><surname>Wohlfahrt</surname><given-names>M</given-names></name>
+<name><surname>Wurzinger</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Visual graph comparison</article-title>. In: <conf-name>IV ’09: proceedings of the 13th conference on information visualisation</conf-name>, <conf-loc>Barcelona, Spain</conf-loc>, <conf-date>15-17 July 2009</conf-date>, pp. <fpage>62</fpage>–<lpage>67</lpage>. <conf-loc>Los Alamitos, CA, USA: IEEE Computer Society</conf-loc>.</citation>
+</ref>
+<ref id="bibr42-1473871612455983">
+<label>42.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pohl</surname><given-names>M</given-names></name>
+<name><surname>Birke</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Interactive exploration of large dynamic networks</article-title>. In: <conf-name>VISUAL ’08: proceedings of the 10th international conference on visual information systems</conf-name>, <conf-loc>Salerno, Italy</conf-loc>, <conf-date>11-12 September 2008</conf-date>, pp. <fpage>56</fpage>–<lpage>67</lpage>. <conf-loc>Berlin/Heidelberg, Germany: Springer-Verlag</conf-loc>.</citation>
+</ref>
+<ref id="bibr43-1473871612455983">
+<label>43.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Glorie</surname><given-names>M</given-names></name>
+<name><surname>Zaidman</surname><given-names>A</given-names></name>
+<name><surname>Van Deursen</surname><given-names>A</given-names></name>
+<etal/>
+</person-group>. <article-title>Splitting a large software repository for easing future software evolution – an industrial experience report</article-title>. <source>J Softw Maint and Evol-R</source> <year>2009</year>; <volume>21</volume>: <fpage>113</fpage>–<lpage>141</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

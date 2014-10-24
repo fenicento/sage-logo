@@ -1,0 +1,4972 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">ADB</journal-id>
+<journal-id journal-id-type="hwp">spadb</journal-id>
+<journal-title>Adaptive Behavior</journal-title>
+<issn pub-type="ppub">1059-7123</issn>
+<issn pub-type="epub">1741-2633</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1059712312457186</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1059712312457186</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Papers</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>An artificial ants model for fast construction and approximation of proximity graphs</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Azzag</surname><given-names>Hanane</given-names></name>
+<xref ref-type="aff" rid="aff1-1059712312457186">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Guinot</surname><given-names>Christiane</given-names></name>
+<xref ref-type="aff" rid="aff2-1059712312457186">2</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Venturini</surname><given-names>Gilles</given-names></name>
+<xref ref-type="aff" rid="aff3-1059712312457186">3</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-1059712312457186"><label>1</label>University of Paris 13, LIPN-UMR 7030, Villetaneuse, France</aff>
+<aff id="aff2-1059712312457186"><label>2</label>CE.R.I.E.S, Neuilly-sur-Seine Cedex, France</aff>
+<aff id="aff3-1059712312457186"><label>3</label>Université Francois Rabelais de Tours, Laboratoire d’Informatique, Tours, France</aff>
+<author-notes>
+<corresp id="corresp1-1059712312457186">Hanane Azzag, University of Paris 13, Sorbonne Paris City - CNRS LIPN-UMR 7030 99, avenue J-B Clement - F-93430, Villetaneuse, France. Email: <email>hanane.azzag@lipn.univ-paris13.fr</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>12</month>
+<year>2012</year>
+</pub-date>
+<volume>20</volume>
+<issue>6</issue>
+<fpage>443</fpage>
+<lpage>459</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">International Society of Adaptive Behavior</copyright-holder>
+</permissions>
+<abstract>
+<p>In this paper we present a summary of our work which has led to the conception of a new model for the fast construction of proximity graphs. We present the state of the art in graph self-assembly, and then we detail the self-assembly behavior observed in real ants from which our model is derived. We describe our main algorithm, called AntGraph, where each ant represents one datum and where the proximity graph is built in an incremental way. Ants perform two steps: following the path of maximum local similarity, and then connecting to other ants. We present a hierarchical extension, called H-AntGraph, which can build large graphs (with up to 1 million data items). We study the properties of the constructed graphs, and compare our results with those obtained by other methods. We use force-directed graph layout algorithms to display the graphs and to allow the domain expert to perform an interactive clustering task. We validate this approach with a comparative user-study.</p>
+</abstract>
+<kwd-group>
+<kwd>Artificial ants</kwd>
+<kwd>self-assembly behavior</kwd>
+<kwd>proximity graph</kwd>
+<kwd>interactive clustering</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1059712312457186" sec-type="intro">
+<title>1 Introduction</title>
+<p>Building a neighborhood or proximity graph over a dataset is an interesting process which is used in many domains (see, for instance, <xref ref-type="bibr" rid="bibr20-1059712312457186">Ester, Kriegel, and Sander (1997)</xref> and <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid and Yoshida (2007)</xref> and other references in this paper). In general, algorithms used to build such graphs are simple and only require a distance or similarity to be computed between couples of data. Using this distance, appropriate heuristics can discover underlying topological information about the dataset. This learned topology can be used in various ways: for instance, starting from a selected datum, one may explore the content of the dataset by following edges of the graph to find interesting neighbors (i.e. similar data). Another possibility is to use the topology to define clusters. In this paper, we want to use such a graph to help a domain expert to discover knowledge about a large dataset containing, for instance, 1 million data items. More precisely, we are interested in a visual data mining approach: we would like to visualize the graph, and to include interactions in the visualization, in order to let the expert explore the data in an interactive way.</p>
+<p>Two main limitations of standard approaches should be noted for such an objective. First, standard methods for constructing a proximity graph have a high complexity because they rely on formal and mathematical properties, which have a high computational cost. For instance, the basic algorithm for building the relative neighborhood graph (<xref ref-type="bibr" rid="bibr49-1059712312457186">Toussaint, 1980</xref>) has a complexity in <inline-formula id="inline-formula1-1059712312457186">
+<mml:math display="inline" id="math1-1059712312457186">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> where <italic>n</italic> is the number of data. Therefore, with a large dataset (1 million data items), this computation time can be prohibitive. Then, a second problem is how to display such a graph, because large graphs can be difficult to represent in a graphical way. So the objectives of this paper can be divided into two parts, the first being the most important: (1) we want to create a proximity graph that connects together similar data, and this possibly for a large dataset (1 million data items), in order to reveal the underlying structure of the data; (2) we want to give to this graph a specific structure that eases its visualization, in order to let the domain expert explore the dataset and, for instance, observe and define relevant clusters.</p>
+<p>To achieve these two goals, we have been looking for methods that can build graphs and structures, and we have found that this problem is present in natural environments, and that animals may build various kinds of structures. More precisely, we were especially interested in animals which can build structures by assembling their bodies together, and which were using local behaviors such as ‘moving over the structure’, ‘deciding where to go’, or ‘deciding where to connect’. Using these principles, as will be detailed in the paper, ants for instance may build self-assembled structures with various properties. So our proposal consists of modeling and adapting these behaviors in order to reach the two mentioned objectives.</p>
+<p>Of course, graphs built with such a meta-heuristic will be different than those obtained with standard methods: the former will be the result of a stigmergic process with a local control of the properties of the created edges. The latter are such that all created edges check a formal and global mathematical property. The ant-based method will build large graphs in a short time but these will be an approximation of formal proximity graphs, while standard methods cannot be applied to large datasets but ensure a global property for all created edges. Owing to the approximation performed by our meta-heuristic, an important experimental section is devoted (1) to show that the properties of the self-assembled graphs can be related to those built by standard approaches and (2) to show that a domain expert can extract valuable information from the created graphs.</p>
+<p>The remainder of this paper is organized as follows: in Section 2, we present the main principles of proximity graphs, other approaches for graph building, and the self-assembly behavior observed in real ants. In Section 3, we detail the proposed algorithms, including the hierarchical version and the graph display algorithms. Section 4 is devoted to the experimental and comparative results. Section 5 concerns a user-study for an interactive clustering task. Finally, Section 6 concludes and proposes several perspectives.</p>
+</sec>
+<sec id="section2-1059712312457186">
+<title>2 State of the art</title>
+<sec id="section3-1059712312457186">
+<title>2.1 Proximity graphs</title>
+<p>Let us consider a graph <inline-formula id="inline-formula2-1059712312457186">
+<mml:math display="inline" id="math2-1059712312457186">
+<mml:mrow>
+<mml:mi>G</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Ω</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>V</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> where Ω is the set of nodes and <italic>V</italic> the set of edges between nodes. When <italic>G</italic> is a proximity graph, nodes represent data, and edges represent a binary relation between data that indicates which data are neighbors. In this case, for a given node/data <inline-formula id="inline-formula3-1059712312457186">
+<mml:math display="inline" id="math3-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> of Ω, the neighborhood <inline-formula id="inline-formula4-1059712312457186">
+<mml:math display="inline" id="math4-1059712312457186">
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> represents the set of all nodes that are connected to <inline-formula id="inline-formula5-1059712312457186">
+<mml:math display="inline" id="math5-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Building a proximity graph consists of using an existing distance (or similarity) between data in order to establish binary relations between nodes. Several standard methods exist (<xref ref-type="bibr" rid="bibr10-1059712312457186">Bose et al., 2012</xref>). The Gabriel graph (<xref ref-type="bibr" rid="bibr23-1059712312457186">Gabriel &amp; Sokal, 1969</xref>) is built as follows: two data items <inline-formula id="inline-formula6-1059712312457186">
+<mml:math display="inline" id="math6-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula7-1059712312457186">
+<mml:math display="inline" id="math7-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> are neighbors if the hypersphere of diameter <inline-formula id="inline-formula8-1059712312457186">
+<mml:math display="inline" id="math8-1059712312457186">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> that goes through <inline-formula id="inline-formula9-1059712312457186">
+<mml:math display="inline" id="math9-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula10-1059712312457186">
+<mml:math display="inline" id="math10-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is empty. The relative neighborhood graph (RNG) is defined by the following property (<xref ref-type="bibr" rid="bibr49-1059712312457186">Toussaint, 1980</xref>): two data items <inline-formula id="inline-formula11-1059712312457186">
+<mml:math display="inline" id="math11-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula12-1059712312457186">
+<mml:math display="inline" id="math12-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> are neighbors if the intersection between the two hyperspheres centered on <inline-formula id="inline-formula13-1059712312457186">
+<mml:math display="inline" id="math13-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula14-1059712312457186">
+<mml:math display="inline" id="math14-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, respectively, and with a radius of <inline-formula id="inline-formula15-1059712312457186">
+<mml:math display="inline" id="math15-1059712312457186">
+<mml:mrow>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, is empty. Another approach is the Delaunay triangulation (<xref ref-type="bibr" rid="bibr43-1059712312457186">Preparata &amp; Shamos, 1985</xref>) which, in two dimensions, connects any triplet of data that checks the following property: the circle that goes through the three points does not contain any other data. This approach can be generalized to dimensions above three.</p>
+<p>As shown by <xref ref-type="bibr" rid="bibr50-1059712312457186">Toussaint (1991)</xref>, these methods are used in several problems. Generally, they have a high complexity for dimensions above three (see <xref ref-type="bibr" rid="bibr49-1059712312457186">Toussaint (1980)</xref> and <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid and Yoshida (2007))</xref> because such methods have to enumerate all couples of data, and then for each couple, they have to perform a test with every other data item. Several works have been done to reduce this complexity. For the Delaunay triangulation, one may mention <xref ref-type="bibr" rid="bibr12-1059712312457186">Cignoni, Montani, and Scopigno (1998)</xref>. For the RNG, an extension has been proposed in <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid and Yoshida (2007)</xref> where data are added incrementally. The connection test is thus limited to a subset of the whole dataset. In this way, computation times can be improved. However, as we will show in this paper, these running times can be further reduced.</p>
+</sec>
+<sec id="section4-1059712312457186">
+<title>2.2 Self-assembly behavior</title>
+<p>In our work, a graph can be viewed as a structure compound of many small modules (nodes) to be connected together. Therefore, one may consider that a population of self-assembling agents can build such a structure. Each agent is a node that must find a location where to connect. The agents aim at building a global structure with specific properties. This general principle has been developed in several domains.</p>
+<p>In some studies, the structure of the graph is determined in advance and the problem to be solved is to find a sequence of actions for building the target graph (<xref ref-type="bibr" rid="bibr24-1059712312457186">Garzon, Deaton,&amp; Barnes, 1999</xref>; <xref ref-type="bibr" rid="bibr14-1059712312457186">Danos &amp; Tarissan, 2005</xref>, <xref ref-type="bibr" rid="bibr15-1059712312457186">2007</xref>).</p>
+<p>In DNA computing (<xref ref-type="bibr" rid="bibr2-1059712312457186">Adleman, 1994</xref>; <xref ref-type="bibr" rid="bibr3-1059712312457186">Amos, 2005</xref>), self-assembling models concern the sequential construction of a given graph, referring to THE accretive graph assembly problem (AGAP) (<xref ref-type="bibr" rid="bibr45-1059712312457186">Reif, Sahu, &amp; Yin, 2005</xref>; <xref ref-type="bibr" rid="bibr5-1059712312457186">Angelov, Khanna, &amp; Visontai, 2006</xref>). An instance of AGAP is a triplet (i.e. a graph <inline-formula id="inline-formula16-1059712312457186">
+<mml:math display="inline" id="math16-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> with weighted edges, a seed vertex in <inline-formula id="inline-formula17-1059712312457186">
+<mml:math display="inline" id="math17-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and a system temperature) for which one determines whether a vertex sequence exists from the seed in order to build a graph. The weights of edges influence the forces of attraction and repulsion for a given temperature. After stabilization of the system, an assembled sub-graph is obtained.</p>
+<p>In robotics, interesting research deals with the so-called ‘modular robots’ as in <xref ref-type="bibr" rid="bibr41-1059712312457186">Murata, Kurokawa, and Kokaji (1994)</xref> where complex shapes can be achieved, or in the Swarm-Bot project (<xref ref-type="bibr" rid="bibr18-1059712312457186">Dorigo et al., 2004</xref>; <xref ref-type="bibr" rid="bibr40-1059712312457186">Mondada et al., 2004</xref>) where collective assemblages of robots increase their abilities to drag objects or to cross empty spaces. A survey of this topic can be found in <xref ref-type="bibr" rid="bibr27-1059712312457186">Groβ and Dorigo (2008)</xref>.</p>
+<p>The self-assembly behavior of individuals can be observed in several insect species such as ants and bees (<xref ref-type="bibr" rid="bibr4-1059712312457186">Anderson, Theraulaz, &amp; Deneubourg, 2002</xref>). This biological phenomenon is a particular case of self-organization, which represents the minimum assembly of two similar entities with the same connecting mechanisms without human intervention (<xref ref-type="bibr" rid="bibr11-1059712312457186">Camazine et al., 2001</xref>; <xref ref-type="bibr" rid="bibr35-1059712312457186">Krasnogor &amp; Gheorghe, 2005</xref>). In this paper, we are interested in the complex structures that are built by real ants. We have specifically studied how different species were building such structures such as the <italic>Burchelli</italic> ants (<xref ref-type="bibr" rid="bibr4-1059712312457186">Anderson et al., 2002</xref>), the Argentina ants <italic>Linepithema humile</italic> (<xref ref-type="bibr" rid="bibr48-1059712312457186">Theraulaz et al., 2001</xref>), and the <italic>Oecophylla longinoda</italic> (<xref ref-type="bibr" rid="bibr39-1059712312457186">Lioni, Sauwens, Theraulaz, &amp; Deneubourg, 2001</xref>). These two last species have the ability to build specific living structures. <italic>Linepithema humile</italic> are able to build two specific types of chains to cross an empty space or to simply fall without damages from a level to another. The <italic>Oecophylla</italic> species build chains or nests. Such structures are composed by ants which connect their bodies together in order to achieve a particular function imposed by environmental conditions. The general principles that rule such behaviors are the following: real ants start from an initial point also named the support. Then each ant keeps moving from ant to ant until it connects to previously fixed ants. An ant performs the connection with its body (e.g. mandibles, tarsus). Once an ant is connected, it becomes a part of the structure and other ants may move over it or connect to it. This living structure grows according to the number of incoming ants. Its shape depends on local decision rules: each ant is influenced by the local shape of the structure, and possibly by a visual attractor (i.e. a point to reach). Also, the structure evolves over time, because ants may disconnect from it.</p>
+<p>We have previously modeled and studied the self-assembly behavior of real ants (<xref ref-type="bibr" rid="bibr39-1059712312457186">Lioni et al., 2001</xref>; <xref ref-type="bibr" rid="bibr4-1059712312457186">Anderson et al., 2002</xref>) in order to define a clustering algorithm called AntTree (<xref ref-type="bibr" rid="bibr6-1059712312457186">Azzag, Venturini, Oliver, &amp; Guinot, 2007</xref>). AntTree performs a hierarchical clustering which may deal with a large dataset of any type (numerical, symbolic, textual, etc.) and that compares well with agglomerative hierarchical clustering (AHC) (<xref ref-type="bibr" rid="bibr38-1059712312457186">Lance &amp; Williams, 1967</xref>; <xref ref-type="bibr" rid="bibr47-1059712312457186">Sneath &amp; Sokal, 1973</xref>). This method has a low complexity and thus produces a tree of data which allows the formation of data clusters in an efficient time. We generalize this principle of construction to build proximity graphs with the same desired performances.</p>
+<p>Our work can also be related to several approaches in swarm intelligence and clustering where researchers get inspiration from the numerous abilities of ants. The initial and pioneering work in this area is due to <xref ref-type="bibr" rid="bibr25-1059712312457186">Goss and Deneubourg (1991)</xref> where the way real ants sort objects in their nest is modeled. This initial work has been followed by many others such as <xref ref-type="bibr" rid="bibr36-1059712312457186">Kuntz, Layzell, and Snyers (1997)</xref> and <xref ref-type="bibr" rid="bibr37-1059712312457186">Kuntz, Snyers, and Layzell (1998)</xref> for graph partitioning, <xref ref-type="bibr" rid="bibr1-1059712312457186">Abraham and Ramos (2003)</xref> for Web usage mining or <xref ref-type="bibr" rid="bibr30-1059712312457186">Handl, Knowles, and Dorigo (2003)</xref> for document clustering. Extensions have been proposed for instance by <xref ref-type="bibr" rid="bibr31-1059712312457186">Handl, Knowles, and Dorigo (2006)</xref> to automatically identify the number of clusters or by <xref ref-type="bibr" rid="bibr42-1059712312457186">Peterson, Mayer, and Kubler (2008)</xref>. A complete study of approaches using ant-based and swarm-based clustering is presented by <xref ref-type="bibr" rid="bibr32-1059712312457186">Handl and Meyer (2007)</xref>.</p>
+</sec>
+</sec>
+<sec id="section5-1059712312457186">
+<title>3 Proposed algorithms</title>
+<sec id="section6-1059712312457186">
+<title>3.1 Main principles</title>
+<p>The main principles of our algorithms for building proximity graphs for large datasets can be stated as follows: each ant <inline-formula id="inline-formula18-1059712312457186">
+<mml:math display="inline" id="math18-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> represents one data item <inline-formula id="inline-formula19-1059712312457186">
+<mml:math display="inline" id="math19-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. In order to compute the similarity between two ants <inline-formula id="inline-formula20-1059712312457186">
+<mml:math display="inline" id="math20-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula21-1059712312457186">
+<mml:math display="inline" id="math21-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, we use a similarity measure <inline-formula id="inline-formula22-1059712312457186">
+<mml:math display="inline" id="math22-1059712312457186">
+<mml:mrow>
+<mml:mi>sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> whose computation depends on the data type (e.g. numeric, symbolic, see Section 4.1).</p>
+<p>Then, the algorithms are composed of three phases:</p>
+<list id="list1-1059712312457186" list-type="bullet">
+<list-item>
+<p>Initialize (phase 1): an ant <inline-formula id="inline-formula23-1059712312457186">
+<mml:math display="inline" id="math23-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is chosen as the entry point of the graph, and is also called the support. It represents the first node in the graph. The other ants are all placed on this support and are ready to move and to connect.</p>
+</list-item>
+<list-item>
+<p>Build the structure (phase 2): each ant <inline-formula id="inline-formula24-1059712312457186">
+<mml:math display="inline" id="math24-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is simulated, in a sequential way. It moves over the other ants already connected in the graph, until it becomes connected to the graph and may not move anymore. More precisely, this phase is separated into two steps:</p>
+<list id="list2-1059712312457186" list-type="order">
+<list-item>
+<p><inline-formula id="inline-formula25-1059712312457186">
+<mml:math display="inline" id="math25-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> moves over the connected ants until it finds a convenient location where to connect;</p>
+</list-item>
+<list-item>
+<p><inline-formula id="inline-formula26-1059712312457186">
+<mml:math display="inline" id="math26-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> creates several connections around itself according to a local criterion.</p>
+</list-item>
+</list>
+</list-item>
+<list-item>
+<p>Terminate (phase 3): all ants are connected. The graph can be visualized and explored by the expert.</p>
+</list-item>
+</list>
+<p>Phase 2 is the most important part of the algorithm. Its first step consists in moving the ant toward a part of the graph where similar data can be found. This is a stigmergic process, because the actual structure of the graph will influence the directions taken by the moving ants. It is also an auto-catalytic process: the more similar ants get connected in a given part of the graph, the more similar ants will be likely to move toward this part. The second step of this phase consists of deciding which edges should be created once the ant decides to stop moving. We describe now in detail the resulting method AntGraph, and its extension H-AntGraph that builds large hierarchical proximity graphs.</p>
+</sec>
+<sec id="section7-1059712312457186">
+<title>3.2 Initial algorithm: AntGraph</title>
+<p>We consider an ant <inline-formula id="inline-formula27-1059712312457186">
+<mml:math display="inline" id="math27-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> as the starting point from which the graph will be built. It is the first node of the graph. Then we simulate each ant <inline-formula id="inline-formula28-1059712312457186">
+<mml:math display="inline" id="math28-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>: it enters the graph at <inline-formula id="inline-formula29-1059712312457186">
+<mml:math display="inline" id="math29-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, it moves from ant to ant until it finds a convenient location where to connect, and then the next ant is simulated. We denote by <inline-formula id="inline-formula30-1059712312457186">
+<mml:math display="inline" id="math30-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> the ant on which <inline-formula id="inline-formula31-1059712312457186">
+<mml:math display="inline" id="math31-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is located at a given time</p>
+<table-wrap id="table6-1059712312457186" position="float">
+<graphic alternate-form-of="table6-1059712312457186" xlink:href="10.1177_1059712312457186-table6.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left"><bold>Algorithem 1</bold> AntGraph</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1: <bold>while</bold> there is an un-connected ant <inline-formula id="inline-formula32-1059712312457186">
+<mml:math display="inline" id="math32-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> <bold>do</bold></td>
+</tr>
+<tr>
+<td>2: <inline-formula id="inline-formula33-1059712312457186">
+<mml:math display="inline" id="math33-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is placed on <inline-formula id="inline-formula34-1059712312457186">
+<mml:math display="inline" id="math34-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (i.e. <inline-formula id="inline-formula35-1059712312457186">
+<mml:math display="inline" id="math35-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>) {<bold>Step 1: an ant finding a location to connect</bold></td>
+</tr>
+<tr>
+<td>3: Let <inline-formula id="inline-formula36-1059712312457186">
+<mml:math display="inline" id="math36-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> be the ant of <inline-formula id="inline-formula37-1059712312457186">
+<mml:math display="inline" id="math37-1059712312457186">
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>∪</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> which is the most similar to <inline-formula id="inline-formula38-1059712312457186">
+<mml:math display="inline" id="math38-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td>4: <bold>while</bold><inline-formula id="inline-formula39-1059712312457186">
+<mml:math display="inline" id="math39-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>≠</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> <bold>do</bold></td>
+</tr>
+<tr>
+<td>5: <inline-formula id="inline-formula40-1059712312457186">
+<mml:math display="inline" id="math40-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> moves toward <inline-formula id="inline-formula41-1059712312457186">
+<mml:math display="inline" id="math41-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (i.e. <inline-formula id="inline-formula42-1059712312457186">
+<mml:math display="inline" id="math42-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>)</td>
+</tr>
+<tr>
+<td>6: Let <inline-formula id="inline-formula43-1059712312457186">
+<mml:math display="inline" id="math43-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> be the most similar ant to <inline-formula id="inline-formula44-1059712312457186">
+<mml:math display="inline" id="math44-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (among <inline-formula id="inline-formula45-1059712312457186">
+<mml:math display="inline" id="math45-1059712312457186">
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>∪</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>).</td>
+</tr>
+<tr>
+<td>7: <bold>end while</bold></td>
+</tr>
+<tr>
+<td>8: <inline-formula id="inline-formula46-1059712312457186">
+<mml:math display="inline" id="math46-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> connects to <inline-formula id="inline-formula47-1059712312457186">
+<mml:math display="inline" id="math47-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (the most similar ant along the followed path)</td>
+</tr>
+<tr>
+<td>9: Compute the similarity threshold <inline-formula id="inline-formula48-1059712312457186">
+<mml:math display="inline" id="math48-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>sim</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>α</mml:mi>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> {<bold>Step 2: local connection in the neighborhood}</bold></td>
+</tr>
+<tr>
+<td>10: <inline-formula id="inline-formula49-1059712312457186">
+<mml:math display="inline" id="math49-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> connects to ants <inline-formula id="inline-formula50-1059712312457186">
+<mml:math display="inline" id="math50-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> of <inline-formula id="inline-formula51-1059712312457186">
+<mml:math display="inline" id="math51-1059712312457186">
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> which are similar enough (<inline-formula id="inline-formula52-1059712312457186">
+<mml:math display="inline" id="math52-1059712312457186">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≥</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>sim</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>).</td>
+</tr>
+<tr>
+<td>11: <bold>end while</bold></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>step of the simulation. The neighborhood perceived by <inline-formula id="inline-formula53-1059712312457186">
+<mml:math display="inline" id="math53-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is denoted by <inline-formula id="inline-formula54-1059712312457186">
+<mml:math display="inline" id="math54-1059712312457186">
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and it consists of the neighborhood of <inline-formula id="inline-formula55-1059712312457186">
+<mml:math display="inline" id="math55-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> in the graph (which is undirected). Intuitively, <inline-formula id="inline-formula56-1059712312457186">
+<mml:math display="inline" id="math56-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is going to follow the path of local maximum similarity (i.e. neighbors that are the most similar to <inline-formula id="inline-formula57-1059712312457186">
+<mml:math display="inline" id="math57-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>), until it cannot move any more: in this way, it will reach a part of the graph which contains very similar ants (first step of phase 2, see the previous section). Then <inline-formula id="inline-formula58-1059712312457186">
+<mml:math display="inline" id="math58-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> becomes connected to <inline-formula id="inline-formula59-1059712312457186">
+<mml:math display="inline" id="math59-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> and possibly to other ants according to a local similarity threshold.</p>
+<p>We now consider the algorithmic aspect of phase 2, which as previously mentioned can be divided in two steps (see <xref ref-type="fig" rid="fig1-1059712312457186">Figure 1</xref>). In the first step of the <xref ref-type="table" rid="table6-1059712312457186">Algorithm 1</xref> (i.e. from line 1 to line 8), <inline-formula id="inline-formula60-1059712312457186">
+<mml:math display="inline" id="math60-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> follows the path of greatest local similarity in order to find a location where to connect. For this purpose, <inline-formula id="inline-formula61-1059712312457186">
+<mml:math display="inline" id="math61-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> looks in its neighborhood for the most similar ant <inline-formula id="inline-formula62-1059712312457186">
+<mml:math display="inline" id="math62-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. If this ant is not <inline-formula id="inline-formula63-1059712312457186">
+<mml:math display="inline" id="math63-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, then <inline-formula id="inline-formula64-1059712312457186">
+<mml:math display="inline" id="math64-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> moves towards <inline-formula id="inline-formula65-1059712312457186">
+<mml:math display="inline" id="math65-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and repeats the same test, until no ant in the neighborhood is more similar to <inline-formula id="inline-formula66-1059712312457186">
+<mml:math display="inline" id="math66-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> than <inline-formula id="inline-formula67-1059712312457186">
+<mml:math display="inline" id="math67-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. At this point <inline-formula id="inline-formula68-1059712312457186">
+<mml:math display="inline" id="math68-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> cannot move anymore to a more similar location, and it thus connects to <inline-formula id="inline-formula69-1059712312457186">
+<mml:math display="inline" id="math69-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. One should note that this process does not introduce cycles because <inline-formula id="inline-formula70-1059712312457186">
+<mml:math display="inline" id="math70-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> can only move toward an ant that is more similar to it than its current location <inline-formula id="inline-formula71-1059712312457186">
+<mml:math display="inline" id="math71-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Following this path allows the algorithm to cut through the complexity of large datasets: when adding one ant/data item, one considers only a single path rather than all data, and this path is determined in a local way. At the end of this first step, <inline-formula id="inline-formula72-1059712312457186">
+<mml:math display="inline" id="math72-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is connected to <inline-formula id="inline-formula73-1059712312457186">
+<mml:math display="inline" id="math73-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<fig id="fig1-1059712312457186" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>The two steps of AntGraph. In step 1, an ant <inline-formula id="inline-formula74-1059712312457186">
+<mml:math display="inline" id="math74-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> enters the graph at <inline-formula id="inline-formula75-1059712312457186">
+<mml:math display="inline" id="math75-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, then it follows the path of maximum local similarity until its end (ant <inline-formula id="inline-formula76-1059712312457186">
+<mml:math display="inline" id="math76-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>). In step 2, <inline-formula id="inline-formula77-1059712312457186">
+<mml:math display="inline" id="math77-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> becomes connected to <inline-formula id="inline-formula78-1059712312457186">
+<mml:math display="inline" id="math78-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and possibly to neighbors of <inline-formula id="inline-formula79-1059712312457186">
+<mml:math display="inline" id="math79-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> according to a test on local similarity.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312457186-fig1.tif"/>
+</fig>
+<p>In the second part of the algorithm (i.e. from line 9 to line 12), one starts with <inline-formula id="inline-formula80-1059712312457186">
+<mml:math display="inline" id="math80-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> connected to <inline-formula id="inline-formula81-1059712312457186">
+<mml:math display="inline" id="math81-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. To build a graph (and not just a tree), <inline-formula id="inline-formula82-1059712312457186">
+<mml:math display="inline" id="math82-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> must get connected to additional ants in its neighborhood. In order to connect together data which are similar only, we define a local similarity threshold over which we decide to connect ants. This threshold is computed in a local way (there is no global threshold that would be difficult to adjust): <inline-formula id="inline-formula83-1059712312457186">
+<mml:math display="inline" id="math83-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>sim</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>α</mml:mi>
+<mml:mo>*</mml:mo>
+<mml:mi>sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> with <inline-formula id="inline-formula84-1059712312457186">
+<mml:math display="inline" id="math84-1059712312457186">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>≤</mml:mo>
+<mml:mi>α</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. We know that <inline-formula id="inline-formula85-1059712312457186">
+<mml:math display="inline" id="math85-1059712312457186">
+<mml:mrow>
+<mml:mi>sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the maximum similarity which can be locally observed in <inline-formula id="inline-formula86-1059712312457186">
+<mml:math display="inline" id="math86-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> neighborhood. The <inline-formula id="inline-formula87-1059712312457186">
+<mml:math display="inline" id="math87-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> constant is global to all ants and is used to relax the local maximum threshold <inline-formula id="inline-formula88-1059712312457186">
+<mml:math display="inline" id="math88-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>sim</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Here α has an important influence on the number of edges that will be created, as will be seen in the results section.</p>
+<table-wrap id="table7-1059712312457186" position="float">
+<graphic alternate-form-of="table7-1059712312457186" xlink:href="10.1177_1059712312457186-table7.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left"><bold>Algorithm 2</bold> H-AntGraph (main)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. <bold>while</bold> there is an un-connected ant <inline-formula id="inline-formula89-1059712312457186">
+<mml:math display="inline" id="math89-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> <bold>do</bold></td>
+</tr>
+<tr>
+<td>2. <inline-formula id="inline-formula90-1059712312457186">
+<mml:math display="inline" id="math90-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is placed on <inline-formula id="inline-formula91-1059712312457186">
+<mml:math display="inline" id="math91-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (i.e. initially <inline-formula id="inline-formula92-1059712312457186">
+<mml:math display="inline" id="math92-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>).</td>
+</tr>
+<tr>
+<td>3. call recursive function ENTER_SUPERNODE (<inline-formula id="inline-formula93-1059712312457186">
+<mml:math display="inline" id="math93-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>).</td>
+</tr>
+<tr>
+<td>4. <bold>end while</bold></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section8-1059712312457186">
+<title>3.3 Hierarchical extension: H-AntGraph</title>
+<p>The extension that we present called H-AntGraph (hierarchical AntGraph), deals also with the construction of a proximity graph for a large amount of data, but it gives to the graph a hierarchical organization that will ease its visualization and exploration, because the visualization and exploration of a large graph (i.e. 1 million nodes and many more links) is difficult (<xref ref-type="bibr" rid="bibr17-1059712312457186">Di Battista, Eades, Tamassia, &amp; Tollis, 1998</xref>; <xref ref-type="bibr" rid="bibr34-1059712312457186">Keim &amp; Ankerst, 2001</xref>). For this purpose, we extend the definition of a node in AntGraph to a super-node. A super-node contains one data item (the support) and also one sub-graph (ants connected to this support). This sub-graph is itself a proximity graph. A super-node can thus be viewed as a cluster where data are organized in a proximity graph. This definition is recursive: a given super-node may also contain other super-nodes. So this creates a hierarchy of graphs (see <xref ref-type="fig" rid="fig2-1059712312457186">Figure 2</xref>). One important point in this extension is that the size of a super-node is limited to <italic>r</italic> data (the definition of size is not recursive). If one fixes this value to <inline-formula id="inline-formula94-1059712312457186">
+<mml:math display="inline" id="math94-1059712312457186">
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>500</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> for instance, then each super-node can be visualized with a standard graph layout algorithm. In order to build such a hierarchical graph, the principles described in the previous section have been modified in the following way (see <xref ref-type="table" rid="table7-1059712312457186">Algorithm 2</xref> and <xref ref-type="fig" rid="fig2-1059712312457186">Figure 2</xref>).</p>
+<fig id="fig2-1059712312457186" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Overview of the construction of a hierarchical proximity graph with H-AntGraph.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312457186-fig2.tif"/>
+</fig>
+<table-wrap id="table8-1059712312457186" position="float">
+<graphic alternate-form-of="table8-1059712312457186" xlink:href="10.1177_1059712312457186-table8.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left"><bold>Algorithm 3</bold> ENTER_SUPERNODE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><bold>Require:</bold> Super-node <inline-formula id="inline-formula95-1059712312457186">
+<mml:math display="inline" id="math95-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and moving ant <inline-formula id="inline-formula96-1059712312457186">
+<mml:math display="inline" id="math96-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td><bold>Ensure:</bold><inline-formula id="inline-formula97-1059712312457186">
+<mml:math display="inline" id="math97-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> connected to <inline-formula id="inline-formula98-1059712312457186">
+<mml:math display="inline" id="math98-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> or recursively to a sub-graph of <inline-formula id="inline-formula99-1059712312457186">
+<mml:math display="inline" id="math99-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td>1. <inline-formula id="inline-formula100-1059712312457186">
+<mml:math display="inline" id="math100-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> moves toward <inline-formula id="inline-formula101-1059712312457186">
+<mml:math display="inline" id="math101-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (the ant at the end of the local path of maximum similarity),</td>
+</tr>
+<tr>
+<td>2. <bold>if</bold><inline-formula id="inline-formula102-1059712312457186">
+<mml:math display="inline" id="math102-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is not saturated (i.e. nb-of-nodes(<inline-formula id="inline-formula103-1059712312457186">
+<mml:math display="inline" id="math103-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>)<inline-formula id="inline-formula104-1059712312457186">
+<mml:math display="inline" id="math104-1059712312457186">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>&lt;</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>) <bold>then</bold></td>
+</tr>
+<tr>
+<td>3. <inline-formula id="inline-formula105-1059712312457186">
+<mml:math display="inline" id="math105-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> connects to <inline-formula id="inline-formula106-1059712312457186">
+<mml:math display="inline" id="math106-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (in <inline-formula id="inline-formula107-1059712312457186">
+<mml:math display="inline" id="math107-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>)</td>
+</tr>
+<tr>
+<td>4. <bold>if</bold><inline-formula id="inline-formula108-1059712312457186">
+<mml:math display="inline" id="math108-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> has neighbors <bold>then</bold></td>
+</tr>
+<tr>
+<td>5. Compute the local similarity threshold <inline-formula id="inline-formula109-1059712312457186">
+<mml:math display="inline" id="math109-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>sim</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mi>α</mml:mi>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</td>
+</tr>
+<tr>
+<td>6. <inline-formula id="inline-formula110-1059712312457186">
+<mml:math display="inline" id="math110-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> connects to ants <inline-formula id="inline-formula111-1059712312457186">
+<mml:math display="inline" id="math111-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> of <inline-formula id="inline-formula112-1059712312457186">
+<mml:math display="inline" id="math112-1059712312457186">
+<mml:mrow>
+<mml:mi>Γ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> which are similar enough (<inline-formula id="inline-formula113-1059712312457186">
+<mml:math display="inline" id="math113-1059712312457186">
+<mml:mrow>
+<mml:mi>Sim</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>≥</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>sim</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>).</td>
+</tr>
+<tr>
+<td>7. <bold>end if</bold></td>
+</tr>
+<tr>
+<td>8. <bold>else</bold></td>
+</tr>
+<tr>
+<td>9. /*<inline-formula id="inline-formula114-1059712312457186">
+<mml:math display="inline" id="math114-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is saturated, i.e. more than <inline-formula id="inline-formula115-1059712312457186">
+<mml:math display="inline" id="math115-1059712312457186">
+<mml:mrow>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> ants are in <inline-formula id="inline-formula116-1059712312457186">
+<mml:math display="inline" id="math116-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>*/</td>
+</tr>
+<tr>
+<td>10. <bold>if</bold><inline-formula id="inline-formula117-1059712312457186">
+<mml:math display="inline" id="math117-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is not yet a super-node <bold>then</bold></td>
+</tr>
+<tr>
+<td>11. <inline-formula id="inline-formula118-1059712312457186">
+<mml:math display="inline" id="math118-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is turned into a super-node <inline-formula id="inline-formula119-1059712312457186">
+<mml:math display="inline" id="math119-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+</tr>
+<tr>
+<td>12. <bold>end if</bold></td>
+</tr>
+<tr>
+<td>13. call ENTER_SUPERNODE(<inline-formula id="inline-formula120-1059712312457186">
+<mml:math display="inline" id="math120-1059712312457186">
+<mml:mrow>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>N</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>,<inline-formula id="inline-formula121-1059712312457186">
+<mml:math display="inline" id="math121-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>)</td>
+</tr>
+<tr>
+<td>14. <bold>end if</bold></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>First, the initial support ant <inline-formula id="inline-formula122-1059712312457186">
+<mml:math display="inline" id="math122-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is considered as a super-node. The other ants enter the graph by this super-node. When such a moving ant <inline-formula id="inline-formula123-1059712312457186">
+<mml:math display="inline" id="math123-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> has found a convenient location <inline-formula id="inline-formula124-1059712312457186">
+<mml:math display="inline" id="math124-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> where to connect, it becomes connected to <inline-formula id="inline-formula125-1059712312457186">
+<mml:math display="inline" id="math125-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> if and only if the super-node is not saturated (number of data <inline-formula id="inline-formula126-1059712312457186">
+<mml:math display="inline" id="math126-1059712312457186">
+<mml:mrow>
+<mml:mo>&lt;</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>). If the maximum number of nodes in the current super-node has been reached (<inline-formula id="inline-formula127-1059712312457186">
+<mml:math display="inline" id="math127-1059712312457186">
+<mml:mrow>
+<mml:mo>≥</mml:mo>
+<mml:mi>r</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>), then <inline-formula id="inline-formula128-1059712312457186">
+<mml:math display="inline" id="math128-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> is turned into a super-node. Then <inline-formula id="inline-formula129-1059712312457186">
+<mml:math display="inline" id="math129-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> enters this super-node and repeats the same algorithm until it becomes connected.</p>
+<p>When all ants are connected, we obtain a hierarchical graph, where each sub-graph is ‘small’ enough to be displayed with a specific algorithm (<xref ref-type="bibr" rid="bibr17-1059712312457186">Di Battista et al., 1998</xref>) (see Section 3.5). Navigation through the graph is done in a hierarchical way: the user starts from the main super-node with an overview of the graph structure, then he may focus on a node that contains other sub-graphs, and so on in a recursive way. He may also go back to an upper level.</p>
+</sec>
+<sec id="section9-1059712312457186">
+<title>3.4 General properties of AntGraph and H-AntGraph</title>
+<p>The general properties of our algorithms that can also be applied for all ant-based clustering algorithms are as follows. First, AntGraph and H-AntGraph can deal with any kind of data provided that a similarity measure or a distance can be defined, as with many other ant- or swarm-based approaches. So, such algorithms are not restricted to numerical data for instance, but may deal with symbolic data, text, images, etc.</p>
+<p>Artificial ants algorithms are also completely incremental: ants are added one by one to an initially empty graph. This can be an advantage but also a drawback. Data may not need to be loaded all at once, but can be available as a data flow. However, incremental learning also means that our methods are sensitive to the ordering of the data, and to the data which is selected as a starting point. As will be shown in Sections 4.3 and 4.4, standard deviations that result from different choices regarding the order of data are small compared with the means and do not have an important influence on the results.</p>
+<p>The discovered graphs are connected, like the graphs built with standard topological methods. Also, our approach has only one parameter α which has a clear influence on the number of created links. When <inline-formula id="inline-formula130-1059712312457186">
+<mml:math display="inline" id="math130-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, the graph will be a tree. Reducing the value of α results in the creation of more and more links (see Section 4.2), until the complete graph is built with <inline-formula id="inline-formula131-1059712312457186">
+<mml:math display="inline" id="math131-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>.</p>
+<p>The complexity of our algorithms is difficult to evaluate accurately, but as will be shown in the results section, the building of the graph is competitive when compared with two other methods. Still we can give an overall upper bound which is already competitive. When building a proximity graph, two steps can be distinguished. The first consists of finding, for a given data item <inline-formula id="inline-formula132-1059712312457186">
+<mml:math display="inline" id="math132-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, a place in the graph where to connect <inline-formula id="inline-formula133-1059712312457186">
+<mml:math display="inline" id="math133-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. In the work of <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid and Yoshida (2007)</xref>, for instance, this operation is in <inline-formula id="inline-formula134-1059712312457186">
+<mml:math display="inline" id="math134-1059712312457186">
+<mml:mrow>
+<mml:mi>Θ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> for all cases (worst, average, best) because one looks, in the whole graph, for the data which is the closest to <inline-formula id="inline-formula135-1059712312457186">
+<mml:math display="inline" id="math135-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. In AntGraph and H-AntGraph, if <italic>n</italic> ants have been added to the graph, the worst complexity of this step is <inline-formula id="inline-formula136-1059712312457186">
+<mml:math display="inline" id="math136-1059712312457186">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>: <italic>n</italic> moves are performed along the path, which corresponds to a case where the graph has a chain-like structure. However, the computational cost observed in practice suggests that the average complexity is much lower (because the built graphs are rarely a chain).</p>
+<p>The second step consists of establishing a set of <inline-formula id="inline-formula137-1059712312457186">
+<mml:math display="inline" id="math137-1059712312457186">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> candidates data <inline-formula id="inline-formula138-1059712312457186">
+<mml:math display="inline" id="math138-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> for creating edges between <inline-formula id="inline-formula139-1059712312457186">
+<mml:math display="inline" id="math139-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> and <inline-formula id="inline-formula140-1059712312457186">
+<mml:math display="inline" id="math140-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Both algorithms try to limit <inline-formula id="inline-formula141-1059712312457186">
+<mml:math display="inline" id="math141-1059712312457186">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> as much as possible (i.e. <inline-formula id="inline-formula142-1059712312457186">
+<mml:math display="inline" id="math142-1059712312457186">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>&lt;&lt;</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>), but in the work of <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid and Yoshida (2007)</xref>, the heuristic used is <inline-formula id="inline-formula143-1059712312457186">
+<mml:math display="inline" id="math143-1059712312457186">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:msup>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, while in AntGraph it is <inline-formula id="inline-formula144-1059712312457186">
+<mml:math display="inline" id="math144-1059712312457186">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. Here the worst-case complexity is achieved when <inline-formula id="inline-formula145-1059712312457186">
+<mml:math display="inline" id="math145-1059712312457186">
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>′</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>, i.e. when the constructed graph is the complete graph.</p>
+<p>To conclude on the formal complexity, the maximum complexity of AntGraph is <inline-formula id="inline-formula146-1059712312457186">
+<mml:math display="inline" id="math146-1059712312457186">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>, but in practice, the real computational cost is much below this upper bound, because the built graphs do not have a chain-like structure and are not the complete graph. Another property of our approach is that there is no central control, and thus a parallel version of AntGraph could be designed. This could further reduce the complexity of the method.</p>
+</sec>
+<sec id="section10-1059712312457186">
+<title>3.5 Graph display and visual data mining</title>
+<p>We consider now that the domain expert would like to visualize a graph built with AntGraph in order to extract knowledge from it. For this purpose, we need a visualization method, and associated interactions. We must first select a graph visualization method among the numerous algorithms that exist (<xref ref-type="bibr" rid="bibr17-1059712312457186">Di Battista et al., 1998</xref>). We are especially interested in force-directed layout algorithms as initially studied by <xref ref-type="bibr" rid="bibr51-1059712312457186">Tutte (1963)</xref> and further developed for instance by <xref ref-type="bibr" rid="bibr19-1059712312457186">Eades (1984)</xref>. In a force-directed approach, the graph is considered as a mechanical system which is composed of rings (nodes) and springs between the rings (edges). Thus, the edges of the graph may exert forces on the nodes which may move according to some attractive or repulsive forces. Moreover, each spring has a nominal/target length that it tries to reach. Several research works have been devoted to such methods: we may mention for instance <xref ref-type="bibr" rid="bibr33-1059712312457186">Kamada and Kawai (1989)</xref>, <xref ref-type="bibr" rid="bibr21-1059712312457186">Frick, Ludwig, and Mehldau (1995)</xref> or <xref ref-type="bibr" rid="bibr22-1059712312457186">Fruchterman and Reingold (1991)</xref> which is derived from <xref ref-type="bibr" rid="bibr19-1059712312457186">Eades (1984)</xref> and generalizes the force-directed approach. We have selected this last method (<xref ref-type="bibr" rid="bibr22-1059712312457186">Fruchterman &amp; Reingold, 1991</xref>) because it is generic, offers some interactive capacities and may be easily used in an incremental way.</p>
+<p>Given a proximity graph, we define the target length between two neighbor nodes according to the real distance (similarity) between the two corresponding data. Then, all nodes are randomly scattered on a two-dimensional plan or in a three-dimensional space, and forces are simulated until the graph stabilizes. Several examples of results are given in the next sections. Once the graph is visualized, the user is able to explore it. He may detect the global structure of the graph, and more precisely, the existing clusters, their size, density and center, or the relations between these clusters (which cluster is close to another one). The user may also detect outliers, data which do not seem to belong to any cluster. The user may move in the visualization and change his point of view on the graph. He may zoom in or out, and we have implemented a zoom with distortion that focuses on some nodes while keeping the general context of these nodes. The user may select data and obtain additional information, such as the values of the attributes for a selected node. As will be shown in Section 5, the user may assign a label to a group of selected nodes, thus performing an interactive clustering task.</p>
+</sec>
+</sec>
+<sec id="section11-1059712312457186">
+<title>4 Experimental study</title>
+<sec id="section12-1059712312457186">
+<title>4.1 Tested databases and algorithms</title>
+<p>The 37 databases which have been used to evaluate our approach are represented in <xref ref-type="table" rid="table1-1059712312457186">Tables 1</xref> and <xref ref-type="table" rid="table2-1059712312457186">2</xref>. The <inline-formula id="inline-formula147-1059712312457186">
+<mml:math display="inline" id="math147-1059712312457186">
+<mml:mrow>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>ART</mml:mi>
+<mml:mn>1</mml:mn>
+<mml:mo>,</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>,</mml:mo>
+<mml:mi>ART</mml:mi>
+<mml:mn>6</mml:mn>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> databases have been used for instance in <xref ref-type="bibr" rid="bibr6-1059712312457186">Azzag et al. (2007)</xref> and correspond to numerical data generated with uniform or Gaussian laws, and with several levels of difficulty (i.e. overlapping clusters). Real databases (numerical, symbolic and mixed, i.e. with numerical or symbolic attributes) come from the UCI Machine Learning Repository (<xref ref-type="bibr" rid="bibr8-1059712312457186">Blake &amp; Merz, 1998</xref>) and from our collaboration with the CERIES (Epidermal and Sensory Research and Investigation Centre funded by Chanel). For these data, the similarity measure is based, for numeric attributes, on an Euclidean distance computed over normalized data and, for symbolic attributes, on a Hamming distance.</p>
+<table-wrap id="table1-1059712312457186" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Databases used in our tests, where <inline-formula id="inline-formula148-1059712312457186">
+<mml:math display="inline" id="math148-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the real number of classes, <italic>M</italic> the number of attributes, and <italic>N</italic> the number of data items. ‘Mixed’ denotes both numerical and symbolic attributes</p>
+</caption>
+<graphic alternate-form-of="table1-1059712312457186" xlink:href="10.1177_1059712312457186-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" colspan="2">Datasets</th>
+<th align="left">
+<inline-formula id="inline-formula149-1059712312457186">
+<mml:math display="inline" id="math149-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><italic>M</italic></th>
+<th align="left"><italic>N</italic></th>
+<th align="left">Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Artificial</td>
+<td>ART1</td>
+<td>4</td>
+<td>2</td>
+<td>400</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>ART2</td>
+<td>2</td>
+<td>2</td>
+<td>1000</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>ART3</td>
+<td>4</td>
+<td>2</td>
+<td>1100</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>ART4</td>
+<td>2</td>
+<td>2</td>
+<td>200</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>ART5</td>
+<td>9</td>
+<td>2</td>
+<td>900</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>ART6</td>
+<td>4</td>
+<td>8</td>
+<td>400</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td>Real world</td>
+<td>GLASS</td>
+<td>7</td>
+<td>9</td>
+<td>214</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>CERIES</td>
+<td>6</td>
+<td>4</td>
+<td>259</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>IRIS</td>
+<td>3</td>
+<td>4</td>
+<td>150</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>OPTDIGITS</td>
+<td>10</td>
+<td>64</td>
+<td>5620</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>PIMA</td>
+<td>2</td>
+<td>8</td>
+<td>768</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>SEGMENT</td>
+<td>7</td>
+<td>19</td>
+<td>2310</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>SOYBEAN</td>
+<td>4</td>
+<td>35</td>
+<td>47</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>THYROID</td>
+<td>3</td>
+<td>5</td>
+<td>215</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>VEHICLE</td>
+<td>4</td>
+<td>18</td>
+<td>846</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>WINE</td>
+<td>3</td>
+<td>13</td>
+<td>178</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>TIC-TAC-TOE</td>
+<td>2</td>
+<td>9</td>
+<td>958</td>
+<td>Symbolic</td>
+</tr>
+<tr>
+<td/>
+<td>HOUSE-VOTES-84</td>
+<td>2</td>
+<td>16</td>
+<td>435</td>
+<td>Symbolic</td>
+</tr>
+<tr>
+<td/>
+<td>ZOO</td>
+<td>7</td>
+<td>17</td>
+<td>101</td>
+<td>Mixed</td>
+</tr>
+<tr>
+<td/>
+<td>HAYES-ROTH</td>
+<td>3</td>
+<td>5</td>
+<td>132</td>
+<td>Mixed</td>
+</tr>
+<tr>
+<td/>
+<td>HEART</td>
+<td>2</td>
+<td>13</td>
+<td>270</td>
+<td>Mixed</td>
+</tr>
+<tr>
+<td/>
+<td>LYMPHOGRAPHY</td>
+<td>4</td>
+<td>18</td>
+<td>148</td>
+<td>Mixed</td>
+</tr>
+<tr>
+<td/>
+<td>WEBACE1</td>
+<td>10</td>
+<td>3.89 MB</td>
+<td>185</td>
+<td>Text</td>
+</tr>
+<tr>
+<td/>
+<td>TXT-CERIES</td>
+<td>17</td>
+<td>3.65 MB</td>
+<td>258</td>
+<td>Text</td>
+</tr>
+<tr>
+<td/>
+<td>ANTSEARCH</td>
+<td>4</td>
+<td>13.2 MB</td>
+<td>319</td>
+<td>Text</td>
+</tr>
+<tr>
+<td/>
+<td>REUTERS</td>
+<td>9</td>
+<td>4.05 MB</td>
+<td>1025</td>
+<td>Text</td>
+</tr>
+<tr>
+<td/>
+<td>WEBACE2</td>
+<td>6</td>
+<td>19 MB</td>
+<td>2340</td>
+<td>Text</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table2-1059712312457186" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Large databases used in our tests</p>
+</caption>
+<graphic alternate-form-of="table2-1059712312457186" xlink:href="10.1177_1059712312457186-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" colspan="2">Datasets</th>
+<th align="left">
+<inline-formula id="inline-formula150-1059712312457186">
+<mml:math display="inline" id="math150-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left"><italic>M</italic></th>
+<th align="left"><italic>N</italic></th>
+<th align="left">Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Artificial</td>
+<td>GEN-10000</td>
+<td>5</td>
+<td>10</td>
+<td>10,000</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>GEN-25000</td>
+<td>5</td>
+<td>10</td>
+<td>25,000</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>GEN-60000</td>
+<td>5</td>
+<td>10</td>
+<td>60,000</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>GEN-100000</td>
+<td>5</td>
+<td>10</td>
+<td>100,000</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>GEN-1000000</td>
+<td>5</td>
+<td>10</td>
+<td>1,000,000</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td>Real world</td>
+<td>WAVEFORM</td>
+<td>3</td>
+<td>21</td>
+<td>5000</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>LETTER RECOGNITION</td>
+<td>26</td>
+<td>16</td>
+<td>20,000</td>
+<td>Numeric</td>
+</tr>
+<tr>
+<td/>
+<td>FOREST COVERTYPE</td>
+<td>7</td>
+<td>54</td>
+<td>581,012</td>
+<td>Numeric</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>In addition to these multidimensional datasets, we have also used 5 textual databases which have from 258 to 2340 documents: TXT-CERIES (<xref ref-type="bibr" rid="bibr28-1059712312457186">Guinot et al., 2004</xref>) (a collection of 258 texts which deal with skin and dermatology provided by the CERIES), ANTSEARCH (a set of 319 scientific web pages), REUTERS (a database that contains 1025 textual documents where the large clusters have been extracted from the Reuters-21578 Text Categorization Collection (<xref ref-type="bibr" rid="bibr7-1059712312457186">Bay, Kibler, Pazzani, &amp; Smyth, 2000</xref>)), WEBACE1 and WEBACE2 (<xref ref-type="bibr" rid="bibr9-1059712312457186">Boley, Gini, Hastings, Mobasher, &amp; Moore, 1998</xref>) (a first database with 185 documents and 10 categories of web pages coming from an Altavista search, and a second database with 2340 documents and 6 categories from the Yahoo online news service, respectively). The similarity measure used for such textual data is computed with a standard method (i.e. <italic>cosine</italic> and <italic>tfidf</italic> weighting schemes proposed by <xref ref-type="bibr" rid="bibr46-1059712312457186">Salton and Buckley (1988))</xref>.</p>
+<p>In order to evaluate H-AntGraph, we have generated several large datasets with different sizes, i.e., GEN-{10,000, 25,000, 60,000, 100,000 and 1,000,000} (see <xref ref-type="bibr" rid="bibr13-1059712312457186">Da Costa and Venturini (2007))</xref>. The other real-world datasets (i.e. WAVEFORM with 5000 data items, LETTER RECOGNITION with 20,000 data items and FOREST COVERTYPE with 581,012 data items) come from the UCI Machine Learning Repository (<xref ref-type="bibr" rid="bibr8-1059712312457186">Blake &amp; Merz, 1998</xref>).</p>
+<p>Since our approaches are meta-heuristic and make approximations when building the graphs, we wanted to compare our results with those of a standard approach in topological learning. We have discarded the Delaunay graphs because their complexity for high-dimensional datasets is too important, and because Delaunay triangulation is more adapted to numerical data. Instead, we selected the RNG which can deal with any kind of data provided a distance can be defined. Also, it is known that the RNG is included in the Gabriel and Delaunay graphs (see the references in <xref ref-type="bibr" rid="bibr10-1059712312457186">Bose et al. (2012))</xref>.So RNG can be seen as the core structure of such proximity graphs.</p>
+<p>Finally, another motivation for selecting RNG for comparisons was the work of <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid and Yoshida (2007)</xref> and their study of an incremental RNG with interesting running times compared to the standard RNG.</p>
+<p>Finally, we have also used a <italic>k</italic>-nearest neighbors (<italic>k</italic>-NN) approach in order to compare the links created by our methods with the nearest neighbors of each data.</p>
+</sec>
+<sec id="section13-1059712312457186">
+<title>4.2 α parameter study</title>
+<p>AntGraph has only one parameter α which influences the connections between ants. Once the local path of maximum similarity has been explored, an ant <inline-formula id="inline-formula151-1059712312457186">
+<mml:math display="inline" id="math151-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> connects to an ant <inline-formula id="inline-formula152-1059712312457186">
+<mml:math display="inline" id="math152-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and then it decides to which neighbors of <inline-formula id="inline-formula153-1059712312457186">
+<mml:math display="inline" id="math153-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> it will connect to according to a local similarity threshold which depends on α. If <inline-formula id="inline-formula154-1059712312457186">
+<mml:math display="inline" id="math154-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, then <inline-formula id="inline-formula155-1059712312457186">
+<mml:math display="inline" id="math155-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> will be connected to all neighbors of <inline-formula id="inline-formula156-1059712312457186">
+<mml:math display="inline" id="math156-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, and as explained in Section 3.4, the built graph will be in this case the complete graph. If <inline-formula id="inline-formula157-1059712312457186">
+<mml:math display="inline" id="math157-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, then <inline-formula id="inline-formula158-1059712312457186">
+<mml:math display="inline" id="math158-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> will connect to none of <inline-formula id="inline-formula159-1059712312457186">
+<mml:math display="inline" id="math159-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>’s neighbors, and the resulting graph will be a tree. So it is important to study how to set this parameter. For this purpose, we have studied in this section the ratio between the number of edges of the graph produced by AntGraph and the complete graph, a measure also called density. Then, we have studied the influence of α on the visualization of the graphs and on the complexity of AntGraph.</p>
+<p>As far as density is concerned, we tested the first 29 databases of <xref ref-type="table" rid="table1-1059712312457186">Tables 1</xref> and <xref ref-type="table" rid="table2-1059712312457186">2</xref>. We propose in <xref ref-type="fig" rid="fig3-1059712312457186">Figure 3</xref> a summary for 15 representative datasets (3 artificial, 8 real-world and 4 textual databases). AntGraph behaves as expected: for a high value of α (i.e. from 0.92 to 0.99), we obtain a very low density in graphs. For example, when α=0.92, the average density is about 10%. For lower values of α (i.e. 0.01 → 0.3), we observe an increasing density in graphs. Thus, for α values below 0.3, AntGraph builds for the majority of datasets a proximity graph with a density close to 1. For some datasets (particularly the textual ones, i.e. WEBACE1, ANTSEARCH, and WEBACE2) where the similarity values between data are low, we notice that the density for <inline-formula id="inline-formula160-1059712312457186">
+<mml:math display="inline" id="math160-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> is lower than for the other graphs. But the density also converges toward 1 when α decreases.</p>
+<fig id="fig3-1059712312457186" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Density of graphs built with AntGraph on a set of 15 databases of <xref ref-type="table" rid="table1-1059712312457186">Tables 1</xref> and <xref ref-type="table" rid="table2-1059712312457186">2</xref>. Each bar (from left to right) corresponds to a database (from top to bottom in the legend).</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312457186-fig3.tif"/>
+</fig>
+<p>From a visualization point of view, we show in <xref ref-type="fig" rid="fig4-1059712312457186">Figure 4</xref> how the visual aspects of the graphs are affected by α. With low values of α, the visualization is overloaded with links, and even with a zoom, it is impossible to study the local topological properties of the graph. With high values of α, interesting properties can be highlighted, such as the different clusters and their density. So we argue that visualizations with many links are not as informative as those with fewer links.</p>
+<fig id="fig4-1059712312457186" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Visual aspect of a graph (here the IRIS database) according to different values of α: (a) <inline-formula id="inline-formula161-1059712312457186">
+<mml:math display="inline" id="math161-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, (b) <inline-formula id="inline-formula162-1059712312457186">
+<mml:math display="inline" id="math162-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>8</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> and (c) <inline-formula id="inline-formula163-1059712312457186">
+<mml:math display="inline" id="math163-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>92</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. The color of a node represents the real class of the corresponding data item.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312457186-fig4.tif"/>
+</fig>
+<p>From a complexity point of view, we have studied how α influences the running time of AntGraph. Results are presented in <xref ref-type="fig" rid="fig5-1059712312457186">Figure 5</xref> and are consistent with the complexity analysis of Section 3.4. When α is low, many links are present, and graphs are close to the complete graph. As a consequence, the complexity of AntGraph is maximum and certainly close to <inline-formula id="inline-formula164-1059712312457186">
+<mml:math display="inline" id="math164-1059712312457186">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. When α increases, the complexity greatly decreases.</p>
+<fig id="fig5-1059712312457186" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Running times for different databases (see <xref ref-type="table" rid="table1-1059712312457186">Tables 1</xref> and <xref ref-type="table" rid="table2-1059712312457186">2</xref>) and different values of α (using a logarithmic scale). Each bar (from left to right) corresponds to a given α value (from left to right in the legend).</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312457186-fig5.tif"/>
+</fig>
+<p>From these first tests, we can conclude that AntGraph builds interesting graphs both from a visual and complexity points of view when the density is low, i.e. when α is greater than <inline-formula id="inline-formula165-1059712312457186">
+<mml:math display="inline" id="math165-1059712312457186">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>9</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> (for the tested databases). Therefore, in the following, we have selected <inline-formula id="inline-formula166-1059712312457186">
+<mml:math display="inline" id="math166-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>92</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> as a plausible value. Of course this parameter can be adjusted according to the task to be solved, and to the desired density and properties of the graph. Since the density does not indicate which links have been established, in order to further analyze the graphs produced by AntGraph, we conducted additional experiments as described in the next sections.</p>
+</sec>
+<sec id="section14-1059712312457186">
+<title>4.3 Average distances</title>
+<p>We study in this section the ‘length’, i.e. distance, of links established by AntGraph with <inline-formula id="inline-formula167-1059712312457186">
+<mml:math display="inline" id="math167-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>92</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. For a given graph built by AntGraph, we have computed the average distance between neighbors, on average for 20 different runs (the order of data is changed</p>
+<p>for each run). Then we have compared these values to the average distances obtained when one considers the <italic>k</italic>-NN of each data with several values of <italic>k</italic>. Finally, we have computed this average distance between all data (complete graph), and also for graphs built by RNG.</p>
+<p>We present in <xref ref-type="table" rid="table3-1059712312457186">Table 3</xref> the obtained results on a subset of databases. In order to compare AntGraph with <italic>k</italic>-NN, we have underlined the bounds in terms of <italic>k</italic>-NN to which belong the AntGraph average distances. The average distance for AntGraph and for different databases is between 10-NN to 30-NN and is of course much lower than for the complete graph. Also, RNG builds graphs close to 1-NN and 3-NN because this method uses a very constrained building property. For AntGraph one may observe that the added links are consistent with the distance measure.</p>
+<table-wrap id="table3-1059712312457186" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Average distances of links for RNG, AntGraph (AG) with <inline-formula id="inline-formula168-1059712312457186">
+<mml:math display="inline" id="math168-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>92</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <italic>k</italic>-NN and complete graph (CG). Here σ indicates the standard deviations</p>
+</caption>
+<graphic alternate-form-of="table3-1059712312457186" xlink:href="10.1177_1059712312457186-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Databases</th>
+<th align="left">RNG</th>
+<th align="left">AG</th>
+<th align="left">
+<inline-formula id="inline-formula169-1059712312457186">
+<mml:math display="inline" id="math169-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>AG</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">1-NN</th>
+<th align="left">3-NN</th>
+<th align="left">5-NN</th>
+<th align="left">10-NN</th>
+<th align="left">20-NN</th>
+<th align="left">30-NN</th>
+<th align="left">40-NN</th>
+<th align="left">CG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IRIS</td>
+<td>0.049</td>
+<td>0.080</td>
+<td>[0.001]</td>
+<td>0.040</td>
+<td>0.051</td>
+<td>0.059</td>
+<td><underline>0.073</underline></td>
+<td><underline>0.093</underline></td>
+<td>0.109</td>
+<td>0.125</td>
+<td>0.322</td>
+</tr>
+<tr>
+<td>ART6</td>
+<td>0.086</td>
+<td>0.126</td>
+<td>[0.001]</td>
+<td>0.078</td>
+<td>0.087</td>
+<td>0.093</td>
+<td>0.103</td>
+<td>0.114</td>
+<td><underline>0.122</underline></td>
+<td><underline>0.129</underline></td>
+<td>0.275</td>
+</tr>
+<tr>
+<td>WINE</td>
+<td>0.115</td>
+<td>0.150</td>
+<td>[0.003]</td>
+<td>0.106</td>
+<td>0.119</td>
+<td>0.127</td>
+<td><underline>0.140</underline></td>
+<td><underline>0.156</underline></td>
+<td>0.168</td>
+<td>0.178</td>
+<td>0.276</td>
+</tr>
+<tr>
+<td>ART3</td>
+<td>0.012</td>
+<td>0.052</td>
+<td>[0.001]</td>
+<td>0.009</td>
+<td>0.013</td>
+<td>0.016</td>
+<td>0.022</td>
+<td>0.030</td>
+<td>0.036</td>
+<td><underline>0.042</underline></td>
+<td>0.242</td>
+</tr>
+<tr>
+<td>GLASS</td>
+<td>0.051</td>
+<td>0.072</td>
+<td>[0.003]</td>
+<td>0.047</td>
+<td>0.061</td>
+<td><underline>0.068</underline></td>
+<td><underline>0.080</underline></td>
+<td>0.094</td>
+<td>0.106</td>
+<td>0.115</td>
+<td>0.211</td>
+</tr>
+<tr>
+<td>SEGMENT</td>
+<td>0.032</td>
+<td>0.067</td>
+<td>[0.001]</td>
+<td>0.019</td>
+<td>0.027</td>
+<td>0.031</td>
+<td>0.038</td>
+<td>0.047</td>
+<td>0.054</td>
+<td><underline>0.059</underline></td>
+<td>0.262</td>
+</tr>
+<tr>
+<td>HEART</td>
+<td>0.109</td>
+<td>0.133</td>
+<td>[0.002]</td>
+<td>0.078</td>
+<td>0.099</td>
+<td>0.111</td>
+<td><underline>0.132</underline></td>
+<td><underline>0.156</underline></td>
+<td>0.173</td>
+<td>0.186</td>
+<td>0.337</td>
+</tr>
+<tr>
+<td>ART1</td>
+<td>0.022</td>
+<td>0.060</td>
+<td>[0.000]</td>
+<td>0.017</td>
+<td>0.024</td>
+<td>0.030</td>
+<td>0.040</td>
+<td><underline>0.054</underline></td>
+<td><underline>0.064</underline></td>
+<td>0.073</td>
+<td>0.258</td>
+</tr>
+<tr>
+<td>THYROID</td>
+<td>0.037</td>
+<td>0.066</td>
+<td>[0.002]</td>
+<td>0.032</td>
+<td>0.042</td>
+<td>0.049</td>
+<td><underline>0.060</underline></td>
+<td><underline>0.078</underline></td>
+<td>0.090</td>
+<td>0.098</td>
+<td>0.174</td>
+</tr>
+<tr>
+<td>ART4</td>
+<td>0.038</td>
+<td>0.070</td>
+<td>[0.001]</td>
+<td>0.025</td>
+<td>0.036</td>
+<td>0.046</td>
+<td><underline>0.065</underline></td>
+<td><underline>0.093</underline></td>
+<td>0.117</td>
+<td>0.140</td>
+<td>0.394</td>
+</tr>
+<tr>
+<td>PIMA</td>
+<td>0.068</td>
+<td>0.102</td>
+<td>[0.001]</td>
+<td>0.061</td>
+<td>0.070</td>
+<td>0.076</td>
+<td>0.085</td>
+<td><underline>0.096</underline></td>
+<td><underline>0.103</underline></td>
+<td>0.109</td>
+<td>0.214</td>
+</tr>
+<tr>
+<td>WEBACE2</td>
+<td>0.434</td>
+<td>0.468</td>
+<td>[0.007]</td>
+<td>0.397</td>
+<td>0.422</td>
+<td>0.434</td>
+<td>0.450</td>
+<td><underline>0.467</underline></td>
+<td><underline>0.477</underline></td>
+<td>0.485</td>
+<td>0.701</td>
+</tr>
+<tr>
+<td>CERIES</td>
+<td>0.065</td>
+<td>0.097</td>
+<td>[0.002]</td>
+<td>0.052</td>
+<td>0.068</td>
+<td>0.077</td>
+<td><underline>0.093</underline></td>
+<td><underline>0.114</underline></td>
+<td>0.130</td>
+<td>0.144</td>
+<td>0.271</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>These results also give us additional information. Like most incremental approaches, AntGraph is sensitive to the order which is used to present the data. The standard deviations presented in <xref ref-type="table" rid="table3-1059712312457186">Table 3</xref> are small compared with the mean values of the distances. So from an experimental point of view, we observe that the order of data indeed has an influence on the results, but also that this influence is limited.</p>
+</sec>
+<sec id="section15-1059712312457186">
+<title>4.4 Characterizing the discovered graphs</title>
+<p>In order to further analyze the graphs built by AntGraph, we have measured the similarity between such graphs and those built by RNG. For this purpose, we consider the following definitions. First let us consider the confusion matrix between two graphs generated respectively by RNG and AntGraph:</p>
+<graphic id="img1-1059712312457186" position="anchor" xlink:href="10.1177_1059712312457186-img1.tif"/>
+<p>where 0 and 1 correspond to the absence or presence of a link, respectively. In this confusion matrix, one may define (<xref ref-type="bibr" rid="bibr26-1059712312457186">Gower &amp; Legendre, 1986</xref>):</p>
+<list id="list3-1059712312457186" list-type="bullet">
+<list-item>
+<p><italic>a</italic>, the number of common links between RNG and AntGraph; this measure is also denoted ‘double presence’;</p>
+</list-item>
+<list-item>
+<p><italic>b</italic>, the number of links which are present in RNG and absent in AntGraph;</p>
+</list-item>
+<list-item>
+<p><italic>c</italic>, the number of links which are present in AntGraph and absent in RNG;</p>
+</list-item>
+<list-item>
+<p><italic>d</italic>, the remaining information which is the number of ‘double absence’ links in RNG and AntGraph.</p>
+</list-item>
+</list>
+<p>To evaluate the similarity between two graphs, we have computed several confusion matrices and we have selected three indices that can be computed from them (<xref ref-type="bibr" rid="bibr26-1059712312457186">Gower &amp; Legendre, 1986</xref>):</p>
+<list id="list4-1059712312457186" list-type="bullet">
+<list-item>
+<p>Sokal &amp; Michener: also called ‘simple matching concordance’ (SMC). It considers the set of common links (‘double presence and absence’) and weights this last value with the number of possible links (<inline-formula id="inline-formula170-1059712312457186">
+<mml:math display="inline" id="math170-1059712312457186">
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula>). This index varies from 0 to 1, this latter value corresponding to two identical graphs.</p>
+</list-item>
+<list-item>
+<p>Rogers &amp; Tanimoto (R&amp;T): unlike SMC, R&amp;T weights by 2 the inequality of presence/absence in graphs built by AntGraph and RNG (<italic>b</italic> and <italic>c</italic> values count twice). Like SMC, R&amp;T values vary from 0 to 1.</p>
+</list-item>
+<list-item>
+<p>Hamann: this index measures the difference between common presence/absence of links (<italic>a</italic> and <italic>d</italic> values) in two graphs and the number of different links (<italic>c</italic> and <italic>b</italic> values). This value is weighted by the total number of links. The advantage of this index is to highlight whether two graphs are similar or not in terms of types of links. This index varies from <inline-formula id="inline-formula171-1059712312457186">
+<mml:math display="inline" id="math171-1059712312457186">
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula> to 1. This latter value indicates two identical graphs.</p>
+</list-item>
+</list>
+<p>Results are presented in <xref ref-type="table" rid="table4-1059712312457186">Table 4</xref>. The similarity measures are averaged over 20 runs with a different ordering of data for each run. We can note that the more α increases, the more our graphs become similar to RNG. This property is confirmed by all indices which have high values when <inline-formula id="inline-formula172-1059712312457186">
+<mml:math display="inline" id="math172-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>99</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>. In contrast, when <inline-formula id="inline-formula173-1059712312457186">
+<mml:math display="inline" id="math173-1059712312457186">
+<mml:mrow>
+<mml:mi>α</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, then all indices indicate a complete dissimilarity between the graphs constructed by AntGraph and those obtained with RNG. Again here we note that the variations due to the order of data are limited to a small fraction of the mean.</p>
+<table-wrap id="table4-1059712312457186" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Similarity indices between graphs built with RNG and AntGraph. Here <inline-formula id="inline-formula174-1059712312457186">
+<mml:math display="inline" id="math174-1059712312457186">
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the standard deviation</p>
+</caption>
+<graphic alternate-form-of="table4-1059712312457186" xlink:href="10.1177_1059712312457186-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">α</th>
+<th align="left">Databases</th>
+<th align="left" colspan="2">SMC<hr/></th>
+<th align="left" colspan="2">R&amp;T<hr/></th>
+<th align="left" colspan="2">Hamann<hr/></th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th align="left">index</th>
+<th align="left">σ</th>
+<th align="left">index</th>
+<th align="left">σ</th>
+<th align="left">index</th>
+<th align="left">σ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.99</td>
+<td>IRIS</td>
+<td>0.980</td>
+<td>[0.001]</td>
+<td>0.961</td>
+<td>[0.002]</td>
+<td>0.960</td>
+<td>[0.002]</td>
+</tr>
+<tr>
+<td/>
+<td>ART6</td>
+<td>0.990</td>
+<td>[0.000]</td>
+<td>0.979</td>
+<td>[0.000]</td>
+<td>0.979</td>
+<td>[0.000]</td>
+</tr>
+<tr>
+<td/>
+<td>WINE</td>
+<td>0.980</td>
+<td>[0.001]</td>
+<td>0.961</td>
+<td>[0.002]</td>
+<td>0.960</td>
+<td>[0.002]</td>
+</tr>
+<tr>
+<td/>
+<td>ART3</td>
+<td>0.996</td>
+<td>[0.000]</td>
+<td>0.993</td>
+<td>[0.000]</td>
+<td>0.993</td>
+<td>[0.000]</td>
+</tr>
+<tr>
+<td/>
+<td>GLASS</td>
+<td>0.982</td>
+<td>[0.001]</td>
+<td>0.965</td>
+<td>[0.002]</td>
+<td>0.964</td>
+<td>[0.002]</td>
+</tr>
+<tr>
+<td/>
+<td>SEGMENT</td>
+<td>0.998</td>
+<td>[0.000]</td>
+<td>0.996</td>
+<td>[0.000]</td>
+<td>0.996</td>
+<td>[0.000]</td>
+</tr>
+<tr>
+<td>0.92</td>
+<td>IRIS</td>
+<td>0.893</td>
+<td>[0.007]</td>
+<td>0.807</td>
+<td>[0.011]</td>
+<td>0.786</td>
+<td>[0.014]</td>
+</tr>
+<tr>
+<td/>
+<td>ART6</td>
+<td>0.933</td>
+<td>[0.008]</td>
+<td>0.875</td>
+<td>[0.015]</td>
+<td>0.867</td>
+<td>[0.017]</td>
+</tr>
+<tr>
+<td/>
+<td>WINE</td>
+<td>0.918</td>
+<td>[0.006]</td>
+<td>0.849</td>
+<td>[0.010]</td>
+<td>0.837</td>
+<td>[0.012]</td>
+</tr>
+<tr>
+<td/>
+<td>ART3</td>
+<td>0.922</td>
+<td>[0.008]</td>
+<td>0.855</td>
+<td>[0.014]</td>
+<td>0.843</td>
+<td>[0.016]</td>
+</tr>
+<tr>
+<td/>
+<td>GLASS</td>
+<td>0.798</td>
+<td>[0.032]</td>
+<td>0.665</td>
+<td>[0.045]</td>
+<td>0.596</td>
+<td>[0.064]</td>
+</tr>
+<tr>
+<td/>
+<td>SEGMENT</td>
+<td>0.967</td>
+<td>[0.001]</td>
+<td>0.936</td>
+<td>[0.002]</td>
+<td>0.934</td>
+<td>[0.002]</td>
+</tr>
+<tr>
+<td>0.8</td>
+<td>IRIS</td>
+<td>0.662</td>
+<td>[0.042]</td>
+<td>0.496</td>
+<td>[0.049]</td>
+<td>0.324</td>
+<td>[0.084]</td>
+</tr>
+<tr>
+<td/>
+<td>ART6</td>
+<td>0.711</td>
+<td>[0.019]</td>
+<td>0.552</td>
+<td>[0.023]</td>
+<td>0.422</td>
+<td>[0.038]</td>
+</tr>
+<tr>
+<td/>
+<td>WINE</td>
+<td>0.606</td>
+<td>[0.033]</td>
+<td>0.436</td>
+<td>[0.035]</td>
+<td>0.213</td>
+<td>[0.066]</td>
+</tr>
+<tr>
+<td/>
+<td>ART3</td>
+<td>0.636</td>
+<td>[0.024]</td>
+<td>0.466</td>
+<td>[0.026]</td>
+<td>0.272</td>
+<td>[0.048]</td>
+</tr>
+<tr>
+<td/>
+<td>GLASS</td>
+<td>0.440</td>
+<td>[0.065]</td>
+<td>0.284</td>
+<td>[0.060]</td>
+<td>−0.121</td>
+<td>[0.131]</td>
+</tr>
+<tr>
+<td/>
+<td>SEGMENT</td>
+<td>0.678</td>
+<td>[0.011]</td>
+<td>0.513</td>
+<td>[0.013]</td>
+<td>0.356</td>
+<td>[0.023]</td>
+</tr>
+<tr>
+<td>0.3</td>
+<td>IRIS</td>
+<td>0.033</td>
+<td>[0.002]</td>
+<td>0.017</td>
+<td>[0.001]</td>
+<td>−0.933</td>
+<td>[0.003]</td>
+</tr>
+<tr>
+<td/>
+<td>ART6</td>
+<td>0.008</td>
+<td>[0.000]</td>
+<td>0.004</td>
+<td>[0.000]</td>
+<td>−0.983</td>
+<td>[0.000]</td>
+</tr>
+<tr>
+<td/>
+<td>WINE</td>
+<td>0.018</td>
+<td>[0.000]</td>
+<td>0.009</td>
+<td>[0.000]</td>
+<td>−0.965</td>
+<td>[0.000]</td>
+</tr>
+<tr>
+<td/>
+<td>ART3</td>
+<td>0.002</td>
+<td>[0.000]</td>
+<td>0.001</td>
+<td>[0.000]</td>
+<td>−0.995</td>
+<td>[0.000]</td>
+</tr>
+<tr>
+<td/>
+<td>GLASS</td>
+<td>0.012</td>
+<td>[0.000]</td>
+<td>0.006</td>
+<td>[0.000]</td>
+<td>−0.976</td>
+<td>[0.000]</td>
+</tr>
+<tr>
+<td/>
+<td>SEGMENT</td>
+<td>0.001</td>
+<td>[0.000]</td>
+<td>0.001</td>
+<td>[0.000]</td>
+<td>−0.997</td>
+<td>[0.000]</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section16-1059712312457186">
+<title>4.5 Execution times</title>
+<p>We further study in this section the running times of AntGraph and H-AntGraph (see the initial discussion in Section 4.2 and <xref ref-type="fig" rid="fig5-1059712312457186">Figure 5</xref>) and we compare them with two other approaches.</p>
+<p>In <xref ref-type="fig" rid="fig6-1059712312457186">Figure 6</xref>, we report the execution times for AntGraph and RNG. We have taken into account only the time needed for building the graph. AntGraph and RNG were implemented in Java and run on a Intel Core2Duo at 2.4 GHz with 1 GB RAM. AntGraph obtains the best results for all databases. The worst case complexity of RNG is <inline-formula id="inline-formula175-1059712312457186">
+<mml:math display="inline" id="math175-1059712312457186">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> while it is <inline-formula id="inline-formula176-1059712312457186">
+<mml:math display="inline" id="math176-1059712312457186">
+<mml:mrow>
+<mml:mi>O</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula> for AntGraph (see Section 3.4). Furthermore, as explained in Section 4.2, the average complexity of AntGraph observed in practice is lower than <inline-formula id="inline-formula177-1059712312457186">
+<mml:math display="inline" id="math177-1059712312457186">
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+</inline-formula>. This is due to the core principles of this heuristic, i.e. the fact that ants follow the path of maximum local similarity and are compared only with a small set of connected ants. Compared with RNG, our method may thus build proximity graphs with much larger datasets, and this gives us the possibility of new applications.</p>
+<fig id="fig6-1059712312457186" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Comparative execution times between AntGraph and RNG on all of the datasets of <xref ref-type="table" rid="table1-1059712312457186">Tables 1</xref> and <xref ref-type="table" rid="table2-1059712312457186">2</xref>. The times are given in seconds using a logarithmic scale. For each database, the first bar corresponds to AntGraph and the second bar to RNG.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312457186-fig6.tif"/>
+</fig>
+<p>We have measured in <xref ref-type="fig" rid="fig7-1059712312457186">Figure 7</xref> execution times for building hierarchical proximity graphs with databases of different sizes. Again, as far as RNG is concerned, the comparison is in favor of our approach. For a dataset of 1 million data, we respectively build, according to the maximal size of a super-node (i.e. <inline-formula id="inline-formula178-1059712312457186">
+<mml:math display="inline" id="math178-1059712312457186">
+<mml:mrow>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mn>300</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula179-1059712312457186">
+<mml:math display="inline" id="math179-1059712312457186">
+<mml:mrow>
+<mml:mn>500</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, <inline-formula id="inline-formula180-1059712312457186">
+<mml:math display="inline" id="math180-1059712312457186">
+<mml:mrow>
+<mml:mn>700</mml:mn>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>), a hierarchical proximity graph in 27 minutes, 51 minutes, and 71 minutes. The FOREST COVERTYPE dataset requires a larger running time because the number of attributes is more important (i.e. 54): in our incremental approach, the similarities are computed in real time (and cannot be pre-computed and stored in a matrix because of the size of the datasets).</p>
+<fig id="fig7-1059712312457186" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Average execution times for H-AntGraph and RNG (bar on the left in the case of the Waveform dataset) on large datasets (see <xref ref-type="table" rid="table1-1059712312457186">Table 1</xref>). Times are given in minutes using a logarithmic scale. Here <italic>r</italic> is the maximum number of nodes contained in a super-node. For each database, the bars are ordered as indicated in the legend (from left to right). Concerning RNG, only one bar is available (for the smallest database).</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312457186-fig7.tif"/>
+</fig>
+<p>We have also performed a comparative study between our approach and another method which builds proximity graphs in an incremental way (<xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid &amp; Yoshida, 2007</xref>). In this work, authors consider in their experiments large datasets from 5000 to 75,000 data items with a dimension of 50. We have reported execution times obtained with that method in <xref ref-type="fig" rid="fig8-1059712312457186">Figure 8</xref>. We perform a global comparison with two datasets having the same number of attributes. A more precise comparison was not possible because the data used by <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid and Yoshida (2007)</xref> was not a benchmark and thus was not available. In <xref ref-type="fig" rid="fig8-1059712312457186">Figure 8</xref>, we can note that to build a proximity graph from 75,000 data described with 50 attributes, this algorithm requires 156 minutes whereas our approach establishes a proximity graph from the FOREST COVERTYPE dataset (i.e. 581,012 data with 54 attributes) in less than 43 min (for <inline-formula id="inline-formula181-1059712312457186">
+<mml:math display="inline" id="math181-1059712312457186">
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>300</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>). So our approach is much faster than that of <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid and Yoshida (2007)</xref>. This is still true if the maximum cardinality of super-node is increased (i.e. <inline-formula id="inline-formula182-1059712312457186">
+<mml:math display="inline" id="math182-1059712312457186">
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>700</mml:mn>
+</mml:mrow>
+</mml:math>
+</inline-formula>, where H-AntGraph builds the graph in 71 minutes). In addition, the hierarchical graphs produced by H-AntGraph can be easily visualized, which is not the case for <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid and Yoshida (2007)</xref>.</p>
+<fig id="fig8-1059712312457186" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Execution times obtained using the incremental method of <xref ref-type="bibr" rid="bibr29-1059712312457186">Hacid &amp; Yoshida (2007)</xref> for datasets with increasing number of data. The number of attributes for each dataset is 50. Times are given in minutes.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312457186-fig8.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section17-1059712312457186">
+<title>5 Interactive clustering</title>
+<sec id="section18-1059712312457186">
+<title>5.1 Protocol</title>
+<p>We have studied the efficiency of AntGraph for solving an interactive clustering task. For this purpose, we have selected eight real-world databases from <xref ref-type="bibr" rid="bibr8-1059712312457186">Blake and Merz (1998)</xref>. These are supervised datasets: a class attribute exists. However, this class attribute is neither given to AntGraph (or other methods) nor visualized for users. Rather, this attribute is used as a ‘ground truth’ and for the computation of several indices. Eight users, with a minimum knowledge level in data analysis and clustering, have been involved in the tests. They were all students or colleagues from our Computer Science Laboratory.</p>
+<p>At first, we explain to each user the aim of the interactive process, i.e. creating groups of similar data. We let the user train on a simple database in order to let him learn how to use basic features of AntGraph visualization interface (i.e. how to change the point of view, how to select and label clusters). Then we process the selected database and the test begins. Once the graph is built and visualized, the user performs the interactive clustering by assigning a class label to the selected points (see an example in <xref ref-type="fig" rid="fig9-1059712312457186">Figure 9</xref>). Once such a partitioning has been found, we can evaluate its quality thanks to the class attribute. So we were able to evaluate the results with standard indices used in clustering. We have used (1) the number of found clusters <inline-formula id="inline-formula183-1059712312457186">
+<mml:math display="inline" id="math183-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula>, which can be compared with the real number of clusters, (2) the purity of clusters <inline-formula id="inline-formula184-1059712312457186">
+<mml:math display="inline" id="math184-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> (the purity of a cluster is the proportion of data of the same real class, considering the real class which is the most represented in the cluster, and it equals 100% if all data in a cluster belong to the same real class), and (3) the classification error <inline-formula id="inline-formula185-1059712312457186">
+<mml:math display="inline" id="math185-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> that represents the proportion of data couples which are not correctly clustered (also called the Rand index (<xref ref-type="bibr" rid="bibr44-1059712312457186">Rand, 1971</xref>)), i.e. in the same real cluster but not in the same found cluster, and vice versa.</p>
+<fig id="fig9-1059712312457186" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>Example of a 3D interactive visual clustering of a proximity graph built with AntGraph from the IRIS dataset: (a) initialization; (b) zoom with distortion; (c) selection of a first cluster; (d) first cluster labeled; (e) selection of a second cluster; (f) second cluster labeled; (g) selection of a third cluster; (h) third cluster labeled; (i) selection of a fourth and last cluster.</p>
+</caption>
+<graphic xlink:href="10.1177_1059712312457186-fig9.tif"/>
+</fig>
+<p>Finally, using these indices, we have compared the results obtained by users with those obtained by a standard clustering approach, namely the AHC (<xref ref-type="bibr" rid="bibr38-1059712312457186">Lance &amp; Williams, 1967</xref>; <xref ref-type="bibr" rid="bibr47-1059712312457186">Sneath &amp; Sokal, 1973</xref>).</p>
+</sec>
+<sec id="section19-1059712312457186">
+<title>5.2 Results</title>
+<p>Results are presented in <xref ref-type="table" rid="table5-1059712312457186">Table 5</xref>. As far as <inline-formula id="inline-formula186-1059712312457186">
+<mml:math display="inline" id="math186-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is concerned, one may observe that users have a tendency to define more clusters because they divide the existing clusters into several smaller clusters. In contrast, AHC creates fewer clusters. As far as purity is concerned, results are also quite comparable for most databases, with a slight advantage for AntGraph. The classification error is lower for AntGraph than for AHC for most databases, except for PIMA which is known to be very noisy and which is thus difficult for both methods.</p>
+<table-wrap id="table5-1059712312457186" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Results obtained by eight users with AntGraph and comparison with AHC. Here <inline-formula id="inline-formula187-1059712312457186">
+<mml:math display="inline" id="math187-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> is the number of found clusters, <inline-formula id="inline-formula188-1059712312457186">
+<mml:math display="inline" id="math188-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> the purity of clusters, and <inline-formula id="inline-formula189-1059712312457186">
+<mml:math display="inline" id="math189-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> the classification error</p>
+</caption>
+<graphic alternate-form-of="table5-1059712312457186" xlink:href="10.1177_1059712312457186-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Databases</th>
+<th align="left">N</th>
+<th align="left">M</th>
+<th align="left">
+<inline-formula id="inline-formula190-1059712312457186">
+<mml:math display="inline" id="math190-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left" colspan="6">AntGraph<hr/></th>
+<th align="left" colspan="3">AHC<hr/></th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th/>
+<th/>
+<th align="left">
+<inline-formula id="inline-formula191-1059712312457186">
+<mml:math display="inline" id="math191-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula192-1059712312457186">
+<mml:math display="inline" id="math192-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula193-1059712312457186">
+<mml:math display="inline" id="math193-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula194-1059712312457186">
+<mml:math display="inline" id="math194-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula195-1059712312457186">
+<mml:math display="inline" id="math195-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula196-1059712312457186">
+<mml:math display="inline" id="math196-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>σ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula197-1059712312457186">
+<mml:math display="inline" id="math197-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>F</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula198-1059712312457186">
+<mml:math display="inline" id="math198-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula199-1059712312457186">
+<mml:math display="inline" id="math199-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IRIS</td>
+<td>150</td>
+<td>4</td>
+<td>3</td>
+<td>3.9</td>
+<td>[0.78]</td>
+<td>0.92</td>
+<td>[0.03]</td>
+<td>0.09</td>
+<td>[0.02]</td>
+<td>3</td>
+<td>0.88</td>
+<td>0.13</td>
+</tr>
+<tr>
+<td>PIMA</td>
+<td>768</td>
+<td>8</td>
+<td>2</td>
+<td>10.8</td>
+<td>[0.74]</td>
+<td>0.71</td>
+<td>[0.03]</td>
+<td>0.48</td>
+<td>[0.02]</td>
+<td>3</td>
+<td>0.65</td>
+<td>0.48</td>
+</tr>
+<tr>
+<td>SOYBEAN</td>
+<td>47</td>
+<td>35</td>
+<td>4</td>
+<td>4.8</td>
+<td>[0.86]</td>
+<td>0.96</td>
+<td>[0.02]</td>
+<td>0.06</td>
+<td>[0.00]</td>
+<td>6</td>
+<td>1.00</td>
+<td>0.08</td>
+</tr>
+<tr>
+<td>THYROID</td>
+<td>215</td>
+<td>5</td>
+<td>3</td>
+<td>4.1</td>
+<td>[0.85]</td>
+<td>0.89</td>
+<td>[0.03]</td>
+<td>0.29</td>
+<td>[0.04]</td>
+<td>5</td>
+<td>0.84</td>
+<td>0.35</td>
+</tr>
+<tr>
+<td>VEHICLE</td>
+<td>846</td>
+<td>18</td>
+<td>4</td>
+<td>7.3</td>
+<td>[0.83]</td>
+<td>0.46</td>
+<td>[0.02]</td>
+<td>0.32</td>
+<td>[0.01]</td>
+<td>3</td>
+<td>0.35</td>
+<td>0.39</td>
+</tr>
+<tr>
+<td>WINE</td>
+<td>178</td>
+<td>12</td>
+<td>3</td>
+<td>4.2</td>
+<td>[0.60]</td>
+<td>0.91</td>
+<td>[0.02]</td>
+<td>0.16</td>
+<td>[0.02]</td>
+<td>6</td>
+<td>0.84</td>
+<td>0.20</td>
+</tr>
+<tr>
+<td>CERIES</td>
+<td>259</td>
+<td>4</td>
+<td>6</td>
+<td>9.4</td>
+<td>[2.24]</td>
+<td>0.71</td>
+<td>[0.07]</td>
+<td>0.16</td>
+<td>[0.02]</td>
+<td>3</td>
+<td>0.56</td>
+<td>0.24</td>
+</tr>
+<tr>
+<td>GLASS</td>
+<td>214</td>
+<td>9</td>
+<td>6</td>
+<td>8.1</td>
+<td>[0.67]</td>
+<td>0.55</td>
+<td>[0.03]</td>
+<td>0.32</td>
+<td>[0.02]</td>
+<td>3</td>
+<td>0.49</td>
+<td>0.43</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>It is quite interesting to note that an interactive clustering process based on proximity graphs built by AntGraph can produce results which achieve performances equivalent to AHC. The drawback of the interactive process is the time needed to perform the task (here less than 2 minutes), but the main advantage is that the expert has a high confidence in these results because they have visually validated them. So the conclusions of these tests are that AntGraph can build graphs that represent well the topological properties of a dataset, in terms of clusters.</p>
+</sec>
+</sec>
+<sec id="section20-1059712312457186" sec-type="conclusions">
+<title>6 Conclusion</title>
+<p>We have proposed in this paper a fast method for incrementally building proximity graphs, with two algorithms, namely AntGraph and H-AntGraph. This method is inspired from a new biological model, i.e. the self-assembly behavior observed in real ants. Each ant is introduced in the graph on an initial node and it follows the path of greatest local similarity in order to find a convenient location where to connect. We have tested our algorithms on several datasets, both artificial and from the real world, in order to study their properties and to compare them with existing methods. We have shown that execution times are competitive when compared with other methods for building proximity graphs. We have proposed a hierarchical extension of our initial algorithm in order to quickly build large graphs (i.e. with 1 million data items) whose structure can be visualized with standard force-directed graph layout algorithms. We have performed a user study to highlight the possible applications of proximity graphs to interactive clustering. The comparative results have shown that the human performance with AntGraph is competitive to a standard clustering algorithm.</p>
+<p>Several perspectives can be derived from this work. Direct extensions could be tested in order to determine whether they can further improve the quality of learned graphs. One such heuristic would be the ‘node replacement’. On the path of maximum local similarity, a moving ant <inline-formula id="inline-formula200-1059712312457186">
+<mml:math display="inline" id="math200-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> could exchange the data it represents with <inline-formula id="inline-formula201-1059712312457186">
+<mml:math display="inline" id="math201-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>pos</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula>. This would result in a combination of the AntGraph heuristic with another well-known ant-based heuristic (<xref ref-type="bibr" rid="bibr16-1059712312457186">Deneubourg et al., 1990</xref>) where ants can pick-up or deposit objects according to the local similarity of encountered objects. Another possible extension would be a ‘link replacement’ heuristic: when <inline-formula id="inline-formula202-1059712312457186">
+<mml:math display="inline" id="math202-1059712312457186">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> connects to other ants, it could not only add links but also remove links between ants according to some behavioral rules.</p>
+<p>From the interactive visualization point of view, we would like to combine the building of the graph and the computation of its layout, which are actually two different steps in AntGraph. For this purpose, we would like to add to each node its 2D or 3D coordinates. These coordinates would be determined by ants at the time the graph is built. These coordinates could be used to display the graph and at least to initialize the layout algorithms. This would result hopefully in a faster display algorithm that could represent more nodes than the actual version.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>We would like to thank Julien Lavergne for his contribution to the AntGraph project.</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.</p>
+</fn>
+</fn-group>
+<bio>
+<title>About the Authors</title>
+<p><bold>Hanane Azzag</bold> is currently associate professor at the University of Paris 13 (France) and a member of the machine learning team A3 in LIPN laboratory. Her main research interests are biomimetic algorithms and data mining. She graduated from USTHB University where she received her engineer diploma in 2001, and in 2002 gained an MSc (DEA) in artificial intelligence from Tours University. In 2005, after 3 years at Tours computer science laboratory, she received her PhD in computer science from the University of Tours.</p>
+<p><bold>Christiane Guinot</bold> gained her doctorate in biomathematics science (PhD) at the University of Paris in 1982, the habilitation in computer science (DSc) at the University of Tours in 2003. From 1982 to 1986, she took two post-doctoral positions in medical statistics and epidemiology at the Gustave-Roussy Institute in France and at the Showa University School of Medicine in Japan where she acquired a speciality diploma in cancer epidemiology. In parallel, she taught medical statistics at Paris University. In 1986, she joined an international pharmaceutical group as head of the biostatistical department. In 1991, she joined Chanel group and contributed to the foundation of the CE.R.I.E.S. by creating the biometrics and epidemiology department, which she is still heading and the sensory laboratory unit of Chanel. She was elected a member of the International Statistical Institute (ISI) in 2002, and a member of the board of directors of the foundation ‘La Science Statistique’ in 2004. She was elected president of the French Statistical Association (SFdS) in 2005.</p>
+<p><bold>Gilles Venturini</bold> is a professor in computer science at the University of Tours in France. His main research interests concern visual data mining, virtual reality, 3D acquisition, biomimetic algorithms (genetic algorithms, artificial ants). He is at the head of the Fovea research group at the computer science laboratory of the University of Tours. He is co-editor in chief of the French new IT journal (<italic>Revue des Nouvelles Technologies de l’Information</italic>), president of the Société Francophone de Classification (French-speaking society on clustering and classification), and was recently elected president of the French Data Mining Society (Extraction et Gestion des Connaissances).</p>
+</bio>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Abraham</surname><given-names>A.</given-names></name>
+<name><surname>Ramos</surname><given-names>V.</given-names></name>
+</person-group> (<year>2003</year>, <day>08-12</day> <month>December</month>). <article-title>Web usage mining using artificial ant colony clustering and linear genetic programming</article-title>. <source>In the congress on evolutionary computation</source> (p. <fpage>1384</fpage>–<lpage>1391</lpage>). <publisher-loc>Canberra, Australia</publisher-loc>: <publisher-name>IEEE-Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr2-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Adleman</surname><given-names>L. M.</given-names></name>
+</person-group> (<year>1994</year>, <month>November</month>). <article-title>Molecular computation of solutions to combinatorial problems</article-title>. <source>Science</source>, <volume>266</volume>(<issue>5187</issue>), <fpage>1021</fpage>–<lpage>1024</lpage>.</citation>
+</ref>
+<ref id="bibr3-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Amos</surname><given-names>M.</given-names></name>
+</person-group> (<year>2005</year>). <source>Theoretical and experimental dna computation</source> (<volume>Vols. XIII</volume>, <fpage>173</fpage> pages). <publisher-name>Springer Verlag Berlin</publisher-name>, <publisher-loc>Heidelberg</publisher-loc>.</citation>
+</ref>
+<ref id="bibr4-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Anderson</surname><given-names>C.</given-names></name>
+<name><surname>Theraulaz</surname><given-names>G.</given-names></name>
+<name><surname>Deneubourg</surname><given-names>J. L.</given-names></name>
+</person-group> (<year>2002</year>, <month>May</month> <day>1</day>). <article-title>Self-assemblages in insect societies</article-title>. <source>Insectes Sociaux</source>, <volume>49</volume>(<issue>2</issue>), <fpage>99</fpage>–<lpage>110</lpage>.</citation>
+</ref>
+<ref id="bibr5-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Angelov</surname><given-names>S.</given-names></name>
+<name><surname>Khanna</surname><given-names>S.</given-names></name>
+<name><surname>Visontai</surname><given-names>M.</given-names></name>
+</person-group> (<year>2006</year>). <article-title>On the complexity of graph self-assembly in accretive systems</article-title>. In <person-group person-group-type="editor">
+<name><surname>Mao</surname><given-names>C.</given-names></name>
+<name><surname>Yokomori</surname><given-names>T.</given-names></name>
+</person-group> (Eds.), <source>Dna</source> (<volume>Vol. 4287</volume>, p. <fpage>95</fpage>–<lpage>110</lpage>). Springer.</citation>
+</ref>
+<ref id="bibr6-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Azzag</surname><given-names>H.</given-names></name>
+<name><surname>Venturini</surname><given-names>G.</given-names></name>
+<name><surname>Oliver</surname><given-names>A.</given-names></name>
+<name><surname>Guinot</surname><given-names>C.</given-names></name>
+</person-group> (<year>2007</year>). <article-title>A hierarchical ant based clustering algorithm and its use in three real-world applications</article-title>. <source>European Journal of Operational Research</source>, <volume>179</volume>(<issue>3</issue>), <fpage>906</fpage>–<lpage>922</lpage>.</citation>
+</ref>
+<ref id="bibr7-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bay</surname><given-names>S. D.</given-names></name>
+<name><surname>Kibler</surname><given-names>D. F.</given-names></name>
+<name><surname>Pazzani</surname><given-names>M. J.</given-names></name>
+<name><surname>Smyth</surname><given-names>P.</given-names></name>
+</person-group> (<year>2000</year>). <article-title>The UCI KDD archive of large data sets for data mining research and experimentation</article-title>. <source>SIGKDD Explorations</source>, <volume>2</volume>(<issue>2</issue>), <fpage>81</fpage>–<lpage>85</lpage>.</citation>
+</ref>
+<ref id="bibr8-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Blake</surname><given-names>C.</given-names></name>
+<name><surname>Merz</surname><given-names>C.</given-names></name>
+</person-group> (<year>1998</year>). <source>UCI repository of machine learning databases</source>.</citation>
+</ref>
+<ref id="bibr9-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Boley</surname><given-names>D.</given-names></name>
+<name><surname>Gini</surname><given-names>M.</given-names></name>
+<name><surname>Hastings</surname><given-names>K.</given-names></name>
+<name><surname>Mobasher</surname><given-names>B.</given-names></name>
+<name><surname>Moore</surname><given-names>J.</given-names></name>
+</person-group> (<year>1998</year>). <article-title>A client-side agent for document categorization and exploration</article-title>. In (<volume>Vol. 8</volume>, p. <fpage>387</fpage>–<lpage>399</lpage>). <source>Journal of Internet Research</source>.</citation>
+</ref>
+<ref id="bibr10-1059712312457186">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Bose</surname><given-names>P.</given-names></name>
+<name><surname>Dujmovic</surname><given-names>V.</given-names></name>
+<name><surname>Hurtado</surname><given-names>F.</given-names></name>
+<name><surname>Iacono</surname><given-names>J.</given-names></name>
+<name><surname>Langerman</surname><given-names>S.</given-names></name>
+<name><surname>Meijer</surname><given-names>H.</given-names></name>
+<etal/>
+</person-group>. (<year>2012</year>). <article-title>Proximitygraphs: E, δ, Δ, χ and ω</article-title>. In <conf-name>Proceedings of the 28th european workshop on computational geometry (eurocg12)</conf-name>.</citation>
+</ref>
+<ref id="bibr11-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Camazine</surname><given-names>S.</given-names></name>
+<name><surname>Franks</surname><given-names>N. R.</given-names></name>
+<name><surname>Sneyd</surname><given-names>J.</given-names></name>
+<name><surname>Bonabeau</surname><given-names>E.</given-names></name>
+<name><surname>Deneubourg</surname><given-names>J.-L.</given-names></name>
+<name><surname>Theraula</surname><given-names>G.</given-names></name>
+</person-group> (<year>2001</year>). <source>Self-organization in biological systems</source>. <publisher-loc>Princeton, NJ, USA</publisher-loc>: <publisher-name>Princeton University Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr12-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cignoni</surname><given-names>P.</given-names></name>
+<name><surname>Montani</surname><given-names>C.</given-names></name>
+<name><surname>Scopigno</surname><given-names>R.</given-names></name>
+</person-group> (<year>1998</year>). <article-title>Dewall: A fast divide and conquer Delaunay triangulation algorithm in ed</article-title>. <source>Computer-Aided Design</source>, <volume>30</volume>(<issue>5</issue>), <fpage>333</fpage>–<lpage>341</lpage>.</citation>
+</ref>
+<ref id="bibr13-1059712312457186">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Da Costa</surname><given-names>D.</given-names></name>
+<name><surname>Venturini</surname><given-names>G.</given-names></name>
+</person-group> (<year>2007</year>). <article-title>A visual and interactive data exploration method for large data sets and clustering</article-title>. In <conf-name>Adma ’07: Proceedings of the 3rd international conference on advanced data mining and applications</conf-name> (pp. <fpage>553</fpage>–<lpage>561</lpage>). <conf-loc>Berlin, Heidelberg: Springer-Verlag</conf-loc>.</citation>
+</ref>
+<ref id="bibr14-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Danos</surname><given-names>V.</given-names></name>
+<name><surname>Tarissan</surname><given-names>F.</given-names></name>
+</person-group> (<year>2005</year>). <article-title>Self assembling graphs</article-title>. In <person-group person-group-type="editor">
+<name><surname>Mira</surname><given-names>J.</given-names></name>
+<name><surname>Álvarez</surname><given-names>J. R.</given-names></name>
+</person-group> (Eds.), <source>Iwinac</source> (<issue>1</issue>) (<volume>Vol. 3561</volume>, p. <fpage>498</fpage>–<lpage>507</lpage>). <publisher-name>Springer</publisher-name>.</citation>
+</ref>
+<ref id="bibr15-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Danos</surname><given-names>V.</given-names></name>
+<name><surname>Tarissan</surname><given-names>F.</given-names></name>
+</person-group> (<year>2007</year>). <article-title>Self-assembling graphs</article-title>. <source>Natural Computing: an international journal</source>, <volume>6</volume>(<issue>3</issue>), <fpage>339</fpage>–<lpage>358</lpage>.</citation>
+</ref>
+<ref id="bibr16-1059712312457186">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Deneubourg</surname><given-names>J.-L.</given-names></name>
+<name><surname>Goss</surname><given-names>S.</given-names></name>
+<name><surname>Franks</surname><given-names>N.</given-names></name>
+<name><surname>Sendova-Franks</surname><given-names>A.</given-names></name>
+<name><surname>Detrain</surname><given-names>C.</given-names></name>
+<name><surname>Chretien</surname><given-names>L.</given-names></name>
+</person-group> (<year>1990</year>).<article-title>The dynamics of collective sorting: robot-like ant and ant-like robots</article-title>. In <conf-name>Proceedings of thefirst international conference on simulation of adaptive behavior</conf-name> (pp. <fpage>356</fpage>–<lpage>365</lpage>).</citation>
+</ref>
+<ref id="bibr17-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Di Battista</surname><given-names>G.</given-names></name>
+<name><surname>Eades</surname><given-names>P.</given-names></name>
+<name><surname>Tamassia</surname><given-names>R.</given-names></name>
+<name><surname>Tollis</surname><given-names>I. G.</given-names></name>
+</person-group> (<year>1998</year>). <source>Graph drawing: Algorithms for the visualization of graphs</source>. <publisher-loc>Upper Saddle River, NJ, USA</publisher-loc>: <publisher-name>Prentice Hall PTR</publisher-name>.</citation>
+</ref>
+<ref id="bibr18-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Dorigo</surname><given-names>M.</given-names></name>
+<name><surname>Trianni</surname><given-names>V.</given-names></name>
+<name><surname>Şahin</surname><given-names>E.</given-names></name>
+<name><surname>Groβ</surname><given-names>R.</given-names></name>
+<name><surname>Labella</surname><given-names>T. H.</given-names></name>
+<name><surname>Baldassarre</surname><given-names>G.</given-names></name>
+<etal/>
+</person-group>. (<year>2004</year>, <month>September</month>). <article-title>Evolving self-organizing behaviors for a swarm-bot</article-title>. <source>Auton. Robots</source>, <volume>17</volume> (<issue>2–3</issue>), <fpage>223</fpage>–<lpage>245</lpage>.</citation>
+</ref>
+<ref id="bibr19-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Eades</surname><given-names>P.</given-names></name>
+</person-group> (<year>1984</year>). <article-title>A heuristic for graph drawing</article-title>. In <source>Congressus numeranium</source> (<volume>Vol. 42</volume>, p. <fpage>140</fpage>–<lpage>160</lpage>).</citation>
+</ref>
+<ref id="bibr20-1059712312457186">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Ester</surname><given-names>M.</given-names></name>
+<name><surname>Kriegel</surname><given-names>H.-P.</given-names></name>
+<name><surname>Sander</surname><given-names>J.</given-names></name>
+</person-group> (<year>1997</year>). <article-title>Spatial data mining: A database approach</article-title>. In <conf-name>Proceedings of the 5th int. symposium on large spatial databases (ssd ’97)</conf-name> (pp. <fpage>47</fpage>-<lpage>66</lpage>).</citation>
+</ref>
+<ref id="bibr21-1059712312457186">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Frick</surname><given-names>A.</given-names></name>
+<name><surname>Ludwig</surname><given-names>A.</given-names></name>
+<name><surname>Mehldau</surname><given-names>H.</given-names></name>
+</person-group> (<year>1995</year>). <article-title>A fast adaptive layout algorithm for undirected graphs</article-title>. In <conf-name>Proceedings of the dimacs international workshop on graph drawing</conf-name> (pp. <fpage>388</fpage>–<lpage>403</lpage>). <publisher-loc>London, UK, UK</publisher-loc>: <publisher-name>Springer-Verlag</publisher-name>.</citation>
+</ref>
+<ref id="bibr22-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Fruchterman</surname><given-names>T.</given-names></name>
+<name><surname>Reingold</surname><given-names>E.</given-names></name>
+</person-group> (<year>1991</year>). <article-title>Graph drawing by force-directed placement</article-title>. In <source>Software- practice and experience</source> (<volume>Vol. 21</volume>, p. <fpage>1129</fpage>–<lpage>1164</lpage>).</citation>
+</ref>
+<ref id="bibr23-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Gabriel</surname><given-names>K. R.</given-names></name>
+<name><surname>Sokal</surname><given-names>R. R.</given-names></name>
+</person-group> (<year>1969</year>). <article-title>A new statistical approach to geographic variation analysis</article-title>.In <source>Systematic zoology</source> (p. <fpage>259</fpage>–<lpage>278</lpage>).</citation>
+</ref>
+<ref id="bibr24-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Garzon</surname><given-names>M. H.</given-names></name>
+<name><surname>Deaton</surname><given-names>R. J.</given-names></name>
+<name><surname>Barnes</surname><given-names>K.</given-names></name>
+</person-group> (<year>1999</year>, <day>13–17</day> <month>July</month>). <article-title>On self-assembling graphs in vitro</article-title>. In <person-group person-group-type="editor">
+<name><surname>Banzhaf</surname><given-names>W.</given-names></name>
+<etal/>
+</person-group>. (Eds.), <source>Proceedings of the genetic and evolutionary computation conference</source> (<volume>Vol. 2</volume>, pp. <fpage>1805</fpage>–<lpage>1809</lpage>). <publisher-loc>Orlando, Florida, USA</publisher-loc>: <publisher-name>Morgan Kaufmann</publisher-name>.</citation>
+</ref>
+<ref id="bibr25-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Goss</surname><given-names>S.</given-names></name>
+<name><surname>Deneubourg</surname><given-names>J.-L.</given-names></name>
+</person-group> (<year>1991</year>). <article-title>Harvesting by a group of robots</article-title>. In <person-group person-group-type="editor">
+<name><surname>Varela</surname><given-names>F.</given-names></name>
+<name><surname>Bourgine</surname><given-names>P.</given-names></name>
+</person-group> (Eds.), <source>Proceedings of the first european conference on artificial life</source> (pp. <fpage>195</fpage>–<lpage>204</lpage>). <publisher-loc>Paris, France</publisher-loc>: <publisher-name>Elsevier Publishing</publisher-name>.</citation>
+</ref>
+<ref id="bibr26-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Gower</surname><given-names>J. C.</given-names></name>
+<name><surname>Legendre</surname><given-names>P.</given-names></name>
+</person-group> (<year>1986</year>, <month>March</month>). <article-title>Metric and euclidean properties of dissimilarity coeficients</article-title>. <source>Journal of Classification</source>, <volume>3</volume>(<issue>1</issue>), <fpage>5</fpage>–<lpage>48</lpage>.</citation>
+</ref>
+<ref id="bibr27-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Groβ</surname><given-names>R.</given-names></name>
+<name><surname>Dorigo</surname><given-names>M.</given-names></name>
+</person-group> (<year>2008</year>). <article-title>Self-assembly at the macroscopic scale</article-title>. <source>Proceedings of the IEEE</source>, <volume>96</volume>(<issue>9</issue>), <fpage>1490</fpage>–<lpage>1508</lpage>.</citation>
+</ref>
+<ref id="bibr28-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Guinot</surname><given-names>C.</given-names></name>
+<name><surname>Malvy</surname><given-names>D. J.-M.</given-names></name>
+<name><surname>Morizot</surname><given-names>F.</given-names></name>
+<name><surname>Tenenhaus</surname><given-names>M.</given-names></name>
+<name><surname>Latreille</surname><given-names>J.</given-names></name>
+<name><surname>Lopez</surname><given-names>S.</given-names></name>
+<etal/>
+</person-group>. (<year>2004</year>, <month>December</month>, <day>22</day>). <article-title>Classification of healthy human facial skin. CRC Press</article-title>. (Textbook of Cosmetic Dermatology Third edition)</citation>
+</ref>
+<ref id="bibr29-1059712312457186">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Hacid</surname><given-names>H.</given-names></name>
+<name><surname>Yoshida</surname><given-names>T.</given-names></name>
+</person-group> (<year>2007</year>, <month>May</month>). <article-title>Incremental neighborhood graphs construction for multidimensional databases indexing</article-title>. In <conf-name>the canadian artificial intelligence conference, canai 2007, lnai 4509</conf-name> (pp. <fpage>405</fpage>–<lpage>416</lpage>). <conf-loc>Montreal, Quebec, Canada</conf-loc>.</citation>
+</ref>
+<ref id="bibr30-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Handl</surname><given-names>J.</given-names></name>
+<name><surname>Knowles</surname><given-names>J.</given-names></name>
+<name><surname>Dorigo</surname><given-names>M.</given-names></name>
+</person-group> (<year>2003</year>). <article-title>Design and application of hybrid intelligent systems</article-title>. In <person-group person-group-type="editor">
+<name><surname>Abraham</surname><given-names>A.</given-names></name>
+<name><surname>Köoppen</surname><given-names>M.</given-names></name>
+<name><surname>Franke</surname><given-names>K.</given-names></name>
+</person-group> (Eds.), (pp. <fpage>204</fpage>–<lpage>213</lpage>). <publisher-loc>Amsterdam, The Netherlands, The Netherlands</publisher-loc>: <publisher-name>IOS Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr31-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Handl</surname><given-names>J.</given-names></name>
+<name><surname>Knowles</surname><given-names>J.</given-names></name>
+<name><surname>Dorigo</surname><given-names>M.</given-names></name>
+</person-group> (<year>2006</year>, <month>January</month>). <article-title>Ant-based clustering and topographic mapping</article-title>. In (<volume>Vol. 12</volume>, pp. <fpage>35</fpage>–<lpage>61</lpage>). <publisher-loc>Cambridge, MA, USA</publisher-loc>: <publisher-name>MIT Press</publisher-name>.</citation>
+</ref>
+<ref id="bibr32-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Handl</surname><given-names>J.</given-names></name>
+<name><surname>Meyer</surname><given-names>B.</given-names></name>
+</person-group> (<year>2007</year>, <month>December</month>). <article-title>Ant-based and swarm-based clustering</article-title>. In (<volume>Vol. 1</volume>, pp. <fpage>95</fpage>–<lpage>113</lpage>).</citation>
+</ref>
+<ref id="bibr33-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kamada</surname><given-names>T.</given-names></name>
+<name><surname>Kawai</surname><given-names>S.</given-names></name>
+</person-group> (<year>1989</year>). <article-title>An algorithm for drawing general undirected graphs</article-title>. In <source>Information processing letters</source> (<volume>Vol. 31</volume>, p. <fpage>7</fpage>–<lpage>15</lpage>).</citation>
+</ref>
+<ref id="bibr34-1059712312457186">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Keim</surname><given-names>D. A.</given-names></name>
+<name><surname>Ankerst</surname><given-names>M.</given-names></name>
+</person-group> (<year>2001</year>). <article-title>Visual data mining and exploration of large databases</article-title>. In <conf-name>the 5th european conference on principles and practice of knowledge discovery in databases</conf-name>. (Tutorial PKDD 2001)</citation>
+</ref>
+<ref id="bibr35-1059712312457186">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Krasnogor</surname><given-names>N.</given-names></name>
+<name><surname>Gheorghe</surname><given-names>M.</given-names></name>
+</person-group> (<year>2005</year>, <month>April</month>). <article-title>Systems self-assembly</article-title>. <conf-name>International Workshop, The Grand Challenge in Non-Classical Computation</conf-name>, <conf-date>18–19th April 2005</conf-date>, <conf-loc>the University of York, United-Kingdom</conf-loc>.</citation>
+</ref>
+<ref id="bibr36-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Kuntz</surname><given-names>P.</given-names></name>
+<name><surname>Layzell</surname><given-names>P.</given-names></name>
+<name><surname>Snyers</surname><given-names>D.</given-names></name>
+</person-group> (<year>1997</year>). <article-title>A colony of ant-like agents for partitioning in vlsi technology</article-title>. In <person-group person-group-type="editor">
+<name><surname>Husbands</surname><given-names>P.</given-names></name>
+<name><surname>Harvey</surname><given-names>I.</given-names></name>
+</person-group> (Eds.), <source>Proceedings of the fourth european conference on artificial life</source> (pp. <fpage>417</fpage>–<lpage>424</lpage>).</citation>
+</ref>
+<ref id="bibr37-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kuntz</surname><given-names>P.</given-names></name>
+<name><surname>Snyers</surname><given-names>D.</given-names></name>
+<name><surname>Layzell</surname><given-names>P. J.</given-names></name>
+</person-group> (<year>1998</year>). <article-title>A stochastic heuristic for visualising graph clusters in a bi-dimensional space prior to partitioning</article-title>. <source>J. Heuristics</source>, <volume>5</volume>(<issue>3</issue>), <fpage>327</fpage>–<lpage>351</lpage>.</citation>
+</ref>
+<ref id="bibr38-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lance</surname><given-names>G.</given-names></name>
+<name><surname>Williams</surname><given-names>W.</given-names></name>
+</person-group> (<year>1967</year>). <article-title>A general theory of classificatory sorting strategies: I. hierarchical systems</article-title>. <source>Computer journal</source>, <volume>9</volume>(<issue>4</issue>), <fpage>373</fpage>–<lpage>380</lpage>.</citation>
+</ref>
+<ref id="bibr39-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lioni</surname><given-names>A.</given-names></name>
+<name><surname>Sauwens</surname><given-names>C.</given-names></name>
+<name><surname>Theraulaz</surname><given-names>G.</given-names></name>
+<name><surname>Deneubourg</surname><given-names>J.-L.</given-names></name>
+</person-group> (<year>2001</year>). <article-title>The dynamics of chain formation in oecophylla longinoda</article-title>. <source>Journal of Insect Behavior</source>, <volume>14</volume>, <fpage>679</fpage>–<lpage>696</lpage>.</citation>
+</ref>
+<ref id="bibr40-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Mondada</surname><given-names>F.</given-names></name>
+<name><surname>Pettinaro</surname><given-names>G. C.</given-names></name>
+<name><surname>Guignard</surname><given-names>A.</given-names></name>
+<name><surname>Kwee</surname><given-names>I. W.</given-names></name>
+<name><surname>Floreano</surname><given-names>D.</given-names></name>
+<name><surname>Deneubourg</surname><given-names>J.-L.</given-names></name>
+<etal/>
+</person-group>. (<year>2004</year>). <article-title>Swarm-bot: A new distributed robotic concept</article-title>. <source>Auton. Robots</source>, <volume>17</volume> (<issue>2–3</issue>), <fpage>193</fpage>–<lpage>221</lpage>.</citation>
+</ref>
+<ref id="bibr41-1059712312457186">
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Murata</surname><given-names>S.</given-names></name>
+<name><surname>Kurokawa</surname><given-names>H.</given-names></name>
+<name><surname>Kokaji</surname><given-names>S.</given-names></name>
+</person-group> (<year>1994</year>, <month>May</month>). <article-title>Self-assembling machine</article-title>. In <conf-name>Ieee international conference on robotics and automation</conf-name> (<volume>Vol. 1</volume>, p. <fpage>441</fpage>–<lpage>448</lpage>). <conf-loc>Sans Diego, CA, USA</conf-loc>.</citation>
+</ref>
+<ref id="bibr42-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Peterson</surname><given-names>G. L.</given-names></name>
+<name><surname>Mayer</surname><given-names>C. B.</given-names></name>
+<name><surname>Kubler</surname><given-names>T. L.</given-names></name>
+</person-group> (<year>2008</year>, <month>March</month>). <article-title>Ant clustering with locally weighted ant perception and diversified memory</article-title>. <source>Swarm Intelligence</source>, <volume>2</volume>(<issue>1</issue>), <fpage>43</fpage>–<lpage>68</lpage>.</citation>
+</ref>
+<ref id="bibr43-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Preparata</surname><given-names>F. P.</given-names></name>
+<name><surname>Shamos</surname><given-names>M. I.</given-names></name>
+</person-group> (<year>1985</year>). <source>Computational Geometry: Introduction (Monographs in Computer Science)</source>. <publisher-name>Springer-Verlag</publisher-name>.</citation>
+</ref>
+<ref id="bibr44-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Rand</surname><given-names>W. M.</given-names></name>
+</person-group> (<year>1971</year>). <article-title>Objective Criteria for the Evaluation of Clustering Methods</article-title>. <source>Journal of the American Statistical Association</source>, <volume>66</volume>(<issue>336</issue>), <fpage>846</fpage>–<lpage>850</lpage>.</citation>
+</ref>
+<ref id="bibr45-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Reif</surname><given-names>J. H.</given-names></name>
+<name><surname>Sahu</surname><given-names>S.</given-names></name>
+<name><surname>Yin</surname><given-names>P.</given-names></name>
+</person-group> (<year>2005</year>). <article-title>Complexity of Graph Self-assembly in Accretive Systems and Self-destructible Systems</article-title>. In <person-group person-group-type="editor">
+<name><surname>Carbone</surname><given-names>A.</given-names></name>
+<name><surname>Pierce</surname><given-names>N. A.</given-names></name>
+</person-group> (Eds.), <source>Dna</source> (<volume>Vol. 3892</volume>, p. <fpage>257</fpage>–<lpage>274</lpage>). Springer.</citation>
+</ref>
+<ref id="bibr46-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Salton</surname><given-names>G.</given-names></name>
+<name><surname>Buckley</surname><given-names>C.</given-names></name>
+</person-group> (<year>1988</year>). <article-title>Term-weighting approaches in automatic text retrieval</article-title>. <source>Inf. Process. Manage</source>. <volume>24</volume>(<issue>5</issue>), <fpage>513</fpage>–<lpage>523</lpage>.</citation>
+</ref>
+<ref id="bibr47-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Sneath</surname><given-names>P. H.</given-names></name>
+<name><surname>Sokal</surname><given-names>R. R.</given-names></name>
+</person-group> (<year>1973</year>). <source>Numerical taxonomy</source>. <publisher-name>San FranciscoW.H. Freeman</publisher-name>.</citation>
+</ref>
+<ref id="bibr48-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Theraulaz</surname><given-names>G.</given-names></name>
+<name><surname>Bonabeau</surname><given-names>E.</given-names></name>
+<name><surname>Sauwens</surname><given-names>C.</given-names></name>
+<name><surname>Deneubourg</surname><given-names>J.-L.</given-names></name>
+<name><surname>Lioni</surname><given-names>A.</given-names></name>
+<name><surname>Libert</surname><given-names>F.</given-names></name>
+<etal/>
+</person-group>. (<year>2001</year>). <article-title>Model of droplet formation and dynamics in the Argentine ant (Linepithema humile mayr)</article-title>. <source>Bulletin of Mathematical Biology</source>, <volume>63</volume>, <fpage>1079</fpage>–<lpage>1093</lpage>.</citation>
+</ref>
+<ref id="bibr49-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Toussaint</surname><given-names>G. T.</given-names></name>
+</person-group>(<year>1980</year>). <article-title>The relative neighborhood graphs in a finite planar set</article-title>. In <source>Pattern recognition</source> (<fpage>261</fpage>–<lpage>268</lpage>).</citation>
+</ref>
+<ref id="bibr50-1059712312457186">
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Toussaint</surname><given-names>G. T.</given-names></name>
+</person-group> (<year>1991</year>). <article-title>Some unsolved problems on proximity graphsSome unsolved problems on proximity graphs</article-title>. In <person-group person-group-type="editor">
+<name><surname>Dearholt</surname><given-names>D. W.</given-names></name>
+<name><surname>Harrary</surname><given-names>F.</given-names></name>
+</person-group> (Eds.), <source>Memoranda in computer and cognitive science MCCS-91-224</source>. <publisher-name>Computing research laboratory, New Mexico state University Las Cruces</publisher-name>.</citation>
+</ref>
+<ref id="bibr51-1059712312457186">
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tutte</surname><given-names>W. T.</given-names></name>
+</person-group> (<year>1963</year>). <article-title>How to draw a graph</article-title>. In <source>Proceedings london mathematical society</source> (<volume>Vol. 13</volume>, p. <fpage>743</fpage>–<lpage>768</lpage>). Author</citation>
+</ref>
+</ref-list>
+</back>
+</article>

@@ -1,0 +1,1954 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">SIM</journal-id>
+<journal-id journal-id-type="hwp">spsim</journal-id>
+<journal-title>SIMULATION</journal-title>
+<issn pub-type="ppub">0037-5497</issn>
+<issn pub-type="epub">1741-3133</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0037549711400778</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0037549711400778</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Linking information and energy—activity-based energy-aware information processing</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Hu</surname><given-names>Xiaolin</given-names></name>
+<xref ref-type="aff" rid="aff1-0037549711400778">1</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Zeigler</surname><given-names>Bernard P</given-names></name>
+<xref ref-type="aff" rid="aff2-0037549711400778">2</xref>
+<xref ref-type="aff" rid="aff3-0037549711400778">3</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-0037549711400778"><label>1</label>Department of Computer Science, Georgia State University, USA</aff>
+<aff id="aff2-0037549711400778"><label>2</label>Arizona Center for Integrative Modeling and Simulation (ACIMS), C4I Center, George Mason University, USA</aff>
+<aff id="aff3-0037549711400778"><label>3</label>RTSync Corp., USA</aff>
+<author-notes>
+<corresp id="corresp1-0037549711400778">Xiaolin Hu, Department of Computer Science, Georgia State University, Atlanta, GA 30303, USA. Email: <email>xhu@cs.gsu.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>89</volume>
+<issue>4</issue>
+<fpage>435</fpage>
+<lpage>450</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2011</copyright-statement>
+<copyright-year>2011</copyright-year>
+<copyright-holder content-type="sage">Simulation Councils Inc.</copyright-holder>
+</permissions>
+<abstract>
+<p>We present an activity-based framework that links information and energy. The activity-based framework uses a quantization-based approach for modeling information processing and defines weighted activity to model the energy consumption of information processing. We provide a formal description of this framework and use simulation to show how it enables one to study the interaction between information and energy in energy-aware information processing. An existing discrete event system specification (DEVS)-based simulation environment, DEVS-FIRE, is employed to model wireless sensor nodes for detecting and monitoring wildfires. Simulation experimental results confirm the utility of the activity-based framework to support the analysis and design of energy-aware information processing systems.</p>
+</abstract>
+<kwd-group>
+<kwd>activity</kwd>
+<kwd>energy-aware information processing</kwd>
+<kwd>discrete event system specification</kwd>
+<kwd>sensor node</kwd>
+<kwd>wildfire</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0037549711400778" sec-type="intro">
+<title>1. Introduction</title>
+<p>Energy is the general concept that represents the physical cost of action in the real world. Information is the general concept that enables us to model how systems decide on, manage, and control their actions. As in <xref ref-type="fig" rid="fig1-0037549711400778">Figure 1(a)</xref>, information and energy are two key concepts whose interaction is well understood in the following common sense manner: on one hand, information processing takes energy; on the other hand, getting that energy requires information processing to find and consume energy-bearing resources. Systems that sustain themselves in the real world must somehow balance these quantities, but without a more rigorous formulation of this relationship it is difficult to study this balance in a general way. We need a more formal concept of activity (<xref ref-type="fig" rid="fig1-0037549711400778">Figure 1(b)</xref>) to enable us to link energy and information.</p>
+<fig id="fig1-0037549711400778" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Activity as the concept linking information and energy.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig1.tif"/>
+</fig>
+<p>Activity is a measure of change in system behavior – when it is divided by a quantum it gives the least number of events required to simulate the behavior with that quantum size.<sup><xref ref-type="bibr" rid="bibr1-0037549711400778">1</xref></sup> One of the unique properties of discrete event system specification (DEVS)<sup><xref ref-type="bibr" rid="bibr2-0037549711400778">2</xref></sup> (a brief description of DEVS is given in Section 2) is the intrinsic ability of the simulator to be aware of and, therefore, count internal and external state transitions in the model components. Let us measure information processing in a model by such state-to-state transition counts over some time interval, and call this the <italic>activity</italic> measure. Intuitively, components with higher counts over this interval are more actively involved in the information processing than those with low counts. This makes the connection between activity and information. To make the connection with energy, we need to link transition counts with the actual cost of information processing in terms of energy.</p>
+<p>It would be nice to postulate that every state transition consumes the same amount of energy, since then the number of transitions relates directly to energy consumed. However, for reasons we discuss later, this is not a practical option. Instead, we allow the modeler to define a weighted transition mapping and consider this definition to be part of the model itself. In other words, the declaration concerning relative weights of state transitions is a property of a model. It is this property that enables a modeler to abstract the underlying details of energy consumption and directly link energy consumption to information processing. As is usual in modeling methodology, the level of detail required to adequately describe the transition weighting depends on the modeler’s objectives. For example, if the objective is to manage energy at coarse levels, such as low, medium, and high, then fairly coarse representation of the transition weights may well be meaningful. ‘Activity’ in this sense is an abstraction intended to help describe the energy consumption of complex and disparate information processes using a common approach.</p>
+<p>Linking information and energy using the concept of activity makes it possible to study the relationship and interaction between information and energy under a formal and integrated framework. On one hand, by modeling the activity we can monitor, in real time, the energy consumption of information processing. On the other hand, the energy-consumption measurement can be used as a controlling parameter for steering the information processing to support energy-aware management. An application of this activity-based framework is to support the analysis and design of energy-aware information processing systems. In this paper, we provide a formal description of this framework and show how it can support the design and analysis of energy-aware wireless sensor nodes for detecting and monitoring wildfires.</p>
+</sec>
+<sec id="section2-0037549711400778">
+<title>2. The activity-based framework to link information and energy</title>
+<p>The activity-based framework that links information and energy is based on DEVS where information processing is modeled by state transitions of DEVS models. DEVS is a formalism derived from generic dynamic systems theory.<sup><xref ref-type="bibr" rid="bibr2-0037549711400778">2</xref></sup> A basic DEVS component (an atomic model) is described by a structure &lt;<italic>X</italic>, <italic>Y</italic>, <italic>S</italic>, δ<sub>int</sub>, δ<sub>ext</sub>, δ<sub>con</sub>, λ, <italic>ta</italic>&gt;, where the sets <italic>X</italic>, <italic>Y</italic>, and <italic>S</italic> are the input, output, and state sets, respectively. The functions δ<sub>int</sub>, δ<sub>ext</sub>, and δ<sub>con</sub> are the internal, external, and confluent state transition functions, respectively. The internal transition function δ<sub>int</sub>: <italic>S</italic>→<italic>S</italic> specifies the system’s state change due to internal time events. The external transition function δ<sub>ext</sub>: <italic>Q</italic> × <italic>X</italic>→<italic>S</italic> specifies the system’s state change in response to external inputs, where <italic>Q</italic>∈ {(<italic>s</italic>, <italic>e</italic>) | <italic>s</italic>∈<italic>S</italic>, 0 ≤ <italic>e</italic> ≤ <italic>ta</italic>(<italic>s</italic>)} is the <italic>total state</italic> set, <italic>e</italic> is the <italic>time elapsed</italic> since last transition, and <italic>ta</italic> is the time advance function. The confluent transition function describes the evolution of the system state when internal and external events coincide. The function λ is the output function, and <italic>ta</italic> is the time advance function, which is used to schedule output and internal events. More details of DEVS and the DEVS formalism can be found in Zeigler et al.<sup><xref ref-type="bibr" rid="bibr2-0037549711400778">2</xref></sup></p>
+<p>Building on the DEVS formalism, this section provides a formal description of the activity-based framework. We first establish the link between activity and energy by defining <italic>weighted activity</italic> as weighted state transitions, which allow modelers to specify the energy consumption (the weights) associated with the transitions of states. Then we present the link between information and activity. This is achieved through a quantization-based approach for modeling information processing as state transitions defined by a quantizer. In the theory of quantization,<sup><xref ref-type="bibr" rid="bibr2-0037549711400778">2</xref></sup> a quantizer is a significant event detector that monitors its input and uses a logical condition to decide when a significant change occurs. A <italic>quantum</italic> is measure of how big a change must be to be considered significant. We then describe the two aspects of a quantizer, the information aspect (measured by activity) and the energy aspect (measured by weighted activity), to complete the link between information and energy. Finally, we present an activity-based energy-aware information processing framework that utilizes the feedback from weighted activity to the quantizer for supporting energy-aware information processing.</p>
+<sec id="section3-0037549711400778">
+<title>2.1. Linking activity and energy – measuring energy using weighted activity</title>
+<p>Given a DEVS model that models information processing as state transitions, the energy consumption of information processing can be computed from individual state transition energy consumptions, which are specified by the modeler using a <italic>weighting function</italic> associated with the state transitions. In this paper, we define <italic>weighted activity</italic> as the sum of weighted state transitions over some time interval. This weighted activity is a direct measure of energy consumption based on the weighting functions specified by the modeler. Note that we use the term weighted activity to differentiate it from the previous definition of <italic>activity</italic>, which was defined for continuous time functions<sup><xref ref-type="bibr" rid="bibr1-0037549711400778">1</xref>,<xref ref-type="bibr" rid="bibr3-0037549711400778">3</xref>,<xref ref-type="bibr" rid="bibr4-0037549711400778">4</xref></sup> (see Section 2.2). The weighted activity is measured by the weighted transition counts. As will be shown later, the weighted activity and activity is directly related.</p>
+<p>Corresponding to the internal transition function δ<sub>int</sub> and external transition function δ<sub>ext</sub> of a DEVS model, the internal transition weighting function <italic>wt</italic><sub>int</sub> and external transition weighting function <italic>wt</italic><sub>ext</sub> need to be specified (the weighting function for confluent transitions can also be specified if needed). Then the internal transition weighted activity <italic>n</italic><sub>int</sub> and external transition weighted activity <italic>n</italic><sub>ext</sub> can be computed. Mathematically, the semantics of weighting is formalized as follows.</p>
+<p>The internal transition weighting function:</p>
+<p><disp-formula id="disp-formula1-0037549711400778">
+<mml:math display="block" id="math1-0037549711400778">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>wt</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>int</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo>:</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:mtext>Integer</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0037549711400778" xlink:href="10.1177_0037549711400778-eq1.tif"/>
+</disp-formula></p>
+<p>whenever</p>
+<p><disp-formula id="disp-formula2-0037549711400778">
+<mml:math display="block" id="math2-0037549711400778">
+<mml:mrow>
+<mml:mi>s</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:msub>
+<mml:mi>δ</mml:mi>
+<mml:mrow>
+<mml:mi>int</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>⇒</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mrow>
+<mml:mi>int</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mi>n</mml:mi>
+<mml:mrow>
+<mml:mi>int</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:msub>
+<mml:mi>t</mml:mi>
+<mml:mrow>
+<mml:mi>int</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0037549711400778" xlink:href="10.1177_0037549711400778-eq2.tif"/>
+</disp-formula></p>
+<p>The average weighted <italic>activity</italic> accumulated over an interval (<italic>t</italic>, <italic>t</italic>′) from internal transitions:</p>
+<p><disp-formula id="disp-formula3-0037549711400778">
+<mml:math display="block" id="math3-0037549711400778">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>int</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>int</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0037549711400778" xlink:href="10.1177_0037549711400778-eq3.tif"/>
+</disp-formula></p>
+<p>The external transition weighting function:</p>
+<p><disp-formula id="disp-formula4-0037549711400778">
+<mml:math display="block" id="math4-0037549711400778">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>wt</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>:</mml:mo>
+<mml:mi>Q</mml:mi>
+<mml:mo>×</mml:mo>
+<mml:mtext>X</mml:mtext>
+<mml:mo>→</mml:mo>
+<mml:mtext>Integer</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mtext>whenever</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mi>s</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>e</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>x</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mo stretchy="false">⇒</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>wt</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>e</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>x</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0037549711400778" xlink:href="10.1177_0037549711400778-eq4.tif"/>
+</disp-formula></p>
+<p>The average weighted activity accumulated over an interval (<italic>t</italic>, <italic>t</italic>′) from external transitions:</p>
+<p><disp-formula id="disp-formula5-0037549711400778">
+<mml:math display="block" id="math5-0037549711400778">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>int</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>−</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0037549711400778" xlink:href="10.1177_0037549711400778-eq5.tif"/>
+</disp-formula></p>
+<p>The average weighted activity accumulated over an interval (<italic>t</italic>, <italic>t</italic>′) from all transitions:</p>
+<p><disp-formula id="disp-formula6-0037549711400778">
+<mml:math display="block" id="math6-0037549711400778">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>int</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>′</mml:mo>
+</mml:mrow>
+</mml:msup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0037549711400778" xlink:href="10.1177_0037549711400778-eq6.tif"/>
+</disp-formula></p>
+<p>Default definitions set the weighting functions to unity:</p>
+<p><disp-formula id="disp-formula7-0037549711400778">
+<mml:math display="block" id="math7-0037549711400778">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>wt</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>int</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>wt</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>e</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0037549711400778" xlink:href="10.1177_0037549711400778-eq7.tif"/>
+</disp-formula></p>
+<p>Under these conditions, transitions are counted over a period of time and the average weighted activity over the interval is the number of transitions divided by the interval length.</p>
+<p>Another common possibility is to set</p>
+<p><disp-formula id="disp-formula8-0037549711400778">
+<mml:math display="block" id="math8-0037549711400778">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>wt</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mtext>int</mml:mtext>
+</mml:mrow>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>intTime</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>ta</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>wt</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>e</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>intTime</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>e</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0037549711400778" xlink:href="10.1177_0037549711400778-eq8.tif"/>
+</disp-formula></p>
+<p>where the weight of a transition is proportional to the time spent in the state before the transition. The <italic>intTime</italic>() is a rounding function or other means of turning a real number into an integer. For example, if a processor remains in a processing state for time 10.1, then the number of transitions is incremented by <italic>intTime</italic>(10.1) = 10 when it leaves the state. Likewise if it is interrupted by an external event after time <italic>e</italic> while processing, then the number is incremented by <italic>intTime</italic>(<italic>e</italic>). To get this same effect, we could redefine the model to make actual transitions proportional to the time spent in processing. However, this would incur unnecessary inefficiency that contradicts the very basis of discrete event modeling.</p>
+<p>Note that we could model processing in a more detailed manner, for example, by including a description of the job being performed and thereby obtain a more refined estimate of the weighted activity involved. However, there is no natural place to stop such refinement – other than letting our objectives guide such termination, as discussed above. Finally, if we are not interested in observing the weighted activity of some components, we can selectively set their weighting functions identically zero.</p>
+<p>The weighting functions described above make it possible to calculate the weighted activity as a measurement of energy consumption for a given model with discrete transitions. This makes the connection between activity and energy. To make the connection between activity and information, one needs to model information processing as a discrete event model from which weighted activity can be calculated. Developing a discrete event model is straightforward if the information processing is discrete by nature, for example, the change of system state from <italic>active</italic> to <italic>passive</italic> and then to <italic>sleep</italic>, and vice versa. However, for systems that have continuous components, this straightforward approach is not possible. One approach is to measure the discrete activity for a discrete event approximation and ascribe that to the original continuous model. However, with myriad approximations to consider, there is no guarantee that there will be a consistent result. Fortunately, for differential equation models there is concept of  activity that provides an intrinsic measure that relates to the number of transitions of an approximating discrete event model through quantization. The quantization-based approach is presented below.</p>
+</sec>
+<sec id="section4-0037549711400778">
+<title>2.2. Linking information and activity – quantization-based information processing</title>
+<p>Activity is a measure of change in system behavior. The following is the definition of activity for a continuous segment (the description is adapted from Muzy et al.<sup><xref ref-type="bibr" rid="bibr3-0037549711400778">3</xref></sup>). It provides a precise measure of the computational effort required by an ideal quantizer. In fact, we will show that it is a reasonable estimate of the computational effort required by implementations of these devices.</p>
+<p>In <xref ref-type="fig" rid="fig2-0037549711400778">Figure 2</xref>, Φ(<italic>t</italic>) is a continuous function of time; <italic>D</italic> corresponds to the quantum (the minimum threshold for change below which no processing occurs), and <inline-formula id="inline-formula1-0037549711400778">
+<mml:math display="inline" id="math9-0037549711400778">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> corresponds to the maxima and minima of the curve, where the first and last <inline-formula id="inline-formula2-0037549711400778">
+<mml:math display="inline" id="math10-0037549711400778">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+</inline-formula> are the values of the function at the initial and final times.</p>
+<fig id="fig2-0037549711400778" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Definition of activity for continuous time segments.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig2.tif"/>
+</fig>
+<p>The activity in an interval [0, <italic>T</italic>] can be calculated by summing the differences between the adjacent maxima and minima, that is</p>
+<p><disp-formula id="disp-formula9-0037549711400778">
+<label>(1)</label>
+<mml:math display="block" id="math11-0037549711400778">
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:munder>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0037549711400778" xlink:href="10.1177_0037549711400778-eq9.tif"/>
+</disp-formula></p>
+<p>The average activity in an interval [0, <italic>T</italic>] is given by</p>
+<p><disp-formula id="disp-formula10-0037549711400778">
+<mml:math display="block" id="math12-0037549711400778">
+<mml:mrow>
+<mml:mi>AvgActivity</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0037549711400778" xlink:href="10.1177_0037549711400778-eq10.tif"/>
+</disp-formula></p>
+<p>The following fact is important because it relates the number of threshold crossings made by a DEVS simulator, the activity over a time interval <italic>T</italic>, and the quantum size <italic>D</italic>.</p>
+<p><disp-quote>
+<p><bold>Fact</bold>: The number of threshold crossings in an interval of length <italic>T</italic> for threshold levels that are equally spaced by quantum size, <italic>D</italic>, is:</p>
+</disp-quote></p>
+<p><disp-formula id="disp-formula11-0037549711400778">
+<label>(2)</label>
+<mml:math display="block" id="math13-0037549711400778">
+<mml:mrow>
+<mml:mi>Number</mml:mi>
+<mml:mi>of</mml:mi>
+<mml:mi>ThresholdCross</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>q</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0037549711400778" xlink:href="10.1177_0037549711400778-eq11.tif"/>
+</disp-formula></p>
+<p><disp-quote>
+<p><bold>Proof</bold>: Break up a curve with a finite number of extrema (minima and maxima) into segments between successive extrema (i.e. between a minimum and the next maximum, or a maximum and the next minimum). These segments are either non-decreasing or non-increasing, as illustrated in <xref ref-type="fig" rid="fig3-0037549711400778">Figure 3</xref>, showing a non-decreasing segment with minimum, <italic>a</italic> and maximum, <italic>b</italic>. Divide up the interval of length <italic>b</italic>–<italic>a</italic> into intervals of size <italic>D</italic> (the quantum size) by a grid as shown. There are (<italic>b – a</italic>)/<italic>D</italic> such intervals and no matter what the continuous curve <italic>f</italic>(<italic>t</italic>) looks like, it must cross each of the grid lines exactly once (where, if as illustrated by the last crossing, it stays on the grid line we count this as one crossing). Thus for any non-increasing segment, the number of threshold crossings is the distance from the minimum to the maximum divided by the quantum size. It is easy to see that a similar situation holds for a non-decreasing segment (where the distance is the absolute value of the difference). So in any inter-extrema segment we have</p>
+</disp-quote></p>
+<p><disp-formula id="disp-formula12-0037549711400778">
+<mml:math display="block" id="math14-0037549711400778">
+<mml:mrow>
+<mml:mi>#</mml:mi>
+<mml:mi>crossing</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula12-0037549711400778" xlink:href="10.1177_0037549711400778-eq12.tif"/>
+</disp-formula></p>
+<fig id="fig3-0037549711400778" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Activity of a non-decreasing segment.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig3.tif"/>
+</fig>
+<p><disp-quote>
+<p>Now since the activity is the sum of successive distances between extrema (<xref ref-type="disp-formula" rid="disp-formula9-0037549711400778">Equation (1)</xref>), it easily follows that the number of threshold crossings is the activity divided by the quantum size (<xref ref-type="disp-formula" rid="disp-formula11-0037549711400778">Equation (2)</xref>). <xref ref-type="disp-formula" rid="disp-formula11-0037549711400778">Equation (2)</xref> holds for continuous curves with a finite number of extrema in an interval – there will be slight error that is bounded by the quantum size, which will disappear as the quantum goes to zero. By definition, <xref ref-type="disp-formula" rid="disp-formula11-0037549711400778">Equation (2)</xref> will be true for any quantizer that takes exactly one quantum step at each transition and tracks the curve exactly. ▪</p>
+</disp-quote></p>
+</sec>
+<sec id="section5-0037549711400778">
+<title>2.3. Information and energy – activity and weighted activity of quantizer</title>
+<p>Consider a quantizer that processes information (the external input) using the quantization-based principle described above. The activity of the input stream is measured by its activity A, as computed in <xref ref-type="disp-formula" rid="disp-formula9-0037549711400778">Equation (1)</xref>. This represents the amount of information that needs to be processed by the quantizer. We now show that activity A is directly relatable to the weighted activity of the quantizer. As described before, the weighted activity is measured by the number of transitions counted with its transition weighting functions. The weighted activity indicates the energy consumption of the quantizer. Below we examine a close relationship between the activity and the weighted activity.</p>
+<p><disp-quote>
+<p><bold>Fact</bold>: The weighted activity experienced by a quantizer with a quantum size <italic>D</italic> is approximately equal to <italic>A</italic>/<italic>D</italic> where <italic>A</italic> is the activity of the input segment for suitable choice of weighting functions. As shown above for continuous curves, <italic>A</italic> is easily computed from their successive extrema (maxima and minima).</p>
+<p><bold>Proof</bold>: As <italic>D</italic> gets smaller, the number of threshold crossings of any continuous curve with activity <italic>A</italic> approaches the ratio <italic>A</italic>/<italic>D</italic>. We choose weighting functions for the quantizer so that a transition is counted as unity just in case the input differs from the last value by more than the quantum. Under these conditions the number of transitions counted in an interval is equal to the number of threshold crossings for the same quantum. Thus the weighted activity of the quantizer approaches the input activity divided by the quantum size, an approximation that becomes better as the quantum size becomes smaller.</p>
+</disp-quote></p>
+<p>From the above proposition, we can see a close relationship between the two activity perspectives – in the ideal case the weighted activity (measurement of energy) is proportional to the activity (measurement of information). In general we can expect that for a well-designed real-world quantizer, the major contribution of its weighted activity would come from the (external) activity of its sensed input stream (with the other part considered as overhead). When we relate weighted activity to energy, say in terms of battery power consumption, then a useful prediction of such consumption will come from the anticipated pattern of activity of the input stream.</p>
+<p>Section 3 examines such a relationship using an example of a quantization-based wireless sensor node for information processing.</p>
+</sec>
+<sec id="section6-0037549711400778">
+<title>2.4. Activity-based energy-aware information processing</title>
+<p>The foregoing activity results provide a formal foundation to study the relationship and interaction between energy and information. Among the myriad of uses of this framework is to control the operation of the information processing model, such as a quantizer, executed in real time. As illustrated in <xref ref-type="fig" rid="fig4-0037549711400778">Figure 4</xref>, the controller can adjust parameters of the quantizer, such as the size of the quantum, based on the weighted activity that represents the energy consumption. Given a certain ‘energy budget’ (the total energy that can be consumed), a control policy might be to increase the quantum size when the remaining energy is insufficient to support information processing under the current quantum size and to decrease the quantum size otherwise (the remaining energy is the total energy minus the consumed energy, which is measured by the weighted activity). In this way, the controller can adjust the sensitivity of the quantizer in line with the energy left, and thus support energy-aware information processing.</p>
+<fig id="fig4-0037549711400778" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Activity feedback to a controller.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig4.tif"/>
+</fig>
+<p>Consider a wireless sensor node for detecting and monitoring wildfires as an example. When the sensor node runs low on power, increasing the quantum size (thereby decreasing the transition rate) will save draining the battery and result in increased life time for the sensor to monitor the fire temperature. Conversely, when the sensor node has sufficient energy to cover the fire event, decreasing the quantum size will provide more accurate sensor data for monitoring the fire temperature. As a result, the ‘smart’ sensor node is able to trade energy consumption in for information precision and vice versa by adaptively adjusting its quantum size in information processing. Section 3 gives a concrete example of such a ‘smart’ sensor node for detecting and monitoring wildfires.</p>
+</sec>
+<sec id="section7-0037549711400778">
+<title>2.5. Implementation</title>
+<p>To implement the weighted activity in DEVS needs extensions at both the modeling level and simulation level. At the modeling level, a modeler defines the weighted transition mapping and considers this definition to be part of the model itself. This means each atomic model is extended to include an internal transition weighting function and an external transition weighting function (a confluent transition weighting function can be defined too if needed). At the simulation level, the weighted counting of transitions is readily implemented in the DEVS Abstract Simulator. The simulator for atomic models can tell when a particular transition is about to occur and can therefore invoke the appropriate transition weighting function just before it makes this transition happen. The following modifies the atomic model simulator to implement this concept.</p>
+<graphic id="img1-0037549711400778" position="anchor" xlink:href="10.1177_0037549711400778-img1.tif"/>
+<p><bold>Algorithm 1</bold>. Simulator for Atomic DEVS modified to accumulate weighted transitions</p>
+<p>The coordinator of a coupled model is extended to include collaboration with all the simulators of its coupled model in which the coordinator can query the simulators to obtain the weighted activity each has accumulated. Through a method, for example, <italic>getSimActivity()</italic>, an atomic model simulator can make the collected weighted activity of its model available upon request. Such requests might come from the coordinator of a coupled model in which the atomic model is a component. The coordinator can in turn provide an array of weighted activities collected from the component simulators for use by the simulation experimenter, whether human or programmatic.</p>
+<p>This implementation can easily support the functionality shown in <xref ref-type="fig" rid="fig4-0037549711400778">Figure 4</xref>. We can place the controller and quantizer into a coupled model to be executed by a real-time coordinator (denoted as <italic>Simulator</italic> in <xref ref-type="fig" rid="fig4-0037549711400778">Figure 4</xref>). The real-time coordinator obtains the weighted activity from the atomic simulator as the real-time simulation proceeds (see Algorithm 1). The activity outputs of the coordinator can be sent to the controller as external inputs through a dedicated activity input port (e.g. as in DEVSJAVA). Alternatively, the controller can query the coordinator to get the current weighted activity. This activity is used by the controller to adjust parameters of the model, such as the quantum size.</p>
+</sec>
+</sec>
+<sec id="section8-0037549711400778">
+<title>3. A wireless sensor node example</title>
+<p>We consider a wireless sensor node for detecting and monitoring wildfires. The sensor node has a global positioning system (GPS) sensor and a temperature sensor for sensing its location and the temperature of the environment. It has a microcontroller for processing data and sending output (here we treat the memory and radio as part of the microcontroller). The sensor node uses a quantization-based temperature sensor (a quantizer) that outputs a temperature to the microcontroller only when the temperature change reaches the quantum size. The quantum size can be set by the microcontroller. The sensor node starts in the inactive state and after activation via an activating input will remain active for a finite time before deactivation. The activating input may come from another sensor node or be triggered internally when detecting some events. Here we assume the activating input is internally generated when there is significant rise in temperature (e.g. the change of temperature bypasses a pre-defined threshold). While active, the sensor node can process temperature as well as GPS location updates, both of which impact its time to remain active. The sensed temperature is paired with the current location to provide location-based output. Such a device has a myriad of applications when replicated and deployed to multiple monitoring locations. Once deployed it can sense its location and remain fixed in place as in a network to detect wildfire behavior. Alternatively, it can be mobile and report geo-referenced data on the move. This would be the case if worn by fire-fighters in their hats, providing dynamic information on the fire-front perimeter.</p>
+<sec id="section9-0037549711400778">
+<title>3.1. The DEVS model with weighted state transitions</title>
+<p>A DEVS model that implements the behavior of the sensor node is given below. <xref ref-type="table" rid="table1-0037549711400778">Tables 1</xref> and <xref ref-type="table" rid="table2-0037549711400778">2</xref> show the external transition function δ<sub>ext</sub>(<italic>s</italic>, <italic>e</italic>, <italic>x</italic>), the internal transition functions δ<sub>int</sub>(<italic>s</italic>), the time advance function <italic>ta</italic>(<italic>s</italic>), and the output function λ(<italic>s</italic>) of the model. In the tables, the <italic>inNextValue</italic> port receives inputs from the quantization-based temperature sensor, and the <italic>inLocation</italic> port receives inputs from the GPS sensor. The <italic>timeToDeactivate</italic> is a parameter determining how long the sensor node stays in the active state before automatically returning to the inactive state. Another important parameter not shown in the tables is the quantum size of the temperature sensor.</p>
+<table-wrap id="table1-0037549711400778" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Internal transition function, time advance function, and output function</p>
+</caption>
+<graphic alternate-form-of="table1-0037549711400778" xlink:href="10.1177_0037549711400778-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Phase</th>
+<th align="left"><inline-formula id="inline-formula3-0037549711400778">
+<mml:math display="inline" id="math15-0037549711400778">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>int</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula4-0037549711400778">
+<mml:math display="inline" id="math16-0037549711400778">
+<mml:mrow>
+<mml:mi>ta</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+<th align="left">
+<inline-formula id="inline-formula5-0037549711400778">
+<mml:math display="inline" id="math17-0037549711400778">
+<mml:mrow>
+<mml:mi>λ</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WaitForActivation</td>
+<td/>
+<td><inline-formula id="inline-formula6-0037549711400778">
+<mml:math display="inline" id="math18-0037549711400778">
+<mml:mrow>
+<mml:mi>∞</mml:mi>
+</mml:mrow>
+</mml:math>
+</inline-formula></td>
+<td/>
+</tr>
+<tr>
+<td>WaitForNextValue</td>
+<td>WaitForActivation</td>
+<td>timeToDeactivate</td>
+<td/>
+</tr>
+<tr>
+<td>sendValue</td>
+<td>WaitForNextValue</td>
+<td>0</td>
+<td>(lastValue, location)</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table2-0037549711400778" position="float">
+<label>Table 2.</label>
+<caption>
+<p>External transition function</p>
+</caption>
+<graphic alternate-form-of="table2-0037549711400778" xlink:href="10.1177_0037549711400778-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Phase</th>
+<th align="left">Input port</th>
+<th align="left"><inline-formula id="inline-formula7-0037549711400778">
+<mml:math display="inline" id="math19-0037549711400778">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>δ</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ext</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>e</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+</inline-formula></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WaitForActivation</td>
+<td>inActivation</td>
+<td>WaitForNextValue</td>
+</tr>
+<tr>
+<td>WaitForNextValue</td>
+<td>inNextValue(val)</td>
+<td>lastValue = val</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>WaitForNextValue</td>
+</tr>
+<tr>
+<td/>
+<td>inLocation(loc)</td>
+<td>location = loc</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>WaitForNextValue</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>It would be crucial for such a sensor node to be designed with battery power consumption in mind. Both the quantum size of the temperature sensor and the <italic>timeToDeactivate</italic> duration are design choices in configuring the sensor node to optimize power consumption in a particular environment. In this paper, we focus only on the quantum size of the temperature sensor.</p>
+<p>The weighted activity approach provides a well-defined basis for studying and designing the energy-aware sensor node. <xref ref-type="table" rid="table3-0037549711400778">Table 3</xref> lists the parameters of energy-consumption weights that need to be considered in the design decisions. These parameters and their values are derived from the wireless sensor literature (see, e.g. Sinha and Chandrakasan,<sup><xref ref-type="bibr" rid="bibr5-0037549711400778">5</xref></sup> He et al.,<sup><xref ref-type="bibr" rid="bibr6-0037549711400778">6</xref></sup> Raghunathan et al.<sup><xref ref-type="bibr" rid="bibr7-0037549711400778">7</xref></sup> Antoine-Santoni et al.<sup><xref ref-type="bibr" rid="bibr8-0037549711400778">8</xref>,<xref ref-type="bibr" rid="bibr9-0037549711400778">9</xref></sup>). Some adjustments are made in order to better illustrate the activity-based framework. For example, we use a one-time value <italic>processingInput</italic> = 500 to represent the energy consumption for processing a temperature input. This is abstracted from the real energy consumption, which actually depends on the duration for processing the input. In addition, we do not consider the latency overhead associated with transitioning to, and from, the inactive state. The latency overhead exists due to the transition interval – for example, when a processor wakes up, it spends the transition time waiting for the phase-locked loops to lock, the clock to stabilize, and the processor context to be restored. During the transition interval, no productive work can be done and the sensor could miss detecting important events.<sup><xref ref-type="bibr" rid="bibr5-0037549711400778">5</xref></sup>
+<table-wrap id="table3-0037549711400778" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Parameters of energy consumption weights</p>
+</caption>
+<graphic alternate-form-of="table3-0037549711400778" xlink:href="10.1177_0037549711400778-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Parameter</th>
+<th align="left">Definition</th>
+<th align="left">Sample value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>whileInactiveRate</td>
+<td>Time rate at which transition counts increase while not active</td>
+<td>1 (per second)</td>
+</tr>
+<tr>
+<td>whileActiveRate</td>
+<td>Time rate at which transition counts increase while active</td>
+<td>10 (per second)</td>
+</tr>
+<tr>
+<td>processingActivation</td>
+<td>Transition weighting for processing activation input</td>
+<td>20</td>
+</tr>
+<tr>
+<td>processingLocation</td>
+<td>Transition weighting for processing location input</td>
+<td>50</td>
+</tr>
+<tr>
+<td>processingInput</td>
+<td>Transition weighting for processing temperature input</td>
+<td>500</td>
+</tr>
+<tr>
+<td>sendingOutput</td>
+<td>Transition weighting for sending location-based output</td>
+<td>20</td>
+</tr>
+</tbody>
+</table>
+</table-wrap></p>
+<p><xref ref-type="table" rid="table4-0037549711400778">Tables 4</xref> and <xref ref-type="table" rid="table5-0037549711400778">5</xref> show the internal and external weighting functions defined in terms of these parameters. Note that in the active state, transition counts accrue at the same rate with respect to elapsed time whether accumulated at internal or external transitions. This kind of consistency is facilitated by defining parameters such as <italic>whileActiveRate</italic>, which can be used in different places to convey equivalent meanings.</p>
+<table-wrap id="table4-0037549711400778" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Internal transition weighting function</p>
+</caption>
+<graphic alternate-form-of="table4-0037549711400778" xlink:href="10.1177_0037549711400778-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Phase</th>
+<th align="left"><italic>wt</italic><sub>int</sub> (<italic>s</italic>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WaitForNextValue</td>
+<td><italic>whileActiveRate</italic> × <italic>intTime</italic>(σ)</td>
+</tr>
+<tr>
+<td>sendValue</td>
+<td><italic>sendingOutput</italic></td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table5-0037549711400778" position="float">
+<label>Table 5.</label>
+<caption>
+<p>External transition weighting function</p>
+</caption>
+<graphic alternate-form-of="table5-0037549711400778" xlink:href="10.1177_0037549711400778-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Phase</th>
+<th align="left">Input port</th>
+<th align="left"><italic>wt</italic><sub>ext</sub> (<italic>s, e, x</italic>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WaitForActivation</td>
+<td>inActivation</td>
+<td><italic>processingActivation</italic>+<italic>whileInactiveRate</italic> × <italic>intTime</italic>(<italic>e</italic>)</td>
+</tr>
+<tr>
+<td>WaitForNextValue</td>
+<td>inNextValue</td>
+<td><italic>processingInput</italic>+<italic>whileActiveRate</italic> × <italic>intTime</italic>(<italic>e</italic>)</td>
+</tr>
+<tr>
+<td/>
+<td>inLocation</td>
+<td><italic>processingLocation</italic>+<italic>whileActiveRate</italic> × <italic>intTime</italic>(<italic>e</italic>)</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The well-defined weighting functions make it possible to analyze some of the weighted transition accumulations. The accumulation for a single activating input after an elapsed time <italic>e</italic> with no subsequent inputs and ending at the return to inactive state is (for simplicity, in the following, we omit the <italic>intTime</italic> function from the equations)</p>
+<p><disp-formula id="disp-formula13-0037549711400778">
+<mml:math display="block" id="math20-0037549711400778">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mi>p</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>sin</mml:mi>
+<mml:mi>g</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>A</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>v</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mi>h</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>l</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>I</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>v</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mo>×</mml:mo>
+<mml:mi>e</mml:mi>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>+</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mi>h</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>l</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>A</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>v</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mo>×</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>m</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>T</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>D</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>v</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>e</mml:mi>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula13-0037549711400778" xlink:href="10.1177_0037549711400778-eq13.tif"/>
+</disp-formula></p>
+<p>which represents the overhead incurred by activating the device with no subsequent sensing.</p>
+<p>The accumulation for <italic>m</italic> temperature inputs and <italic>n</italic> location updates spread anywhere over an active period of time <italic>t</italic> is</p>
+<p><disp-formula id="disp-formula14-0037549711400778">
+<mml:math display="block" id="math21-0037549711400778">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mi>Accum</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>processingInput</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>sendingOutput</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>+</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>processingLocation</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>whileActiveRate</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula14-0037549711400778" xlink:href="10.1177_0037549711400778-eq14.tif"/>
+</disp-formula></p>
+<p>which represents the part attributable to the external activity of the temperature input stream –<italic>m</italic> × (<italic>processingInput + sendingOutput</italic>) – plus the rest, which is the overhead incurred by processing GPS inputs and the continuous consumption of power while active during the period <italic>t</italic>. Clearly, the design should attempt to make <italic>whileActiveRate</italic> as small as possible while also reducing <italic>whileInactiveRate</italic>, recognizing that the former will always be larger than the latter. Of course, the processing and transmitting energy consumption should be minimized as well.</p>
+</sec>
+<sec id="section10-0037549711400778">
+<title>3.2. Activity-based energy-aware sensing using changing quantum size</title>
+<p>Let us consider only the processing of temperature data and analyze how the activity-based approach can support energy-aware sensing by dynamically changing the quantum size of the temperature sensor. Omitting the part related to the GPS data, the accumulated activity for <italic>m</italic> temperature inputs over an active period of time <italic>t</italic> is</p>
+<p><disp-formula id="disp-formula15-0037549711400778">
+<mml:math display="block" id="math22-0037549711400778">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mi>Accum</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>m</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>processingInput</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>sendingOutput</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>+</mml:mo>
+<mml:mi>whileActiveRate</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula15-0037549711400778" xlink:href="10.1177_0037549711400778-eq15.tif"/>
+</disp-formula></p>
+<p>Recall <xref ref-type="disp-formula" rid="disp-formula11-0037549711400778">Equation (2)</xref>, for a quantization-based temperature sensor <italic>m</italic> is the number of threshold crossings: <italic>m</italic> = <italic>A</italic>(<italic>t</italic>)/<italic>D</italic>, where <italic>A</italic>(<italic>t</italic>) is the external activity (the temperature change) in time interval [0, <italic>t</italic>]. Assuming that the quantum size is constant, this leads to an expression for the weighted activity accumulated over the interval:</p>
+<p><disp-formula id="disp-formula16-0037549711400778">
+<label>(3)</label>
+<mml:math display="block" id="math23-0037549711400778">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mi>Accum</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>A</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>processingInput</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>+</mml:mo>
+<mml:mi>sendingOutput</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>whileActiveRate</mml:mi>
+<mml:mo>×</mml:mo>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula16-0037549711400778" xlink:href="10.1177_0037549711400778-eq16.tif"/>
+</disp-formula></p>
+<p>In a typical wildfire scenario, when the fire spreads and gets closer to a sensor node, the sensed temperature gradually increases and reaches its peak point when the fire spreads to the location of the sensor node. After that the fire burns the biomass (represented by a fuel model) in the area and gradually dies out when the biomass is consumed. The expected temperatures at any height above a surface fire can be estimated or calculated from ambient temperature and fireline intensity.<sup><xref ref-type="bibr" rid="bibr10-0037549711400778">10</xref>,<xref ref-type="bibr" rid="bibr11-0037549711400778">11</xref></sup> We denote the peak temperature as <italic>R</italic><sub>max</sub>, and the ambient temperature as <italic>R</italic><sub>ambient</sub>. The ambient temperature usually does not vary much and can be treated as a constant. <xref ref-type="fig" rid="fig5-0037549711400778">Figure 5</xref> illustrates the typical pattern of temperature change of a sensor node in a wildfire field. At time <italic>T</italic><sub>start</sub> the fire approaches the sensor node and thus the temperature begins to rise above the ambient temperature. At time <italic>T</italic><sub>end</sub> the fire dies out and the temperature returns back to the ambient temperature. The time duration between when the temperature begins to rise and when the temperature drops to normal is the duration of the fire event, denoted as <italic>T</italic> (<italic>T = T</italic><sub>end</sub> <italic>– T</italic><sub>start</sub>). Ideally, the sensor node should monitor the entire duration of the fire event before running out of energy. Note in this paper we do not consider the case that the sensor may be destroyed by the fire.</p>
+<fig id="fig5-0037549711400778" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>The temperature change pattern of a sensor node.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig5.tif"/>
+</fig>
+<p>The overall external activity (the temperature change) of a fire event, as shown in <xref ref-type="fig" rid="fig5-0037549711400778">Figure 5</xref>, is <italic>A</italic>(<italic>T</italic>) = 2 × (<italic>R</italic><sub>max</sub> – <italic>R</italic><sub>ambient</sub>). Replacing <italic>A</italic>(<italic>T</italic>) in <xref ref-type="disp-formula" rid="disp-formula16-0037549711400778">Equation (3)</xref>, we have</p>
+<p><disp-formula id="disp-formula17-0037549711400778">
+<label>(4)</label>
+<mml:math display="block" id="math24-0037549711400778">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>Accum</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>total</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ambient</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>processingInput</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>sendingOutput</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>+</mml:mo>
+<mml:mi>whileActiveRate</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>T</mml:mi>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula17-0037549711400778" xlink:href="10.1177_0037549711400778-eq17.tif"/>
+</disp-formula></p>
+<p><xref ref-type="disp-formula" rid="disp-formula17-0037549711400778">Equation (4)</xref> shows that the total weighted activity (the energy consumption) of the sensor node for monitoring the whole fire event is a function of the quantum size <italic>D</italic>, the peak temperature <italic>R</italic><sub>max</sub>, and the duration of the fire event <italic>T</italic>. The quantum size <italic>D</italic> is a parameter that can be controlled by the sensor node. When <italic>D</italic> is small, the energy consumption would be higher and when <italic>D</italic> is large the energy consumption would be lower. Different from <italic>D</italic>, both <italic>R</italic><sub>max</sub> and <italic>T</italic> are determined by the fire behavior and cannot be controlled by the sensor node. The peak temperature <italic>R</italic><sub>max</sub> depends on the fuel type, terrain, and weather condition of the place. The fire duration <italic>T</italic> depends on how fast the fire spreads, as well as the fuel model at the location. In general, <italic>T</italic> is smaller if the location is at the head of the fire where fire spreads fast; it is larger if the location is at the tail of the fire. This is because the spreading speed at the tail is much slower. As a result, the biomasses at the tail area are ignited at a slower rate, leading to a longer duration before the fire dies out. Some experimental results of energy consumption with different <italic>D</italic> and different fire behaviors are given in Section 4.1.</p>
+<p>Since quantum size <italic>D</italic> is a parameter that can be controlled to affect energy consumption, next we study the control policies that dynamically change <italic>D</italic> for supporting energy-aware sensing. Let us define an energy budget <italic>E</italic><sub>budget</sub>, representing the total energy that is available for monitoring the fire event. We assume the sensor node knows its energy consumption at real time at any given time <italic>t</italic>. One way it can monitor its energy consumption is to use the accumulated weighted activity computed from weighted state transitions. In this approach, the energy consumption at time <italic>t</italic>: <italic>Accum</italic>(<italic>t</italic>) <italic>= m ×</italic> (<italic>processingInput + sendingOutput</italic>) <italic>+ while ActiveRate × (t-T</italic><sub>start</sub>), where <italic>m</italic> is the number of temperature inputs and <italic>T</italic><sub>start</sub> is the start time of the fire event. Here, the device maintains the count <italic>m</italic> of inputs at any time. This can be called a model-based approach and depends on accurate calibration of parameters (<italic>processingInput</italic>, <italic>sendingOutput</italic>, and <italic>while ActiveRate</italic>), as well as the validity of the weighted transition model.</p>
+<p>Let <italic>E</italic>(<italic>t</italic>) denote the energy consumption at time <italic>t</italic>, and <italic>E</italic><sub>remaining</sub>(<italic>t</italic>) denote the remaining energy budget. We have: <italic>E</italic><sub>remaining</sub>(<italic>t</italic>) <italic>= E</italic><sub>budget</sub> <italic>– E</italic>(<italic>t</italic>). The goal of dynamically changing <italic>D</italic> at time <italic>t</italic> is to compute a new quantum size so that the sensor node can finish monitoring the fire event (or monitor the fire event as long as possible) before running out of the remaining energy.</p>
+<p>We define <italic>R</italic>(<italic>t</italic>) as the sensed temperature at time <italic>t</italic>, and <italic>A</italic><sub>remaining</sub>(<italic>t</italic>) as the expected remaining external activity (temperature change) for the fire event. Based on the observation (see <xref ref-type="fig" rid="fig5-0037549711400778">Figure 5</xref>) that the temperature always increases to the peak point <italic>R</italic><sub>max</sub> and then decreases to the ambient temperature <italic>R</italic><sub>ambient</sub> at the end of the fire event, we can calculate <italic>A</italic><sub>remaining</sub>(<italic>t</italic>) at time <italic>t</italic>, regardless of the temperature change curve. To do this, we need to know if at time <italic>t</italic> the peak temperature has been reached or not (this can be decided, e.g. based on if the current temperature is increasing or decreasing). <xref ref-type="fig" rid="fig5-0037549711400778">Figure 5</xref> illustrates two sample time points <italic>t</italic>1 (where the peak temperature is not reached yet), and <italic>t</italic>2 (where the peak temperature has been reached). The values of <italic>A</italic><sub>remaining</sub>(<italic>t</italic>) for these two time points are calculated as below:</p>
+<p><disp-formula id="disp-formula18-0037549711400778">
+<mml:math display="block" id="math25-0037549711400778">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>remaining</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>R</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>max</mml:mo>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ambient</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="right" columnspan="1">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>remaining</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>R</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>R</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>ambient</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula18-0037549711400778" xlink:href="10.1177_0037549711400778-eq18.tif"/>
+</disp-formula></p>
+<p>Knowing the expected remaining external activity <italic>A</italic><sub>remaining</sub>(<italic>t</italic>), the expected energy consumption for the sensor node to cover the rest of the fire event can be computed from <xref ref-type="disp-formula" rid="disp-formula16-0037549711400778">Equation (3)</xref>. This energy consumption should not be larger than the remaining energy <italic>E</italic><sub>remaining</sub>(<italic>t</italic>). Thus we have</p>
+<p><disp-formula id="disp-formula19-0037549711400778">
+<mml:math display="block" id="math26-0037549711400778">
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mi>E</mml:mi>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>m</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>≥</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>A</mml:mi>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>m</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>g</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>/</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>p</mml:mi>
+<mml:mi>r</mml:mi>
+<mml:mi>o</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>s</mml:mi>
+<mml:mi>sin</mml:mi>
+<mml:mi>g</mml:mi>
+<mml:mi>I</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>p</mml:mi>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mo>+</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>d</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>g</mml:mi>
+<mml:mi>O</mml:mi>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>p</mml:mi>
+<mml:mi>u</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:mi>w</mml:mi>
+<mml:mi>h</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>l</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>A</mml:mi>
+<mml:mi>c</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>v</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mi>R</mml:mi>
+<mml:mi>a</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>e</mml:mi>
+<mml:mo>×</mml:mo>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mi>T</mml:mi>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+<mml:mi>n</mml:mi>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:math>
+<graphic alternate-form-of="disp-formula19-0037549711400778" xlink:href="10.1177_0037549711400778-eq19.tif"/>
+</disp-formula></p>
+<p>This equation defines the constraint for selecting the new quantum size. Let <italic>D</italic><sub>new</sub>(<italic>t</italic>) be the new quantum size at time <italic>t</italic>. <italic>D</italic><sub>new</sub>(<italic>t</italic>) is computed as</p>
+<p><disp-formula id="disp-formula20-0037549711400778">
+<label>(5)</label>
+<mml:math display="block" id="math27-0037549711400778">
+<mml:mrow>
+<mml:mtable align="right" width="80%">
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>new</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mo>≥</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>A</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>remaining</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>processingInput</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:mi>sendingOutput</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo stretchy="false">/</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="left" columnspan="1">
+<mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>E</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>remaining</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mi>whileActiveRate</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mo>×</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>T</mml:mi>
+<mml:mtext>end</mml:mtext>
+<mml:mo>−</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula20-0037549711400778" xlink:href="10.1177_0037549711400778-eq20.tif"/>
+</disp-formula></p>
+<p>This constraint first imposes the precondition that <italic>E</italic><sub>remaining</sub>(<italic>t</italic>) ≥ <italic>whileActiveRate ×</italic> (<italic>T</italic><sub>end</sub>–<italic>t</italic>)) so that the remaining energy covers the remaining power consumption just for being active. It then stipulates that the quantum be big enough so that the weighted transitions for processing the remaining activity are possible.</p>
+<p>There are two unknown parameters in <xref ref-type="disp-formula" rid="disp-formula20-0037549711400778">Equation (5)</xref> in order to compute <italic>D</italic><sub>new</sub>(<italic>t</italic>). The first one is <italic>R</italic><sub>max</sub>, which may be needed to calculate <italic>A</italic><sub>remaining</sub>(<italic>t</italic>) (<italic>R</italic><sub>max</sub> is needed only when the peak temperature is not reached yet at time <italic>t</italic>). For this unknown parameter, we propose to use some empirically defined value based on the fuel model and typical weather condition<sup><xref ref-type="bibr" rid="bibr10-0037549711400778">10</xref>,<xref ref-type="bibr" rid="bibr11-0037549711400778">11</xref></sup> as an estimation of <italic>R</italic><sub>max</sub>. We note even if the real <italic>R</italic><sub>max</sub> is different from the empirically defined value, the system still works because eventually the real <italic>R</italic><sub>max</sub> will be recorded (when the peak is detected). The second unknown parameter in <xref ref-type="disp-formula" rid="disp-formula20-0037549711400778">Equation (5)</xref> is <italic>T</italic><sub>end</sub>, that is, the ending time of the fire, which is determined by the fire behavior. Below we present two different ways to treat this unknown parameter, which result in two different control policies for dynamically changing the quantum size. We name them the <italic>Adjusted Quantization Policy</italic> and the <italic>Adaptive Quantization Policy</italic>, respectively.</p>
+<sec id="section11-0037549711400778">
+<title>3.2.1. Adjusted quantization policy</title>
+<p>In the adjusted quantization policy, we do not estimate the remaining duration of the fire event, denoted as (<italic>T</italic><sub>end</sub><italic>– t</italic>) in <xref ref-type="disp-formula" rid="disp-formula20-0037549711400778">Equation (5)</xref>. The simplest way of doing this is to totally ignore the <italic>whileActiveRate ×</italic> (<italic>T</italic><sub>end</sub>–<italic>t</italic>) element, that is, setting (<italic>T</italic><sub>end</sub>–<italic>t</italic>) = 0. In this way, the result is always optimistic in the sense that the computed <italic>D</italic><sub>new</sub> is always smaller than it should be. This is because the energy consumption of staying in the active state is not taken into account for computing <italic>D</italic><sub>new</sub>. To alleviate this problem, an alternative approach is to always treat (<italic>T</italic><sub>end</sub>–<italic>t</italic>) as a constant number, which can be empirically defined. Section 4.2 shows some results of the adjusted quantization policy by setting (<italic>T</italic><sub>end</sub>–<italic>t</italic>) = 0 all the time.</p>
+</sec>
+<sec id="section12-0037549711400778">
+<title>3.2.2. Adaptive quantization policy</title>
+<p>In the adaptive quantization policy, we dynamically estimate the remaining duration (<italic>T</italic><sub>end</sub>–<italic>t</italic>) of the fire event and use that estimation to calculate the quantum size <italic>D</italic>. We carry out the estimation based on a simple technique similar to extrapolating the slope of a curve in numerical solutions. Specifically, we compute the rate of temperature change from the last quantized input, and use this rate to estimate the duration for the remaining temperature change <italic>A</italic><sub>remaining</sub>(<italic>t</italic>). Let <italic>c</italic>(<italic>t</italic>) denote the rate of change computed from the last quantized input, then the remaining during (<italic>T</italic><sub>end</sub>–<italic>t</italic>) is estimated as (<italic>T</italic><sub>end</sub>–<italic>t</italic>) = <italic>A</italic><sub>remaining</sub>(<italic>t</italic>)/<italic>c</italic>(<italic>t</italic>). The adaptive quantization policy is more ‘intelligent’ in the sense that it adaptively adjusts the quantum size based on what is the current rate of temperature change. Section 4.3 shows some experimental results of the adaptive quantization policy.</p>
+<p>Since several estimations are used in computing the quantum size <italic>D</italic>, the effectiveness of adjusting <italic>D</italic> will depend on the accuracy of these estimations. However, even when imprecise estimations are used, the control policies still work to some extent. This is because <italic>D</italic> is dynamically computed at every update and the system has the capability of adjusting itself to overcome the estimation errors.</p>
+</sec>
+</sec>
+</sec>
+<sec id="section13-0037549711400778" sec-type="results">
+<title>4. Experimental results</title>
+<p>We present several experiment results to demonstrate the activity-based approach described in this paper. The experiments are carried out using wildfire spread simulations based on the DEVS-FIRE model.<sup><xref ref-type="bibr" rid="bibr12-0037549711400778">12</xref>,<xref ref-type="bibr" rid="bibr13-0037549711400778">13</xref></sup> The sensor node model and the state transition weighting functions are described in Section 3.1. Since we focus on the temperature sensor data only, the logic corresponding to the GPS sensor is not implemented in the experiments. In addition, we set the <italic>time ToDeactivate</italic> = 600, which is long enough so the sensor node will not transition to the inactive state before the fire event ends. This allows us to study the quantum size as the only factor for affecting the energy consumption of the sensor node.</p>
+<p><xref ref-type="fig" rid="fig6-0037549711400778">Figure 6</xref> shows a snapshot of the wildfire spread simulation and the corresponding temperature map at the moment. In <xref ref-type="fig" rid="fig6-0037549711400778">Figure 6(a)</xref>, the different colors in the background represent different fuel models. The wind speed used in the simulation is 12 miles/hour, while the wind direction is from south to north. The fire front is depicted in red, while the burned area is depicted in black. <xref ref-type="fig" rid="fig6-0037549711400778">Figure 6(b)</xref> shows the temperature map in the fire field. The temperatures range from 27 to about 300 Celsius, which are displayed in different colors. We consider two identical sensor nodes placed at two different locations in the fire field, as marked in <xref ref-type="fig" rid="fig6-0037549711400778">Figure 6(b)</xref>. Sensor node 1 (denoted as sensor1) is placed at the head of the fire (because the fire spreads from south to north due to wind direction). Sensor node 2 (denoted as sensor2) is placed at the left flank of the fire.</p>
+<fig id="fig6-0037549711400778" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Wildfire spread simulation, temperature map, and sensor nodes. (a) A wildfire spread simualtion. (b) The temperature map and sensor nodes (color online only).</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig6.tif"/>
+</fig>
+<sec id="section14-0037549711400778">
+<title>4.1. Quantum size, sensor data and energy consumption</title>
+<p>Our first experiment aims to show the effect of quantum size to the sensor data and to the energy consumption of the sensor nodes. <xref ref-type="fig" rid="fig7-0037549711400778">Figure 7(a)</xref> show the actual temperature of the locations and the sensed temperatures from the two sensors when both sensors use a fixed quantum size <italic>D</italic> = 10. The actual temperature is calculated in the simulation based on a temperature model that takes into account the distance to the closest fire front and the diminish effect of temperature after the area is burned out. <xref ref-type="fig" rid="fig7-0037549711400778">Figure 7(b)</xref> shows the same information when quantum size <italic>D</italic> = 30. The figures show that the two sensor nodes have different temperature curves. Sensor1’s temperature starts to increase (at a rapid pace) at time 260 s. It reaches its peak temperature at time 580 s, and returns to the ambient temperature at time 1340 s. At time 960 s sensor1’s temperature fluctuates due to the non-linear fire-spreading behavior caused by the non-uniform terrain and fuel model around the location of sensor1. Note that sensor1’s temperature changes faster than sensor2’s temperature, because it is located at the head of the fire where the fire spreads fast. Different from sensor1, sensor2’s temperature rises at time 360 s at a much slower pace. It reaches its peak at time 1400 s, and returns to the ambient temperature at time 2860 s. The duration of the fire event (between temperature rises and returns) as sensed by sensor2 is 2500 s, which is much longer than that of sensor1 (1080 s). <xref ref-type="fig" rid="fig7-0037549711400778">Figures 7(a)</xref> and <xref ref-type="fig" rid="fig7-0037549711400778">(b)</xref> show that the quantization-based sensors are able to keep track of the curve of the actual temperature. The max error between the sensor data and actual temperature is constrained by the quantum size. The sensed temperatures are stepwise constants due to the discrete event-based updates of the sensor data. Comparing <xref ref-type="fig" rid="fig7-0037549711400778">Figures 7(a)</xref> and <xref ref-type="fig" rid="fig7-0037549711400778">(b)</xref>, one can see that the smaller the quantum size, the more accurate the sensor data.</p>
+<fig id="fig7-0037549711400778" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Temperature data and energy consumptions when using different quantum sizes. (a) Quantum size <italic>D</italic> = 10. (b) Quantum size <italic>D</italic> = 30. (c) Energy consumptions.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig7.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig7-0037549711400778">Figure 7(c)</xref> shows the energy consumption of the two sensors when using the two different quantum sizes. The two sensors have different rates of consuming the energy. In the beginning, sensor1 consumes more energy because it has more frequent temperate updates. Then sensor1 becomes inactive after the fire burns out. Sensor2 has a smaller rate of energy consumption in the beginning. However, in the end sensor2 consumes more energy than sensor1 consumes because it stays active for a longer duration. In this example, sensor1 deactivates at time 1340 s, while sensor2 deactivates at time 2860 s. For the same sensor node, as predicted, when the quantum size increases, the number of temperature updates decreases. As a result, the energy consumption becomes smaller. Below we show how the quantum size can be dynamically changed based on the energy budget.</p>
+</sec>
+<sec id="section15-0037549711400778">
+<title>4.2. Results of adjusted quantization policy</title>
+<p>Our second experiment shows results of adjusted quantization policy. The experiment uses the same configurations as in Section 4.1. The only difference is that instead of maintaining a fixed quantum size, the two sensor nodes dynamically change their quantum sizes according to the adjusted quantization policy described in Section 3.2. In the experiment, the initial quantum size for both sensors is 10. We define an upper bound, 50, and a lower bound, 10, for the quantum size adjustment. We carried out the experiment using two different energy budgets: one is 35,000 and the other is 25,000. <xref ref-type="fig" rid="fig8-0037549711400778">Figure 8(a)</xref> show the results of sensor data when the energy budget is 35,000; <xref ref-type="fig" rid="fig8-0037549711400778">Figure 8(b)</xref> shows the results of sensor data when the energy budget is 25,000. <xref ref-type="fig" rid="fig8-0037549711400778">Figure 8(c)</xref> shows the adjusted quantum sizes over time for both sensor nodes under the two different energy budgets.</p>
+<fig id="fig8-0037549711400778" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Temperature data and quantum sizes when using adjusted quantization policy. (a) Energy budget = 35,000. (b) Energy budget = 25,000. (c) Quantum size adjustment over time.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig8.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig8-0037549711400778">Figure 8</xref> shows that the quantum sizes of the two sensors are not fixed any more – they increase dynamically based on the remaining energy budget. When the energy budget is 35,000, sensor1’s quantum size is maintained at 10 (because there is enough energy for sensor1); sensor2’s quantum size increases to 11, 12, 14, and finally to 48. When the energy budget is 25,000, sensor1’s quantum size slightly increases to 12; sensor2’s quantum size quickly increases and finally reaches the upper bound of 50. <xref ref-type="fig" rid="fig8-0037549711400778">Figure 8(c)</xref> shows that the smaller the energy budget is, the more likely it is that the quantum size increases to a large value. This is expected because a large quantum size leads to less energy consumption and thus can better meet the energy budget. <xref ref-type="fig" rid="fig8-0037549711400778">Figures 8(a)</xref> and <xref ref-type="fig" rid="fig8-0037549711400778">(b)</xref> show that because of the adjusted quantum size the sensor nodes are able to monitor the fire event for longer (compared to using a fixed quantum size 10) under a given energy budget. In this example, when the energy budget is 35,000, sensor2 runs out of energy at time 2340 s. This is longer than 2260 s if a fixed quantum size 10 is used (see the energy-consumption figure in Section 4.1). When the energy budget is 25,000, sensor2 runs out of energy at time 1940 s. This compares to 1740 s if a fixed quantum size 10 is used. For both energy budgets, sensor1 was able to finish monitoring the whole fire event, which ends at time 1340 s. However, if a fixed quantum size 10 is used, sensor1 will run out of energy at time 1280 s.</p>
+<p>This experiment demonstrates how the adjusted quantization policy works. It shows that the adjusted quantization policy is able to dynamically increase the quantum size of a sensor node based on the remaining energy budget and thus increases the life time of the sensor node. However, the adjusted quantization policy does not work in a very effective manner. This is because the policy does not take the <italic>whileActiveRate</italic> into account for adjusting the quantum size (see Section 3.2).</p>
+</sec>
+<sec id="section16-0037549711400778">
+<title>4.3. Results of adaptive quantization policy</title>
+<p>Our third experiment shows results of adaptive quantization policy. The experiment setup is the same as in Section 4.2, with the only difference being changing the quantum size according to the adaptive quantization policy instead of the adjusted quantization policy. <xref ref-type="fig" rid="fig9-0037549711400778">Figure 9(a)</xref> show the results of sensor data when the energy budget is 35,000; <xref ref-type="fig" rid="fig9-0037549711400778">Figure 9(b)</xref> shows the results of sensor data when the energy budget is 25,000. <xref ref-type="fig" rid="fig9-0037549711400778">Figure 9(c)</xref> shows the changing quantum sizes over time for both sensor nodes under the two different energy budgets.</p>
+<fig id="fig9-0037549711400778" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>Temperature data and quantum sizes when using adaptive quantization policy. (a) Energy budget = 35,000. (b) Energy budget = 25,000. (c) Quantum size adjustment over time.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig9.tif"/>
+</fig>
+<p>From <xref ref-type="fig" rid="fig9-0037549711400778">Figure 9(c)</xref> we can see that the quantum sizes of the two sensor nodes change dynamically too. However, different from the adjusted quantization policy that increases (not decreases) the quantum size only, the adaptive quantization policy increases and decreases the quantum size adaptively according to the remaining energy budget. In addition, the adaptive quantization policy gives better results than the adjusted quantization policy in terms of the sensor nodes’ life time. For example, when the energy budget is 25,000, sensor2 runs out of energy at time 2340 s. This compares to 1940 s if using the adjusted quantization policy and 1740 s if using a fixed quantum size of 10. When the energy budget is 35,000, sensor2 is able to finish the whole fire event, which ends at time 2860 s. However, sensor2 runs out of energy at time 2340 s if using the adjusted quantization policy.</p>
+<p><xref ref-type="fig" rid="fig10-0037549711400778">Figure 10</xref> compares the energy consumptions of the adjusted quantization policy and the adaptive quantization policy. <xref ref-type="fig" rid="fig10-0037549711400778">Figure 10(a)</xref> shows the energy consumptions of sensor1 and sensor2 for energy budget = 25,000. It can be seen that the adjusted quantization policy and the adaptive quantization policy result in different trajectories of energy consumptions. Compared to the adjusted quantization policy, the adaptive quantization policy gives a slower rate of energy consumption. This is especially obvious for sensor2 – sensor2 was able to monitor the fire event for a significantly longer time period when using adaptive quantization policy. <xref ref-type="fig" rid="fig10-0037549711400778">Figure 10(b)</xref> shows the energy consumptions of sensor1 and sensor2 for energy budget = 35,000. Similar to in <xref ref-type="fig" rid="fig10-0037549711400778">Figure 10(a)</xref>, sensor2 has a slower energy-consumption rate when using adaptive quantization policy. The energy consumption of sensor1 follows about the same rate for the two quantization policies. This is because there is enough energy to monitor the whole fire event for sensor1, and thus both policies suggest using the smallest quantum size (quantum size = 10). <xref ref-type="fig" rid="fig10-0037549711400778">Figure 10</xref> clearly shows the advantage of the adaptive quantization policy over the adjusted quantization policy in situations when there is a limited energy budget.</p>
+<fig id="fig10-0037549711400778" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>Energy consumptions of adjusted quantization policy and adaptive quantization policy.</p>
+</caption>
+<graphic xlink:href="10.1177_0037549711400778-fig10.tif"/>
+</fig>
+<p>The adaptive quantization policy gives better results because it takes into account the <italic>whileActiveRate</italic>, as explained in Section 3.2, and dynamically estimates the remaining duration of the fire event. In this sense, the adaptive quantization policy is ‘smarter’ than the adjusted quantization policy. We note that an accurate estimation of the remaining duration of the fire event is important for the adaptive quantization policy to work well. In our current implementation, the controller of the adaptive quantization policy computes the temperature change rate from the most recent quantized input for calculating the remaining duration of the fire event. Better results could be reached if the temperature change rate is computed from the last several inputs instead of only the most recent input.</p>
+</sec>
+</sec>
+<sec id="section17-0037549711400778" sec-type="conclusions">
+<title>5. Conclusions</title>
+<p>We presented an activity-based framework that links information and energy, and showed how this framework can be used to support energy-aware information processing. For sensing applications, the activity concept links the time course of a signal to the energy required by a quantizer to monitor it over a finite interval. An application to a wireless sensor node for detecting and monitoring wildfires was presented. Two policies of dynamically changing quantum size based on energy budget were studied. Results obtained from simulation experiments show that effective policies for setting the quantum size can be developed to provide energy-aware sensing using the activity-based framework developed in this paper. From the application point of view, the activity awareness sensing discussed in this paper can be expanded in two directions in future work. The first involves direct hardware implementation as in the DEVS System-on-a-Chip.<sup><xref ref-type="bibr" rid="bibr14-0037549711400778">14</xref></sup> The other direction is the application of activity in learning and adapting to provide lower cost and power consumption, and increased life time for sensor nodes in deployments in stressful environments. More generally, the activity concept might prove to be a useful concept in the design of cyber-physical, and other information technology systems, that need to account for their use of energy, as well as their other requirements.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding</label>
+<p>This research was supported in part by the National Science Foundation [CNS-0841170 and CNS-0941432].</p>
+</fn>
+<fn fn-type="conflict">
+<label>Conflict of interest statement</label>
+<p>None declared.</p>
+</fn>
+</fn-group>
+<bio>
+<title>Author biographies</title>
+<p><bold>Xiaolin Hu</bold> is an Associate Professor in the Computer Science Department at Georgia State University, Atlanta, Georgia. He received his PhD degree from the University of Arizona, MS degree from the Chinese Academy of Sciences, and BS degree from the Beijing Institute of Technology in 2004, 1999, and 1996, respectively. His research interests include modeling and simulation theory and application, agent and multi-agent systems, and complex systems science. He has served as program chairs for several international conferences/symposiums in the field of modeling and simulation, and is an associate editor for Simulation: Transaction of The Society for Modeling and Simulation International. Dr Hu is a National Science Foundation (NSF) CAREER Award recipient.</p>
+<p><bold>Bernard P Zeigler</bold> is Chief Scientist for RTSync, Emeritus Professor of Electrical and Computer Engineering at the University of Arizona and Research Professor in the C4I Center at George Mason University. He is internationally known for his seminal contributions in modeling and simulation theory. He has published several books including ‘Theory of Modeling and Simulation’ and ‘Modeling &amp; Simulation-based Data Engineering: Introducing Pragmatics into Ontologies for Net-Centric Information Exchange’.</p>
+</bio>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0037549711400778">
+<label>1.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Zeigler</surname><given-names>BP</given-names></name>
+<name><surname>Jammalamadaka</surname><given-names>R</given-names></name>
+<name><surname>Akerkar</surname><given-names>SR</given-names></name>
+</person-group>. <article-title>Continuity and change (activity) are fundamentally related in DEVS simulation of continuous systems</article-title>. <source>Lect Notes Comput Sci</source> <year>2005</year>; <volume>3397/2005</volume>: <fpage>1</fpage>–<lpage>13</lpage>.</citation>
+</ref>
+<ref id="bibr2-0037549711400778">
+<label>2.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Zeigler</surname><given-names>BP</given-names></name>
+<name><surname>Praehofer</surname><given-names>H</given-names></name>
+<name><surname>Kim</surname><given-names>TG</given-names></name>
+</person-group>. <source>Theory of modeling and simulation</source>, <edition>2nd ed.</edition> <publisher-loc>New York, NY, USA</publisher-loc>: <publisher-name>Academic Press</publisher-name>, <year>2000</year>.</citation>
+</ref>
+<ref id="bibr3-0037549711400778">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Muzy</surname><given-names>R</given-names></name>
+<name><surname>Jammalamadaka</surname><given-names>BP</given-names></name>
+<name><surname>Zeigler</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Nutaro, the activity tracking paradigm in discrete-event modeling and simulation: the case of spatially continuous distributed systems</article-title>. <source>Proceedings of SIMULATION 2010</source> <year>2010</year>.</citation>
+</ref>
+<ref id="bibr4-0037549711400778">
+<label>4.</label>
+<citation citation-type="thesis">
+<person-group person-group-type="author">
+<name><surname>Jammalamadaka</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Multilevel methodology for simulation of spatio-temporal systems with heterogeneous activity: application to spread of valley fever fungus</article-title>. <italic>PhD Dissertation</italic>, <publisher-name>Electrical and Computer Engineering Department, University of Arizona</publisher-name>, <year>2008</year>.</citation>
+</ref>
+<ref id="bibr5-0037549711400778">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Sinha</surname><given-names>A</given-names></name>
+<name><surname>Chandrakasan</surname><given-names>A</given-names></name>
+</person-group>. <article-title>Dynamic power management in wireless sensor networks</article-title>. <source>IEEE Design Test</source> <year>2001</year>; <volume>18</volume>: <fpage>62</fpage>–<lpage>74</lpage>.</citation>
+</ref>
+<ref id="bibr6-0037549711400778">
+<label>6.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>He</surname><given-names>T</given-names></name>
+<name><surname>Krishnamurthy</surname><given-names>S</given-names></name>
+<name><surname>Stankovic</surname><given-names>JA</given-names></name>
+<name><surname>Abdelzaher</surname><given-names>T</given-names></name>
+<name><surname>Luo</surname><given-names>L</given-names></name>
+<name><surname>Stoleru</surname><given-names>R</given-names></name><etal/>
+</person-group>. <article-title>Energy-efficient surveillance system using wireless sensor networks</article-title>. In: <conf-name>Proceedings of the 2nd International Conference on Mobile Systems, Applications, and Services</conf-name>, <conf-loc>Boston, MA</conf-loc>, <conf-date>6–9 June 2004</conf-date>.</citation>
+</ref>
+<ref id="bibr7-0037549711400778">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Raghunathan</surname><given-names>V</given-names></name>
+<name><surname>Schurgers</surname><given-names>C</given-names></name>
+<name><surname>Park</surname><given-names>S</given-names></name>
+<name><surname>Srivastava</surname><given-names>MB</given-names></name>
+</person-group>. <article-title>Energy-aware wireless sensor networks</article-title>. <source>IEEE Signal Process Mag</source> <year>2002</year>; <volume>19</volume>: <fpage>40</fpage>–<lpage>50</lpage>.</citation>
+</ref>
+<ref id="bibr8-0037549711400778">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Antoine-Santoni</surname><given-names>T</given-names></name>
+<name><surname>Santucci</surname><given-names>JF</given-names></name>
+<name><surname>De Gentili</surname><given-names>E</given-names></name>
+<name><surname>Costa</surname><given-names>B</given-names></name>
+</person-group>. <article-title>Discrete event modeling and simulation of wireless sensor network performance</article-title>. <source>Simulation</source> <year>2008</year>; <volume>84</volume>: <fpage>103</fpage>–<lpage>122</lpage>.</citation>
+</ref>
+<ref id="bibr9-0037549711400778">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Antoine-Santoni</surname><given-names>T</given-names></name>
+<name><surname>Santucci</surname><given-names>JF</given-names></name>
+<name><surname>De Gentili</surname><given-names>E</given-names></name>
+<name><surname>Silvani</surname><given-names>X</given-names></name>
+<name><surname>Morandini</surname><given-names>F</given-names></name>
+</person-group>. <article-title>Performance of a protected wireless sensor network in a fire. Analysis of fire spread and data transmission</article-title>. <source>Sensors</source> <year>2009</year>; <volume>9</volume>: <fpage>5878</fpage>–<lpage>5893</lpage>.</citation>
+</ref>
+<ref id="bibr10-0037549711400778">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Van Wagner</surname><given-names>CE</given-names></name>
+</person-group>. <article-title>Convection temperatures above low intensity forest fires</article-title>. <source>Can For Serv Bi-mon Res Notes</source> <year>1975</year>; <volume>31</volume>: <fpage>21</fpage>–<lpage>26</lpage>.</citation>
+</ref>
+<ref id="bibr11-0037549711400778">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Van Wagner</surname><given-names>CE</given-names></name>
+</person-group>. <article-title>Height of crown scorch in forest fires</article-title>. <source>
+Can J For Res</source> <year>1973</year>; <volume>3</volume>: <fpage>373</fpage>–<lpage>378</lpage>.</citation>
+</ref>
+<ref id="bibr12-0037549711400778">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hu</surname><given-names>X</given-names></name>
+<name><surname>Sun</surname><given-names>Y</given-names></name>
+<name><surname>Ntaimo</surname><given-names>L</given-names></name>
+</person-group>. <article-title>DEVS-FIRE: design and application of formal discrete event wildfire spread and suppression models</article-title>. <source>Simulation</source> <year>2010</year>; [in press].</citation>
+</ref>
+<ref id="bibr13-0037549711400778">
+<label>13.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ntaimo</surname><given-names>L</given-names></name>
+<name><surname>Hu</surname><given-names>X</given-names></name>
+<name><surname>Sun</surname><given-names>Y</given-names></name>
+</person-group>. <article-title>DEVS-FIRE: towards an integrated simulation environment for surface wildfire spread and containment</article-title>. <source>Simulation</source> <year>2008</year>; <volume>84</volume>: <fpage>137</fpage>–<lpage>155</lpage>.</citation>
+</ref>
+<ref id="bibr14-0037549711400778">
+<label>14.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Hu</surname><given-names>X</given-names></name>
+<name><surname>Zeigler</surname><given-names>BP</given-names></name>
+<name><surname>Couretas</surname><given-names>J</given-names></name>
+</person-group>. <article-title>DEVS-on–a-Chip: implementing DEVS in real-time Java on a tiny internet interface for scalable factory automation</article-title>. In: <conf-name>Proceedings of the IEEE International Conference on Systems, Man, and Cybernetics</conf-name>, <conf-date>October 2001</conf-date>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

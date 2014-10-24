@@ -1,0 +1,1812 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JIS</journal-id>
+<journal-id journal-id-type="hwp">spjis</journal-id>
+<journal-title>Journal of Information Science</journal-title>
+<issn pub-type="ppub">0165-5515</issn>
+<issn pub-type="epub">1741-6485</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0165551512463994</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0165551512463994</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>SRank: Shortest paths as distance between nodes of a graph with application to RDF clustering</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Khosravi-Farsani</surname><given-names>Hadi</given-names></name>
+<aff id="aff1-0165551512463994">Computer Engineering Department, University of Isfahan, Iran</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Nematbakhsh</surname><given-names>Mohammadali</given-names></name>
+<aff id="aff2-0165551512463994">Computer Engineering Department, University of Isfahan, Iran</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Lausen</surname><given-names>Georg</given-names></name>
+<aff id="aff3-0165551512463994">Informatik Department, Albert-Ludwigs University, Germany</aff>
+</contrib>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0165551512463994">Hadi Khosravi-Farsani, Computer Engineering Department, University of Isfahan, Hezarjerib Street, Isfahan, Iran. Email: <email>khosravi@eng.ui.ac.ir</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>39</volume>
+<issue>2</issue>
+<fpage>198</fpage>
+<lpage>210</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">Chartered Institute of Library and Information Professionals</copyright-holder>
+</permissions>
+<abstract>
+<p>Similarity estimation between interconnected objects appears in many real-world applications and many domain-related measures have been proposed. This work proposes a new perspective on specifying the similarity between resources in linked data, and in general for vertices of a directed graph. More specifically, we compute a measure that says ‘two objects are similar if they are connected by multiple small-length shortest path’. This general similarity measure, called SRank, is based on simple and intuitive shortest paths. For a given domain, SRank can be combined with other domain-specific similarity measures. The suggested model is evaluated in a clustering procedure on a sample data from DBPedia knowledge-base, where the class label of each resource is estimated and compared with the ground-truth class label. Experimental results show that SRank outperforms other similarity measures in terms of precision and recall rate.</p>
+</abstract>
+<kwd-group>
+<kwd>clustering</kwd>
+<kwd>linked data</kwd>
+<kwd>Semantic Web</kwd>
+<kwd>similarity</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0165551512463994" sec-type="intro">
+<title>1. Introduction</title>
+<p>Extracting the similarity score between items is relevant to many areas of computer science, for instance, social networks, search engine, targeted advertisements, clustering, web mining, data mining and ontology mapping, and in general, information networks require a model to specify the notion of similarity between items. Clearly, a similarity metric could be developed based on the definition of similarity and the context in which items are being found.</p>
+<p>Various aspects of resources could be used to determine similarity, which usually depends on the connectivity (e.g. the number of possible paths between two vertices) and structural similarity (e.g. the number of common neighbours of two vertices). In this paper, we propose SRank (Short-Rank), which exploits the resource-to-resource relationships found in information networks. Our study is motivated by recent research and applications on RDF resource clustering, link discovery and RDF ranking over a linked data cloud, which usually require an effective and trustworthy evaluation of underlying similarity functions among resources. Without loss of generality, all the models in this paper are valid and general for computing similarity score between nodes of a directed graph.</p>
+<p>The main intuition behind SRank is that ‘two objects are considered as similar if they are connected by multiple small-length shortest paths’. In comparison with other state-of-the-art similarity measures, SimRank [<xref ref-type="bibr" rid="bibr1-0165551512463994">1</xref>] considers in-links, BipartiteRank [<xref ref-type="bibr" rid="bibr1-0165551512463994">1</xref>] explores out-links and P-Rank [<xref ref-type="bibr" rid="bibr2-0165551512463994">2</xref>] takes into account both in- and out-links in order to propagate the similarity scores through in-links, out-links and both of them.</p>
+<p>As an example, consider the small RDF graph <italic>G</italic>, shown in <xref ref-type="fig" rid="fig1-0165551512463994">Figure 1</xref>, illustrating a soccer player graph where a vertex represents a soccer player and an edge represents the hyperlinks relationship (<ext-link ext-link-type="uri" xlink:href="http://dbpedia.org/ontology/wikiPageWikiLink">http://dbpedia.org/ontology/wikiPageWikiLink</ext-link> predicate in the DBPedia knowledge base). Nodes on this sample graph are an article in Wikipedia knowledge base or a corresponding resource in its DBPedia version. The full URI address of each node could be made by putting the Wikipedia prefix (<ext-link ext-link-type="uri" xlink:href="http://en.wikipedia.org/wiki/">http://en.wikipedia.org/wiki/</ext-link>) or BDPedia prefix (<ext-link ext-link-type="uri" xlink:href="http://dbpedia.org/page">http://dbpedia.org/page</ext-link>) at the start of its node name. As we can see, <italic>Kris Commons</italic> is pointing to <italic>Nigel Clough</italic> and <italic>Colin Calderwood</italic>. Note that nodes in our sample graph may have more links to other resources that have not been shown in the graph.</p>
+<fig id="fig1-0165551512463994" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>A small soccer player RDF graph extracted from DBPedia.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463994-fig1.tif"/>
+</fig>
+<p>We present SimRank, BipartiteRank, and P-Rank scores for all obtained similarity pairs in <xref ref-type="table" rid="table1-0165551512463994">Table 1</xref>. The SimRank value for [<italic>M, S</italic>], [<italic>J, N</italic>] is unavailable, since SimRank considers in-relationship information for similarity computation. More seriously, [<italic>M, J</italic>], [<italic>K, N</italic>] pairs have no value for SimRank, mainly because these vertex pairs do not have common in-link similarity flows. BipartiteRank works like SimRank with the only difference being that it considers out-links. In this way, the similarity of <italic>S</italic> with the other nodes is not available because <italic>S</italic> has no output links. Furthermore, the similarity between pairs of [<italic>K, N</italic>], [<italic>J, C</italic>], [<italic>M, C</italic>] is not available in the presence of BipartiteRank. In contrast to SimRank and BipartiteRank, P-Rank scores flow from in-link neighbours of resources and penetrate through their out-link ones. P-Rank is able to produce more similarity pairs; however it suffers from some drawbacks, especially concerning the produced scores as well as a symmetric assumption for similarity scores.</p>
+<table-wrap id="table1-0165551512463994" position="float">
+<label>Table 1.</label>
+<caption>
+<p>The corresponding similarity values for SimRank (<italic>C</italic> = 0.8), BapartiteRank (<italic>C</italic> = 0.8) and P-Rank (<italic>C</italic> = 0.8, <italic>λ</italic> = 0.5)</p>
+</caption>
+<graphic alternate-form-of="table1-0165551512463994" xlink:href="10.1177_0165551512463994-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">Resource pairs</th>
+<th align="left">SimRank</th>
+<th align="left">Bipartite Rank</th>
+<th align="left">P-Rank</th>
+<th align="left">SRank<sub>3</sub></th>
+<th align="left">SRank<sub>4</sub></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><italic>K, C</italic></td>
+<td>0.29</td>
+<td>N/A</td>
+<td>0.19</td>
+<td>0.5</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>2</td>
+<td><italic>J, K</italic></td>
+<td>0.58</td>
+<td>0.11</td>
+<td>0.36</td>
+<td>0.25</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td>3</td>
+<td><italic>J, C</italic></td>
+<td>0.4</td>
+<td>N/A</td>
+<td>0.28</td>
+<td>0.25</td>
+<td>0.33</td>
+</tr>
+<tr>
+<td>4</td>
+<td><italic>M, C</italic></td>
+<td>0.23</td>
+<td>N/A</td>
+<td>0.11</td>
+<td>0.5</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>5</td>
+<td><italic>C, S</italic></td>
+<td>0.21</td>
+<td>N/A</td>
+<td>0.06</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>6</td>
+<td><italic>J, S</italic></td>
+<td>0.18</td>
+<td>N/A</td>
+<td>0.04</td>
+<td>N/A</td>
+<td>0.08</td>
+</tr>
+<tr>
+<td>7</td>
+<td><italic>S, M</italic></td>
+<td>0.32</td>
+<td>N/A</td>
+<td>0.11</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>8</td>
+<td><italic>M, S</italic></td>
+<td>N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>0.16</td>
+<td>0.41</td>
+</tr>
+<tr>
+<td>9</td>
+<td><italic>N, S</italic></td>
+<td>0.23</td>
+<td>N/A</td>
+<td>0.07</td>
+<td>N/A</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td>10</td>
+<td><italic>M, N</italic></td>
+<td>0.47</td>
+<td>0.29</td>
+<td>0.35</td>
+<td>0.16</td>
+<td>0.16</td>
+</tr>
+<tr>
+<td>11</td>
+<td><italic>K, S</italic></td>
+<td>0.25</td>
+<td>N/A</td>
+<td>0.07</td>
+<td>0.5</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>12</td>
+<td><italic>N, C</italic></td>
+<td>0.4</td>
+<td>N/A</td>
+<td>0.26</td>
+<td>0.5</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>13</td>
+<td><italic>K, M</italic></td>
+<td>N/A</td>
+<td>0.14</td>
+<td>0.17</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>14</td>
+<td><italic>M, K</italic></td>
+<td>N/A</td>
+<td>0.14</td>
+<td>N/A</td>
+<td>0.33</td>
+<td>0.33</td>
+</tr>
+<tr>
+<td>15</td>
+<td><italic>J, N</italic></td>
+<td>N/A</td>
+<td>0.11</td>
+<td>0.14</td>
+<td>N/A</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td>16</td>
+<td><italic>J, M</italic></td>
+<td>N/A</td>
+<td>0.05</td>
+<td>0.08</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>17</td>
+<td><italic>M, J</italic></td>
+<td>N/A</td>
+<td>0.05</td>
+<td>0.08</td>
+<td>0.33</td>
+<td>0.33</td>
+</tr>
+<tr>
+<td>18</td>
+<td><italic>K, N</italic></td>
+<td>N/A</td>
+<td>N/A</td>
+<td>0.12</td>
+<td>0.5</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>19</td>
+<td><italic>N, K</italic></td>
+<td>N/A</td>
+<td>N/A</td>
+<td>0.12</td>
+<td>1</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>SRank takes the different paths between two resources into account and produces a similarity score based on the number of different paths as well as their corresponding lengths. For example, [<italic>M, C</italic>] should receive a greater similarity score compared with [<italic>M, K</italic>] since they are connected by two different paths (<italic>M</italic> points to <italic>C</italic> by a direct edge and also an indirect edge through <italic>K</italic>). As can be seen in <xref ref-type="table" rid="table1-0165551512463994">Table 1</xref>, the [<italic>M, C</italic>] pair receives a low similarity score in the P-Rank algorithm. The similarity score between them is further strengthened in the presence of the SRank algorithm. In fact, SRank assigns high similarity value to strongly connected resources while the previous methods assign the similarity value only based on in- or out-link matching. The SRank similarity scores for path lengths 3 and 4 are presented in columns 6 and 7 of <xref ref-type="table" rid="table1-0165551512463994">Table 1</xref>, respectively.</p>
+<p>The main assumption behind previous algorithms is that the similarity of [<italic>a, b</italic>] is equal to the similarity of [<italic>b, a</italic>], which may not be a valid assumption in some domains. Consider again the [<italic>J, M</italic>] pair in the graph <italic>G</italic> in <xref ref-type="fig" rid="fig1-0165551512463994">Figure 1</xref>. <italic>Joel Lynch</italic> has only one relationship with <italic>Matt Thornhill</italic> while <italic>Matt Thornhill</italic> has two more relationships with the other available resources. SRank differentiates the similarity score of the pair [<italic>J, M</italic>] from the value for [<italic>M, J</italic>] because, from <italic>J</italic>’s viewpoint, <italic>M</italic> is the correct match for <italic>J</italic>, while from <italic>M</italic>’s viewpoint, <italic>J</italic> may not be the correct match for him.</p>
+<p>The contributions of this paper are summarized as follows: we propose a new mathematical similarity measure, SRank, which produces similarity pairs based on the number of different paths as well as their corresponding lengths. We study its main advantages over other introduced similarity measures, and its applicability under RDF data model found in Link Data cloud. We study the applicability of SRank to the RDF resource clustering and introduce a new clustering algorithm based on the SRank similarity measure. High-similarity resources fall into one cluster while low-similarity resources are distributed to different clusters. We perform evaluation of the proposed clustering method over our standard constructed graph extracted from DBPedia knowledge base. In this way, the class label of each resource is estimated and compared with the ground-truth class label.</p>
+<p>The rest of the paper is structured as follows. Section 2 discusses some of the recent related works. In Section 3, we propose our similarity measure from both mathematical as well as implementation perspectives. Moreover, the new clustering method will be presented in Section 3. We report our evaluation studies in Section 4. Finally, Section 5 is devoted to conclusions extracted from the text.</p>
+</sec>
+<sec id="section2-0165551512463994">
+<title>2. Related works</title>
+<p>Many similarity computation techniques have been proposed in the literature to elicit the degree of relatedness between the items in an association. The essential challenge is that the definition of similarity relies heavily on the context in which items are found. Concretely, dependency of similarity to the context leads to the appearance of many techniques; however, most of them depend on structural properties of the items.</p>
+<p>Similarity techniques can be broadly divided into three main categories. The first category converts items to a graph and then deploys graph analysis techniques to capture item similarity [<xref ref-type="bibr" rid="bibr1-0165551512463994">1</xref><xref ref-type="bibr" rid="bibr2-0165551512463994"/><xref ref-type="bibr" rid="bibr3-0165551512463994"/><xref ref-type="bibr" rid="bibr4-0165551512463994"/><xref ref-type="bibr" rid="bibr5-0165551512463994"/>–<xref ref-type="bibr" rid="bibr6-0165551512463994">6</xref>]. The second category models items as vectors in <italic>N</italic>-dimensional space and, after that, vector similarity methods (e.g. cosine of the angel between two vectors) capture item similarity. The third category is based on relation methods that use relationships in an external information source (e.g. WordNet ontology [<xref ref-type="bibr" rid="bibr7-0165551512463994">7</xref><xref ref-type="bibr" rid="bibr8-0165551512463994"/>–<xref ref-type="bibr" rid="bibr9-0165551512463994">9</xref>], Wikipedia knowledgebase [<xref ref-type="bibr" rid="bibr10-0165551512463994">10</xref>] and search engine applications [<xref ref-type="bibr" rid="bibr11-0165551512463994">11</xref>]) to determine items similarity. The combination of the above techniques could also be developed based on the input data and the definition of similarity in the considered context.</p>
+<p>Graph analysis techniques are absolutely the most important for computing similarities. The most notable works are the methods of Co-citation [<xref ref-type="bibr" rid="bibr12-0165551512463994">12</xref><xref ref-type="bibr" rid="bibr13-0165551512463994"/>–<xref ref-type="bibr" rid="bibr14-0165551512463994">14</xref>], bibliographic coupling [<xref ref-type="bibr" rid="bibr13-0165551512463994">13</xref>, <xref ref-type="bibr" rid="bibr15-0165551512463994">15</xref>], and Amsler [<xref ref-type="bibr" rid="bibr16-0165551512463994">16</xref>]. Intuitively, bibliographic coupling captures the number of common citations in two items whereas Co-citation returns how frequently two items are being cited together. Amsler considers both of bibliographic-coupling and Co-citation for similarity computation.</p>
+<p>Some authors have considered similarity measures based on different definitions of the random-walk model on a graph [<xref ref-type="bibr" rid="bibr17-0165551512463994">17</xref>, <xref ref-type="bibr" rid="bibr18-0165551512463994">18</xref>]. For instance, Harel and Koren [<xref ref-type="bibr" rid="bibr19-0165551512463994">19</xref>] defined similarity as the probability of visiting a node before return to the starting node. White and Smyth [<xref ref-type="bibr" rid="bibr20-0165551512463994">20</xref>] introduced average first-passage time, which is defined as the ‘relative centrality’ of a given node with respect to some other node of interest. Newman [<xref ref-type="bibr" rid="bibr21-0165551512463994">21</xref>] suggested ‘betweenness centrality’, which is defined as how often a node is traversed during a random walk between two other nodes.</p>
+<p>Vector-based similarity techniques are commonly referred to in the literature as data similarity [<xref ref-type="bibr" rid="bibr22-0165551512463994">22</xref>, <xref ref-type="bibr" rid="bibr23-0165551512463994">23</xref>]. Experimentally, the notion of data similarity is correlated to the input data attached to each item. For string data, the typical distance measure is edit distance, which is the number of character insertions and/or deletions that need to be made in order to transform one item to another. The Jaccard index [<xref ref-type="bibr" rid="bibr11-0165551512463994">11</xref>, <xref ref-type="bibr" rid="bibr24-0165551512463994">24</xref>] could be used for categorical data and measures similarity as the number of common categories divided by the number of all categories of two considered items. For textual data, term frequency–inverse document frequency (tf-idf) is the most popular approach and is commonly used in the field of data mining.</p>
+<p>Some authors believe that considering just the terms leads to matching problems. Moreover, the <italic>limited information problem</italic> convinced them to exploit external information sources to elicit reliable similarity values between two items. Semantic similarity between two items by well-known ontologies (e.g. WordNet) has been well studied [<xref ref-type="bibr" rid="bibr8-0165551512463994">8</xref>]. Knowledge bases such as Wikipedia [<xref ref-type="bibr" rid="bibr10-0165551512463994">10</xref>] could also be used to model items relatedness. However, external information sources provide a similarity score in general opinion and should be embedded in the considering domain as an aiding value.</p>
+</sec>
+<sec id="section3-0165551512463994">
+<title>3. SRank</title>
+<p>The basic intuition of SRank can be expressed as ‘two objects in a directed graph are considered as similar if they are connected by small-length shortest path’. More specifically, similarity between objects <italic>a</italic> and <italic>b</italic> (maybe different from similarity between <italic>b</italic> and <italic>a</italic>) in a given graph is affected by the following two contradictory conditions:</p>
+<list id="list1-0165551512463994" list-type="bullet">
+<list-item>
+<p>number of shortest paths from <italic>a</italic> to <italic>b</italic> (shortest path is defined on the considering domain);</p>
+</list-item>
+<list-item>
+<p>length of shortest paths from <italic>a</italic> to <italic>b</italic>.</p>
+</list-item>
+</list>
+<p>Referring to <xref ref-type="fig" rid="fig1-0165551512463994">Figure 1</xref>, [<italic>M, C</italic>] pair are similar because there are two paths from <italic>M</italic> to <italic>C</italic>. On the other hand, for [<italic>C, M</italic>] the similarity is not available since there is no path from <italic>C</italic> to <italic>M</italic>. Similarity between [<italic>M, C</italic>] is higher than that between [<italic>M, K</italic>] because <italic>M</italic> has two different paths with <italic>C</italic> while it holds only one path to <italic>K</italic>.</p>
+<sec id="section4-0165551512463994">
+<title>3.1. Preliminaries</title>
+<p>A <italic>labelled directed graph</italic> is denoted as <italic>G =</italic> (<italic>V, E, C</italic>), where <italic>V</italic> is the set of vertices, &lt;<italic>a, b</italic>&gt; ∈ <italic>E</italic> is a relationship from resource <italic>a</italic> to resource <italic>b</italic>, where <italic>a,b</italic> ∈ <italic>V. C</italic> is the ground-truth class label, which is provided by human being. We denote the size of whole RDF nodes as | <italic>V</italic> | = <italic>m</italic>.</p>
+<p>A <italic>similarity function</italic> takes graph <italic>G</italic> and two vertices <italic>a</italic> and <italic>b</italic> as input and then computes the similarity score between <italic>a</italic> and <italic>b</italic>, that is, <italic>d</italic>(<italic>a, b</italic>) <italic>← Similarity</italic>(<italic>G,a,b</italic>). <italic>RDF graph clustering</italic> partitions an RDF graph <italic>G</italic> into <italic>k</italic> disjoint segments <italic>G<sub>i</sub> =</italic> (<italic>V<sub>i</sub>, E</italic><sub>i</sub>, <italic>C</italic>) where <inline-formula id="inline-formula1-0165551512463994"><mml:math display="inline" id="math1-0165551512463994"><mml:mrow><mml:mi>V</mml:mi><mml:mo>=</mml:mo><mml:msubsup><mml:mrow><mml:mo>∪</mml:mo></mml:mrow><mml:mrow><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mrow><mml:mi>k</mml:mi></mml:mrow></mml:msubsup><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula> and <italic>V<sub>i</sub>∩ V <sub>j</sub> =Φ</italic> for any <italic>i ≠ j</italic>. A custom clustering algorithm results must increase</p>
+<p>
+<disp-formula id="disp-formula1-0165551512463994">
+<mml:math display="block" id="math2-0165551512463994">
+<mml:mrow>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0165551512463994" xlink:href="10.1177_0165551512463994-eq1.tif"/>
+</disp-formula>
+</p>
+<p>in case of <italic>x = y</italic> and decrease</p>
+<p>
+<disp-formula id="disp-formula2-0165551512463994">
+<mml:math display="block" id="math3-0165551512463994">
+<mml:mrow>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>x</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>→</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>v</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0165551512463994" xlink:href="10.1177_0165551512463994-eq2.tif"/>
+</disp-formula>
+</p>
+<p>in case of <italic>x ≠ y</italic>.</p>
+</sec>
+<sec id="section5-0165551512463994">
+<title>3.2. SRank formula</title>
+<p>In a large graph <italic>G</italic> (i.e. web graph, RDF graph), an arbitrary vertex is strongly connected to some vertices while it is absolutely far from some other vertices. If there are multiple shortest paths from <italic>a</italic> to <italic>b</italic>, then <italic>a</italic> is close to <italic>b</italic> from <italic>a</italic>’s viewpoint. On the other hand, if the same condition holds for <italic>b</italic> to <italic>a</italic>, then <italic>b</italic> is close to <italic>a</italic> from <italic>b</italic>’s viewpoint. In this way, <italic>a</italic> and <italic>b</italic> are similar if there are multiple shortest paths between <italic>a</italic> and <italic>b</italic> as well as <italic>b</italic> and <italic>a</italic>.</p>
+<p><bold>Definition 1 [AccessValue].</bold> Let <italic>P<sup>p</sup></italic> be the <italic>N</italic>*<italic>N</italic> transition probability matrix of length <italic>p</italic> of a graph <italic>G</italic>. Access value from <italic>a</italic> to <italic>b</italic> is defined as</p>
+<p><disp-formula id="disp-formula3-0165551512463994">
+<label>(1)</label>
+<mml:math display="block" id="math4-0165551512463994">
+<mml:mrow>
+<mml:mi>H</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0165551512463994" xlink:href="10.1177_0165551512463994-eq3.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>w<sub>i</sub></italic> is the supposed weight for all paths with length <italic>i. P<sup>p</sup><sub>a</sub></italic>,<sub><italic>b</italic></sub> is probability of going from <italic>a</italic> to <italic>b</italic> with length <italic>p</italic> and is equal to number of <italic>p</italic>-paths from <italic>a</italic> to <italic>b</italic> (<italic>k<sub>p</sub></italic>(<italic>a, b</italic>)) divided by the number of <italic>p</italic>-paths starting from <italic>a</italic> (<italic>k<sub>p</sub></italic>(<italic>a, x</italic>)):</p>
+<p><disp-formula id="disp-formula4-0165551512463994">
+<label>(2)</label>
+<mml:math display="block" id="math5-0165551512463994">
+<mml:mrow>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+<mml:mrow>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mo>∀</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:mi>G</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:munder>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>x</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0165551512463994" xlink:href="10.1177_0165551512463994-eq4.tif"/>
+</disp-formula>
+</p>
+<p>The access values between different nodes of a given graph are approximately estimated only by considering a very few sentences of equation (1). Moreover, constructing all of the different paths is very time-consuming. As a consequence, <italic>H</italic>(<italic>a,b</italic>) is replaced by <italic>H<sub>s</sub></italic><sup>(<italic>a,b</italic>)</sup> and is defined as:</p>
+<p>
+<disp-formula id="disp-formula5-0165551512463994">
+<label>(3)</label>
+<mml:math display="block" id="math6-0165551512463994">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>H</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>+</mml:mo>
+<mml:mo>…</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mspace width="0.75em"/>
+<mml:mn>1</mml:mn>
+<mml:mo>≤</mml:mo>
+<mml:mi>s</mml:mi>
+<mml:mo>≤</mml:mo>
+<mml:mi>n</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0165551512463994" xlink:href="10.1177_0165551512463994-eq5.tif"/>
+</disp-formula>
+</p>
+<p>It is apparent that, to obtain meaningful results, the weight of shorter paths must be higher than that of longer paths. As can be seen in Section 4, we investigated a couple of different combinations of weight assignment through the clustering algorithm and arrived at the following equation for path weight.:</p>
+<p>
+<disp-formula id="disp-formula6-0165551512463994">
+<label>(4)</label>
+<mml:math display="block" id="math7-0165551512463994">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0165551512463994" xlink:href="10.1177_0165551512463994-eq6.tif"/>
+</disp-formula>
+</p>
+<p>A straightforward approach to estimate similarity score between <italic>a</italic> and <italic>b</italic> is to normalize <italic>H<sub>s</sub></italic>(<italic>a, b</italic>) with respect to <italic>H</italic><sub>Max</sub> and <italic>H</italic><sub>Min</sub> in the whole collection. In our experiment we used equation (5) for the similarity score between <italic>a</italic> and <italic>b</italic>:</p>
+<p>
+<disp-formula id="disp-formula7-0165551512463994">
+<label>(5)</label>
+<mml:math display="block" id="math8-0165551512463994">
+<mml:mrow>
+<mml:mi>SRan</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>H</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>H</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Min</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>H</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Max</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>H</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Min</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0165551512463994" xlink:href="10.1177_0165551512463994-eq7.tif"/>
+</disp-formula>
+</p>
+<p><bold>Theorem 1.</bold> The above equations (shown in equations 1–5) have the following properties:</p>
+<p><bold>Asymmetric</bold> SRank<sub>s</sub><sup><italic>a,b</italic></sup>≠ SRank<sub>s</sub><sup><italic>b,a</italic></sup> in some of resources while SRank<sub>s</sub><sup><italic>a,b</italic></sup> = SRank<sub>s</sub><sup><italic>b,a</italic></sup> in symmetric resources to each other.</p>
+<p>
+<bold>Positive defined</bold>: ∀ <italic>a,b</italic> ⇒ SRank<sub>s</sub><sup><italic>a,b</italic></sup>≥ 0.</p>
+<p>If <italic>H<sub>s</sub><sup>a,b</sup></italic>≥<italic>H<sub>s</sub><sup>c,d</sup></italic> we cannot conclude that <italic>H<sub>s</sub></italic><sub>+1</sub><sup><italic>a,b</italic></sup>≥<italic>H<sub>s</sub></italic><sub>+1</sub><sup><italic>c,d</italic></sup>.</p>
+</sec>
+<sec id="section6-0165551512463994">
+<title>3.3. Computing SRank</title>
+<p>Based on Section 3.2, the solution to the iterative SRank formulae (equations 1–5) can be reached by extracting different paths between every two nodes. Algorithm 1 illustrates the iterative procedure for computing SRank in a given graph <italic>G</italic>. Let <italic>m</italic> be the number of vertices in <italic>G</italic> and <italic>s</italic> be the user-provided threshold value for the desired considering paths. This algorithm comprises four main stages: initialization, path extraction, access value computation and SRank computation. In the first stage, an empty queue for holding explored paths and also an array of valid visited paths for each node are created (lines 1 and 2). Subsequently, the <italic>PathQueue</italic> as well as <italic>AllValidPath</italic> are initialized by inserting all of the available edges in the input graph <italic>G</italic> (lines 3–8). In real implementations, either a string dictionary or string array can be chosen as the core data structure for <italic>AllValidPath</italic>.</p>
+<p>During the second stage, paths with length equal to or smaller than <italic>s</italic> are extracted in an efficient manner. Lines 9–17 show the iterative approach where <italic>tmpPath</italic> contains the first path in the <italic>PathQueue</italic>. Out-nodes of the last node of <italic>tmpPath</italic> are added to the <italic>tmpPath</italic> in order to make new paths. In this way, the newly constructed paths are added to <italic>AllValidPath</italic> as well as <italic>tmpPath</italic>. The third stage computes the access value between every two nodes based on equations (1–4) (lines 18–29). Finally, SRank scores between nodes are computed in the last stage similar to equation (5) (lines 18–29).</p>
+<p>The access value computation stage is the dominant operation over algorithm 1 (<xref ref-type="fig" rid="fig2-0165551512463994">Scheme 1</xref>), where the <italic>H</italic> value is calculated for different paths between every two nodes. The space complexities of <italic>AllValidPath</italic> as well as <italic>H</italic> are <italic>O</italic>(<italic>m</italic>) and <italic>O</italic>(<italic>m<sup>2</sup></italic>) respectively. Similarly, the time complexity of SRank algorithm is <italic>O</italic>(<italic>m<sup>2</sup>*s</italic>) and the worst case time complexity can be <italic>O</italic>(<italic>m<sup>4</sup></italic>). In comparison with SimRank as well as P-Rank, whose space and time complexities are <italic>O</italic>(<italic>m<sup>2</sup></italic>) and <italic>O</italic>(<italic>m<sup>4</sup></italic>), <italic>SRank</italic> has the same space and time complexities as both of them.</p>
+<fig id="fig2-0165551512463994" position="float">
+<label>Scheme 1.</label>
+<caption>
+<p>Algorithm 1.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463994-fig2.tif"/>
+</fig>
+</sec>
+<sec id="section7-0165551512463994">
+<title>3.4. SRank-based clustering algorithm</title>
+<p>In order to study the effectiveness of SRank, we chose to investigate how different similarity measures perform in clustering applications. It is worth noting that SRank is not confined only to clustering applications. Any data-oriented applications adopting structural similarity as an underlying function can make use of SRank as its similarity measure. In this section, we will address the challenges in the clustering process by discussing the most important issues.</p>
+<p>We plug SimRank, bipartiteRank, P-Rank as well as SRank into a hierarchical clustering method. We chose the agglomerative approach where each resource starts in its own cluster, and pairs of clusters were merged as one moved up the hierarchy. <xref ref-type="fig" rid="fig3-0165551512463994">Figure 2</xref> shows the process involved in our performed clustering process. In the mentioned approach, we need three main different measures: (1) a measure for constructing two element clusters; (2) another measure for cluster merging; and (3) the threshold measure for stopping the cluster merging.</p>
+<fig id="fig3-0165551512463994" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Clustering process.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463994-fig3.tif"/>
+</fig>
+<p>In order to construct two element clusters, aggregation functions such as average, sum, count, maximum and minimum could be applied on SRank scores (equation 5) to produce stable distance scores between pair of resources. Equation (6) shows the suggested formula to derive distance value between a pair of resources. Intuitively, the original distance scores are correlated with the type of aggregation function used. It must be between 0 and 2 in the case of sum function, while it is between 0 and 1 in the case of average, maximum and minimum function. In the performed evaluation, the sum function is assumed as aggregation function and resources are joined together, depending on the sum of corresponding distance values.</p>
+<p>
+<disp-formula id="disp-formula8-0165551512463994">
+<label>(6)</label>
+<mml:math display="block" id="math9-0165551512463994">
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>b</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mtext>Aggregation</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>Function</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mtext>SRank</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>b</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msubsup>
+<mml:mrow>
+<mml:mtext>SRank</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>s</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>b</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mtext>in</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>V</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0165551512463994" xlink:href="10.1177_0165551512463994-eq8.tif"/>
+</disp-formula>
+</p>
+<p>In order to decide which clusters should be combined, a measure of distance between sets of clusters is required. The structural distance between pair of resources, <italic>d</italic>(<italic>a,b</italic>), by SimRank, bipartiteRank, P-Rank and SRank scores could be developed to produce distance scores between their corresponding clusters. Unlike resource distance, mean or average score between resources can only be used as cluster distance. Equation (7) defines the distance between clusters as</p>
+<p>
+<disp-formula id="disp-formula9-0165551512463994">
+<label>(7)</label>
+<mml:math display="block" id="math10-0165551512463994">
+<mml:mrow>
+<mml:mi>d</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:munder>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>b</mml:mi>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:munder>
+<mml:mi>d</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mi>a</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>b</mml:mi>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>*</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>G</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-0165551512463994" xlink:href="10.1177_0165551512463994-eq9.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>m<sub>i</sub></italic> and <italic>m<sub>j</sub></italic> are the number of resources in clusters <italic>i</italic> and <italic>j</italic> respectively.</p>
+<p>The clusters must be merged together as their distance scores satisfy the user-provided threshold value. Given a set of clusters, the threshold value strongly depends on the context in which clusters are found. In highly connected graph, a high value should be assumed for threshold measure while in less connected graph, the threshold value should be chosen as a lower value. In the implementation of all clustering algorithms, we investigated the clustering qualities and report the best result for each algorithm.</p>
+</sec>
+</sec>
+<sec id="section8-0165551512463994">
+<title>4. Experimental study</title>
+<p>In this section, we report our experimental studies on the performance of SRank as an effective structural similarity measure over linked data resources. We present the power of SRank in comparison with SimRank, BipartiteRank and P-Rank. All of our experiments are performed on a dual core of Intel PC with a 2 GHz CPU and 4 GB memory. All previous algorithms as well as our suggested approach are implemented in Java and compiled with JDK 1.6. For ease and fairness of comparison, we show the best case of three previous algorithms while our recommended algorithm is evaluated by different combinations of parameters. In addition, the feasibility and efficiency of the SRank algorithm will be studied via experiments.</p>
+<p>We ran our experiments on a standard data extracted from DBPedia knowledge base. The next subsection introduces the data set construction process. Comparison methods will be described in Section 4.2. The constructed clusters are evaluated in Section 4.3.</p>
+<sec id="section9-0165551512463994">
+<title>4.1. Experimental datasets</title>
+<p>The DBPedia knowledge base currently contains more than 1.6 million resources. The downloaded DBPedia data was time stamped 25 March 2011. Around 363,739 resources describe persons and so have an rdf:type value of person. If person <italic>a</italic> has a wikiPageWikiLink to another person <italic>b</italic>, there exists a directed edge from <italic>a</italic> to <italic>b</italic>. Each resource of DBPedia has a predicate (<ext-link ext-link-type="uri" xlink:href="http://dbpedia.org/property/wordnet-type">http://dbpedia.org/property/wordnet-type</ext-link>) with the online version of wordnet ontology. Unfortunately, only 120,764 of available resources had a value for this predicate. We extracted those resources that had a value for this predicate and aggregated them to a separate data set. The mentioned resources were distributed to 30 class labels. The whole collection of the constructed standard dataset can be downloaded from <ext-link ext-link-type="uri" xlink:href="http://dbis.informatik.uni-freiburg.de/dbpedia_person/WholeData">http://dbis.informatik.uni-freiburg.de/dbpedia_person/WholeData</ext-link>.</p>
+<p>Working on a large graph with more than 120,000 nodes is time-consuming. Therefore, we compared our method with the other ones on the extracted sample data. We considered 2640 resources and corresponding links from the original data set. <xref ref-type="table" rid="table2-0165551512463994">Table 2</xref> shows that the selected resources were connected together through 3391 links. More specifically, the total number of resources with no in-link was 945; 2113 nodes had an out-link; 527 resources had no out-link; and the total number of resources with in- and out-links was 1168.</p>
+<table-wrap id="table2-0165551512463994" position="float">
+<label>Table 2.</label>
+<caption>
+<p>Sample data extracted from DBPedia (2640 resources)</p>
+</caption>
+<graphic alternate-form-of="table2-0165551512463994" xlink:href="10.1177_0165551512463994-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Measures</th>
+<th align="left">Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Number of links</td>
+<td>3391</td>
+</tr>
+<tr>
+<td>Number of nodes having no input links</td>
+<td>945</td>
+</tr>
+<tr>
+<td>Number of nodes having output links</td>
+<td>2113</td>
+</tr>
+<tr>
+<td>Number of nodes having no output links</td>
+<td>527</td>
+</tr>
+<tr>
+<td>Number of nodes having both input and output links</td>
+<td>1168</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>
+<xref ref-type="fig" rid="fig4-0165551512463994">Figure 3</xref> plots the distribution of resources among 30 class labels. <italic>Actor</italic> class had the highest occurrence of resources and had 589 resources of all 2640 resources. The occurrence frequency of the other classes is shown in <xref ref-type="fig" rid="fig4-0165551512463994">Figure 3</xref> as well.</p>
+<fig id="fig4-0165551512463994" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Distribution of resources within class labels (2640 resources into 30 class labels).</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463994-fig4.tif"/>
+</fig>
+</sec>
+<sec id="section10-0165551512463994">
+<title>4.2. Comparison methods and evaluation</title>
+<p>We utilized the supervised approach to assess and compare different clustering approaches. In fact, we supposed that the WordNet predicate of the available data classifies resources to the correct class labels. With this assumption, we could use the common supervised measure for evaluation purposes. Next, we define the deployed measures.</p>
+<p><disp-quote>
+<p>
+<bold>Entropy.</bold> The degree to which each cluster consists of objects of a single class. The entropy of each cluster <italic>i</italic> is calculated using the standard Formula 8, where <italic>L</italic> is the number of classes, <italic>P<sub>ij</sub></italic> is the probability that a member of cluster <italic>i</italic> belongs to class <italic>j</italic> (<inline-formula id="inline-formula2-0165551512463994"><mml:math display="inline" id="math11-0165551512463994"><mml:mrow><mml:msub><mml:mrow><mml:mi>P</mml:mi></mml:mrow><mml:mrow><mml:mi>ij</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mfrac><mml:mrow><mml:msub><mml:mrow><mml:mi>m</mml:mi></mml:mrow><mml:mrow><mml:mi>ij</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mrow><mml:msub><mml:mrow><mml:mi>m</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub></mml:mrow></mml:mfrac></mml:mrow></mml:math></inline-formula>), <italic>m<sub>ij</sub></italic> number of objects of class <italic>j</italic> in cluster <italic>i, m<sub>i</sub></italic> number of objects in cluster <italic>i</italic>.</p>
+<p>
+<disp-formula id="disp-formula10-0165551512463994">
+<label>(8)</label>
+<mml:math display="block" id="math12-0165551512463994">
+<mml:mrow>
+<mml:mi>e</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.50em"/>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>e</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>L</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>P</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ij</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>.</mml:mo>
+<mml:msubsup>
+<mml:mrow>
+<mml:mi>log</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>Pij</mml:mi>
+</mml:mrow>
+</mml:msubsup>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula10-0165551512463994" xlink:href="10.1177_0165551512463994-eq10.tif"/>
+</disp-formula>
+</p>
+<p><bold>Precision.</bold> The fraction of a cluster that consists of objects of specified class. The overall precision of clustering is calculated by average of individual cluster's precisions. <italic>Precision= P<sub>ij</sub></italic>.</p>
+<p><bold>Recall.</bold> The extent to which class members go together in a cluster. Average value of individual class recall is considered as recall value for whole clustering.</p>
+<p><bold><italic>F</italic>-Measure.</bold> A combination of both precision and recall that measures the extent to which a cluster contains only the object of a particular class and all objects of that class. It is defined by equation (9):</p>
+<p>
+<disp-formula id="disp-formula11-0165551512463994">
+<label>(9)</label>
+<mml:math display="block" id="math13-0165551512463994">
+<mml:mrow>
+<mml:mtext>FMeasure</mml:mtext>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+<mml:mo>*</mml:mo>
+<mml:mtext>precision</mml:mtext>
+<mml:mo>*</mml:mo>
+<mml:mtext>recall</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>precision</mml:mtext>
+<mml:mo>+</mml:mo>
+<mml:mtext>recall</mml:mtext>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula11-0165551512463994" xlink:href="10.1177_0165551512463994-eq11.tif"/>
+</disp-formula>
+</p>
+</disp-quote></p>
+</sec>
+<sec id="section11-0165551512463994">
+<title>4.3. Cluster quality evaluation</title>
+<p>
+<xref ref-type="table" rid="table3-0165551512463994">Tables 3</xref>
+<xref ref-type="table" rid="table4-0165551512463994"/>
+<xref ref-type="table" rid="table5-0165551512463994"/>–<xref ref-type="table" rid="table6-0165551512463994">6</xref> show the top five similar pairs of resources where different shortest path parameters are considered for computing the SRank score. The first and second column represents the first and second resources, respectively, while the third column shows the corresponding class label of the underlying resources. The resources as well as their class labels could be investigated online in DBPedia and Wikipedia knowledge bases. The remaining part of this section investigates the quality of the constructed clusters based on the suggested clustering algorithm.</p>
+<table-wrap id="table3-0165551512463994" position="float">
+<label>Table 3.</label>
+<caption>
+<p>Top five similar resources at SRank<sub>3</sub></p>
+</caption>
+<graphic alternate-form-of="table3-0165551512463994" xlink:href="10.1177_0165551512463994-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Resource</th>
+<th align="left">Resource</th>
+<th align="left">Class label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ray King</td>
+<td>Wes Helms</td>
+<td>Ball player</td>
+</tr>
+<tr>
+<td>James G. King</td>
+<td>Rufus King</td>
+<td>Incumbent</td>
+</tr>
+<tr>
+<td>Brent Krahn</td>
+<td>Chuck Kobasew</td>
+<td>Hockey player</td>
+</tr>
+<tr>
+<td>Marie Ferrarella</td>
+<td>Kathleen Eagle</td>
+<td>Writer</td>
+</tr>
+<tr>
+<td>Ken Peplowski</td>
+<td>Kenny Davern</td>
+<td>Musician</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table4-0165551512463994" position="float">
+<label>Table 4.</label>
+<caption>
+<p>Top five similar resources at SRank<sub>4</sub></p>
+</caption>
+<graphic alternate-form-of="table4-0165551512463994" xlink:href="10.1177_0165551512463994-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Resource</th>
+<th align="left">Resource</th>
+<th align="left">Class label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daddy Kev</td>
+<td>Bus Driver</td>
+<td>Musician</td>
+</tr>
+<tr>
+<td>Kessai Note</td>
+<td>Litokwa Tomeing</td>
+<td>President</td>
+</tr>
+<tr>
+<td>Roshumba Williams</td>
+<td>Gary Dourdan</td>
+<td>Actor</td>
+</tr>
+<tr>
+<td>Gianluca Curci</td>
+<td>Ivan Pelizzoli</td>
+<td>Soccer player</td>
+</tr>
+<tr>
+<td>Jeff Barmby</td>
+<td>Nick Barmby</td>
+<td>Soccer player</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table5-0165551512463994" position="float">
+<label>Table 5.</label>
+<caption>
+<p>Top five similar resources at SRank<sub>5</sub></p>
+</caption>
+<graphic alternate-form-of="table5-0165551512463994" xlink:href="10.1177_0165551512463994-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Resource</th>
+<th align="left">Resource</th>
+<th align="left">Class label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Manuel I of PortugalZ</td>
+<td>Edward of Portugal</td>
+<td>Sovereign</td>
+</tr>
+<tr>
+<td>Donald O. Wright</td>
+<td>Karl Rolvaag</td>
+<td>Incumbent</td>
+</tr>
+<tr>
+<td>Josiah Zion Gumede</td>
+<td>Abel Muzorewa</td>
+<td>Incumbent</td>
+</tr>
+<tr>
+<td>James G. King</td>
+<td>Rufus King</td>
+<td>Incumbent</td>
+</tr>
+<tr>
+<td>Saint Eligius</td>
+<td>Godeberta</td>
+<td>Saint</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table6-0165551512463994" position="float">
+<label>Table 6.</label>
+<caption>
+<p>Top five similar resources at SRank<sub>6</sub></p>
+</caption>
+<graphic alternate-form-of="table6-0165551512463994" xlink:href="10.1177_0165551512463994-table6.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Resource</th>
+<th align="left">Resource</th>
+<th align="left">Class label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rhona Brankin</td>
+<td>Sarah Boyack</td>
+<td>Incumbent</td>
+</tr>
+<tr>
+<td>Ann Cusack</td>
+<td>Joan Cusack</td>
+<td>Actor</td>
+</tr>
+<tr>
+<td>Richard Barber</td>
+<td>Juliet Barker</td>
+<td>Writer</td>
+</tr>
+<tr>
+<td>Wes Helms</td>
+<td>Ray King</td>
+<td>Ball player</td>
+</tr>
+<tr>
+<td>Jamie Moyer</td>
+<td>Jim Thome</td>
+<td>Ball player</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>Notice that regenerating the exact pre-existing classes is a very difficult problem, especially for our sample dataset where RDF representation of the resources is very simple and the information is not really sufficient for reconstructing the subject-area classification. Moreover, all predicates that point to resources outside of the sample data have been removed. It might be possible to achieve better results using semantic or data distance between other predicates of RDF resources, but this was not the focus of this work.</p>
+<p>We ran SimRank, BipartiteRank, P-Rank, and SRank over <italic>G</italic> until the similarity converged. We then clustered person resources using algorithm 1. We randomly chose similarity threshold and investigated the result of clustering. We then picked up the best threshold value for each algorithm and report the result in <xref ref-type="table" rid="table7-0165551512463994">Table 7</xref>. For the sake of clarity and readability, we compare the results graphically in <xref ref-type="fig" rid="fig5-0165551512463994">Figures 4</xref> and <xref ref-type="fig" rid="fig6-0165551512463994">5</xref>.</p>
+<table-wrap id="table7-0165551512463994" position="float">
+<label>Table 7.</label>
+<caption>
+<p>Statistics of generated clusters for each algorithm</p>
+</caption>
+<graphic alternate-form-of="table7-0165551512463994" xlink:href="10.1177_0165551512463994-table7.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Similarity method</th>
+<th align="left">Number of similar resources above threshold</th>
+<th align="left">Number of two-element clusters</th>
+<th align="left">Number of unclassified resources</th>
+<th align="left">Precision</th>
+<th align="left">Recall</th>
+<th align="left"><italic>F</italic>-Measure</th>
+<th align="left">Entorpy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SimRank</td>
+<td>1518</td>
+<td>432</td>
+<td>1776</td>
+<td>0.83</td>
+<td>0.09</td>
+<td>0.17</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>BiPartite</td>
+<td>4297</td>
+<td>630</td>
+<td>1380</td>
+<td>0.85</td>
+<td>0.15</td>
+<td>0.26</td>
+<td>0.34</td>
+</tr>
+<tr>
+<td>P-Rank</td>
+<td>4823</td>
+<td>764</td>
+<td>1112</td>
+<td>0.83</td>
+<td>0.18</td>
+<td>0.29</td>
+<td>0.32</td>
+</tr>
+<tr>
+<td>SRank<sub>3</sub></td>
+<td>3197</td>
+<td>824</td>
+<td>992</td>
+<td>0.91</td>
+<td>0.26</td>
+<td>0.4</td>
+<td>0.24</td>
+</tr>
+<tr>
+<td>SRank<sub>4</sub></td>
+<td>3431</td>
+<td>846</td>
+<td>948</td>
+<td>0.91</td>
+<td>0.2</td>
+<td>0.32</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td>SRank<sub>5</sub></td>
+<td>4254</td>
+<td>850</td>
+<td>940</td>
+<td>0.91</td>
+<td>0.26</td>
+<td>0.4</td>
+<td>0.32</td>
+</tr>
+<tr>
+<td>SRank<sub>6</sub></td>
+<td>3560</td>
+<td>840</td>
+<td>960</td>
+<td>0.9</td>
+<td>0.22</td>
+<td>0.35</td>
+<td>0.26</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig5-0165551512463994" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>Comparison of clustering algorithms. (a) Precision comparison; (b) recall comparison; and (c) <italic>F</italic>-measure comparison.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463994-fig5.tif"/>
+</fig>
+<fig id="fig6-0165551512463994" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Comparison of clustering algorithms. (a) Entropy comparison; (b) number of unclassified items comparison.</p>
+</caption>
+<graphic xlink:href="10.1177_0165551512463994-fig6.tif"/>
+</fig>
+
+<p>Observe first the SimRank results, which only consider in-links of resources. As can be seen in the second row of <xref ref-type="table" rid="table7-0165551512463994">Table 7</xref>, the number of similarity scores above the chosen threshold value is 1518. Afterwards, algorithm 1 generates 432 clusters in the first phase and merges the produced clusters in subsequent phases. SimRank is unable to classify 1776 resources because the number of resources that have no input links is equal to 945 (<xref ref-type="table" rid="table2-0165551512463994">Table 2</xref>). The best recorded value for precision, recall, <italic>F</italic>-measure and entropy are 0.83, 0.09, 0.17 and 0.1 respectively.</p>
+<p>The BiPartiteRank results are in row three of <xref ref-type="table" rid="table7-0165551512463994">Table 7</xref>. Remember that BiPartiteRank just investigates the similarity between output nodes of resources. Similar to SimRank, BiPartiteRank is unable to classify 1380 resources since the number of all resources having no output links is 527 (row 5 of <xref ref-type="table" rid="table2-0165551512463994">Table 2</xref>). Precision, recall and <italic>F</italic>-measure of BiPartiteRank are better than those of <italic>SimRank</italic>. This shows that considering output links leads to better results than considering just input links.</p>
+<p>Rows 5–8 in <xref ref-type="table" rid="table7-0165551512463994">Table 7</xref> show SRank results where <italic>s</italic> is variable between 3 and 6 (<italic>s</italic> represents the usage path length in equation 5). In all cases, SRank is able to cluster more resources than SimRank, Bipartite and P-Rank (columns 3 and 4). SRank precision is more than 90%, which indicates that more than 90% of the resources fall into a cluster belonging to one class. The recall value of SRank is between 22 and 26%; that means that SRank is able to bring together 22–26% of resources belonging to one class into a cluster. In this way, the SRank <italic>F</italic>-measure is started from 32% where the path length used is 4 and ends with 40% where the path length used is 5.</p>
+<p>
+<xref ref-type="fig" rid="fig5-0165551512463994">Figure 4</xref> compares the different combinations of SRank with SimRank, Bipartite and P-Rank in terms of precision, recall and <italic>F</italic>-measure. P-Rank precision is better than that of SimRank and Bipartite, while it is much lower than that of SRank. SRank recall in all combinations of <italic>s</italic> is much better than the former ones. The <italic>F</italic>-measure comparison of the algorithms is shown in <xref ref-type="fig" rid="fig5-0165551512463994">Figure 4(c)</xref> and indicates that our suggested method also performs well.</p>
+<p>
+<xref ref-type="fig" rid="fig6-0165551512463994">Figure 5</xref> plots the entropy and number of unclassified resources for all algorithms. As can be seen, SRank classifies more resources compared with former algorithms because SRank uses all information behind the links in the graph <italic>G</italic>.</p>
+<p>
+<xref ref-type="table" rid="table8-0165551512463994">Table 8</xref> portrays a comparison of the runtime between different similarity measures using the above settings (Section 4.1). The execution times of SimRank, BiPartite and P-Rank are around 413, 584 and 583 s, respectively. These times relate to the time for constructing the graph and also propagating similarity values over in, out and in–out links. Unlike previous algorithms, which construct all graphs to compute the similarity value between nodes, SRank only needs to enumerate the number of paths between two distinct nodes. The execution time for SRank<sub>3</sub> is about 9 s, while it is around 163 s for SRank<sub>6</sub>. As can be seen, increasing the <italic>s</italic> value leads to the production of more similarity pairs and longer execution times.</p>
+<table-wrap id="table8-0165551512463994" position="float">
+<label>Table 8.</label>
+<caption>
+<p>Runtime comparison for different similarity methods</p>
+</caption>
+<graphic alternate-form-of="table8-0165551512463994" xlink:href="10.1177_0165551512463994-table8.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Similarity method</th>
+<th align="left">Numbe of similar resources</th>
+<th align="left">Execution time (ms)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SimRank</td>
+<td>167,263</td>
+<td>413,827</td>
+</tr>
+<tr>
+<td>BiPartite</td>
+<td>507,096</td>
+<td>584,574</td>
+</tr>
+<tr>
+<td>P-Rank</td>
+<td>962,730</td>
+<td>583,964</td>
+</tr>
+<tr>
+<td>SRank<sub>3</sub></td>
+<td>8,582</td>
+<td>8,547</td>
+</tr>
+<tr>
+<td>SRank<sub>4</sub></td>
+<td>16,997</td>
+<td>34,684</td>
+</tr>
+<tr>
+<td>SRank<sub>5</sub></td>
+<td>29,287</td>
+<td>132,594</td>
+</tr>
+<tr>
+<td>SRank<sub>6</sub></td>
+<td>45,743</td>
+<td>162,587</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+</sec>
+<sec id="section12-0165551512463994" sec-type="conclusions">
+<title>5. Conclusion</title>
+<p>We have proposed a general model for computing similarity scores between resources of a directed graph. It is based on the number of shortest paths between resources. More specifically, we computed a measure that says ‘two objects are similar if they are connected by multiple small-length shortest paths’. These similarity measures can be used in order to compare resources belonging to the RDF graph that are not necessarily connected. They rely on the degree of number of paths between these elements. While the model has been developed in the case of a directed graph extracted from linked data cloud, the notion of SRank also can be applied to undirected graphs in other domains.</p>
+<p>We showed through experiments that SRank scores perform well in constructing clusters for person resources extracted from DBPedia. In fact, the proposed quantities provide a very general mechanism for computing similarities between the nodes of a graph by exploiting its structure.</p>
+<p>We are now working on other domains such as social networks and web graphs to assess the feasibility of SRank. We are also comparing the results in other data-oriented applications that need to determine the similarity between resources. Moreover, different weight adjustment approaches may be deployed to improve the results. Finally, we are working on generalizations to directed weighted graphs, directed labelled edges and heterogeneous graphs.</p>
+</sec>
+</body>
+<back>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0165551512463994">
+<label>[1]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Jeh</surname><given-names>G</given-names></name>
+<name><surname>Widom</surname><given-names>J</given-names></name>
+</person-group>. <article-title>SimRank: A measure of structural-context similarity</article-title>. <italic>Technical Report</italic> 2001-41. <publisher-name>Stanford InfoLab</publisher-name>, <year>2001</year>.</citation>
+</ref>
+<ref id="bibr2-0165551512463994">
+<label>[2]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Zhao</surname><given-names>P</given-names></name>
+<name><surname>Han</surname><given-names>J</given-names></name>
+<name><surname>Sun</surname><given-names>Y</given-names></name>
+</person-group>. <article-title>P-rank: a comprehensive structural similarity measure over information networks</article-title>. In: <source>International conference on information and knowledge management</source>, <year>2009</year>, pp. <fpage>553</fpage>–<lpage>562</lpage>.</citation>
+</ref>
+<ref id="bibr3-0165551512463994">
+<label>[3]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Newman</surname><given-names>MEJ</given-names></name>
+</person-group>. <article-title>Fast algorithm for detecting community structure in networks</article-title>. <source>Physical Review E</source>, <year>2004</year>; <fpage>69</fpage>:</citation>
+</ref>
+<ref id="bibr4-0165551512463994">
+<label>[4]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Tian</surname><given-names>Y</given-names></name>
+<name><surname>Hankins</surname><given-names>RA</given-names></name>
+<name><surname>Patel</surname><given-names>JM</given-names></name>
+</person-group>. <article-title>Efficient aggregation for graph summarization</article-title>. In: <conf-name>Proceedings of the 2008 ACM SIGMOD international conference on management of data, SIGMOD 08</conf-name>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM</publisher-name>, <year>2008</year>, pp. <fpage>567</fpage>–<lpage>580</lpage>.</citation>
+</ref>
+<ref id="bibr5-0165551512463994">
+<label>[5]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Flake</surname><given-names>GW</given-names></name>
+<name><surname>Lawrence</surname><given-names>S</given-names></name>
+<name><surname>Giles</surname><given-names>CL</given-names></name>
+</person-group>. <article-title>Efficient identification of web communities</article-title>. In: <conf-name>International conference on knowledgediscovery and data mining</conf-name>, <year>2000</year>, pp. <fpage>150</fpage>–<lpage>160</lpage>.</citation>
+</ref>
+<ref id="bibr6-0165551512463994">
+<label>[6]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lempel</surname><given-names>R</given-names></name>
+<name><surname>Moran</surname><given-names>S</given-names></name>
+</person-group>. <article-title>Salsa: The stochastic approach for link-structure analysis</article-title>. <source>ACM Transactions on Information Systems</source>, <year>2001</year>; <volume>19</volume>(<issue>2</issue>): <fpage>131</fpage>–<lpage>160</lpage>.</citation>
+</ref>
+<ref id="bibr7-0165551512463994">
+<label>[7]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Pedersen</surname><given-names>T</given-names></name>
+<name><surname>Patwardhan</surname><given-names>S</given-names></name>
+<name><surname>Michelizzi</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Wordnet::similarity – measuring the relatedness of concepts</article-title>. In: <conf-name>Proceedings of the 19th national conference on artificial intelligence</conf-name>. <publisher-loc>San Jose, CA</publisher-loc>: <publisher-name>AAAI</publisher-name>, <year>2004</year>, pp. <fpage>144</fpage>–<lpage>152</lpage>.</citation>
+</ref>
+<ref id="bibr8-0165551512463994">
+<label>[8]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Budanitsky</surname><given-names>A</given-names></name>
+<name><surname>Hirst</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Evaluating wordnet-based measures of lexical semantic relatedness</article-title>. <source>Computational Linguistics</source>, <year>2006</year>; <volume>32</volume>(<issue>1</issue>): <fpage>13</fpage>–<lpage>47</lpage>.</citation>
+</ref>
+<ref id="bibr9-0165551512463994">
+<label>[9]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Daoud</surname><given-names>M</given-names></name>
+<name><surname>Tamine</surname><given-names>L</given-names></name>
+<name><surname>Boughanem</surname><given-names>M</given-names></name>
+</person-group>. <article-title>A personalized search using a semantic distance measure in a graph-based ranking model</article-title>. <source>Journal of Information Science</source>, <year>2011</year>; <volume>37</volume>(<issue>6</issue>): <fpage>614</fpage>–<lpage>636</lpage>.</citation>
+</ref>
+<ref id="bibr10-0165551512463994">
+<label>[10]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Ponzetto</surname><given-names>SP</given-names></name>
+<name><surname>Strube</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Knowledge derived from Wikipedia for computing semantic relatedness</article-title>. <source>Journal of Artificial Intelligence Research</source>, <year>2007</year>; <volume>30</volume>(<issue>1</issue>): <fpage>181</fpage>–<lpage>211</lpage>.</citation>
+</ref>
+<ref id="bibr11-0165551512463994">
+<label>[11]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Alguliev</surname><given-names>R</given-names></name>
+<name><surname>Aliguliyev</surname><given-names>R</given-names></name>
+<name><surname>Ganjaliyev</surname><given-names>F</given-names></name>
+</person-group>. <article-title>Investigation of the role of similarity measure and ranking algorithm in mining social networks</article-title>. <source>Journal of Information Science</source>, <year>2011</year>; <volume>37</volume>(<issue>3</issue>): <fpage>229</fpage>–<lpage>234</lpage>.</citation>
+</ref>
+<ref id="bibr12-0165551512463994">
+<label>[12]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Small</surname><given-names>H</given-names></name>
+</person-group>. <article-title>Co-citation in the scientific literature: a new measure of the relationship between two documents</article-title>. <source>Journal of The American Society for Information Science and Technology</source>, <year>1973</year>; <volume>24</volume>(<issue>1</issue>): <fpage>265</fpage>–<lpage>269</lpage>.</citation>
+</ref>
+<ref id="bibr13-0165551512463994">
+<label>[13]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Boyack</surname><given-names>KW</given-names></name>
+<name><surname>Klavans</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Co-citation analysis, bibliographic coupling, and direct citation: which citation approach represents the research front most accurately</article-title>. <source>Journal of the American Society for Information Science and Technology</source>, <year>2010</year>; <volume>61</volume>(<issue>12</issue>): <fpage>2389</fpage>–<lpage>2404</lpage>.</citation>
+</ref>
+<ref id="bibr14-0165551512463994">
+<label>[14]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Eck</surname><given-names>NJV</given-names></name>
+<name><surname>Waltman</surname><given-names>L</given-names></name>
+</person-group>. <article-title>Appropriate similarity measures for author co-citation analysis</article-title>. <source>Journal of The American Society for Information Science and Technology</source>, <year>1998</year>; <volume>59</volume>: <fpage>1653</fpage>–<lpage>1661</lpage>.</citation>
+</ref>
+<ref id="bibr15-0165551512463994">
+<label>[15]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kessler</surname><given-names>MM</given-names></name>
+</person-group>. <article-title>Bibliographic coupling between scientific papers</article-title>. <source>American Documentation</source>, <year>1963</year>; <volume>14</volume>(<issue>1</issue>): <fpage>10</fpage>–<lpage>25</lpage>.</citation>
+</ref>
+<ref id="bibr16-0165551512463994">
+<label>[16]</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Amsler</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Application of citation-based automatic classification</article-title>. <italic>Technical Report</italic>, <year>1972</year>.</citation>
+</ref>
+<ref id="bibr17-0165551512463994">
+<label>[17]</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Lovász</surname><given-names>L</given-names></name>
+</person-group>. <article-title>Random walks on graphs: A survey</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.cs.elte.hu/~lovasz/erdos.pdf">http://www.cs.elte.hu/~lovasz/erdos.pdf</ext-link> (<year>1993</year>).</citation>
+</ref>
+<ref id="bibr18-0165551512463994">
+<label>[18]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Fouss</surname><given-names>F</given-names></name>
+<name><surname>Pirotte</surname><given-names>A</given-names></name>
+<name><surname>Renders</surname><given-names>J</given-names></name>
+<name><surname>Saerens</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Random-walk computation of similarities between nodes of a graph, with application to collaborative recommendation</article-title>. <source>IEEE Transactions on Knowledge and Data Engineering</source>, <year>2007</year>; <volume>19</volume>(<issue>3</issue>): <fpage>355</fpage>–<lpage>369</lpage>.</citation>
+</ref>
+<ref id="bibr19-0165551512463994">
+<label>[19]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Harel</surname><given-names>D</given-names></name>
+<name><surname>Koren</surname><given-names>Y</given-names></name>
+</person-group>. <source>Foundations of software technology and theoretical computer science: On clustering using random walks</source>. <publisher-name>Springer</publisher-name>, <publisher-loc>Berlin</publisher-loc>, <year>2001</year>, pp. <fpage>18</fpage>–<lpage>41</lpage>.</citation>
+</ref>
+<ref id="bibr20-0165551512463994">
+<label>[20]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>White</surname><given-names>S</given-names></name>
+<name><surname>Smyth</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Algorithms for estimating relative importance in networks</article-title>. In: <source>KDD '03: Proceedings of the ninth ACM SIGKDD international conference on knowledge discovery and data mining</source>. <publisher-loc>New York</publisher-loc>: <publisher-name>ACM</publisher-name>, <year>2003</year>, pp. <fpage>266</fpage>–<lpage>275</lpage>.</citation>
+</ref>
+<ref id="bibr21-0165551512463994">
+<label>[21]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Newman</surname><given-names>MEJ</given-names></name>
+</person-group>. <article-title>A measure of betweenness centrality based on random walks</article-title>. <source>Social Networks</source>, <year>2005</year>; <volume>27</volume>(<issue>1</issue>): <fpage>39</fpage>–<lpage>54</lpage>.</citation>
+</ref>
+<ref id="bibr22-0165551512463994">
+<label>[22]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jain</surname><given-names>A</given-names></name>
+<name><surname>Murty</surname><given-names>M</given-names></name>
+<name><surname>Flynn</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Data clustering: A review</article-title>. <source>ACM Computing Survey</source>, <year>1999</year>; <volume>31</volume>(<issue>3</issue>): <fpage>264</fpage>–<lpage>323</lpage>.</citation>
+</ref>
+<ref id="bibr23-0165551512463994">
+<label>[23]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>Y</given-names></name>
+<name><surname>Wei</surname><given-names>J</given-names></name>
+<name><surname>Wu</surname><given-names>S</given-names></name>
+<name><surname>Hu</surname><given-names>Y</given-names></name>
+</person-group>. <article-title>A similarity-based method for retrieving documents from the SCI/SSCI databases</article-title>. <source>Journal of Information Science</source>, <year>2006</year>; <volume>32</volume>(<issue>6</issue>): <fpage>449</fpage>–<lpage>464</lpage>.</citation>
+</ref>
+<ref id="bibr24-0165551512463994">
+<label>[24]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jaccard</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Distribution de la flore alpine dans le bassin des Dranses et dans quelques régions voisines</article-title>. <source>Bulletin de la Société Vaudoise des Sciences Naturelles</source>, <year>1901</year>; <volume>37</volume>: <fpage>241</fpage>–<lpage>272</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

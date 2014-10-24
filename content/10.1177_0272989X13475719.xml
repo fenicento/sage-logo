@@ -1,0 +1,1269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">MDM</journal-id>
+<journal-id journal-id-type="hwp">spmdm</journal-id>
+<journal-id journal-id-type="nlm-ta">Med Decis Making</journal-id>
+<journal-title>Medical Decision Making</journal-title>
+<issn pub-type="ppub">0272-989X</issn>
+<issn pub-type="epub">1552-681X</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage CA: Los Angeles, CA</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0272989X13475719</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0272989X13475719</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Bivariate Random-Effects Meta-analysis of Sensitivity and Specificity with the Bayesian SAS PROC MCMC</article-title>
+<subtitle>Methodology and Empirical Evaluation in 50 Meta-analyses</subtitle>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Menke</surname><given-names>Jan</given-names></name>
+<degrees>MD</degrees>
+</contrib>
+</contrib-group>
+<aff id="aff1-0272989X13475719">Gesellschaft für wissenschaftliche Datenverarbeitung Goettingen (GWDG), Goettingen, Germany</aff>
+<aff id="aff2-0272989X13475719">Diagnostic Radiology, University Hospital, Goettingen, Germany (JM)</aff>
+<author-notes>
+<corresp id="corresp1-0272989X13475719">Jan Menke, Gesellschaft für wissenschaftliche Datenverarbeitung Goettingen (GWDG), Goettingen, Germany; Diagnostic Radiology, University Hospital, 37075 Goettingen, Germany; e-mail: <email>jmenke@gwdg.de</email>.</corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>7</month>
+<year>2013</year>
+</pub-date>
+<volume>33</volume>
+<issue>5</issue>
+<fpage>692</fpage>
+<lpage>701</lpage>
+<history>
+<date date-type="received">
+<day>30</day>
+<month>6</month>
+<year>2012</year>
+</date>
+<date date-type="accepted">
+<day>23</day>
+<month>10</month>
+<year>2012</year>
+</date>
+</history>
+<abstract>
+<p><bold>Background and Objective:</bold> Meta-analysis allows for summarizing the sensitivities and specificities from several primary diagnostic test accuracy studies quantitatively. This article presents and evaluates a full Bayesian method for bivariate random-effects meta-analysis of sensitivity and specificity with SAS PROC MCMC. <bold>Methods:</bold> First, the formula of the bivariate random-effects model is presented. Then its implementation with the Bayesian SAS PROC MCMC is empirically evaluated, using the published 2 × 2 count data of 50 meta-analyses. The convergence of the Markov chains is analyzed visually and qualitatively. The results are compared with a Bayesian WinBUGS approach, using the Bland-Altman analysis for assessing agreement between 2 methods. <bold>Results:</bold> The 50 meta-analyses covered broad ranges of pooled sensitivity (17.4% to 98.8%) and specificity (60.0% to 99.7%), and the between-study heterogeneity varied as well. In all meta-analyses, the Markov chains converged well. The meta-analytic results from the SAS PROC MCMC and the WinBUGS random-effects approaches were nearly similar, showing close 95% limits of agreement for the pooled sensitivity (–0.06% to 0.05%) and specificity (–0.05% to 0.05%) without significant differences (P &gt; 0.05). This indicates that the bivariate model is well implemented with both different statistical programs, without systematic differences arising from program attributes. <bold>Conclusions:</bold> As alternative to a WinBUGS approach, the Bayesian SAS PROC MCMC is well suited for bivariate random-effects meta-analysis of sensitivity and specificity.</p>
+</abstract>
+<kwd-group>
+<kwd>diagnostic test evaluation</kwd>
+<kwd>Bayesian meta-analysis</kwd>
+<kwd>Bayesian statistical methods</kwd>
+<kwd>hierarchical models</kwd>
+<kwd>systematic reviews</kwd>
+<kwd>meta-analysis</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<p>Meta-analysis of diagnostic test accuracy allows researchers to summarize similar primary studies quantitatively. These primary studies often report bivariate pairs of sensitivity and specificity, which can be well interpreted. Sensitivity measures the probability of correctly diagnosing a disease or status, whereas specificity measures the probability of correctly identifying its absence.<sup><xref ref-type="bibr" rid="bibr1-0272989X13475719">1</xref><xref ref-type="bibr" rid="bibr2-0272989X13475719"/><xref ref-type="bibr" rid="bibr3-0272989X13475719"/>–<xref ref-type="bibr" rid="bibr4-0272989X13475719">4</xref></sup> A meta-analysis of the primary studies intends to find pooled summary estimates for sensitivity and specificity that are more globally valid than the results of one single study. Such meta-analysis can be conducted with a fixed-effects model or random-effects model.<sup><xref ref-type="bibr" rid="bibr5-0272989X13475719">5</xref></sup> A fixed-effects model assumes that between-study variation originates from sampling errors alone. A random-effects model assumes that between-study variation originates from sampling errors and additionally from unknown true differences between the studies, such as differences in patient characteristics.<sup><xref ref-type="bibr" rid="bibr5-0272989X13475719">5</xref><xref ref-type="bibr" rid="bibr6-0272989X13475719"/>–<xref ref-type="bibr" rid="bibr7-0272989X13475719">7</xref></sup> For a random-effects meta-analysis, 2 well-known approaches are the bivariate random-effects model and the hierarchical summary receiver operating characteristics (HSROC) model.<sup><xref ref-type="bibr" rid="bibr3-0272989X13475719">3</xref>,<xref ref-type="bibr" rid="bibr7-0272989X13475719">7</xref><xref ref-type="bibr" rid="bibr8-0272989X13475719"/>–<xref ref-type="bibr" rid="bibr9-0272989X13475719">9</xref></sup> These approaches are mathematically equivalent, which allows converting the summary estimates from one approach to the other.<sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref></sup> This study focuses on the bivariate model and derives the related HSROC estimates mathematically.</p>
+<p>For meta-analysis, either frequentist (classic) methods or Bayesian methods can be used. The frequentist method treats the data as variables and the model parameters as fixed, whereas the Bayesian method does the reverse by treating the data as fixed and the model parameters as variables.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup> In principle, the Bayesian concept is conceivable since the observed data cannot be changed and are therefore fixed, whereas the underlying model parameters are to be estimated. Bayesian methods are computationally intense, but this limitation is becoming less relevant due to ongoing advances in hardware and software.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup> A decade ago Rutter and Gatsonis<sup><xref ref-type="bibr" rid="bibr9-0272989X13475719">9</xref></sup> had already presented a Bayesian HSROC approach for the meta-analysis of diagnostic accuracy for use with the free statistical WinBUGS program (Imperial College and MRC, UK).<sup><xref ref-type="bibr" rid="bibr11-0272989X13475719">11</xref></sup> Up to now there was no bivariate counterpart for use with SAS PROC MCMC. However, PROC MCMC of SAS version 9.3 now has a RANDOM statement, which facilitates random-effects modeling.<sup><xref ref-type="bibr" rid="bibr12-0272989X13475719">12</xref>,<xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref></sup></p>
+<p>The objective of this study was to develop and empirically evaluate a Bayesian model for bivariate random-effects meta-analysis of sensitivity and specificity, using SAS PROC MCMC.</p>
+<sec id="section1-0272989X13475719" sec-type="methods">
+<title>Methods</title>
+<p>This section describes the bivariate model for meta-analysis of sensitivity and specificity, implements the model with SAS PROC MCMC and for comparison with WinBUGS, and describes how the results of these different statistical programs are compared.</p>
+<sec id="section2-0272989X13475719">
+<title>Bivariate Random-Effects Model for Meta-analysis</title>
+<p>A bivariate random-effects model is a special case of a generalized linear mixed model.<sup><xref ref-type="bibr" rid="bibr3-0272989X13475719">3</xref>,<xref ref-type="bibr" rid="bibr14-0272989X13475719">14</xref>,<xref ref-type="bibr" rid="bibr15-0272989X13475719">15</xref></sup> In the relevant meta-analysis, each primary study contributes 2×2 count data, which are related to estimates of sensitivity and specificity:</p>
+<p>
+<disp-formula id="disp-formula1-0272989X13475719">
+<mml:math display="block" id="math1-0272989X13475719">
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>TP</mml:mtext>
+</mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+<mml:mo>∼</mml:mo>
+<mml:mtext>Bionomial</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>RPi</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>π</mml:mi>
+<mml:mrow>
+<mml:mtext>A</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>w</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>h</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>RP</mml:mtext>
+</mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>TP</mml:mtext>
+</mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>FN</mml:mtext>
+</mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>TN</mml:mtext>
+</mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+<mml:mo>∼</mml:mo>
+<mml:mtext>Bionomial</mml:mtext>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mtext>RNi</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mi>π</mml:mi>
+<mml:mrow>
+<mml:mtext>B</mml:mtext>
+<mml:mo>,</mml:mo>
+<mml:mtext>i</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mi>w</mml:mi>
+<mml:mi>i</mml:mi>
+<mml:mi>t</mml:mi>
+<mml:mi>h</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>RN</mml:mtext>
+</mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>TN</mml:mtext>
+</mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>FP</mml:mtext>
+</mml:mrow>
+<mml:mtext>i</mml:mtext>
+</mml:msub>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0272989X13475719" xlink:href="10.1177_0272989X13475719-eq1.tif"/>
+</disp-formula>
+</p>
+<p>where</p>
+<list id="list1-0272989X13475719" list-type="simple">
+<list-item><p>i denotes that the element belongs to study i.</p></list-item>
+<list-item><p>TP<sub>i</sub>, FP<sub>i</sub>, FN<sub>i</sub>, TN<sub>i</sub> are observed true-positives (TP), false-positives (FP), false-negatives (FN), and true-negatives (TN) of study i.</p></list-item>
+<list-item><p>RP<sub>i</sub> = TP<sub>i</sub> + FN<sub>i</sub> denotes observed positive reference tests (RP) of study i.</p></list-item>
+<list-item><p>RN<sub>i</sub> = TN<sub>i</sub> + FP<sub>i</sub> denotes observed negative reference tests (RN) of study i.</p></list-item>
+<list-item><p>~ indicates a stochastic relation (“. . . has as its distribution . . .”).</p></list-item>
+<list-item><p>= indicates an equality relation (“. . . is equal to . . .”).</p></list-item>
+<list-item><p>π<sub>A</sub>,<sub>i</sub> is true sensitivity (probability) of study i, to be estimated.</p></list-item>
+<list-item><p>π<sub>B</sub>,<sub>i</sub> is true specificity (probability) of study i, to be estimated.</p></list-item>
+</list>
+<p>The bivariate random-effects model of sensitivity and specificity is described by<sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref>,<xref ref-type="bibr" rid="bibr3-0272989X13475719">3</xref>,<xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref>,<xref ref-type="bibr" rid="bibr16-0272989X13475719">16</xref></sup></p>
+<p>
+<disp-formula id="disp-formula2-0272989X13475719">
+<mml:math display="block" id="math2-0272989X13475719">
+<mml:mrow>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mi>μ</mml:mi>
+<mml:mi>A</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mi>μ</mml:mi>
+<mml:mi>B</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>i</mml:mi>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>~</mml:mo>
+<mml:mi>M</mml:mi>
+<mml:mi>V</mml:mi>
+<mml:mi>N</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mrow>
+<mml:mi>μ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mi>μ</mml:mi>
+<mml:mi>A</mml:mi>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mi>μ</mml:mi>
+<mml:mi>B</mml:mi>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>,</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>Σ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:mtable columnalign="left">
+<mml:mtr>
+<mml:mtd>
+<mml:mi>σ</mml:mi>
+<mml:mi>A</mml:mi>
+<mml:mo>²</mml:mo>
+<mml:mspace width="0.25em"/>
+<mml:mi>σ</mml:mi>
+<mml:mi>A</mml:mi>
+<mml:mi>B</mml:mi>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:mi>σ</mml:mi>
+<mml:mi>A</mml:mi>
+<mml:mi>B</mml:mi>
+<mml:mspace width="0.25em"/>
+<mml:mi>σ</mml:mi>
+<mml:mi>B</mml:mi>
+<mml:mo>²</mml:mo>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+</mml:mrow>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mspace width="0.25em"/>
+<mml:mo>,</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0272989X13475719" xlink:href="10.1177_0272989X13475719-eq2.tif"/></disp-formula>
+</p>
+<p>where</p>
+<list id="list2-0272989X13475719" list-type="simple">
+<list-item><p>µ<sub>A,i</sub> = logit(π<sub>A</sub>,<sub>i</sub>) denotes the true sensitivity of study i on the logit scale, to be estimated.</p></list-item>
+<list-item><p>µ<sub>B,i</sub> = logit(π<sub>B</sub>,<sub>i</sub>) denotes the true specificity of study i on the logit scale, to be estimated.</p></list-item>
+<list-item><p>logit(π) = log(π/(1-π)) denotes the transformation of probability π to the logit scale.</p></list-item>
+<list-item><p>~ indicates a stochastic relation (“. . . has as its distribution . . .”).</p></list-item>
+<list-item><p>= indicates an equality relation (“. . . is equal to . . .”).</p></list-item>
+<list-item><p>MVN (µ, Σ) denotes the 2-dimensional multivariate normal distribution with mean vector µ and covariance matrix Σ.</p></list-item>
+<list-item><p>µ<sub>A</sub> denotes the pooled sensitivity of the meta-analysis on the logit scale.</p></list-item>
+<list-item><p>µ<sub>B</sub> denotes the pooled specificity of the meta-analysis on the logit scale.</p></list-item>
+<list-item><p>σ<sub>A</sub><sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref></sup> denotes the variance of the random effects for sensitivity.</p></list-item>
+<list-item><p>σ<sub>B</sub><sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref></sup> denotes the variance of the random effects for specificity.</p></list-item>
+<list-item><p>σ<sub>AB</sub> denotes the covariance of the bivariate random effects.</p></list-item>
+</list>
+<p>The model parameters µ<sub>A</sub> and µ<sub>B</sub> are the bivariate summary estimates of sensitivity and specificity on the logit scale.<sup><xref ref-type="bibr" rid="bibr4-0272989X13475719">4</xref></sup> In a bivariate random-effects meta-analysis, the primary studies may contribute additional random effects of unknown origin to the model. These random effects of sensitivity and specificity are assumed having a bivariate normal distribution across the studies, which considers a possible correlation between them.<sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref>,<xref ref-type="bibr" rid="bibr16-0272989X13475719">16</xref></sup> Their covariance structure is determined by σ<sub>A</sub><sup>2</sup>, σ<sub>B</sub><sup>2</sup> and σ<sub>AB</sub>. Omitting the random effects from <xref ref-type="disp-formula" rid="disp-formula2-0272989X13475719">Equation 2</xref> results in a fixed-effects model.</p>
+</sec>
+<sec id="section3-0272989X13475719">
+<title>Implementation of a Bayesian Bivariate Random-Effects Meta-analysis</title>
+<sec id="section4-0272989X13475719">
+<title>Data structure</title>
+<p>The implementation of the Bayesian bivariate model is shown for the historical lymphangiography data of Scheidler and others.<sup><xref ref-type="bibr" rid="bibr17-0272989X13475719">17</xref></sup> In this example (<xref ref-type="table" rid="table1-0272989X13475719">Table 1</xref> and Appendix 1A), the data file “<monospace>file_data</monospace>” contains the 2 × 2 data of the 17 primary studies with one record per study. The file “<monospace>file_bidata</monospace>” splits these data into 2 records per study and adds a status-index to identify the bivariate data for sensitivity “<monospace>A_pos</monospace>” and specificity “<monospace>B_neg</monospace>”.</p>
+<table-wrap id="table1-0272989X13475719" position="float">
+<label>Table 1</label>
+<caption>
+<p>DATA Code of the Meta-analytic Example</p>
+</caption>
+<graphic alternate-form-of="table1-0272989X13475719" xlink:href="10.1177_0272989X13475719-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Line</th>
+<th align="center">Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>DATA file_data;</td>
+</tr>
+<tr>
+<td>2</td>
+<td>length author $20;</td>
+</tr>
+<tr>
+<td>3</td>
+<td>input study author $ year tru_pos fal_pos fal_neg tru_neg;</td>
+</tr>
+<tr>
+<td>4</td>
+<td>ref_pos = tru_pos + fal_neg;</td>
+</tr>
+<tr>
+<td>5</td>
+<td>ref_neg = tru_neg + fal_pos;</td>
+</tr>
+<tr>
+<td>6</td>
+<td>datalines;</td>
+</tr>
+<tr>
+<td>7</td>
+<td>1 Kindermann 1970 19 1 10 81</td>
+</tr>
+<tr>
+<td>8</td>
+<td>2 Lecart 1971 8 9 2 13</td>
+</tr>
+<tr>
+<td/>
+<td>… (further data in Appendix A)</td>
+</tr>
+<tr>
+<td>23</td>
+<td>17 Stellato 1992 4 3 0 14</td>
+</tr>
+<tr>
+<td>24</td>
+<td>;run;</td>
+</tr>
+<tr>
+<td>25</td>
+<td>PROC PRINT data=file_data; run;</td>
+</tr>
+<tr>
+<td>26</td>
+<td/>
+</tr>
+<tr>
+<td>27</td>
+<td>DATA file_bidata; set file_data;</td>
+</tr>
+<tr>
+<td>28</td>
+<td>status=‘A_pos’; true=tru_pos; total=ref_pos; output;</td>
+</tr>
+<tr>
+<td>29</td>
+<td>status=‘B_neg’; true=tru_neg; total=ref_neg; output;</td>
+</tr>
+<tr>
+<td>30</td>
+<td>keep study status true total; run;</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section5-0272989X13475719">
+<title>Program code of the bivariate model with SAS PROC MCMC</title>
+<p>The bivariate random-effects model of formula 2 can be implemented with PROC MCMC from SAS 9.3 (<xref ref-type="table" rid="table2-0272989X13475719">Table 2</xref> and Appendix 1C). Details of SAS PROC MCMC are provided in an online manual.<sup><xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref></sup> The SAS code presented here was adapted from other published code examples.<sup><xref ref-type="bibr" rid="bibr12-0272989X13475719">12</xref></sup> Lines 1–5 invoke PROC MCMC with options regarding sampling and tuning (line 2) and the reported output (lines 3–5). The number of discarded burn-in samples (<monospace>nbi=100000</monospace>) is set to 10% of the MCMC samples (<monospace>nmc=1000000</monospace>). The MCMC samples are thinned by a factor of 10 (<monospace>thin=10</monospace>) to reduce autocorrelation. The posterior distribution therefore consists of 100,000 samples, corresponding to 1000 samples per percentile. In the following text the term <italic>samples</italic> refers to these thinned samples, unless specified otherwise. The 3 <monospace>ARRAY</monospace> statements of lines 8–10 declare the model variables, with alias-names provided behind the “[ ]” brackets. The “<monospace>random eta</monospace>” statement (see below) causes that a bivariate <monospace>eta</monospace> array is defined for each of the 17 studies. The bivariate array <monospace>mu</monospace> and the covariance matrix <monospace>Sigma</monospace> implement the 5 parameters of the bivariate random-effects model of <xref ref-type="disp-formula" rid="disp-formula2-0272989X13475719">Equation 2</xref>. In line 10, <monospace>cov_uAB2</monospace> is always identical to <monospace>cov_uAB</monospace>. The <monospace>PARMS</monospace> statements of lines 12–13 declare the summary estimates “<monospace>mu</monospace>” and the random effects covariance matrix “<monospace>Sigma</monospace>” to be model parameters, and the <monospace>prior</monospace> statements of lines 14–15 specify their prior distributions. In line 14 noninformative uniform priors are used for <monospace>mu_A</monospace> and <monospace>mu_B</monospace>, ranging from −10 to 10. On the sensitivity/specificity scale, this corresponds to a sufficiently broad parameter range of 0.005% to 99.995%. Instead of the uniform priors, a multivariate normal prior with large variances (such as 100) could also be used.<sup><xref ref-type="bibr" rid="bibr12-0272989X13475719">12</xref>,<xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref></sup> Line 15 specifies the Wishart distribution as multivariate prior for the random-effects covariance matrix.<sup><xref ref-type="bibr" rid="bibr12-0272989X13475719">12</xref>,<xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref></sup> The <monospace>ARRAY</monospace> statement of line 11 has defined the identity scale matrix for the Wishart distribution. Code lines 17–20 are subsequently evaluated for each study-specific data record of <monospace>file_bidata</monospace>. Line 20 implements <xref ref-type="disp-formula" rid="disp-formula1-0272989X13475719">Equation 1</xref>, lines 18–19 provide the logit link for sensitivity and specificity, and line 17 implements <xref ref-type="disp-formula" rid="disp-formula2-0272989X13475719">Equation 2</xref> of the bivariate model. In lines 22–26 further model results are calculated, including positive and negative likelihood ratios.<sup><xref ref-type="bibr" rid="bibr18-0272989X13475719">18</xref>,<xref ref-type="bibr" rid="bibr19-0272989X13475719">19</xref></sup> Lines 28–32 calculate the 5 parameters of the closely related HSROC model.<sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref></sup> The SAS code of the fixed-effects model results from omitting all code elements that are related to random effects (Appendix 1B). When running the program, a chain of subsequent MCMC samples is generated for each monitored model parameter, as specified in code lines 4, 5, and 16. Such Markov chain is a stochastic process whose future state is only dependent on the current state and is independent of the past.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup> As a prerequisite for robust results, the Markov chains should converge to a unique posterior distribution for each model parameter.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref>,<xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref></sup> This can be assessed by the program’s diagnostics (line 3).<sup><xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref></sup></p>
+<table-wrap id="table2-0272989X13475719" position="float">
+<label>Table 2</label>
+<caption>
+<p>PROC MCMC Code of the Random-Effects Model</p>
+</caption>
+<graphic alternate-form-of="table2-0272989X13475719" xlink:href="10.1177_0272989X13475719-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Line</th>
+<th align="center">Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>PROC MCMC data=file_bidata outpost=file_postout_random propcov=quanew</td>
+</tr>
+<tr>
+<td>2</td>
+<td>nbi=100000 nmc=1000000 ntu=1000 thin=10 seed=1 simreport=100</td>
+</tr>
+<tr>
+<td>3</td>
+<td>diagnostics=all stats(percentage=(2.5 5 10 25 50 75 90 95 97.5))=all</td>
+</tr>
+<tr>
+<td>4</td>
+<td>monitor=(mu_A mu_B LOR sens spec log_LRP log_LRN var_uA var_uB cov_uAB</td>
+</tr>
+<tr>
+<td>5</td>
+<td>ALPHA THETA BETA var_uAlpha var_uTheta) dic;</td>
+</tr>
+<tr>
+<td>6</td>
+<td>title ‘Bayesian bivariate random-effects model’;</td>
+</tr>
+<tr>
+<td>7</td>
+<td>/* declarations and initializations */</td>
+</tr>
+<tr>
+<td>8</td>
+<td>array eta[2] eta_A eta_B; /* includes study-specific random effects */</td>
+</tr>
+<tr>
+<td>9</td>
+<td>array mu[2] mu_A mu_B; /* logit of pooled sens and spec */</td>
+</tr>
+<tr>
+<td>10</td>
+<td>array Sigma[2,2] var_uA cov_uAB cov_uAB2 var_uB; /*covariance matrix*/</td>
+</tr>
+<tr>
+<td>11</td>
+<td>array S[2,2] (1 0 0 1);</td>
+</tr>
+<tr>
+<td>12</td>
+<td>parms mu: 0;</td>
+</tr>
+<tr>
+<td>13</td>
+<td>parms Sigma {0.01 0 0 0.01};</td>
+</tr>
+<tr>
+<td>14</td>
+<td>prior mu: ~ unif(-10,10);</td>
+</tr>
+<tr>
+<td>15</td>
+<td>prior Sigma ~ iwish(2, S);</td>
+</tr>
+<tr>
+<td>16</td>
+<td>/* the following instructions are evaluated for each data record */</td>
+</tr>
+<tr>
+<td>17</td>
+<td>random eta ~ mvn(mu, Sigma) subject=study monitor=(eta_A eta_B);</td>
+</tr>
+<tr>
+<td>18</td>
+<td>if status=‘A_pos’ then p = logistic(eta_A);</td>
+</tr>
+<tr>
+<td>19</td>
+<td>if status=‘B_neg’ then p = logistic(eta_B);</td>
+</tr>
+<tr>
+<td>20</td>
+<td>model true ~ binomial(total, p);</td>
+</tr>
+<tr>
+<td>21</td>
+<td>/* calculation of other bivariate parameters */</td>
+</tr>
+<tr>
+<td>22</td>
+<td>LOR = mu_A + mu_B; /* logarithm of the diagnostic odds ratio */</td>
+</tr>
+<tr>
+<td>23</td>
+<td>sens = logistic(mu_A); /* pooled sensitivity */</td>
+</tr>
+<tr>
+<td>24</td>
+<td>spec = logistic(mu_B); /* pooled specificity */</td>
+</tr>
+<tr>
+<td>25</td>
+<td>log_LRP = log10(sens/(1-spec)); /*log10 of positive likelihood ratio*/</td>
+</tr>
+<tr>
+<td>26</td>
+<td>log_LRN = log10((1-sens)/spec); /*log10 of negative likelihood ratio*/</td>
+</tr>
+<tr>
+<td>27</td>
+<td>/* calculation of HSROC parameters */</td>
+</tr>
+<tr>
+<td>28</td>
+<td>THETA = (mu_A*(var_uB/var_uA)**0.25 - mu_B*(var_uA/var_uB)**0.25)/2;</td>
+</tr>
+<tr>
+<td>29</td>
+<td>ALPHA = (mu_A*(var_uB/var_uA)**0.25 + mu_B*(var_uA/var_uB)**0.25);</td>
+</tr>
+<tr>
+<td>30</td>
+<td>BETA = log(sqrt(var_uB/var_uA));</td>
+</tr>
+<tr>
+<td>31</td>
+<td>var_uTheta = (sqrt(var_uA*var_uB) - cov_uAB)/2;</td>
+</tr>
+<tr>
+<td>32</td>
+<td>var_uAlpha = (sqrt(var_uA*var_uB) + cov_uAB)*2;</td>
+</tr>
+<tr>
+<td>33</td>
+<td>run;</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section6-0272989X13475719">
+<title>Assessing chain convergence</title>
+<p>The convergence of the Markov chains with SAS PROC MCMC was visually assessed by the chain histories and the autocorrelation plots, specifically by assessing mixing and stationarity of the chains. Additionally, the following quantitative statistics from SAS PROC MCMC were used: The Geweke test assesses chain convergence by comparing the mean estimates from the chain’s first 10% portion and the last 50% portion. The Heidelberger-Welch stationarity test assesses whether the Markov chain comes from a covariance stationary process. The Heidelberger-Welch half-width test was not applied since it assumes that the sample’s standard deviation is proportional to the sample’s mean. This test may be falsely negative if the sample’s mean is zero or close to zero; for example if <monospace>mu_A</monospace> = 0 (pooled sensitivity = 50%). With the SAS PROC MCMC random-effects model, a Gelman-Rubin test was performed to study whether parallel Markov chains converge to the same posterior distributions, when using very different starting values for the parameters. In this test, 3 chains were compared, the first chain with the parameters of the standard code “<monospace>mu_A=0; mu_B=0; var_uA=0.01; var_uB=0.01; cov_uAB=0</monospace>”, the second chain with “<monospace>mu_A=5; mu_B=-5; var_uA=1.01; var_uB=100; cov_uAB=10</monospace>”, and the third chain with “<monospace>mu_A=-5; mu_B=5; var_uA=100; var_uB=1.01; cov_uAB=-10</monospace>”. The program for this test was adopted from example 52.13 of the SAS 9.3 manual.<sup><xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref></sup> All convergence diagnostics of SAS PROC MCMC were performed with the default parameters. The significance level was set to <italic>P</italic>&lt;0.05.</p>
+</sec>
+<sec id="section7-0272989X13475719">
+<title>Determining the standard chain length</title>
+<p>For orientation, a prestudy of chain convergence was performed with the meta-analytic lymphangiography example of Scheidler and others.<sup><xref ref-type="bibr" rid="bibr17-0272989X13475719">17</xref></sup> After 100 MCMC samples (<monospace><bold>nbi=100</bold></monospace>;<monospace><bold>nmc=1000</bold></monospace>;<monospace><bold>thin=10</bold></monospace>) all convergence tests were passed, except for the Raftery-Lewis test. The latter test required at least 3750 samples. Generally the precision of the MCMC estimates increases with the square root of the MCMC sample size, but this requires more computations.<sup><xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref></sup> In this tradeoff, a computation time between 1 min and 1 h was considered acceptable here, since such time is negligible when compared with the months needed for collecting the meta-analytic primary data. The lymphangiography example<sup><xref ref-type="bibr" rid="bibr17-0272989X13475719">17</xref></sup> required 11 min for computing the presented SAS random-effects code with a single processor of a 2.4-GHz Pentium computer. The resulting 100,000 MCMC samples are much more than the 3750 samples required in the Raftery-Lewis test. It was therefore expected that chain convergence might be unproblematic in similar meta-analyses when using the code’s standard chain length.</p>
+</sec>
+<sec id="section8-0272989X13475719">
+<title>Program code of the bivariate model with WinBUGS</title>
+<p>For comparison, the SAS PROC MCMC program codes of the random-effects model and the fixed-effects model were translated to WinBUGS code for use with the WinBUGS package (version 1.4.3).<sup><xref ref-type="bibr" rid="bibr20-0272989X13475719">20</xref></sup> These WinBUGS codes are available from the author on request.</p>
+</sec>
+</sec>
+<sec id="section9-0272989X13475719">
+<title>Empirical Comparison of the SAS PROC MCMC and WinBUGS Codes</title>
+<p>The SAS PROC MCMC and WinBUGS codes were empirically compared using 2×2 count data of 50 meta-analyses about diagnostic test accuracy (Appendix 2). In a former study, these meta-analyses had been randomly selected from the literature after searching the PubMed database for “meta-analysis,” “systematic review,” and related terms from January 2006 to March 2009.<sup><xref ref-type="bibr" rid="bibr3-0272989X13475719">3</xref></sup> Per meta-analysis, the 2×2 count data of one index test were used, also if 2 or more index tests had been investigated in that meta-analysis. From each meta-analysis, those primary studies were excluded that had not investigated both sensitivity and specificity, for example, if only diseased patients had been included so that the specificity of the index test could not be determined.</p>
+<p>The 2×2 count data of the 50 meta-analyses were recalculated with bivariate fixed-effects and random-effects models using SAS PROC MCMC (Appendix 1) and WinBUGS. The agreement between the results from these different program codes was assessed by the Bland-Altman method.<sup><xref ref-type="bibr" rid="bibr21-0272989X13475719">21</xref></sup> The significance level was set to <italic>P</italic> &lt; 0.05.</p>
+<p>This study was not funded.</p>
+</sec>
+</sec>
+<sec id="section10-0272989X13475719">
+<title>Results</title>
+<sec id="section11-0272989X13475719">
+<title>Results in the Meta-analytic Example</title>
+<p>The presented program codes were applied with the meta-analytic lymphangiography example of Scheidler and others.<sup><xref ref-type="bibr" rid="bibr17-0272989X13475719">17</xref></sup> The Markov chains converged well, as exemplified in <xref ref-type="fig" rid="fig1-0272989X13475719">Figure 1</xref> for <monospace>mu_A</monospace>. At lag 5 the posterior autocorrelations of the 5 model parameters were small, ranging from 0.0531 to 0.0016. In the Gelman-Rubin test, the different chains of <monospace>mu_A</monospace>, <monospace>mu_B</monospace>, <monospace>var_uA,var_uB</monospace>, and <monospace>cov_uaB</monospace> centered to the same parameter range after a few samples and converged to the same distribution after obtaining about 500 to 4000 samples, which is much less than the initial 10,000 samples that were discarded as burn-in. The fixed-effects and random-effects estimates from SAS PROC MCMC and WinBUGS were nearly identical (<xref ref-type="table" rid="table3-0272989X13475719">Table 3</xref>). <xref ref-type="fig" rid="fig2-0272989X13475719">Figure 2</xref> visualizes a summary plot of the bivariate random-effects meta-analysis.<sup><xref ref-type="bibr" rid="bibr22-0272989X13475719">22</xref></sup></p>
+<fig id="fig1-0272989X13475719" position="float">
+<label>Figure 1</label>
+<caption>
+<p>MCMC sampling in a meta-analytic example. In the meta-analytic lymphangiography example, this figure illustrates the MCMC sampling for <monospace>mu_A</monospace>of the SAS PROC MCMC random-effects code. In the chain history (upper panel), the Markov chain is mixing well and explores its distribution by traversing to areas where the density is low. The posterior autocorrelation of <monospace>mu_A</monospace>at lag 5 is 0.0531 and thus small (left lower panel). The posterior distribution of <monospace>mu_A</monospace> resembles a normal distribution (right lower panel) with mean = 0.7574 and standard deviation = 0.2035 on the logit scale.</p>
+</caption>
+<graphic xlink:href="10.1177_0272989X13475719-fig1.tif"/>
+</fig>
+<table-wrap id="table3-0272989X13475719" position="float">
+<label>Table 3</label>
+<caption>
+<p>Meta-analysis of the Lymphangiography Example</p>
+</caption>
+<graphic alternate-form-of="table3-0272989X13475719" xlink:href="10.1177_0272989X13475719-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th/>
+<th align="center" colspan="1">SAS PROC MCMC<hr/></th>
+<th align="center" colspan="1">WinBUGS<hr/></th>
+</tr>
+<tr>
+<th align="left">Bivariate Model</th>
+<th align="center">Parameter</th>
+<th align="center">
+<inline-formula id="inline-formula1-0272989X13475719">
+<mml:math display="inline" id="math3-0272989X13475719">
+<mml:mover accent="true">
+<mml:mi>x</mml:mi>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> (95% CI)</th>
+<th align="center"><inline-formula id="inline-formula2-0272989X13475719">
+<mml:math display="inline" id="math4-0272989X13475719">
+<mml:mover accent="true">
+<mml:mi>x</mml:mi>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> (95% CI)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fixed effects</td>
+<td>π<sub>A</sub> (<monospace>sens</monospace>)</td>
+<td>67.1% (62.3%–71.9%)</td>
+<td>67.1% (62.2%–71.8%)</td>
+</tr>
+<tr>
+<td/>
+<td>π<sub>B</sub> (<monospace>spec</monospace>)</td>
+<td>80.0% (77.6%–82.4%)</td>
+<td>80.1% (77.6%–82.4%)</td>
+</tr>
+<tr>
+<td/>
+<td>µ<sub>A</sub> (<monospace>mu_A</monospace>)</td>
+<td>0.716 (0.502–0.938)</td>
+<td>0.716 (0.500–0.935)</td>
+</tr>
+<tr>
+<td/>
+<td>µ<sub>B</sub> (<monospace>mu_B</monospace>)</td>
+<td>1.391 (1.240–1.545)</td>
+<td>1.391 (1.239–1.545)</td>
+</tr>
+<tr>
+<td/>
+<td>DIC</td>
+<td>231.6</td>
+<td>231.6</td>
+</tr>
+<tr>
+<td>Random effects</td>
+<td>π<sub>A</sub> (<monospace>sens</monospace>)</td>
+<td>67.9% (59.1%–76.4%)</td>
+<td>67.9% (58.9%–76.3%)</td>
+</tr>
+<tr>
+<td/>
+<td>π<sub>B</sub> (<monospace>spec</monospace>)</td>
+<td>83.4% (75.5%–90.0%)</td>
+<td>83.4% (75.4%–90.0%)</td>
+</tr>
+<tr>
+<td/>
+<td>µ<sub>A</sub> (<monospace>mu_A</monospace>)</td>
+<td>0.757 (0.366–1.172)</td>
+<td>0.758 (0.361–1.171)</td>
+</tr>
+<tr>
+<td/>
+<td>µ<sub>B</sub> (<monospace>mu_B</monospace>)</td>
+<td>1.640 (1.124–2.199)</td>
+<td>1.640 (1.121–2.196)</td>
+</tr>
+<tr>
+<td/>
+<td>σ<sub>A</sub>
+<sup>2</sup> (<monospace>var_uA</monospace>)</td>
+<td>0.377 (0.116–0.980)</td>
+<td>0.378 (0.116–0.987)</td>
+</tr>
+<tr>
+<td/>
+<td>σ<sub>B</sub>
+<sup>2</sup> (<monospace>var_uB</monospace>)</td>
+<td>1.008 (0.359–2.349)</td>
+<td>1.007 (0.357–2.345)</td>
+</tr>
+<tr>
+<td/>
+<td>σ<sub>AB</sub> (<monospace>cov_uAB</monospace>)</td>
+<td>0.064 (−0.372 to 0.551)</td>
+<td>0.063 (−0.375 to 0.550)</td>
+</tr>
+<tr>
+<td/>
+<td>DIC</td>
+<td>168.5</td>
+<td>168.6</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-0272989X13475719">
+<p>Note: CI = credible interval. The summary estimates from the SAS PROC MCMC and WinBUGS approaches were very similar. The Bayesian MCMC model-fit is described by the deviance information criterion (DIC). Regarding the interpretation of DIC, “smaller is better,” with a difference &gt;10 considered being substantial. The DIC may be compared for any models but only in the same data.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup> The other bivariate model parameters are defined in the Methods section.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<fig id="fig2-0272989X13475719" position="float">
+<label>Figure 2</label>
+<caption>
+<p>Example of a bivariate random-effects meta-analysis with SAS PROC MCMC. This summary plot of sensitivity and specificity visualizes the results of a bivariate random-effects meta-analysis with SAS PROC MCMC for the lymphangiography data of Scheidler and others.<sup><xref ref-type="bibr" rid="bibr17-0272989X13475719">17</xref></sup> Rectangles = observed bivariate pairs of sensitivity and specificity of the 17 primary lymphangiography studies. Solid line = summary receiver operating characteristics (ROC) curve. Central point = bivariate summary point. Ellipse = 95% confidence ellipse for the bivariate summary point. Dashed line = line of identity for sensitivity v. (1 – specificity). This plot was generated with Review Manager (RevMan) version 5.1.23.<sup><xref ref-type="bibr" rid="bibr19-0272989X13475719">19</xref></sup> Its input parameters were obtained from the output of the SAS PROC MCMC random-effects program: E(logitSe) 0.7574; E(logitSp) 1.6403; Var(logitSe) 0.377; Var(logitSp) 1.0075; Cov(logits) 0.0641; SE(E(logitSe)) 0.2035; SE(E(logitSp)) 0.2706; Cov(Es) 0.0042; Studies 17.</p>
+</caption>
+<graphic xlink:href="10.1177_0272989X13475719-fig2.tif"/>
+</fig>
+</sec>
+<sec id="section12-0272989X13475719">
+<title>Empirical Study of 50 Meta-analyses</title>
+<p>The 50 meta-analyses covered broad ranges of pooled sensitivity (17.4%–98.8%) and specificity (60.0%–99.7%) (<xref ref-type="table" rid="table4-0272989X13475719">Table 4</xref>). The number of primary studies per meta-analysis ranged from 5 to 45. In comparison to the fixed-effects models, the random-effects models generally had a smaller deviance information criterion (DIC), indicating a better model fit.</p>
+<table-wrap id="table4-0272989X13475719" position="float">
+<label>Table 4</label>
+<caption>
+<p>Results of SAS PROC MCMC in 50 Meta-analyses and Comparison with WinBUGS</p>
+</caption>
+<graphic alternate-form-of="table4-0272989X13475719" xlink:href="10.1177_0272989X13475719-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="center" colspan="2">Results with SAS PROC MCMC<hr/></th>
+<th align="center" colspan="3">SAS PROC MCMC Compared with WinBUGS<hr/></th>
+</tr>
+<tr>
+<th/>
+<th align="center"><inline-formula id="inline-formula3-0272989X13475719">
+<mml:math display="inline" id="math5-0272989X13475719">
+<mml:mover accent="true">
+<mml:mi>x</mml:mi>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula>
+</th>
+<th align="center">Range</th>
+<th align="center">95% Limits of Agreement</th>
+<th align="center"><inline-formula id="inline-formula4-0272989X13475719">
+<mml:math display="inline" id="math6-0272989X13475719">
+<mml:mover accent="true">
+<mml:mi>x</mml:mi>
+<mml:mo>¯</mml:mo>
+</mml:mover>
+</mml:math>
+</inline-formula> Difference<sup><xref ref-type="table-fn" rid="table-fn3-0272989X13475719">a</xref></sup>
+</th>
+<th align="center"><italic>P</italic>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="6">Fixed-effects models</td>
+</tr>
+<tr>
+<td> Studies per meta-analysis</td>
+<td>14</td>
+<td>5–45</td>
+<td/>
+<td/>
+<td/>
+</tr>
+<tr>
+<td> Pooled sensitivity (%)</td>
+<td>80.6</td>
+<td>18.7–98.0</td>
+<td>−0.01152, 0.01186</td>
+<td>0.00017</td>
+<td>0.84</td>
+</tr>
+<tr>
+<td> Pooled specificity (%)</td>
+<td>86.9</td>
+<td>65.1–99.5</td>
+<td>−0.01690, 0.01952</td>
+<td>0.00131</td>
+<td>0.32</td>
+</tr>
+<tr>
+<td> <monospace>mu_A</monospace> (logit scale)</td>
+<td>1.74</td>
+<td>−1.47 to 3.89</td>
+<td>−0.00137, 0.00132</td>
+<td>−0.00003</td>
+<td>0.79</td>
+</tr>
+<tr>
+<td> <monospace>mu_B</monospace> (logit scale)</td>
+<td>2.15</td>
+<td>0.62–5.33</td>
+<td>−0.00116, 0.00138</td>
+<td>0.00011</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td> SD of <monospace>mu_A</monospace> (logit scale)</td>
+<td>0.16</td>
+<td>0.03–0.44</td>
+<td>−0.00126, 0.00137</td>
+<td>0.00005</td>
+<td>0.57</td>
+</tr>
+<tr>
+<td> SD of <monospace>mu_B</monospace> (logit scale)</td>
+<td>0.14</td>
+<td>0.01–0.80</td>
+<td>−0.00161, 0.00153</td>
+<td>−0.0004</td>
+<td>0.71</td>
+</tr>
+<tr>
+<td> DIC</td>
+<td>309</td>
+<td>34–1494</td>
+<td>−1.1955, 1.0249</td>
+<td>−0.0853</td>
+<td>0.29</td>
+</tr>
+<tr>
+<td> Computation time (s)</td>
+<td>12</td>
+<td>6–30</td>
+<td/>
+<td/>
+<td/>
+</tr>
+<tr>
+<td colspan="6">Random effects models</td>
+</tr>
+<tr>
+<td> Studies per meta-analysis</td>
+<td>14</td>
+<td>5–45</td>
+<td/>
+<td/>
+<td/>
+</tr>
+<tr>
+<td> Pooled sensitivity (%)</td>
+<td>82.3</td>
+<td>17.4–98.8</td>
+<td>−0.05707, 0.04841</td>
+<td>−0.00433</td>
+<td>0.26</td>
+</tr>
+<tr>
+<td> Pooled specificity (%)</td>
+<td>88.5</td>
+<td>60.0–99.7</td>
+<td>−0.05338, 0.05204</td>
+<td>−0.00067</td>
+<td>0.86</td>
+</tr>
+<tr>
+<td> <monospace>mu_A</monospace> (logit scale)</td>
+<td>1.94</td>
+<td>−1.56 to 4.40</td>
+<td>−0.00760, 0.00747</td>
+<td>−0.00006</td>
+<td>0.91</td>
+</tr>
+<tr>
+<td> <monospace>mu_B</monospace> (logit scale)</td>
+<td>2.35</td>
+<td>0.41–5.77</td>
+<td>−0.00444, 0.00426</td>
+<td>−0.00009</td>
+<td>0.78</td>
+</tr>
+<tr>
+<td> SD of <monospace>mu_A</monospace> (logit scale)</td>
+<td>0.40</td>
+<td>0.11–1.49</td>
+<td>−0.00713, 0.00743</td>
+<td>0.00015</td>
+<td>0.78</td>
+</tr>
+<tr>
+<td> SD of <monospace>mu_B</monospace> (logit scale)</td>
+<td>0.41</td>
+<td>0.16–1.24</td>
+<td>−0.00790, 0.00809</td>
+<td>0.00009</td>
+<td>0.87</td>
+</tr>
+<tr>
+<td> <monospace>var_uA</monospace> (logit scale)</td>
+<td>1.13</td>
+<td>0.41–6.70</td>
+<td>−0.06624, 0.05915</td>
+<td>−0.00355</td>
+<td>0.44</td>
+</tr>
+<tr>
+<td> <monospace>var_uB</monospace> (logit scale)</td>
+<td>1.37</td>
+<td>0.33–7.52</td>
+<td>−0.01584, 0.01271</td>
+<td>−0.00156</td>
+<td>0.14</td>
+</tr>
+<tr>
+<td> <monospace>cov_uAB</monospace> (logit scale)</td>
+<td>−0.12</td>
+<td>−1.71 to 0.81</td>
+<td>−0.01096, 0.01184</td>
+<td>0.00044</td>
+<td>0.60</td>
+</tr>
+<tr>
+<td> DIC</td>
+<td>136</td>
+<td>35–442</td>
+<td>−0.0839, 0.0843</td>
+<td>0.0002</td>
+<td>0.97</td>
+</tr>
+<tr>
+<td> Computation time (min)</td>
+<td>2.4</td>
+<td>0.9–7.4</td>
+<td/>
+<td/>
+<td/>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn2-0272989X13475719">
+<p>Note: DIC = deviance information criterion; SD = standard deviation. The SAS PROC MCMC codes and the WinBUGS codes were empirically compared by using the 2×2 count data from 50 meta-analyses. The comparison was performed by the Bland-Altman method by assessing the difference of the SAS-PROC-MCMC-results minus the WinBUGS-results.<sup><xref ref-type="bibr" rid="bibr21-0272989X13475719">21</xref></sup> The 95% limits of agreement were very narrow, and there were no significant differences between the SAS PROC MCMC and WinBUGS approaches (<italic>P</italic> &gt; 0.05).</p>
+</fn>
+<fn id="table-fn3-0272989X13475719">
+<label>a.</label>
+<p>Difference of the SAS-PROC-MCMC-results minus the WinBUGS-results.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>The following computation times refer to parallel-processing on a 2.4-GHz quad core Pentium computer in batch mode: For the fixed-effects models the average computation time per meta-analysis was 12 s with SAS PROC MCMC and 35 s with WinBUGS. For the random-effects models, the average computation time per meta-analysis was 2.4 min with SAS PROC MCMC and 1.3 min with WinBUGS.</p>
+<p>In the graphic chain histories of the SAS PROC MCMC and the WinBUGS approaches, the Markov chains of all meta-analyses converged well, showing stationarity and good mixing. The chain convergence tests were generally passed in all 50 meta-analyses. In the Gelman-Rubin test, the different chains centered to the same parameter range after a few samples and generally converged to the same distribution after obtaining about 500–4000 samples.</p>
+<p>For the fixed-effects and the random-effects model, the Bland-Altman analyses showed close agreement between the SAS PROC MCMC and WinBUGS approaches with no systematic differences (<italic>P</italic> &gt; 0.05). For the fixed-effects models, the results from SAS PROC MCMC and WinBUGS were nearly identical (<xref ref-type="table" rid="table4-0272989X13475719">Table 4</xref>). For the random-effects models, the 95% limits of agreement for the pooled sensitivity (–0.06% to 0.05%) and specificity (–0.05% to 0.05%) were also very close.</p>
+</sec>
+</sec>
+<sec id="section13-0272989X13475719" sec-type="discussion">
+<title>Discussion</title>
+<sec id="section14-0272989X13475719">
+<title>Summary of Results</title>
+<p>For Bayesian bivariate random-effects meta-analysis of sensitivity and specificity, this study presented the statistical model and its implementation with SAS PROC MCMC. The program code was empirically evaluated in 50 meta-analyses, and the results were very similar to a corresponding WinBUGS approach. Computation required a few minutes, which is sufficiently fast for practical applications.</p>
+</sec>
+<sec id="section15-0272989X13475719">
+<title>Bivariate Model of Sensitivity and Specificity for Meta-analysis of Diagnostic Accuracy</title>
+<p>The bivariate random-effects model of sensitivity and specificity belongs to the statistical models that have been recommended for the meta-analysis of diagnostic accuracy.<sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref>,<xref ref-type="bibr" rid="bibr7-0272989X13475719">7</xref>,<xref ref-type="bibr" rid="bibr8-0272989X13475719">8</xref></sup> By its random effects, this model considers unknown true differences in sensitivity and specificity that may exist between the primary studies. Additionally the model considers that these random effects of sensitivity and specificity may be correlated. Harbord and others<sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref></sup> have shown that the bivariate random-effects model is mathematically equivalent to the HSROC model. Therefore, these 2 models may be considered the 2 different sides of the same coin, and the HSROC parameters can be directly obtained from the bivariate results, as done by the presented program code.</p>
+</sec>
+<sec id="section16-0272989X13475719">
+<title>Model Implementation with Classic Methods versus Bayesian Methods</title>
+<p>The bivariate random-effects model of sensitivity and specificity can be implemented in different ways. A previous study has shown the implementation with SAS PROC GLIMMIX that is a classic approach.<sup><xref ref-type="bibr" rid="bibr3-0272989X13475719">3</xref></sup> In that implementation the generalized linear mixed model of <xref ref-type="disp-formula" rid="disp-formula2-0272989X13475719">Equation 2</xref> is fitted by maximum likelihood, where the marginal distribution is numerically approximated in iterations until a stop criterion is fulfilled. SAS PROC GLIMMIX assumes predefined fixed distributions for its model parameters and is computationally very fast.</p>
+<p>In contrast, the Bayesian SAS PROC MCMC obtains its results from numerical simulations rather than analytically or by iterative approximation, which, however, requires more computation time. The resulting posterior distributions depend on the priors and the data and need not be normally distributed. Bayesian analysis can estimate any functions of parameters directly. For example, the pooled positive and negative likelihood ratios and their 95% credible intervals can be estimated from the pooled sensitivity and specificity, which are derived from <monospace>mu_A</monospace> and <monospace>mu_B</monospace>. This can be done by the program, as has been implemented. Alternatively, this could be calculated later, using the samples of the posterior distributions that are stored in the file “<monospace>file_postout_random</monospace>”.</p>
+</sec>
+<sec id="section17-0272989X13475719">
+<title>Markov Chain Monte Carlo Method</title>
+<p>SAS PROC MCMC implements a Markov chain Monte Carlo (MCMC) method that combines 2 methods: Monte Carlo integration and Markov chain sampling.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup></p>
+<p>Monte Carlo integration is a numerical integration method that simplifies a continuous distribution by taking discrete samples. With a large sample size, the sample’s histogram approximates to a continuous distribution, and then any inferences about the distribution can be made by the samples, such as estimating the mean and the 95% credible interval.</p>
+<p>Markov chains provide a method of drawing samples from the target densities. A Markov chain is a stochastic process whose future state is only dependent on the current state and is independent of the past.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup> It is this property that allows Markov chains to simplify complex problems, because the next sample in the chain depends only on the previous sample.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup> The Markov chains require an initial value that needs to be within the target distribution. The samples are obtained by a random-walk Metropolis algorithm in SAS PROC MCMC and by Gibbs sampling in WinBUGS.<sup><xref ref-type="bibr" rid="bibr11-0272989X13475719">11</xref>,<xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref>,<xref ref-type="bibr" rid="bibr15-0272989X13475719">15</xref></sup></p>
+</sec>
+<sec id="section18-0272989X13475719">
+<title>Convergence Diagnostics of the Markov Chains and Computation Time</title>
+<p>Convergence diagnostics help assessing 2 issues: first, whether the Markov chain has become stationary (the initial nonstationary samples are discarded as “burn-in”), and second, how many samples are required for the posterior distribution. With more samples, the model parameters are estimated more accurately, but the computation time increases proportionally.</p>
+<p>In the empirical study of the 50 meta-analyses, according to the convergence diagnostics it would have been sufficient to discard about 4000 samples as burn-in, even when starting at the extreme initials of second and third chain of the Gelman-Rubin test. However, for safety the presented standard program discards 10,000 samples as burn-in to start sampling of the posterior distribution when the Markov chains have well reached stationarity. The extra 6000 samples require only a few additional seconds for computation, which is negligible.</p>
+<p>In the program, a large number of samples—100,000—was used for the posterior distributions, which is more than in some other MCMC code examples.<sup><xref ref-type="bibr" rid="bibr13-0272989X13475719">13</xref></sup> There was no need to reduce this dense sampling, since the program generally finished after a few minutes. Similar to other statistics, the MCMC results are generally more accurate when using more samples, so that computation time would be the main reason for limiting the MCMC sample size. However, when programming new meta-analytic statistics, one might initially wish to test the program for errors with a shorter run-time. This can be done for example by using (<monospace>nbi=10000; nmc=100000</monospace>) in line 2 of the program code (see Methods, section 2) and returning to (<monospace>nbi=100000; nmc=1000000</monospace>) afterwards. Batch processing then requires no user interaction.</p>
+<p>Further computation time was required by the sample thinning (<monospace>thin=10</monospace>) that reduces autocorrelation and thus improves the chain mixing among adjacent samples. Regarding the computation time it is even unproblematic to use more thinning, but in the 50 meta-analyses the Markov chains mixed well, indicating no need for doing so.</p>
+</sec>
+<sec id="section19-0272989X13475719">
+<title>Prior Distributions</title>
+<p>A major property of Bayesian method is the need (or ability) to use priors for the distributions of interest. With the observed data and with MCMC sampling, these distributions turn into the posterior distributions. In the absence of clear prior information it is often preferred to use noninformative priors, so that the posterior distributions are exclusively determined by the data.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup> In the presented program code, such noninformative uniform priors were applied for <monospace>mu_A</monospace> and <monospace>mu_B</monospace> that represent the pooled sensitivity and specificity on the logit scale.</p>
+<p>For the random effects, a bivariate normal prior was used since the model’s <xref ref-type="disp-formula" rid="disp-formula2-0272989X13475719">Equation 2</xref> assumes such distribution. In the SAS PROC MCMC standard code, the corresponding covariance matrix is initialized with small values (<monospace>var_uA=0.01; var_uB=0.01; cov_uAB=0)</monospace>. This follows the recommendation of Dobson and Barnett<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup> to use a relatively small initial variance, so that the initial random effects are close to the pooled mean and can “fan out” as the Markov chain progresses. However, in the Gelman-Rubin test, the much larger initials of the second chain (<monospace>var_uA=1.01; var_uB=100; cov_uaB=10</monospace>) and third chain (<monospace>var_uA=100; var_uB=1.01; cov_uaB=-10</monospace>) gave similar results, indicating insensitivity to these initials of the covariance matrix.</p>
+</sec>
+<sec id="section20-0272989X13475719">
+<title>Empirical Evaluation in 50 Meta-analyses</title>
+<p>The 50 meta-analyses had been randomly selected from the literature. They covered broad ranges of different pooled sensitivities and specificities. Also, they included small meta-analyses with 5 primary studies up to large meta-analyses with 45 primary studies. Therefore, these 50 meta-analyses are considered representative for testing the SAS PROC MCMC code in practice. In these meta-analyses, the code application was simple and robust with good mixing and convergence of the Markov chains. In the Bland-Altman analysis, the SAS PROC MCMC and the WinBUGS approaches showed nearly identical results in the 50 meta-analyses. This indicates that the bivariate model is well implemented with both different statistical programs, without systematic differences arising from program attributes.</p>
+</sec>
+<sec id="section21-0272989X13475719">
+<title>Comparison to other Bayesian meta-analytic methods</title>
+<p>In this study, an additional Bayesian WinBUGS approach for the bivariate model was programmed and used for comparison. Harbord and others<sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref></sup> have shown that the bivariate model is mathematically equivalent to the HSROC model. For such HSROC model, Rutter and Gatsonis<sup><xref ref-type="bibr" rid="bibr9-0272989X13475719">9</xref></sup> have presented an MCMC WinBUGS code. For the HSROC parameters ALPHA (accuracy), THETA (threshold), and BETA (shape parameter) they have also used uniform priors, as done here for <monospace>mu_A</monospace> and <monospace>mu_B</monospace>. Verde<sup><xref ref-type="bibr" rid="bibr23-0272989X13475719">23</xref></sup> has presented a further MCMC WinBUGS code for a random-effects model. For the meta-analytic lymphangiography example, his pooled estimates are approximately similar to the results presented here.<sup><xref ref-type="bibr" rid="bibr17-0272989X13475719">17</xref></sup> In his well-suited approach, Verde meta-analyzed pairs of differences (D) and sums (S) of the logit-transformed true-positive and true-negative rates.<sup><xref ref-type="bibr" rid="bibr16-0272989X13475719">16</xref>,<xref ref-type="bibr" rid="bibr23-0272989X13475719">23</xref></sup> However, the present study intended to implement the bivariate model of <xref ref-type="disp-formula" rid="disp-formula2-0272989X13475719">Equation 2</xref> directly, and the study results indicate that this is well possible.</p>
+</sec>
+<sec id="section22-0272989X13475719">
+<title>Code Extensions</title>
+<p>The presented SAS PROC MCMC code can be extended to include covariates for meta-regression.<sup><xref ref-type="bibr" rid="bibr2-0272989X13475719">2</xref>,<xref ref-type="bibr" rid="bibr24-0272989X13475719">24</xref><xref ref-type="bibr" rid="bibr25-0272989X13475719"/>–<xref ref-type="bibr" rid="bibr26-0272989X13475719">26</xref></sup> For this purpose it is helpful to center the covariates by subtracting their mean, since this improves mixing and convergence of the Markov chains.<sup><xref ref-type="bibr" rid="bibr10-0272989X13475719">10</xref></sup> The presented code can also be modified for multivariate meta-analysis, for example, using 3×3 count data. Such code extensions will be presented in ongoing meta-analyses that use them.</p>
+</sec>
+</sec>
+<sec id="section23-0272989X13475719" sec-type="conclusions">
+<title>Conclusions</title>
+<p>As alternative to a WinBUGS approach, the Bayesian SAS PROC MCMC is well-suited for bivariate random-effects meta-analysis of sensitivity and specificity.</p>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="supplementary-material">
+<p>Supplementary material for this article is available on the <italic>Medical Decision Making</italic> Web site at <ext-link ext-link-type="uri" xlink:href="http://mdm.sagepub.com/supplemental">http://mdm.sagepub.com/supplemental</ext-link>.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0272989X13475719">
+<label>1.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Armitage</surname><given-names>P</given-names></name>
+<name><surname>Berry</surname><given-names>G</given-names></name>
+</person-group>. <source>Statistical Methods in Medical Research</source>. <edition>3rd ed.</edition> <publisher-loc>Oxford, UK</publisher-loc>: <publisher-name>Blackwell Science</publisher-name>; <year>1994</year>.</citation>
+</ref>
+<ref id="bibr2-0272989X13475719">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Harbord</surname><given-names>RM</given-names></name>
+<name><surname>Deeks</surname><given-names>JJ</given-names></name>
+<name><surname>Egger</surname><given-names>M</given-names></name>
+<name><surname>Whiting</surname><given-names>P</given-names></name>
+<name><surname>Sterne</surname><given-names>JA</given-names></name>
+</person-group>. <article-title>A unification of models for meta-analysis of diagnostic accuracy studies</article-title>. <source>Biostatistics</source>. <year>2007</year>;<volume>8</volume>:<fpage>239</fpage>–<lpage>51</lpage>.</citation>
+</ref>
+<ref id="bibr3-0272989X13475719">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Menke</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Bivariate random-effects meta-analysis of sensitivity and specificity with SAS PROC GLIMMIX</article-title>. <source>Methods Inf Med</source>. <year>2010</year>;<volume>49</volume>:<fpage>54</fpage>–<lpage>64</lpage>.</citation>
+</ref>
+<ref id="bibr4-0272989X13475719">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kardaun</surname><given-names>JWPF</given-names></name>
+<name><surname>Kardaun</surname><given-names>OJWF</given-names></name>
+</person-group>. <article-title>Comparative diagnostic performance of three radiological procedures for the detection of lumbar disk herniation</article-title>. <source>Methods Inf Med</source>. <year>1990</year>;<volume>29</volume>:<fpage>12</fpage>–<lpage>22</lpage>.</citation>
+</ref>
+<ref id="bibr5-0272989X13475719">
+<label>5.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Wang</surname><given-names>MC</given-names></name>
+<name><surname>Bushman</surname><given-names>BJ</given-names></name>
+</person-group>. <source>Integrating Results through Meta-analytic Review Using SAS Software</source>. <publisher-loc>Cary, NC</publisher-loc>: <publisher-name>SAS Institute</publisher-name>; <year>1999</year>.</citation>
+</ref>
+<ref id="bibr6-0272989X13475719">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Macaskill</surname><given-names>P</given-names></name>
+</person-group>. <article-title>Empirical Bayes estimates generated in a hierarchical summary ROC analysis agreed closely with those of a full Bayesian analysis</article-title>. <source>J Clin Epidemiol</source>. <year>2004</year>;<volume>57</volume>:<fpage>925</fpage>–<lpage>32</lpage>.</citation>
+</ref>
+<ref id="bibr7-0272989X13475719">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Harbord</surname><given-names>RM</given-names></name>
+<name><surname>Whiting</surname><given-names>P</given-names></name>
+<name><surname>Sterne</surname><given-names>JA</given-names></name>
+<etal/>
+</person-group>. <article-title>An empirical comparison of methods for meta-analysis of diagnostic accuracy showed hierarchical models are necessary</article-title>. <source>J Clin Epidemiol</source>. <year>2008</year>;<volume>61</volume>:<fpage>1095</fpage>–<lpage>103</lpage>.</citation>
+</ref>
+<ref id="bibr8-0272989X13475719">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Leeflang</surname><given-names>MM</given-names></name>
+<name><surname>Deeks</surname><given-names>JJ</given-names></name>
+<name><surname>Gatsonis</surname><given-names>C</given-names></name>
+<name><surname>Bossuyt</surname><given-names>PM</given-names></name>
+</person-group>. <article-title>Systematic reviews of diagnostic test accuracy</article-title>. <source>Ann Intern Med</source>. <year>2008</year>;<volume>149</volume>:<fpage>889</fpage>–<lpage>97</lpage>.</citation>
+</ref>
+<ref id="bibr9-0272989X13475719">
+<label>9.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Rutter</surname><given-names>CM</given-names></name>
+<name><surname>Gatsonis</surname><given-names>CA</given-names></name>
+</person-group>. <article-title>A hierarchical regression approach to meta-analysis of diagnostic test accuracy evaluations</article-title>. <source>Stat Med</source>. <year>2001</year>;<volume>20</volume>:<fpage>2865</fpage>–<lpage>84</lpage>.</citation>
+</ref>
+<ref id="bibr10-0272989X13475719">
+<label>10.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Dobson</surname><given-names>AJ</given-names></name>
+<name><surname>Barnett</surname><given-names>AG</given-names></name>
+</person-group>. <source>An Introduction to Generalized Linear Models</source>. <edition>3rd ed.</edition> <publisher-loc>Boca Raton, FL</publisher-loc>: <publisher-name>CRC Press, Chapman &amp; Hall</publisher-name>; <year>2008</year>.</citation>
+</ref>
+<ref id="bibr11-0272989X13475719">
+<label>11.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lunn</surname><given-names>DJ</given-names></name>
+<name><surname>Thomas</surname><given-names>A</given-names></name>
+<name><surname>Best</surname><given-names>N</given-names></name>
+<name><surname>Spiegelhalter</surname><given-names>D</given-names></name>
+</person-group>. <article-title>WinBUGS—a Bayesian modelling framework: concepts, structure, and extensibility</article-title>. <source>Stat Comput</source>. <year>2000</year>;<volume>10</volume>:<fpage>325</fpage>–<lpage>37</lpage>.</citation>
+</ref>
+<ref id="bibr12-0272989X13475719">
+<label>12.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>F</given-names></name>
+</person-group>. <article-title>The RANDOM statement and more: moving on with PROC MCMC. SAS Global Forum 2011, paper 334-2011</article-title>. <publisher-loc>Cary, NC</publisher-loc>: <publisher-name>SAS Institute</publisher-name>. Available from: URL: <ext-link ext-link-type="uri" xlink:href="http://support.sas.com/resources/papers/proceedings11/334-2011.pdf">http://support.sas.com/resources/papers/proceedings11/334-2011.pdf</ext-link>.</citation>
+</ref>
+<ref id="bibr13-0272989X13475719">
+<label>13.</label>
+<citation citation-type="web">
+<collab>SAS/STAT 9.3 user’s guide</collab>. <article-title>PROC MCMC</article-title>. Available from: URL: <ext-link ext-link-type="uri" xlink:href="http://support.sas.com/documentation/cdl/en/statug/63962/HTML/default/viewer.htm#statug_mcmc_sect001.htm">http://support.sas.com/documentation/cdl/en/statug/63962/HTML/default/viewer.htm#statug_mcmc_sect001.htm</ext-link>.</citation>
+</ref>
+<ref id="bibr14-0272989X13475719">
+<label>14.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Littell</surname><given-names>RC</given-names></name>
+<name><surname>Milliken</surname><given-names>GA</given-names></name>
+<name><surname>Stroup</surname><given-names>WW</given-names></name>
+<name><surname>Wolfinger</surname><given-names>RD</given-names></name>
+<name><surname>Schabenberger</surname><given-names>O</given-names></name>
+</person-group>. <source>SAS for Mixed Models</source>. <edition>2nd ed.</edition> <publisher-loc>Cary, NC</publisher-loc>: <publisher-name>SAS Institute</publisher-name>; <year>2006</year>.</citation>
+</ref>
+<ref id="bibr15-0272989X13475719">
+<label>15.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Jones</surname><given-names>A</given-names></name>
+<name><surname>Huddleston</surname><given-names>E</given-names></name>
+</person-group>. <source>SAS/STAT 9.2 user’s guide</source>. <edition>2nd ed.</edition> <publisher-loc>Cary, NC</publisher-loc>: <publisher-name>SAS Institute</publisher-name>; <year>2009</year>. <article-title>Available from: URL:</article-title> <ext-link ext-link-type="uri" xlink:href="http://support.sas.com">http://support.sas.com</ext-link>.</citation>
+</ref>
+<ref id="bibr16-0272989X13475719">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Reitsma</surname><given-names>JB</given-names></name>
+<name><surname>Glas</surname><given-names>AS</given-names></name>
+<name><surname>Rutjes</surname><given-names>AW</given-names></name>
+<name><surname>Scholten</surname><given-names>RJ</given-names></name>
+<name><surname>Bossuyt</surname><given-names>PM</given-names></name>
+<name><surname>Zwinderman</surname><given-names>AH</given-names></name>
+</person-group>. <article-title>Bivariate analysis of sensitivity and specificity produces informative summary measures in diagnostic reviews</article-title>. <source>J Clin Epidemiol</source>. <year>2005</year>;<volume>58</volume>:<fpage>982</fpage>–<lpage>90</lpage>.</citation>
+</ref>
+<ref id="bibr17-0272989X13475719">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Scheidler</surname><given-names>J</given-names></name>
+<name><surname>Hricak</surname><given-names>H</given-names></name>
+<name><surname>Yu</surname><given-names>KK</given-names></name>
+<name><surname>Subak</surname><given-names>L</given-names></name>
+<name><surname>Segal</surname><given-names>MR</given-names></name>
+</person-group>. <article-title>Radiological evaluation of lymph node metastases in patients with cervical cancer: a meta-analysis</article-title>. <source>JAMA</source>. <year>1997</year>;<volume>278</volume>:<fpage>1096</fpage>–<lpage>101</lpage>.</citation>
+</ref>
+<ref id="bibr18-0272989X13475719">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Biggerstaff</surname><given-names>BJ</given-names></name>
+</person-group>. <article-title>Comparing diagnostic tests: a simple graphic using likelihood ratios</article-title>. <source>Stat Med</source>. <year>2000</year>;<volume>19</volume>:<fpage>649</fpage>–<lpage>63</lpage>.</citation>
+</ref>
+<ref id="bibr19-0272989X13475719">
+<label>19.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Menke</surname><given-names>J</given-names></name>
+<name><surname>Larsen</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Meta-analysis: accuracy of contrast-enhanced magnetic resonance angiography for assessing steno-occlusions in peripheral arterial disease</article-title>. <source>Ann Intern Med</source>. <year>2010</year>;<volume>153</volume>:<fpage>325</fpage>–<lpage>34</lpage>.</citation>
+</ref>
+<ref id="bibr20-0272989X13475719">
+<label>20.</label>
+<citation citation-type="web">
+<collab>WinBUGS with DoodleBUGS, version 1.4.3</collab>. <publisher-name>Imperial College and MRC</publisher-name>, <publisher-loc>UK</publisher-loc>. Available from: URL: <ext-link ext-link-type="uri" xlink:href="http://www.mrc-bsu.cam.ac.uk/bugs">http://www.mrc-bsu.cam.ac.uk/bugs</ext-link>.</citation>
+</ref>
+<ref id="bibr21-0272989X13475719">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Bland</surname><given-names>JM</given-names></name>
+<name><surname>Altman</surname><given-names>DG</given-names></name>
+</person-group>. <article-title>Statistical methods for assessing agreement between two methods of clinical measurement</article-title>. <source>Lancet</source>. <year>1986</year>;<volume>1</volume>:<fpage>307</fpage>–<lpage>10</lpage>.</citation>
+</ref>
+<ref id="bibr22-0272989X13475719">
+<label>22.</label>
+<citation citation-type="web">
+<collab>Review Manager (RevMan) version 5.0.23</collab>. <publisher-loc>Copenhagen</publisher-loc>: <publisher-name>The Nordic Cochrane Centre, The Cochrane Collaboration</publisher-name>; <year>2009</year>. <article-title>Available from: URL:</article-title> <ext-link ext-link-type="uri" xlink:href="http://www.ccims.net/RevMan/RevMan5">http://www.ccims.net/RevMan/RevMan5</ext-link>.</citation>
+</ref>
+<ref id="bibr23-0272989X13475719">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Verde</surname><given-names>PE</given-names></name>
+</person-group>. <article-title>Meta-analysis of diagnostic test data: a bivariate Bayesian modeling approach</article-title>. <source>Stat Med</source>. <year>2010</year>;<volume>29</volume>:<fpage>3088</fpage>–<lpage>102</lpage>.</citation>
+</ref>
+<ref id="bibr24-0272989X13475719">
+<label>24.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Menke</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Diagnostic accuracy of contrast-enhanced MR angiography in severe carotid stenosis: meta-analysis with metaregression of different techniques</article-title>. <source>Eur Radiol</source>. <year>2009</year>;<volume>19</volume>:<fpage>2204</fpage>–<lpage>16</lpage>.</citation>
+</ref>
+<ref id="bibr25-0272989X13475719">
+<label>25.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Menke</surname><given-names>J</given-names></name>
+<name><surname>Larsen</surname><given-names>J</given-names></name>
+<name><surname>Kallenberg</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Diagnosing cerebral aneurysms by computed tomographic angiography: meta-analysis</article-title>. <source>Ann Neurol</source>. <year>2011</year>;<volume>69</volume>:<fpage>646</fpage>–<lpage>54</lpage>.</citation>
+</ref>
+<ref id="bibr26-0272989X13475719">
+<label>26.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Menke</surname><given-names>J</given-names></name>
+</person-group>. <article-title>Diagnostic accuracy of multidetector CT in acute mesenteric ischemia: systematic review and meta-analysis</article-title>. <source>Radiology</source>. <year>2010</year>;<volume>256</volume>:<fpage>93</fpage>–<lpage>101</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

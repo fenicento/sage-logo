@@ -1,0 +1,1424 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">MDM</journal-id>
+<journal-id journal-id-type="hwp">spmdm</journal-id>
+<journal-id journal-id-type="nlm-ta">Med Decis Making</journal-id>
+<journal-title>Medical Decision Making</journal-title>
+<issn pub-type="ppub">0272-989X</issn>
+<issn pub-type="epub">1552-681X</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage CA: Los Angeles, CA</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0272989X12457243</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0272989X12457243</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Original Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>A Pilot Study Using Machine Learning and Domain Knowledge to Facilitate Comparative Effectiveness Review Updating</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Dalal</surname><given-names>Siddhartha R.</given-names></name>
+<degrees>PhD</degrees>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Shekelle</surname><given-names>Paul G.</given-names></name>
+<degrees>MD, PhD</degrees>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Hempel</surname><given-names>Susanne</given-names></name>
+<degrees>PhD</degrees>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Newberry</surname><given-names>Sydne J.</given-names></name>
+<degrees>PhD</degrees>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Motala</surname><given-names>Aneesa</given-names></name>
+<degrees>BA</degrees>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Shetty</surname><given-names>Kanaka D.</given-names></name>
+<degrees>MD, MS</degrees>
+</contrib>
+</contrib-group>
+<aff id="aff1-0272989X12457243">Southern California Evidence-based Practice Center, RAND Corporation, Santa Monica, CA (SRD, PGS, SH, SJN, AM, KDS)</aff>
+<aff id="aff2-0272989X12457243">Greater Los Angeles Veterans Affairs Healthcare System, Los Angeles, CA (PGS)</aff>
+<author-notes>
+<corresp id="corresp1-0272989X12457243">Siddhartha R. Dalal, PhD, RAND Corporation, 1776 Main Street, Santa Monica, CA 90401; e-mail: <email>sdalal@rand.org</email>.</corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>33</volume>
+<issue>3</issue>
+<issue-title>Special Issue: Health Technology Assessment to Inform Policy</issue-title>
+<fpage>343</fpage>
+<lpage>355</lpage>
+<history>
+<date date-type="received">
+<day>21</day>
+<month>3</month>
+<year>2012</year>
+</date>
+<date date-type="accepted">
+<day>29</day>
+<month>5</month>
+<year>2012</year>
+</date>
+</history>
+<abstract>
+<p><bold>Background.</bold> Comparative effectiveness and systematic reviews require frequent and time-consuming updating. Results of earlier screening should be useful in reducing the effort needed to screen relevant articles. <bold>Methods.</bold> We collected 16,707 PubMed citation classification decisions from 2 comparative effectiveness reviews: interventions to prevent fractures in low bone density (LBD) and off-label uses of atypical antipsychotic drugs (AAP). We used previously written search strategies to guide extraction of a limited number of explanatory variables pertaining to the intervention, outcome, and study design. We empirically derived statistical models (based on a sparse generalized linear model with convex penalties [GLMnet] and a gradient boosting machine [GBM]) that predicted article relevance. We evaluated model sensitivity, positive predictive value (PPV), and screening workload reductions using 11,003 PubMed citations retrieved for the LBD and AAP updates. <bold>Results.</bold> GLMnet-based models performed slightly better than GBM-based models. When attempting to maximize sensitivity for all relevant articles, GLMnet-based models achieved high sensitivities (0.99 and 1.0 for AAP and LBD, respectively) while reducing projected screening by 55.4% and 63.2%. The GLMnet-based model yielded sensitivities of 0.921 and 0.905 and PPVs of 0.185 and 0.102 when predicting articles relevant to the AAP and LBD efficacy/effectiveness analyses, respectively (using a threshold of <italic>P</italic> ≥ 0.02). GLMnet performed better when identifying adverse effect relevant articles for the AAP review (sensitivity = 0.981) than for the LBD review (0.685). The system currently requires MEDLINE-indexed articles. <bold>Conclusions.</bold> We evaluated statistical classifiers that used previous classification decisions and explanatory variables derived from MEDLINE indexing terms to predict inclusion decisions. This pilot system reduced workload associated with screening 2 simulated comparative effectiveness review updates by more than 50% with minimal loss of relevant articles.</p>
+</abstract>
+<kwd-group>
+<kwd>machine learning</kwd>
+<kwd>comparative effectiveness reviews</kwd>
+<kwd>text classification</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<p>Clinical providers, researchers, and government agencies use comparative effectiveness and other systematic reviews to determine appropriate clinical practice and research needs. Several experts have suggested that systematic reviews should be updated at least every 2 years to maintain their utility, although this is not common practice.<sup><xref ref-type="bibr" rid="bibr1-0272989X12457243">1</xref><xref ref-type="bibr" rid="bibr2-0272989X12457243"/><xref ref-type="bibr" rid="bibr3-0272989X12457243"/><xref ref-type="bibr" rid="bibr4-0272989X12457243"/><xref ref-type="bibr" rid="bibr5-0272989X12457243"/>–<xref ref-type="bibr" rid="bibr6-0272989X12457243">6</xref></sup> One barrier to more timely reviews remains the substantial cost involved in repeating the entire process of literature retrieval and data extraction (which may exceed that needed for the first review).<sup><xref ref-type="bibr" rid="bibr7-0272989X12457243">7</xref><xref ref-type="bibr" rid="bibr8-0272989X12457243"/><xref ref-type="bibr" rid="bibr9-0272989X12457243"/><xref ref-type="bibr" rid="bibr10-0272989X12457243"/>–<xref ref-type="bibr" rid="bibr11-0272989X12457243">11</xref></sup> Researchers often filter citations in 2 labor-intensive stages: first, researchers scan titles and/or abstracts to exclude obviously irrelevant articles; second, researchers use the full text to exclude additional studies after reading or screening the full text.<sup><xref ref-type="bibr" rid="bibr8-0272989X12457243">8</xref><xref ref-type="bibr" rid="bibr9-0272989X12457243"/>–<xref ref-type="bibr" rid="bibr10-0272989X12457243">10</xref></sup> In many comparative effectiveness reviews, researchers retain articles that are useful for analyses of effectiveness.</p>
+<p>To reduce such effort in screening systematic reviews, several studies described technologies aimed at limiting the number of retrieved citations that require initial human review.<sup><xref ref-type="bibr" rid="bibr12-0272989X12457243">12</xref><xref ref-type="bibr" rid="bibr13-0272989X12457243"/><xref ref-type="bibr" rid="bibr14-0272989X12457243"/><xref ref-type="bibr" rid="bibr15-0272989X12457243"/><xref ref-type="bibr" rid="bibr16-0272989X12457243"/><xref ref-type="bibr" rid="bibr17-0272989X12457243"/>–<xref ref-type="bibr" rid="bibr18-0272989X12457243">18</xref></sup> These studies typically extracted large numbers of features (explanatory variables) based on variants of a “bag-of-words” approach. In this approach, each document is given a set of explanatory variables representing the presence or frequency of text and Medical Subject Heading (MeSH) indexing terms. Some studies added domain knowledge when classifying features using, for example, United Medical Language System (UMLS).<sup><xref ref-type="bibr" rid="bibr17-0272989X12457243">17</xref></sup> Researchers have also used numerous algorithms to model relevance as a function of these many thousands of potential explanatory variables, including variants of a support vector machine (SVM),<sup><xref ref-type="bibr" rid="bibr13-0272989X12457243">13</xref>,<xref ref-type="bibr" rid="bibr14-0272989X12457243">14</xref>,<xref ref-type="bibr" rid="bibr17-0272989X12457243">17</xref>,<xref ref-type="bibr" rid="bibr18-0272989X12457243">18</xref></sup> a voting perceptron-based classifier,<sup><xref ref-type="bibr" rid="bibr12-0272989X12457243">12</xref></sup> naïve Bayes,<sup><xref ref-type="bibr" rid="bibr14-0272989X12457243">14</xref>,<xref ref-type="bibr" rid="bibr17-0272989X12457243">17</xref></sup> and algorithms related to boosting.<sup><xref ref-type="bibr" rid="bibr14-0272989X12457243">14</xref>,<xref ref-type="bibr" rid="bibr17-0272989X12457243">17</xref></sup> In one study on predicting articles relevant to systematic reviews, the authors used a voting perceptron-based classifier to model relevance as a function of these explanatory variables.<sup><xref ref-type="bibr" rid="bibr12-0272989X12457243">12</xref></sup> The study reported work reductions for 11 of the 15 topics while maintaining 95% sensitivity for relevant articles. A later related study used a classifier based on the SVM-light algorithm as well as a bag-of-words feature set to generate predictions prospectively (i.e., the approach used articles included in earlier systematic reviews to classify articles retrieved for updated reviews).<sup><xref ref-type="bibr" rid="bibr16-0272989X12457243">16</xref></sup> The investigators found that predictive performance as measured by area under the receiver operating curve (AUC) was stable in the update when compared to predictions generated for training data.</p>
+<p>Another group used an active learning strategy to aid the creation of new systematic reviews.<sup><xref ref-type="bibr" rid="bibr13-0272989X12457243">13</xref>,<xref ref-type="bibr" rid="bibr18-0272989X12457243">18</xref></sup> Similar to the above study, the model predicts relevance based on explanatory variables derived from a bag-of-words approach. However, they used a process that interactively built a classifier using expert decisions on the most uncertain cases; their underlying hypothesis was that decisions chosen on the most uncertain instances would produce better information for a given cost (reviewer time). They were able to reduce the article screening burden in a simulated de novo review by roughly 50% in 2 of 3 reviews while retaining all relevant articles.</p>
+<p>While these earlier machine learning studies using thousands of explanatory variables have met with some success, in other fields, model parsimony has contributed toward improving out-of-sample predictions.<sup><xref ref-type="bibr" rid="bibr19-0272989X12457243">19</xref><xref ref-type="bibr" rid="bibr20-0272989X12457243"/>–<xref ref-type="bibr" rid="bibr21-0272989X12457243">21</xref></sup> We hypothesized that the effort MEDLINE researchers put into indexing key concepts with subheadings and the domain knowledge within earlier comparative effectiveness reviews can be leveraged for generating parsimonious models with substantial predictive power. MeSH indexing identifies key concepts in articles and further describes those concepts with descriptive subheadings (“chemically induced,” “adverse effects,” “epidemiology,” etc.). We hypothesized that extracting data solely on a few key variables (including publication type, intervention, and outcome) could have sufficient power, counterbalancing the slightly greater upfront time required for identifying key concepts beforehand. Earlier, we described using this approach to extract articles that tested whether particular drugs caused any type of adverse effect (AE).<sup><xref ref-type="bibr" rid="bibr22-0272989X12457243">22</xref></sup> In this study, we modified our earlier approach to make it useful for locating studies relevant to comparative effectiveness reviews, which analyze all articles assessing either effectiveness or AEs that use particular study designs.</p>
+<p>We tested this hypothesis in a pilot study that used 2 comparative effectiveness reviews conducted by the Southern California Evidence-based Practice Center (SCEPC), under contract to the Agency for Healthcare Research and Quality (AHRQ). The first concerned the prevention of fractures in patients with osteopenia or osteoporosis (low bone density [LBD]).<sup><xref ref-type="bibr" rid="bibr9-0272989X12457243">9</xref>,<xref ref-type="bibr" rid="bibr10-0272989X12457243">10</xref></sup> The second review covered off-label indications for atypical antipsychotic drugs (AAP).<sup><xref ref-type="bibr" rid="bibr8-0272989X12457243">8</xref></sup> For both reviews, we aimed to use the earlier study’s reviewer decisions to predict whether updated search results would have been judged irrelevant by the second-stage filter or would have been classified as relevant for either the effectiveness or AE analyses.</p>
+<p>The key challenge in this study is that the training (original search) and test (updated search) data are independent samples. In both reviews, the conditions and interventions of interest, research personnel, and study objectives changed between the initial and update reports. In other contexts, the general problem of training data becoming inapplicable to test data over time has been described as concept drift.<sup><xref ref-type="bibr" rid="bibr23-0272989X12457243">23</xref><xref ref-type="bibr" rid="bibr24-0272989X12457243"/><xref ref-type="bibr" rid="bibr25-0272989X12457243"/><xref ref-type="bibr" rid="bibr26-0272989X12457243"/>–<xref ref-type="bibr" rid="bibr27-0272989X12457243">27</xref></sup> Researchers have devised several strategies to address this problem including giving weight to more recent training observations or to the small number of classified update observations (if present). An earlier study explored how well an SVM-based machine learning framework would perform on a series of simulated review updates (some of whose search criteria changed significantly) without additional accommodations to the update.<sup><xref ref-type="bibr" rid="bibr16-0272989X12457243">16</xref></sup> They found that their framework performed well in many cases, although they noted that it was uncertain whether reviewers would be satisfied with their prospective performance in all cases. In this case, the LBD and AAP researchers changed their objectives substantially when conducting the updates; also, they had not classified additional citations from either update. To address this substantial concept drift without additional data, we represented specific drugs and outcomes as more abstract concepts such as “intervention” and “outcome.” Our underlying hypothesis was that more general attributes would be stable over time, although specific features might change. In the remainder of the article, we describe this method in detail and simulate how such a system might perform in predicting articles that would have passed the second-stage screening process and been included in the update report for either AEs or efficacy/effectiveness.</p>
+<sec id="section1-0272989X12457243" sec-type="methods">
+<title>Methods</title>
+<sec id="section2-0272989X12457243">
+<title>Data Sources</title>
+<p>We obtained PubMed citations retrieved by the SCEPC (until January 2011) for the LBD and AAP reviews. We excluded PubMed citations that had not yet been assigned MeSH and publication type terms as well as articles obtained exclusively from non-PubMed databases (such as PsycInfo and EMBASE). Excluding non-PubMed databases is a limitation whose importance varied by study. For the LBD update, all relevant studies were found in PubMed. For the AAP update, 31 articles included in the final report were not located in PubMed. Of those, 14 were scientific information packets (which will always require human review), 9 were identified by mining references of included reports, and 8 were found in poster presentations.</p>
+<p>The methodologies for both LBD and AAP reviews have been discussed extensively in other reports.<sup><xref ref-type="bibr" rid="bibr8-0272989X12457243">8</xref><xref ref-type="bibr" rid="bibr9-0272989X12457243"/>–<xref ref-type="bibr" rid="bibr10-0272989X12457243">10</xref></sup> Briefly, in the LBD study, the interventions consisted of exercise therapy and multiple drugs (including bisphosphonate drugs, calcitonin, selective estrogen receptor modulators, parathyroid hormone derivatives, and menopausal hormone therapy). The primary outcomes of interest were fractures and AEs, but the search strategy also retrieved articles discussing predisposing conditions such as osteoporosis and osteopenia to improve yield. The initial search (1966-2006) yielded 14,700 articles with full MEDLINE citations, and the updated search (containing a modified set of interventions and new AEs) retrieved 7051 articles with full MEDLINE citations (spanning 2006-2010). In the original AAP review, the interventions consisted of atypical antipsychotic drugs, including olanzapine, risperidone, quetiapine, and clozapine. Outcomes of interest included dementia, obsessive-compulsive disorder, and posttraumatic stress disorder, and outcomes could be excluded if reclassified by the US Food and Drug Administration as an approved indication. The search conducted in 2006 yielded 1307 MEDLINE citations requiring human classification. The updated search added outcomes such as anorexia nervosa, bulimia, and substance abuse to the list of off-label uses under consideration; 3591 MEDLINE citations were retrieved. For both studies, articles retrieved for update and original searches were mutually exclusive.</p>
+<p>During the initial modeling phase, we had access to second-stage researcher decisions on the original search results (relevant for AE analysis, effectiveness analysis, or both). The LBD training document literature included 382 relevant articles: 218 for effectiveness and 279 articles for AEs. The LBD update body of literature included 127 relevant articles: 63 for effectiveness and 92 for AEs. The AAP training literature contained 98 relevant articles: 82 for effectiveness and 91 for AEs. The AAP update contained 116 relevant articles: 101 for effectiveness and 105 for AEs. Of note, at the second stage, articles were excluded for more critical reasons (e.g., inappropriate study design, inappropriate intervention, etc.) and reasons of timing (duplicate data, inclusion in prior meta-analysis). We considered the latter articles to have passed a second stage of review because their study design was fundamentally sound.</p>
+</sec>
+<sec id="section3-0272989X12457243">
+<title>Processing MEDLINE Citations</title>
+<p>We aimed to construct a limited set of important variables from MEDLINE citations, which usually contain 10 to 15 indexing terms that may be modified by 1 or more subheadings. <xref ref-type="fig" rid="fig1-0272989X12457243">Figure 1</xref> shows a stylized example adapted from the LBD search strategy and 1 citation.<sup><xref ref-type="bibr" rid="bibr9-0272989X12457243">9</xref>,<xref ref-type="bibr" rid="bibr28-0272989X12457243">28</xref></sup> Data related to generic study characteristics (such as randomized controlled trial [RCT] or human study) were extracted from all studies. We first identified key MeSH terms by programmatically matching all terms in previously constructed search strategies to terms within the MeSH database.<sup><xref ref-type="bibr" rid="bibr29-0272989X12457243">29</xref></sup> One author divided each search strategy into terms related to interventions and terms related to outcomes. This task was made easier by the fact that outcome and intervention terms were usually grouped within each search. For example, one search in the original LBD review was “(osteoporosis OR osteopenia OR osteopaenia OR fracture* OR bone mineral OR fractures[mh] OR bone density) AND (raloxifene* OR evista OR tamoxifen* OR nolvadex OR emblon OR fentamox OR soltamox OR tamofen).”<sup><xref ref-type="bibr" rid="bibr9-0272989X12457243">9</xref></sup> Hence, we could identify interventions (raloxifene, etc.) and outcomes (osteoporosis, osteopenia, etc.) without substantial effort. We then created a set of 46 binary explanatory variables based on whether the exact intervention or outcome terms were present in the MEDLINE citation and linked to particular subheadings. We further created a set of 46 matching explanatory variables based on whether other interventions or outcomes (that are unrelated to the outcomes and interventions of interest) were present in the MEDLINE citation and linked to particular subheadings. This might indicate that other diseases or interventions were of primary importance in the article.</p>
+<fig id="fig1-0272989X12457243" position="float">
+<label>Figure 1</label>
+<caption><p>MEDLINE citation processing example.</p></caption>
+<graphic xlink:href="10.1177_0272989X12457243-fig1.tif"/>
+</fig>
+<p>In addition, we created a set of 29 binary explanatory variables related to general article characteristics including demographic group (gender and age), treatment target (human, animal, and others), and publication type (review, RCT, meta-analysis, and others). Finally, we created variables indicating whether any intervention or outcome was explicitly mentioned in the article’s title or indexing terms, whether the article was particularly short (1 or 2 pages long), and whether “randomized controlled trial” or “meta-analysis” was mentioned in the title or abstract. In total, we used only these 121 variables instead of a text-based approach that might create thousands of explanatory variables along with a greater risk for overfitting and possible loss of out-of-sample predictive power.</p>
+</sec>
+<sec id="section4-0272989X12457243">
+<title>Statistical Classification</title>
+<p>We created a series of models based on all combinations of the following: 2 outcomes (inclusion in the final report for efficacy or AEs), training data with associated explanatory variables from 2 reviews (AAP and LBD), and 2 statistical learning algorithms (gradient boosting machine [GBM] and generalized linear model with convex penalties [GLMnet]). After deriving each model empirically using training data from the original review, we generated predictions for articles in each corresponding update. We also evaluated how well GBM and GLMnet could predict inclusion for any outcome (efficacy/effectiveness or AEs) in a given review update (AAP or LBD). Each step is explained in detail below.</p>
+<p>We modeled relevance as a function of the explanatory variables discussed above while solely using those articles retrieved in the original search (1966-2005/6 literature: the training data). To simulate a true update in which the update search results would not have been known, we blinded the statistical learning model to researcher decisions from study updates. We constructed separate models for predicting inclusion in effectiveness or AE analyses because article characteristics predictive of relevance likely differed substantially between the 2 analyses. Then, we generated a final prediction using the maximum prediction from the effectiveness and AE analyses. This analysis is most relevant to current AHRQ practice for comparative effectiveness reviews because automated processes will need to capture both effectiveness and AE analyses. However, we also evaluated our models’ performance in predicting inclusion in either analysis because other researchers may be interested in 1 type of study.</p>
+<p>We first evaluated the GBM statistical method, a nonparametric tree-based prediction approach based on boosting.<sup><xref ref-type="bibr" rid="bibr30-0272989X12457243">30</xref>,<xref ref-type="bibr" rid="bibr31-0272989X12457243">31</xref></sup> In the general boosting framework, models combine weak (i.e., moderately inaccurate) classifiers iteratively into a strong final classifier. GBM is a specific implementation of boosting and consists of a general, automated, data-adaptive modeling algorithm that can estimate the nonlinear relationship between a variable of interest and a large number of covariates using a sequence of simple classifiers combined in an optimal way. The algorithm generates a large sequence of simple classification trees. Each tree is fit to the prediction residuals for the preceding tree (i.e., the deviations between the observed and predicted values) (see <xref ref-type="fig" rid="fig2-0272989X12457243">Figure 2</xref> for an example tree). The GBM algorithm also assigns each tree a weight computed to minimize the entire model’s overall loss function (in this case, based on the logistic function). The final model therefore includes all simple (weak) models, but each is weighted proportionally to accuracy. We validated the results on training data using 5-fold cross-validation (which reduces overfitting). Each fold of cross-validation randomly selects 20% of the data to serve as test data; then, the process fits a model on the remaining 80% of the data; finally, model performance is measured on the reserved test data. One ultimately finds the model, which would minimize the prediction error averaged across all 5 folds and models.<sup><xref ref-type="bibr" rid="bibr19-0272989X12457243">19</xref></sup></p>
+<fig id="fig2-0272989X12457243" position="float">
+<label>Figure 2</label>
+<caption><p>Example of gradient boosting machine tree.</p></caption>
+<graphic xlink:href="10.1177_0272989X12457243-fig2.tif"/>
+</fig>
+<p>We also tested GLMnet, which fits a linear logistic model with convex penalty on the magnitude of coefficients.<sup><xref ref-type="bibr" rid="bibr19-0272989X12457243">19</xref>,<xref ref-type="bibr" rid="bibr32-0272989X12457243">32</xref></sup> A standard linear model would model relevance as a function of all explanatory variables, but this may lead to overfitting. The LASSO shrinkage and selection method for linear regression minimizes the usual sum of squared errors, with a bound on the sum of the absolute values of the coefficients.<sup><xref ref-type="bibr" rid="bibr19-0272989X12457243">19</xref></sup> The GLMnet method shrinks coefficients of less important variables to zero with a more general convex penalty, resulting in fewer independent variables that often have better out-of-sample predictive power. GLMnet also employs cyclical coordinate descent (computed along a regularization path) to efficiently solve these problems.<sup><xref ref-type="bibr" rid="bibr32-0272989X12457243">32</xref></sup> Of note, we considered using SVM (and other methods), but we chose GLMnet and GBM based on our prior experience and because several reports suggested that it would be unlikely that SVM would be markedly superior to GBM or GLMnet.<sup><xref ref-type="bibr" rid="bibr14-0272989X12457243">14</xref>,<xref ref-type="bibr" rid="bibr33-0272989X12457243">33</xref>,<xref ref-type="bibr" rid="bibr34-0272989X12457243">34</xref></sup></p>
+<p>We used both GLMnet and GBM to generate prediction scores (probabilities) for articles in updated searches (the test data). We compared these predictions against “gold-standard” independent decisions from the SCEPC at various thresholds; that is, if a relevant article was assigned a probability of 0.015, it would be counted as a true positive at threshold <italic>P</italic> ≥ 0.01 and a false negative at a threshold of <italic>P</italic> ≥ 0.05. We then calculated the following performance metrics at various thresholds: recall/sensitivity (percentage of relevant articles retrieved), precision/positive predictive value (PPV: percentage of predicted relevant articles that were truly relevant), and simulated workload saved (i.e., percentage of simulated literature search screening reduced by using the predictive model exclusively).</p>
+<p>Of note, there is no perfect threshold because neither error minimization nor sensitivity maximization are absolute goals; a strategy that rejected all articles might have an error rate of 1% (and an excessive false-negative rate), while a strategy accepting all articles would have 100% sensitivity (and an excessive false-positive rate).<sup><xref ref-type="bibr" rid="bibr12-0272989X12457243">12</xref>,<xref ref-type="bibr" rid="bibr18-0272989X12457243">18</xref></sup> To balance these objectives and conform to researcher preferences, we evaluated performance at multiple probability thresholds. We derived sensitivity-maximizing thresholds based on actual performance in the original AAP and LBD studies; we also judged results against a threshold of <italic>P</italic> ≥ 0.02, which appeared to have preserved good sensitivity while substantially reducing the error rate. We also compared the performance of GLMnet and GBM using their receiver operating characteristic (ROC) curves and via a nonparametric approach.<sup><xref ref-type="bibr" rid="bibr35-0272989X12457243">35</xref></sup></p>
+<p>To estimate model variability, we calculated bootstrapped standard errors for the sensitivity and PPV results.<sup><xref ref-type="bibr" rid="bibr36-0272989X12457243">36</xref></sup> We derived models from 100 samples drawn with replacement from the original literature review articles; we used these bootstrapped models to generate independent predictions on the actual original and updated reports. We calculated standard errors from the resulting simulated sensitivity and PPV estimates. At plausible thresholds discussed in the report (<italic>P</italic> ≤ 0.1), the standard errors were extremely small (probably due to the large sample sizes of the training data used to fit the original models) and are not shown. For example, at a threshold of 0.1, the estimated sensitivity for LBD efficacy articles was 0.995, and the standard error was 0.0008. MEDLINE citations were retrieved in plain text format and parsed using Python 2.7.2 (Python Software Foundation, <ext-link ext-link-type="uri" xlink:href="http://python.org">http://python.org</ext-link>); all statistical modeling was conducted in R 2.10 (R Foundation, <ext-link ext-link-type="uri" xlink:href="http://www.r-project.org/">http://www.r-project.org/</ext-link>).</p>
+<p>This work was produced under contract for AHRQ, which evaluated the work using its own peer review system but did not participate in data acquisition, statistical analysis, or article preparation. This work was also funded in part by the RAND Corporation. The RAND Corporation played no role in the design or conduct of the study.</p>
+</sec>
+</sec>
+<sec id="section5-0272989X12457243" sec-type="results">
+<title>Results</title>
+<sec id="section6-0272989X12457243">
+<title>Literature Characteristics</title>
+<p><xref ref-type="table" rid="table1-0272989X12457243">Table 1</xref> shows the characteristics of the AAP and LBD literature searches, divided into original and updated searches. Substantial and statistically significant differences were observed between the means of variables in the original and updated searches for both LBD and AAP. This finding suggests that the composition of the search results differed substantially between the update and original searches in both studies, making modeling more difficult. <xref ref-type="table" rid="table1-0272989X12457243">Table 1</xref> demonstrates how characteristics may vary between different review topics (e.g., “RCT” and “Agent and toxicity”).</p>
+<table-wrap id="table1-0272989X12457243" position="float">
+<label>Table 1</label>
+<caption><p>AAP Characteristics: Original versus Update</p></caption>
+<graphic alternate-form-of="table1-0272989X12457243" xlink:href="10.1177_0272989X12457243-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="center" colspan="3">AAP<hr/></th>
+<th align="center" colspan="3">LBD<hr/></th>
+</tr>
+<tr>
+<th align="left">Variable</th>
+<th align="center">Original</th>
+<th align="center">Update</th>
+<th align="center"><italic>P</italic> Value for Comparison<sup><xref ref-type="table-fn" rid="table-fn2-0272989X12457243">a</xref></sup></th>
+<th align="center">Original</th>
+<th align="center">Update</th>
+<th align="center"><italic>P</italic> Value for Comparison<sup><xref ref-type="table-fn" rid="table-fn2-0272989X12457243">a</xref></sup></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No. of studies</td>
+<td>1307</td>
+<td>3591</td>
+<td/>
+<td>14,700</td>
+<td>7051</td>
+<td/>
+</tr>
+<tr>
+<td>Year, mean (range)</td>
+<td>2000.9</td>
+<td>2005.7</td>
+<td>&lt;0.001</td>
+<td>1997.6</td>
+<td>2007.5</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td/>
+<td>(1972-2006)</td>
+<td>(1988-2011)</td>
+<td/>
+<td>(1966-2009)</td>
+<td>(1997-2011)</td>
+<td/>
+</tr>
+<tr>
+<td>Any outcome in title</td>
+<td>0.331</td>
+<td>0.388</td>
+<td>&lt;0.001</td>
+<td>0.441</td>
+<td>0.345</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td>Any agent in title</td>
+<td>0.683</td>
+<td>0.551</td>
+<td>&lt;0.001</td>
+<td>0.393</td>
+<td>0.507</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td>Agent and administration</td>
+<td>0.194</td>
+<td>0.163</td>
+<td>0.011</td>
+<td>0.093</td>
+<td>0.173</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td>Agent and therapeutic use</td>
+<td>0.717</td>
+<td>0.65</td>
+<td>&lt;0.001</td>
+<td>0.265</td>
+<td>0.272</td>
+<td>0.318</td>
+</tr>
+<tr>
+<td>Agent and toxicity</td>
+<td>0.445</td>
+<td>0.381</td>
+<td>&lt;0.001</td>
+<td>0.078</td>
+<td>0.148</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td>Demographic tags include child</td>
+<td>0.178</td>
+<td>0.229</td>
+<td>&lt;0.001</td>
+<td>0.173</td>
+<td>0.14</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td>Outcome and complications</td>
+<td>0.08</td>
+<td>0.084</td>
+<td>0.681</td>
+<td>0.081</td>
+<td>0.077</td>
+<td>0.363</td>
+</tr>
+<tr>
+<td>Outcome and drug therapy</td>
+<td>0.415</td>
+<td>0.358</td>
+<td>&lt;0.001</td>
+<td>0.199</td>
+<td>0.177</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td>Outcome and prevention</td>
+<td>0.004</td>
+<td>0.011</td>
+<td>0.024</td>
+<td>0.177</td>
+<td>0.18</td>
+<td>0.691</td>
+</tr>
+<tr>
+<td>Outcome and psychology</td>
+<td>0.222</td>
+<td>0.18</td>
+<td>0.001</td>
+<td>0.005</td>
+<td>0.004</td>
+<td>0.743</td>
+</tr>
+<tr>
+<td>Other outcome and psychology</td>
+<td>0.233</td>
+<td>0.183</td>
+<td>&lt;0.001</td>
+<td>0.01</td>
+<td>0.011</td>
+<td>0.467</td>
+</tr>
+<tr>
+<td>Clinical trial</td>
+<td>0.287</td>
+<td>0.126</td>
+<td>&lt;0.001</td>
+<td>0.136</td>
+<td>0.039</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td>Comparative study</td>
+<td>0.198</td>
+<td>0.169</td>
+<td>0.02</td>
+<td>0.116</td>
+<td>0.077</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td>Meta-analysis</td>
+<td>0.018</td>
+<td>0.023</td>
+<td>0.377</td>
+<td>0.006</td>
+<td>0.017</td>
+<td>&lt;0.001</td>
+</tr>
+<tr>
+<td>RCT</td>
+<td>0.164</td>
+<td>0.14</td>
+<td>0.035</td>
+<td>0.105</td>
+<td>0.101</td>
+<td>0.366</td>
+</tr>
+<tr>
+<td>Text contains RCT</td>
+<td>0.102</td>
+<td>0.115</td>
+<td>0.2</td>
+<td>0.061</td>
+<td>0.087</td>
+<td>&lt;0.001</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-0272989X12457243">
+<p>Note: Each column (original and update) represents both excluded and relevant studies. AAP = atypical antipsychotic drug systematic review; LBD = low bone density systematic review; RCT = randomized controlled trial.</p>
+</fn>
+<fn id="table-fn2-0272989X12457243">
+<label>a.</label>
+<p><italic>P</italic> value derived from the Fisher exact test comparing update versus original for each study.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+</sec>
+<sec id="section7-0272989X12457243">
+<title>Performance Predicting Any Relevant Result and Potential Workload Reductions</title>
+<p>Sensitivity decreases and the number needed to screen increases as the probability threshold is raised for AAP (<xref ref-type="table" rid="table2-0272989X12457243">Table 2</xref>). We selected a threshold of <italic>P</italic> ≥ 0.01 based on the performance of the model in the original search results, in which a threshold of <italic>P</italic> ≥ 0.01 yielded perfect sensitivity with 58.1% of screening saved. When we applied this threshold to the GLMnet predictions for the update, sensitivity exceeded 0.99, and the proportion of title/abstract screening saved was 55.4% or 1990 of 3591 articles.</p>
+<table-wrap id="table2-0272989X12457243" position="float">
+<label>Table 2</label>
+<caption><p>Performance in Retrieving Any Relevant Article (AAP Update)</p></caption>
+<graphic alternate-form-of="table2-0272989X12457243" xlink:href="10.1177_0272989X12457243-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="center" colspan="4">GLMnet<hr/></th>
+<th align="center" colspan="4">GBM<hr/></th>
+</tr>
+<tr>
+<th align="left">Prediction Threshold</th>
+<th align="center">False Negatives</th>
+<th align="center">Sensitivity</th>
+<th align="center">Total Screening Burden</th>
+<th align="center">Screening Saved (%)</th>
+<th align="center">False Negatives</th>
+<th align="center">Sensitivity</th>
+<th align="center">Total Screening Burden</th>
+<th align="center">Screening Saved (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>3591</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>3591</td>
+<td>0</td>
+</tr>
+<tr>
+<td>0.001</td>
+<td>0</td>
+<td>1</td>
+<td>3237</td>
+<td>9.9</td>
+<td>0</td>
+<td>1</td>
+<td>3591</td>
+<td>0</td>
+</tr>
+<tr>
+<td>0.005</td>
+<td>1</td>
+<td>0.991</td>
+<td>2191</td>
+<td>39</td>
+<td>0</td>
+<td>1</td>
+<td>3591</td>
+<td>0</td>
+</tr>
+<tr>
+<td>0.01</td>
+<td>1</td>
+<td>0.991</td>
+<td>1601</td>
+<td>55.4</td>
+<td>4</td>
+<td>0.966</td>
+<td>1807</td>
+<td>49.7</td>
+</tr>
+<tr>
+<td>0.015</td>
+<td>2</td>
+<td>0.983</td>
+<td>1312</td>
+<td>63.5</td>
+<td>11</td>
+<td>0.905</td>
+<td>1021</td>
+<td>71.6</td>
+</tr>
+<tr>
+<td>0.02</td>
+<td>3</td>
+<td>0.974</td>
+<td>1144</td>
+<td>68.1</td>
+<td>13</td>
+<td>0.888</td>
+<td>857</td>
+<td>76.1</td>
+</tr>
+<tr>
+<td>0.025</td>
+<td>4</td>
+<td>0.966</td>
+<td>1026</td>
+<td>71.4</td>
+<td>13</td>
+<td>0.888</td>
+<td>780</td>
+<td>78.3</td>
+</tr>
+<tr>
+<td>0.05</td>
+<td>10</td>
+<td>0.914</td>
+<td>737</td>
+<td>79.5</td>
+<td>14</td>
+<td>0.879</td>
+<td>604</td>
+<td>83.2</td>
+</tr>
+<tr>
+<td>0.1</td>
+<td>14</td>
+<td>0.879</td>
+<td>549</td>
+<td>84.7</td>
+<td>18</td>
+<td>0.845</td>
+<td>471</td>
+<td>86.9</td>
+</tr>
+<tr>
+<td>0.2</td>
+<td>21</td>
+<td>0.819</td>
+<td>452</td>
+<td>87.4</td>
+<td>25</td>
+<td>0.784</td>
+<td>341</td>
+<td>90.5</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn3-0272989X12457243">
+<p>Note: Sensitivity for a particular threshold was determined by selecting articles if the maximum predicted relevance from either model (effectiveness or adverse effect) exceeded the threshold. We do not show sensitivities &lt;0.75 as these results are unlikely to be useful to systematic review researchers. AAP = atypical antipsychotic drug systematic review; GLMnet = generalized linear model with convex penalties; GBM = gradient boosting machine.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<table-wrap id="table3-0272989X12457243" position="float">
+<label>Table 3</label>
+<caption><p>Performance in Retrieving Any Relevant Article (LBD Update)</p></caption>
+<graphic alternate-form-of="table3-0272989X12457243" xlink:href="10.1177_0272989X12457243-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="center" colspan="4">GLMnet<hr/></th>
+<th align="center" colspan="4">GBM<hr/></th>
+</tr>
+<tr>
+<th align="left">Prediction Threshold</th>
+<th align="center">False Negatives</th>
+<th align="center">Sensitivity</th>
+<th align="center">Total Screening Burden</th>
+<th align="center">Screening Saved (%)</th>
+<th align="center">False Negatives</th>
+<th align="center">Sensitivity</th>
+<th align="center">Total Screening Burden</th>
+<th align="center">Screening Saved (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>7051</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>7051</td>
+<td>0</td>
+</tr>
+<tr>
+<td>0.001</td>
+<td>0</td>
+<td>1</td>
+<td>2597</td>
+<td>63.2</td>
+<td>3</td>
+<td>0.976</td>
+<td>2354</td>
+<td>66.6</td>
+</tr>
+<tr>
+<td>0.005</td>
+<td>10</td>
+<td>0.921</td>
+<td>1180</td>
+<td>83.3</td>
+<td>24</td>
+<td>0.811</td>
+<td>878</td>
+<td>87.5</td>
+</tr>
+<tr>
+<td>0.01</td>
+<td>20</td>
+<td>0.843</td>
+<td>882</td>
+<td>87.5</td>
+<td>30</td>
+<td>0.764</td>
+<td>765</td>
+<td>89.2</td>
+</tr>
+<tr>
+<td>0.015</td>
+<td>25</td>
+<td>0.803</td>
+<td>749</td>
+<td>89.4</td>
+<td>31</td>
+<td>0.756</td>
+<td>687</td>
+<td>90.3</td>
+</tr>
+<tr>
+<td>0.02</td>
+<td>26</td>
+<td>0.795</td>
+<td>678</td>
+<td>90.4</td>
+<td>31</td>
+<td>0.756</td>
+<td>630</td>
+<td>91.1</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn4-0272989X12457243">
+<p>Note: Sensitivity for a particular threshold was determined by selecting articles if the maximum predicted relevance from either model (effectiveness or adverse effect) exceeded the threshold. We do not show sensitivities &lt;0.75 as these results are unlikely to be useful to systematic review researchers. LBD = low bone density systematic review; GLMnet = generalized linear model with convex penalties; GBM = gradient boosting machine.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>The GLMnet-based model for LBD performed worse than in AAP: the model selected articles for the update with a sensitivity of 0.795 at a threshold of <italic>P</italic> ≥ 0.02 (compared to 0.974 for AAP) (<xref ref-type="table" rid="table2-0272989X12457243">Tables 2</xref> and <xref ref-type="table" rid="table3-0272989X12457243">3</xref>). However, this approach still provided potential benefits at less stringent thresholds. We chose a threshold of <italic>P</italic> ≥ 0.001 because it was the largest threshold that yielded perfect sensitivity in the original search results; it also yielded a 66.8% screening reduction. After applying the same <italic>P</italic> ≥ 0.001 threshold to the update, we found perfect sensitivity and a 63.2% reduction in projected article screening burden. GBM performed slightly worse in both the AAP and LBD reviews, as supported by the ROC analysis below.</p>
+<p>We show model prediction performance for the AAP and LBD updated searches graphically using histograms of prediction probabilities (<xref ref-type="fig" rid="fig3-0272989X12457243">Figures 3</xref> and <xref ref-type="fig" rid="fig4-0272989X12457243">4</xref>, respectively). Excluded articles were generally assigned very low probabilities in both. However, in the LBD study, a substantial percentage of relevant studies were assigned relatively low probabilities. We also show these results using ROC curves (<xref ref-type="fig" rid="fig5-0272989X12457243">Figures 5</xref> and <xref ref-type="fig" rid="fig6-0272989X12457243">6</xref>). The AUC for the GLMnet method (in the AAP study) was 0.943 versus 0.925 with GBM (<italic>P</italic> = 0.007 under null hypothesis of equality). The AUC for the GLMnet method (in the LBD study) was 0.954 versus 0.947 for GBM (<italic>P</italic> = 0.06 under null hypothesis of equality). GLMnet seemed to slightly outperform GBM using visual inspection and using AUC methods. Still, it would be difficult to establish GLMnet’s superiority in this context (comparative effectiveness review updating) without further studies.</p>
+<fig id="fig3-0272989X12457243" position="float">
+<label>Figure 3</label>
+<caption><p>Distribution of predictions for inclusion in any analysis (atypical antipsychotic drug study).</p></caption>
+<graphic xlink:href="10.1177_0272989X12457243-fig3.tif"/>
+</fig>
+<fig id="fig4-0272989X12457243" position="float">
+<label>Figure 4</label>
+<caption><p>Distribution of predictions for inclusion in any analysis (low bone density study).</p></caption>
+<graphic xlink:href="10.1177_0272989X12457243-fig4.tif"/>
+</fig>
+<fig id="fig5-0272989X12457243" position="float">
+<label>Figure 5</label>
+<caption><p>Receiver operating characteristic curve for classifying atypical antipsychotic drug articles.</p></caption>
+<graphic xlink:href="10.1177_0272989X12457243-fig5.tif"/>
+</fig>
+<fig id="fig6-0272989X12457243" position="float">
+<label>Figure 6</label>
+<caption><p>Receiver operating characteristic curve for classifying low bone density articles.</p></caption>
+<graphic xlink:href="10.1177_0272989X12457243-fig6.tif"/>
+</fig>
+</sec>
+<sec id="section8-0272989X12457243">
+<title>Performance Predicting Articles Relevant to Specific Analyses</title>
+<p>We show disaggregated effectiveness (<xref ref-type="table" rid="table4-0272989X12457243">Table 4</xref>) and AE (<xref ref-type="table" rid="table5-0272989X12457243">Table 5</xref>) results for both studies (AAP/LBD) and methods (GLMnet/GBM). For AAP, all analyses achieved high sensitivity when predicting effectiveness articles on the original sample at relatively stringent thresholds (<italic>P</italic> ≥ 0.02). For example, the GLMnet-based predictive model achieved a sensitivity of 1 and PPV of 0.38 using a threshold of 0.02 for predicting relevant articles in the original sample. Applying the GLMnet model to the updated AAP literature search results yielded a sensitivity of 0.921 and PPV of 0.185 using the same threshold; GBM performed similarly.</p>
+<table-wrap id="table4-0272989X12457243" position="float">
+<label>Table 4</label>
+<caption><p>Model Performance for Efficacy/Effectiveness</p></caption>
+<graphic alternate-form-of="table4-0272989X12457243" xlink:href="10.1177_0272989X12457243-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th/>
+<th/>
+<th align="center" colspan="2">GLMnet<hr/></th>
+<th align="center" colspan="2">GBM<hr/></th>
+</tr>
+<tr>
+<th align="left">Study</th>
+<th align="center">Phase</th>
+<th align="center">Threshold</th>
+<th align="center">Sensitivity</th>
+<th align="center">PPV</th>
+<th align="center">Sensitivity</th>
+<th align="center">PPV</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AAP</td>
+<td>Original</td>
+<td>0.001</td>
+<td>1</td>
+<td>0.144</td>
+<td>1</td>
+<td>0.383</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.01</td>
+<td>1</td>
+<td>0.366</td>
+<td>1</td>
+<td>0.383</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.02</td>
+<td>1</td>
+<td>0.383</td>
+<td>1</td>
+<td>0.383</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.1</td>
+<td>1</td>
+<td>0.421</td>
+<td>0.976</td>
+<td>0.476</td>
+</tr>
+<tr>
+<td/>
+<td>Update</td>
+<td>0.001</td>
+<td>1</td>
+<td>0.066</td>
+<td>0.921</td>
+<td>0.186</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.01</td>
+<td>0.921</td>
+<td>0.162</td>
+<td>0.921</td>
+<td>0.186</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.02</td>
+<td>0.921</td>
+<td>0.185</td>
+<td>0.921</td>
+<td>0.187</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.1</td>
+<td>0.901</td>
+<td>0.206</td>
+<td>0.881</td>
+<td>0.232</td>
+</tr>
+<tr>
+<td>LBD</td>
+<td>Original</td>
+<td>0.001</td>
+<td>1</td>
+<td>0.07</td>
+<td>1</td>
+<td>0.108</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.01</td>
+<td>0.991</td>
+<td>0.143</td>
+<td>0.991</td>
+<td>0.142</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.02</td>
+<td>0.982</td>
+<td>0.174</td>
+<td>0.982</td>
+<td>0.179</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.1</td>
+<td>0.862</td>
+<td>0.322</td>
+<td>0.872</td>
+<td>0.378</td>
+</tr>
+<tr>
+<td/>
+<td>Update</td>
+<td>0.001</td>
+<td>1</td>
+<td>0.038</td>
+<td>0.968</td>
+<td>0.06</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.01</td>
+<td>0.937</td>
+<td>0.08</td>
+<td>0.889</td>
+<td>0.08</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.02</td>
+<td>0.905</td>
+<td>0.102</td>
+<td>0.889</td>
+<td>0.106</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.1</td>
+<td>0.778</td>
+<td>0.203</td>
+<td>0.635</td>
+<td>0.181</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn5-0272989X12457243">
+<p>Note: GLMnet = generalized linear model with convex penalties; GBM = gradient boosting machine; PPV = positive predictive value; AAP = atypical antipsychotic drug systematic review; LBD = low bone density systematic review.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<table-wrap id="table5-0272989X12457243" position="float">
+<label>Table 5</label>
+<caption><p>Model Performance for Adverse Effects</p></caption>
+<graphic alternate-form-of="table5-0272989X12457243" xlink:href="10.1177_0272989X12457243-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th/>
+<th/>
+<th align="center" colspan="2">GLMnet<hr/></th>
+<th align="center" colspan="2">GBM<hr/></th>
+</tr>
+<tr>
+<th align="left">Study</th>
+<th align="center">Phase</th>
+<th align="center">Threshold</th>
+<th align="center">Sensitivity</th>
+<th align="center">PPV</th>
+<th align="center">Sensitivity</th>
+<th align="center">PPV</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AAP</td>
+<td>Original</td>
+<td>0.001</td>
+<td>1</td>
+<td>0.078</td>
+<td>1</td>
+<td>0.07</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.01</td>
+<td>1</td>
+<td>0.168</td>
+<td>1</td>
+<td>0.138</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.02</td>
+<td>0.978</td>
+<td>0.215</td>
+<td>1</td>
+<td>0.274</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.1</td>
+<td>0.901</td>
+<td>0.392</td>
+<td>0.934</td>
+<td>0.436</td>
+</tr>
+<tr>
+<td/>
+<td>Update</td>
+<td>0.001</td>
+<td>1</td>
+<td>0.033</td>
+<td>1</td>
+<td>0.029</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.01</td>
+<td>0.99</td>
+<td>0.065</td>
+<td>0.971</td>
+<td>0.056</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.02</td>
+<td>0.981</td>
+<td>0.09</td>
+<td>0.895</td>
+<td>0.11</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.1</td>
+<td>0.867</td>
+<td>0.172</td>
+<td>0.848</td>
+<td>0.2</td>
+</tr>
+<tr>
+<td>LBD</td>
+<td>Original</td>
+<td>0.001</td>
+<td>1</td>
+<td>0.065</td>
+<td>1</td>
+<td>0.073</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.01</td>
+<td>0.993</td>
+<td>0.175</td>
+<td>0.975</td>
+<td>0.192</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.02</td>
+<td>0.964</td>
+<td>0.21</td>
+<td>0.971</td>
+<td>0.229</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.1</td>
+<td>0.885</td>
+<td>0.338</td>
+<td>0.903</td>
+<td>0.365</td>
+</tr>
+<tr>
+<td/>
+<td>Update</td>
+<td>0.001</td>
+<td>0.946</td>
+<td>0.04</td>
+<td>0.957</td>
+<td>0.039</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.01</td>
+<td>0.739</td>
+<td>0.097</td>
+<td>0.674</td>
+<td>0.098</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.02</td>
+<td>0.685</td>
+<td>0.116</td>
+<td>0.663</td>
+<td>0.119</td>
+</tr>
+<tr>
+<td/>
+<td/>
+<td>0.1</td>
+<td>0.511</td>
+<td>0.179</td>
+<td>0.478</td>
+<td>0.191</td>
+</tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn6-0272989X12457243">
+<p>Note: GLMnet = generalized linear model with convex penalties; GBM = gradient boosting machine; PPV = positive predictive value; AAP = atypical antipsychotic drug systematic review; LBD = low bone density systematic review.</p>
+</fn>
+</table-wrap-foot>
+</table-wrap>
+<p>The effectiveness results were similar for the LBD review. The GLMnet-based predictive model achieved a sensitivity of 0.982 and PPV of 0.174 using a threshold of 0.02 for predicting relevant articles in the original sample. We then tested these results on the updated literature search results; GLMnet yielded a sensitivity of 0.905 and PPV of 0.102.</p>
+<p>For the AAP review, the GLMnet-based predictive model achieved a sensitivity of 0.978 and PPV of 0.215 using a threshold of 0.02 for predicting articles relevant to AEs in the original sample. Applying the GLMnet-based model to the updated literature search results yielded a sensitivity of 0.981 and PPV of 0.09. The GBM-based model performed better in the original (sensitivity = 1; PPV = 0.274) but worse in the update (sensitivity = 0.895; PPV = 0.11).</p>
+<p>The GLMnet-based predictive model achieved a sensitivity of 0.964 and PPV of 0.21 using a threshold of 0.02 for predicting articles relevant for the AE analysis in the original LBD review. However, we were able to predict AE-relevant articles in the update with a substantially reduced sensitivity (0.685) when compared to the AAP results. Reducing the threshold substantially (i.e., retaining all articles with <italic>P</italic> ≥ 0.001) would increase sensitivity to 0.946 but decrease PPV to 0.04. The GBM-based model did not produce substantially better results for this analysis.</p>
+</sec>
+<sec id="section9-0272989X12457243">
+<title>Model Prediction Errors</title>
+<p>SCEPC researchers independently evaluated articles that were included in the final updated reviews but were assigned relatively low probability scores by the statistical classifiers. At a probability threshold of 0.02 (which reduced workload substantially), the GLMnet algorithm produced 29 false negatives. Of the 29 false negatives, 26 were from the LBD update, and 28 were non-RCT studies (which included meta-analyses, case-control studies, retrospective analyses of claims databases, and analyses of government registries); nearly all such studies were irrelevant in the original LBD review.</p>
+<p>The GLMnet-based model rejected 1 study relevant to the AAP update at <italic>P</italic> ≥ 0.01.<sup><xref ref-type="bibr" rid="bibr37-0272989X12457243">37</xref></sup> This clinical trial was likely assigned a low probability because it was also tagged as a letter. Despite missing this trial using machine learning, SCEPC researchers might have been able to retrieve it because it was referenced in a relevant article and would plausibly have been caught using the researchers’ analyses of references accepted in the final reports.<sup><xref ref-type="bibr" rid="bibr38-0272989X12457243">38</xref></sup></p>
+</sec>
+</sec>
+<sec id="section10-0272989X12457243" sec-type="discussion">
+<title>Discussion</title>
+<p>We created a prototype machine learning system that is designed to reduce the workload associated with comparative effectiveness review updating. Our system first extracted domain knowledge and thousands of previously classified documents from 2 comparative effectiveness reviews and then modeled article relevance using the GBM and GLMnet statistical methods. In 2 simulated comparative effectiveness review updates, our approach reduced the workload associated with screening updated search results for relevant effectiveness and AE articles by more than 50% with minimal or no loss of relevant articles. GLMnet performed slightly better than GBM in this context, but overall model performance was similar despite their substantial theoretical differences. Based on the slight differences in model performance between the various approaches, improving identification of RCTs and refining methods for correcting differences between the original and updated reviews may be more important than algorithm selection in future research.</p>
+<p>When simulating a process for selecting all citations relevant to either effectiveness or AEs, we excluded over 50% of irrelevant articles with a loss of 1 of 116 relevant articles for AAP and 0 of 127 relevant articles for LBD. Clearly, the false-positive rate is high (~50%), but this process still could provide substantial value to researchers. One potential problem is that researchers conducting comparative effectiveness reviews aim for 100% sensitivity; despite the high sensitivity rates achieved, the loss of 1 article suggests that researchers will have to make some tradeoffs between sensitivity and efficiency as it will be difficult to guarantee 100% sensitivity without excessively high false-positive rates. On the other hand, it is unclear whether human reviewers can guarantee perfect sensitivity using current processes. In addition, other methods (such as reference mining) can be used to raise sensitivity further. In this case, the single missed reference might have been found by searching within the references of included articles.<sup><xref ref-type="bibr" rid="bibr38-0272989X12457243">38</xref></sup> Furthermore, some errors were the result of key included outcomes being present in the main article text and yet not mentioned in the abstract or MeSH indexing terms. For example, relevant LBD articles often mentioned bone density in the abstract while describing fracture prevention only in the full text. As a result, we assigned a number of articles to the intermediate range because both relevant and irrelevant articles were frequently indexed under bone density. Such data extraction errors were unrelated to improper feature encoding and might only be resolved by analyzing the full text of these articles.</p>
+<p>Both GLMnet-based and GBM-based statistical models performed well when selecting AAP citations relevant to effectiveness and AE analyses. By contrast, in the LBD study, both methods achieved substantially lower sensitivity (for a given level of PPV) when predicting AE-relevant articles than when predicting articles relevant to effectiveness analyses. When investigating these false-negative AE articles, we noted that nearly all articles relevant to AEs in the original LBD review were RCTs, possibly because epidemiological studies and retrospective database analyses are difficult to conduct prior to widespread use. This would not have presented a problem if researchers want only RCTs in the update. However, in the update, SCEPC researchers focused on new AEs that were studied in observational studies. As a result, both methods mistakenly assigned lower probabilities to relevant non-RCT studies in the update.</p>
+<p>Our results are in accord with prior attempts using machine learning to facilitate comparative effectiveness review data collection.<sup><xref ref-type="bibr" rid="bibr12-0272989X12457243">12</xref>,<xref ref-type="bibr" rid="bibr13-0272989X12457243">13</xref>,<xref ref-type="bibr" rid="bibr18-0272989X12457243">18</xref></sup> For example, an active learning model achieved 50% workload reductions and 100% sensitivity in several cases.<sup><xref ref-type="bibr" rid="bibr18-0272989X12457243">18</xref></sup> In contrast to prior studies, we adopted a more parsimonious approach that focused on relatively few study design characteristics (publication type, demographic groups, and statistical design), intervention-specific characteristics, and outcome-specific characteristics. We were able to efficiently identify key terms by mapping terms in search strategies to key terms in MeSH, thus leveraging the substantial time that research librarians invested in creating search strategies. (While this required some upfront time, experienced clinical researchers and research librarians should not require more than 1 to 2 hours to perform this task and possibly considerably less after we integrate automated concept mapping tools such as the National Library of Medicine’s MetaMap.<sup><xref ref-type="bibr" rid="bibr39-0272989X12457243">39</xref></sup>) Furthermore, our algorithms explicitly dealt with updating, which required predicting updated citations even though the literature, research personnel, search strategies, and (possibly) some of the underlying goals all changed. Our approach achieved some success in combating data changes over time (known as concept drift in other applications).<sup><xref ref-type="bibr" rid="bibr16-0272989X12457243">16</xref>,<xref ref-type="bibr" rid="bibr23-0272989X12457243">23</xref>,<xref ref-type="bibr" rid="bibr24-0272989X12457243">24</xref>,<xref ref-type="bibr" rid="bibr26-0272989X12457243">26</xref>,<xref ref-type="bibr" rid="bibr27-0272989X12457243">27</xref></sup> Achieving similar levels of success suggests benefits to a parsimonious approach incorporating domain-specific knowledge about key interventions and outcomes. In addition, this approach allows us to separate effectiveness and AE analyses; although most comparative effectiveness reviews do not separate these analyses, independent filtering mechanisms may be of interest to other researchers.</p>
+<p>Our methods carry several limitations. First, our statistical model was very sensitive to MEDLINE’s publication type field and MEDLINE indexing generally<sup><xref ref-type="bibr" rid="bibr40-0272989X12457243">40</xref></sup>; developing algorithms that account for discrepancies in MEDLINE classification could dramatically improve model performance. Second, these systems currently work only when PubMed citations are fully indexed, which occurs several weeks or months after publication; excluded publications would require standard human review. This limitation would only affect a small percentage of articles if reviews are being conducted every 2 to 3 years; however, the current system would be inadequate for reviews that require continuous updating and large numbers of citations from non-MEDLINE databases (such as EMBASE). To address the first 2 limitations, we are investigating methods for using additional text features to improve capture of study design details and for classifying unindexed articles, which would make these methods more timely, comprehensive, and accurate. Third, these algorithms also assigned moderately low relevance probabilities to numerous non-RCT articles relevant to AEs, suggesting that this approach cannot mitigate all issues related to concept drift. This suggests some role for an active learning approach that classifies a small number of update articles to maximize accuracy on the update.<sup><xref ref-type="bibr" rid="bibr13-0272989X12457243">13</xref>,<xref ref-type="bibr" rid="bibr27-0272989X12457243">27</xref></sup> Fourth, this was tested on just 2 comparative effectiveness reviews and will need validation on additional comparative effectiveness reviews and on nontherapeutic applications. Furthermore, we will need to test this system on actual comparative effectiveness review updates to estimate cost savings. To that end, agreement among comparative effectiveness review methodologists on a common data format would facilitate such trials. If such data (article identifier, decision regarding relevance, etc.) were not tabulated in the original report, creating a machine learning model might not be cost-effective given the effort required to format the data properly.</p>
+</sec>
+<sec id="section11-0272989X12457243" sec-type="conclusions">
+<title>Conclusions</title>
+<p>In this pilot study, we created a prototype system that classified PubMed literature search results from 2 simulated comparative effectiveness review updates. We achieved good performance on both updates using statistical models that were empirically derived from earlier review inclusion judgments as well as explanatory variables selected using domain knowledge. Future research analyzing the article text and incorporating active learning approaches could expand the scope and the accuracy of this method. A more refined system could allow researchers to update their reviews more frequently and efficiently.</p>
+</sec>
+</body>
+<back>
+<ack>
+<p>We thank Roberta Shanman for the literature searches that were provided for the comparative effectiveness reviews. We also thank Margaret Maglione, Martha Timmer, Elizabeth Roth, and Tanja Perry for their assistance with the data collection.</p>
+</ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<p>This work was largely produced under Agency for Healthcare Research and Quality Contract No. 290-2007-10062-I. The funding agreement ensured the authors’ independence in designing the study, interpreting the data, and writing and publishing the report. This work was also funded by an internal grant from the RAND Corporation. The RAND Corporation played no role in the design or conduct of the study.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0272989X12457243">
+<label>1.</label>
+<citation citation-type="book">
+<person-group person-group-type="editor">
+<name><surname>Higgins</surname><given-names>J</given-names></name>
+<name><surname>Green</surname><given-names>S</given-names></name>
+</person-group>, eds. <article-title>Cochrane Handbook for Systematic Reviews of Interventions. Version 5.0.2</article-title>. <collab>The Cochrane Collaboration</collab>; <year>2009</year>.</citation>
+</ref>
+<ref id="bibr2-0272989X12457243">
+<label>2.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Shojania</surname><given-names>KG</given-names></name>
+<name><surname>Sampson</surname><given-names>M</given-names></name>
+<name><surname>Ansari</surname><given-names>MT</given-names></name>
+<name><surname>Ji</surname><given-names>J</given-names></name>
+<name><surname>Doucette</surname><given-names>S</given-names></name>
+<name><surname>Moher</surname><given-names>D.</given-names></name>
+</person-group> <article-title>How quickly do systematic reviews go out of date? A survival analysis</article-title>. <source>Ann Intern Med</source>. <year>2007</year>;<volume>147</volume>(<issue>4</issue>):<fpage>224</fpage>–<lpage>33</lpage>.</citation>
+</ref>
+<ref id="bibr3-0272989X12457243">
+<label>3.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Garritty</surname><given-names>C</given-names></name>
+<name><surname>Tsertsvadze</surname><given-names>A</given-names></name>
+<name><surname>Tricco</surname><given-names>AC</given-names></name>
+<name><surname>Sampson</surname><given-names>M</given-names></name>
+<name><surname>Moher</surname><given-names>D.</given-names></name>
+</person-group> <article-title>Updating systematic reviews: an international survey</article-title>. <source>PLoS One</source>. <year>2010</year>;<volume>5</volume>(<issue>4</issue>):<fpage>e9914</fpage>.</citation>
+</ref>
+<ref id="bibr4-0272989X12457243">
+<label>4.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Moher</surname><given-names>D</given-names></name>
+<name><surname>Tsertsvadze</surname><given-names>A</given-names></name>
+<name><surname>Tricco</surname><given-names>AC</given-names></name>
+<etal/>
+</person-group>. <article-title>When and how to update systematic reviews</article-title>. <source>Cochrane Database Syst Rev</source>. <volume>2008</volume>(<issue>1</issue>):<fpage>MR000023</fpage>.</citation>
+</ref>
+<ref id="bibr5-0272989X12457243">
+<label>5.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jadad</surname><given-names>AR</given-names></name>
+<name><surname>Cook</surname><given-names>DJ</given-names></name>
+<name><surname>Jones</surname><given-names>A</given-names></name>
+<etal/>
+</person-group>. <article-title>Methodology and reports of systematic reviews and meta-analyses: a comparison of Cochrane reviews with articles published in paper-based journals</article-title>. <source>JAMA</source>. <year>1998</year>;<volume>280</volume>(<issue>3</issue>):<fpage>278</fpage>–<lpage>80</lpage>.</citation>
+</ref>
+<ref id="bibr6-0272989X12457243">
+<label>6.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Moher</surname><given-names>D</given-names></name>
+<name><surname>Tetzlaff</surname><given-names>J</given-names></name>
+<name><surname>Tricco</surname><given-names>AC</given-names></name>
+<name><surname>Sampson</surname><given-names>M</given-names></name>
+<name><surname>Altman</surname><given-names>DG.</given-names></name>
+</person-group> <article-title>Epidemiology and reporting characteristics of systematic reviews</article-title>. <source>PLoS Med</source>. <year>2007</year>;<volume>4</volume>(<issue>3</issue>):<fpage>e78</fpage>.</citation>
+</ref>
+<ref id="bibr7-0272989X12457243">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Maher</surname><given-names>AR</given-names></name>
+<name><surname>Maglione</surname><given-names>M</given-names></name>
+<name><surname>Bagley</surname><given-names>S</given-names></name>
+<etal/>
+</person-group>. <article-title>Efficacy and comparative effectiveness of atypical antipsychotic medications for off-label uses in adults: a systematic review and meta-analysis</article-title>. <source>JAMA</source>. <year>2011</year>;<volume>306</volume>(<issue>12</issue>):<fpage>1359</fpage>–<lpage>69</lpage>.</citation>
+</ref>
+<ref id="bibr8-0272989X12457243">
+<label>8.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Shekelle</surname><given-names>P</given-names></name>
+<name><surname>Maglione</surname><given-names>M</given-names></name>
+<name><surname>Bagley</surname><given-names>S</given-names></name>
+<etal/>
+</person-group>. <article-title>Efficacy and Comparative Effectiveness of Off-Label Use of Atypical Antipsychotics</article-title>. <publisher-loc>Rockville, MD</publisher-loc>: <publisher-name>Agency for Healthcare Research and Quality</publisher-name>; <year>2007</year>.</citation>
+</ref>
+<ref id="bibr9-0272989X12457243">
+<label>9.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>MacLean</surname><given-names>C</given-names></name>
+<name><surname>Alexander</surname><given-names>A</given-names></name>
+<name><surname>Carter</surname><given-names>J</given-names></name>
+<etal/>
+</person-group>. <article-title>Comparative Effectiveness of Treatments to Prevent Fractures in Men and Women with Low Bone Density or Osteoporosis</article-title>. <publisher-loc>Rockville, MD</publisher-loc>: <publisher-name>Agency for Healthcare Research and Quality</publisher-name>; <year>2007</year>.</citation>
+</ref>
+<ref id="bibr10-0272989X12457243">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>MacLean</surname><given-names>C</given-names></name>
+<name><surname>Newberry</surname><given-names>S</given-names></name>
+<name><surname>Maglione</surname><given-names>M</given-names></name>
+<etal/>
+</person-group>. <article-title>Systematic review: comparative effectiveness of treatments to prevent fractures in men and women with low bone density or osteoporosis</article-title>. <source>Ann Intern Med</source>. <year>2008</year>;<volume>148</volume>(<issue>3</issue>):<fpage>197</fpage>–<lpage>213</lpage>.</citation>
+</ref>
+<ref id="bibr11-0272989X12457243">
+<label>11.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Shekelle</surname><given-names>P</given-names></name>
+<name><surname>Takata</surname><given-names>G</given-names></name>
+<name><surname>Newberry</surname><given-names>S</given-names></name>
+<etal/>
+</person-group>. <article-title>Management of Acute Otitis Media: Update</article-title>. <publisher-loc>Rockville, MD</publisher-loc>: <publisher-name>Agency for Healthcare Research and Quality;</publisher-name> <year>2010</year>.</citation>
+</ref>
+<ref id="bibr12-0272989X12457243">
+<label>12.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cohen</surname><given-names>AM</given-names></name>
+<name><surname>Hersh</surname><given-names>WR</given-names></name>
+<name><surname>Peterson</surname><given-names>K</given-names></name>
+<name><surname>Yen</surname><given-names>PY.</given-names></name>
+</person-group> <article-title>Reducing workload in systematic review preparation using automated citation classification</article-title>. <source>J Am Med Inform Assoc</source>. <year>2006</year>;<volume>13</volume>(<issue>2</issue>):<fpage>206</fpage>–<lpage>19</lpage>.</citation>
+</ref>
+<ref id="bibr13-0272989X12457243">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wallace</surname><given-names>BC</given-names></name>
+<name><surname>Small</surname><given-names>K</given-names></name>
+<name><surname>Brodley</surname><given-names>CE</given-names></name>
+<name><surname>Trikalinos</surname><given-names>TA.</given-names></name>
+</person-group> <article-title>Active learning for biomedical citation screening</article-title>. <conf-name>In: Proceedings of the 16th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</conf-name>. <conf-loc>Washington, DC</conf-loc>: <collab>Association for Computing Machinery</collab>; <year>2011</year>.</citation>
+</ref>
+<ref id="bibr14-0272989X12457243">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Aphinyanaphongs</surname><given-names>Y</given-names></name>
+<name><surname>Tsamardinos</surname><given-names>I</given-names></name>
+<name><surname>Statnikov</surname><given-names>A</given-names></name>
+<name><surname>Hardin</surname><given-names>D</given-names></name>
+<name><surname>Aliferis</surname><given-names>CF.</given-names></name>
+</person-group> <article-title>Text categorization models for high-quality article retrieval in internal medicine</article-title>. <source>J Am Med Inform Assoc</source>. <year>2005</year>;<volume>12</volume>(<issue>2</issue>):<fpage>207</fpage>–<lpage>16</lpage>.</citation>
+</ref>
+<ref id="bibr15-0272989X12457243">
+<label>15.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cohen</surname><given-names>AM</given-names></name>
+<name><surname>Ambert</surname><given-names>K</given-names></name>
+<name><surname>McDonagh</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Cross-topic learning for work prioritization in systematic review creation and update</article-title>. <source>J Am Med Inform Assoc</source>. <year>2009</year>;<volume>16</volume>(<issue>5</issue>):<fpage>690</fpage>–<lpage>704</lpage>.</citation>
+</ref>
+<ref id="bibr16-0272989X12457243">
+<label>16.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Cohen</surname><given-names>AM</given-names></name>
+<name><surname>Ambert</surname><given-names>K</given-names></name>
+<name><surname>McDonagh</surname><given-names>M.</given-names></name>
+</person-group> <article-title>A prospective evaluation of an automated classification system to support evidence-based medicine and systematic review</article-title>. <source>AMIA Annu Symp Proc</source>. <year>2010</year>;<volume>2010</volume>:<fpage>121</fpage>–<lpage>5</lpage>.</citation>
+</ref>
+<ref id="bibr17-0272989X12457243">
+<label>17.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kilicoglu</surname><given-names>H</given-names></name>
+<name><surname>Demner-Fushman</surname><given-names>D</given-names></name>
+<name><surname>Rindflesch</surname><given-names>TC</given-names></name>
+<name><surname>Wilczynski</surname><given-names>NL</given-names></name>
+<name><surname>Haynes</surname><given-names>RB.</given-names></name>
+</person-group> <article-title>Towards automatic recognition of scientifically rigorous clinical research evidence</article-title>. <source>J Am Med Inform Assoc</source>. <year>2009</year>;<volume>16</volume>(<issue>1</issue>):<fpage>25</fpage>–<lpage>31</lpage>.</citation>
+</ref>
+<ref id="bibr18-0272989X12457243">
+<label>18.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Wallace</surname><given-names>BC</given-names></name>
+<name><surname>Trikalinos</surname><given-names>TA</given-names></name>
+<name><surname>Lau</surname><given-names>J</given-names></name>
+<name><surname>Brodley</surname><given-names>C</given-names></name>
+<name><surname>Schmid</surname><given-names>CH.</given-names></name>
+</person-group> <article-title>Semi-automated screening of biomedical citations for systematic reviews</article-title>. <source>BMC Bioinformatics</source>. <year>2010</year>;<volume>11</volume>:<fpage>55</fpage>.</citation>
+</ref>
+<ref id="bibr19-0272989X12457243">
+<label>19.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Hastie</surname><given-names>T</given-names></name>
+<name><surname>Tibshirani</surname><given-names>R</given-names></name>
+<name><surname>Friedman</surname><given-names>J.</given-names></name>
+</person-group> <article-title>The Elements of Statistical Learning: Data Mining, Inference, and Prediction</article-title>. <publisher-loc>New York</publisher-loc>: <publisher-name>Springer Verlag;</publisher-name> <year>2009</year>.</citation>
+</ref>
+<ref id="bibr20-0272989X12457243">
+<label>20.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Genkin</surname><given-names>A</given-names></name>
+<name><surname>Lewis</surname><given-names>D</given-names></name>
+<name><surname>Madigan</surname><given-names>D.</given-names></name>
+</person-group> <article-title>Large-scale bayesian logistic regression for text categorization</article-title>. <source>Technometrics</source>. <year>2007</year>;<volume>49</volume>:<fpage>291</fpage>–<lpage>304</lpage>.</citation>
+</ref>
+<ref id="bibr21-0272989X12457243">
+<label>21.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tibshirani</surname><given-names>R.</given-names></name>
+</person-group> <article-title>Regression shrinkage and selection by lasso</article-title>. <source>J R Stat Soc Series B</source>. <year>1996</year>;<volume>58</volume>:<fpage>267</fpage>–<lpage>88</lpage>.</citation>
+</ref>
+<ref id="bibr22-0272989X12457243">
+<label>22.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Shetty</surname><given-names>KD</given-names></name>
+<name><surname>Dalal</surname><given-names>SR.</given-names></name>
+</person-group> <article-title>Using information mining of the medical literature to improve drug safety</article-title>. <source>J Am Med Inform Assoc</source>. <year>2011</year>;<volume>18</volume>(<issue>5</issue>):<fpage>668</fpage>–<lpage>74</lpage>.</citation>
+</ref>
+<ref id="bibr23-0272989X12457243">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Widmer</surname><given-names>G</given-names></name>
+<name><surname>Kubat</surname><given-names>M.</given-names></name>
+</person-group> <article-title>Learning in the presence of concept drift and hidden contexts</article-title>. <source>Mach Learn</source>. <year>1996</year>;<volume>23</volume>(<issue>1</issue>):<fpage>69</fpage>–<lpage>101</lpage>.</citation>
+</ref>
+<ref id="bibr24-0272989X12457243">
+<label>24.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tsymbal</surname><given-names>A</given-names></name>
+<name><surname>Pechenizkiy</surname><given-names>M</given-names></name>
+<name><surname>Cunningham</surname><given-names>P</given-names></name>
+<name><surname>Puuronen</surname><given-names>S.</given-names></name>
+</person-group> <article-title>Dynamic integration of classifiers for handling concept drift</article-title>. <source>Inf Fusion</source>. <year>2008</year>;<volume>9</volume>(<issue>1</issue>):<fpage>56</fpage>–<lpage>68</lpage>.</citation>
+</ref>
+<ref id="bibr25-0272989X12457243">
+<label>25.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Blitzer</surname><given-names>J</given-names></name>
+<name><surname>McDonald</surname><given-names>R</given-names></name>
+<name><surname>Pereira</surname><given-names>F.</given-names></name>
+</person-group> <article-title>Domain adaptation with structural correspondence learning</article-title>. <conf-name>In: Proceedings of thew 2006 Conference on Empirical Methods in Natural Language Processing</conf-name>. <conf-loc>Sydney, Australia</conf-loc>: <collab>Association for Computational Linguistics</collab>; <year>2006</year>. p <fpage>120</fpage>–<lpage>8</lpage>.</citation>
+</ref>
+<ref id="bibr26-0272989X12457243">
+<label>26.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Pan</surname><given-names>SJ</given-names></name>
+<name><surname>Yang</surname><given-names>Q.</given-names></name>
+</person-group> <article-title>A survey on transfer learning</article-title>. <source>IEEE Trans Knowl Data Eng</source>. <year>2010</year>;<volume>22</volume>(<issue>10</issue>):<fpage>15</fpage>.</citation>
+</ref>
+<ref id="bibr27-0272989X12457243">
+<label>27.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="editor">
+<name><surname>Daume</surname><given-names>H</given-names></name>
+</person-group>, ed. <article-title>Frustratingly easy domain adaptation</article-title>. <conf-name>In: Proceedings of the 45th Annual Meeting of the Association of Computational Linguistics</conf-name>. <conf-loc>Prague</conf-loc>: <collab>Association for Computational Linguistics</collab>; <year>2007</year>.</citation>
+</ref>
+<ref id="bibr28-0272989X12457243">
+<label>28.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Saag</surname><given-names>KG</given-names></name>
+<name><surname>Zanchetta</surname><given-names>JR</given-names></name>
+<name><surname>Devogelaer</surname><given-names>JP</given-names></name>
+<etal/>
+</person-group>. <article-title>Effects of teriparatide versus alendronate for treating glucocorticoid-induced osteoporosis: thirty-six-month results of a randomized, double-blind, controlled trial</article-title>. <source>Arthritis Rheum</source>. <year>2009</year>;<volume>60</volume>(<issue>11</issue>):<fpage>3346</fpage>–<lpage>55</lpage>.</citation>
+</ref>
+<ref id="bibr29-0272989X12457243">
+<label>29.</label>
+<citation citation-type="gov">
+<collab>US National Institutes of Health. MeSH Browser</collab>. <year>2010</year>. <article-title>Available from: URL:</article-title> <comment><ext-link ext-link-type="uri" xlink:href="http://www.nlm.nih.gov/mesh/MBrowser.html">http://www.nlm.nih.gov/mesh/MBrowser.html</ext-link></comment></citation>
+</ref>
+<ref id="bibr30-0272989X12457243">
+<label>30.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Freund</surname><given-names>Y</given-names></name>
+<name><surname>Schapire</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Experiments with a new boosting algorithm</article-title>. <conf-name>In: Machine Learning: Proceedings of the Thirteenth International Conference</conf-name>. <conf-loc>San Francisco: Morgan Kaufman</conf-loc>; <year>1996</year>. p <fpage>148</fpage>–<lpage>56</lpage>.</citation>
+</ref>
+<ref id="bibr31-0272989X12457243">
+<label>31.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Friedman</surname><given-names>JH</given-names></name>
+</person-group>. <article-title>Greedy function approximation: a gradient boosting machine</article-title>. <source>Ann Stat</source>. <year>2001</year>;<volume>29</volume>(<issue>5</issue>):<fpage>1189</fpage>–<lpage>232</lpage>.</citation>
+</ref>
+<ref id="bibr32-0272989X12457243">
+<label>32.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Friedman</surname><given-names>J</given-names></name>
+<name><surname>Hastie</surname><given-names>T</given-names></name>
+<name><surname>Tibshirani</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Regularization paths for generalized linear models via coordinate descent</article-title>. <source>J Stat Softw</source>. <year>2010</year>;<volume>33</volume>(<issue>1</issue>):<fpage>1</fpage>–<lpage>22</lpage>.</citation>
+</ref>
+<ref id="bibr33-0272989X12457243">
+<label>33.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Deerwester</surname><given-names>S</given-names></name>
+<name><surname>Dumais</surname><given-names>S</given-names></name>
+<name><surname>Furnas</surname><given-names>G</given-names></name>
+<name><surname>Landauer</surname><given-names>T</given-names></name>
+<name><surname>Harshman</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Indexing by latent semantic analysis</article-title>. <source>J Am Soc Inf Sci</source>. <year>1990</year>;<volume>41</volume>:<fpage>391</fpage>–<lpage>407</lpage>.</citation>
+</ref>
+<ref id="bibr34-0272989X12457243">
+<label>34.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Deerwester</surname><given-names>S</given-names></name>
+<name><surname>Dumais</surname><given-names>S</given-names></name>
+<name><surname>Landauer</surname><given-names>T</given-names></name>
+<name><surname>Furnas</surname><given-names>G</given-names></name>
+<name><surname>Beck</surname><given-names>L</given-names></name>
+</person-group>. <article-title>Improving information-retrieval with latent semantic indexing</article-title>. <conf-name>In: Proceedings of the ASIS Annual Meeting</conf-name>. <conf-loc>Atlanta, GA</conf-loc>: <collab>American Society for Information Science</collab>; <year>1988</year>. p <fpage>36</fpage>–<lpage>40</lpage>.</citation>
+</ref>
+<ref id="bibr35-0272989X12457243">
+<label>35.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>DeLong</surname><given-names>ER</given-names></name>
+<name><surname>DeLong</surname><given-names>DM</given-names></name>
+<name><surname>Clarke-Pearson</surname><given-names>DL</given-names></name>
+</person-group>. <article-title>Comparing the areas under two or more correlated receiver operating characteristic curves: a nonparametric approach</article-title>. <source>Biometrics</source>. <year>1988</year>;<volume>44</volume>(<issue>3</issue>):<fpage>837</fpage>–<lpage>45</lpage>.</citation>
+</ref>
+<ref id="bibr36-0272989X12457243">
+<label>36.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Efron</surname><given-names>B</given-names></name>
+<name><surname>Tibshirani</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Bootstrap methods for standard errors, confidence intervals, and other measures of statistical accuracy</article-title>. <source>Stat Sci</source>. <year>1986</year>;<volume>1</volume>(<issue>1</issue>):<fpage>54</fpage>–<lpage>75</lpage>.</citation>
+</ref>
+<ref id="bibr37-0272989X12457243">
+<label>37.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tsuang</surname><given-names>J</given-names></name>
+<name><surname>Marder</surname><given-names>SR</given-names></name>
+<name><surname>Han</surname><given-names>A</given-names></name>
+<name><surname>Hsieh</surname><given-names>W</given-names></name>
+</person-group>. <article-title>Olanzapine treatment for patients with schizophrenia and cocaine abuse</article-title>. <source>J Clin Psychiatry</source>. <year>2002</year>;<volume>63</volume>(<issue>12</issue>):<fpage>1180</fpage>–<lpage>1</lpage>.</citation>
+</ref>
+<ref id="bibr38-0272989X12457243">
+<label>38.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hamilton</surname><given-names>JD</given-names></name>
+<name><surname>Nguyen</surname><given-names>QX</given-names></name>
+<name><surname>Gerber</surname><given-names>RM</given-names></name>
+<name><surname>Rubio</surname><given-names>NB</given-names></name>
+</person-group>. <article-title>Olanzapine in cocaine dependence: a double-blind, placebo-controlled trial</article-title>. <source>Am J Addict</source>. <year>2009</year>;<volume>18</volume>(<issue>1</issue>):<fpage>48</fpage>–<lpage>52</lpage>.</citation>
+</ref>
+<ref id="bibr39-0272989X12457243">
+<label>39.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Aronson</surname><given-names>AR</given-names></name>
+<name><surname>Lang</surname><given-names>FM</given-names></name>
+</person-group>. <article-title>An overview of MetaMap: historical perspective and recent advances</article-title>. <source>J Am Med Inform Assoc</source>. <year>2010</year>;<volume>17</volume>(<issue>3</issue>):<fpage>229</fpage>–<lpage>36</lpage>.</citation>
+</ref>
+<ref id="bibr40-0272989X12457243">
+<label>40.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Glanville</surname><given-names>JM</given-names></name>
+<name><surname>Lefebvre</surname><given-names>C</given-names></name>
+<name><surname>Miles</surname><given-names>JN</given-names></name>
+<name><surname>Camosso-Stefinovic</surname><given-names>J</given-names></name>
+</person-group>. <article-title>How to identify randomized controlled trials in MEDLINE: ten years on</article-title>. <source>J Med Libr Assoc</source>. <year>2006</year>;<volume>94</volume>(<issue>2</issue>):<fpage>130</fpage>–<lpage>6</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

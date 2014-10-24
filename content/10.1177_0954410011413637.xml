@@ -1,0 +1,880 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">PIG</journal-id>
+<journal-id journal-id-type="hwp">sppig</journal-id>
+<journal-title>Proceedings of the Institution of Mechanical Engineers, Part G: Journal of Aerospace Engineering</journal-title>
+<issn pub-type="ppub">0954-4100</issn>
+<issn pub-type="epub">2041-3025</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0954410011413637</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0954410011413637</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Coupling in-flight trajectory planning and flocking for multiple autonomous parafoils</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Rosich</surname><given-names>A</given-names></name>
+</contrib>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Gurfil</surname><given-names>P</given-names></name>
+<xref ref-type="corresp" rid="corresp1-0954410011413637">*</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-0954410011413637">Faculty of Aerospace Engineering, Technion – Israel Institute of Technology, Technion City, Haifa, Israel</aff>
+<author-notes>
+<corresp id="corresp1-0954410011413637">Faculty of Aerospace Engineering, Technion – Israel Institute of Technology, Technion City, Haifa 32000, Israel. email: <email>pgurfil@technion.ac.il</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>6</month>
+<year>2012</year>
+</pub-date>
+<volume>226</volume>
+<issue>6</issue>
+<fpage>691</fpage>
+<lpage>720</lpage>
+<history>
+<date date-type="received"><day>28</day><month>3</month><year>2011</year></date>
+<date date-type="accepted"><day>24</day><month>5</month><year>2011</year></date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2011</copyright-statement>
+<copyright-year>2011</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>Much effort has been invested during the past decades in design of parafoils for a wide range of payloads and in development of means for their guidance. Existing parafoils are capable of autonomous navigation using the global positioning system and other onboard sensors. The purpose of this study is to explore the advantages of coordination among multiple autonomous parafoils. Each parafoil is able to navigate to the target on its own by following a real-time-generated reference trajectory. A new method for trajectory generation is presented and behaviour-based rules are developed that control the relative motion of the descending parafoils. The set of simple rules results in an emergent behaviour known as flocking. The coupling between trajectory following and flocking is studied in a multiagent simulation. The simulation uses a realistic six-degrees-of-freedom model of a heavy cargo parafoil. The obtained results demonstrate the possibility of flocking behaviour for guided parafoils. The flocking rules ensure safe separation between the vehicles headed for the same target and allow the parafoils to follow a reference trajectory as a group.</p>
+</abstract>
+<kwd-group>
+<kwd>coordinated parafoils</kwd>
+<kwd>guidance</kwd>
+<kwd>trajectory generation</kwd>
+<kwd>flocking</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="sec1-0954410011413637" sec-type="intro"><title>1 INTRODUCTION</title>
+<p>Technology advances during the 20th century revolutionized the airdrop practices by allowing precision aerial delivery. One of those advances was the introduction of ram-air parachutes, also known as parafoils, in the mid 1960s. Parafoils, contrary to the round parachutes, are lifting wings. They have much higher gliding ratio and better manoeuvrability than parachutes, thus providing better control of the flight path. The global positioning system (GPS) and advances in microelectronics and microelectromechanical systems have provided miniature on-board sensors and computers, rendering the development of fully autonomous parafoils possible. Simultaneously, precision aerial delivery technology was identified as a vital capability by several military and space exploration institutions. Consequently, in the past decades, guided parafoils became an object of an increased research interest.</p>
+<p>Among the challenges for the designers of ram-air parachutes is increasing the payload capacity of the parafoils while improving their glide ratio. For example, NASA's X-38 program, cancelled in 2003, involved development and testing of a 7500 ft<sup>2</sup> parafoil for landing a 25 000 lb spacecraft [<xref ref-type="bibr" rid="bibr1-0954410011413637">1</xref>]. In Europe, the FASTWing CL (foldable adaptive steerable textile wing for delivery of capital loads) project [<xref ref-type="bibr" rid="bibr2-0954410011413637">2</xref>], ongoing since December 2006, aims to develop a self-navigated system for cargo up to 6000 kg. A 42 000 lb parafoil system was demonstrated in USA in 2009 [<xref ref-type="bibr" rid="bibr3-0954410011413637">3</xref>].</p>
+<p>Another major scientific and engineering effort was directed towards the development of autonomous guidance systems and algorithms that would enable precise delivery of the payload to the planned destination in spite of uncertainties in the wind data and the parachute characteristics. The accuracy goal set by the US Army was landing within 100 m of the target under adverse weather conditions and with deployment altitudes above 25 000 ft [<xref ref-type="bibr" rid="bibr4-0954410011413637">4</xref>–<xref ref-type="bibr" rid="bibr6-0954410011413637">6</xref>]. For lighter – below 150 lb – payload category, even a tighter objective of 10 m at 80 per cent circular error probable (CEP) is now considered [<xref ref-type="bibr" rid="bibr3-0954410011413637">3</xref>].</p>
+<p>The subject that received less attention is coordination and task management of multiple parafoil systems. Nevertheless, proper interaction among the parafoils is essential since many airdrop scenarios involve coordinated delivery of multiple payloads to multiple destinations. Operation of multiple units that share airspace is required to be collision free; hence, it is necessary to employ coordination and collision avoidance algorithms.</p>
+<p>The domain of autonomous parafoil systems is closely related to other domains of robotics and artificial intelligence (AI). A parafoil vehicle equipped with an airborne guidance computer can be viewed as an intelligent agent with sensing, actuating, and information processing capabilities. As such, it can be aware of and interact with other agents within its vicinity. The research of AI behaviours and group interactions evolved concurrently with the parafoil technology. Traditionally, the research in robotics and AI considers wheeled robots, human-like or animal-like robots, autonomous computer-generated agents, and characters. Lately, the models considered were extended to various land, air, and underwater vehicles. Techniques from the AI world can also be applied to the design of interactions and autonomous coordination between parafoils.</p>
+<p>This study considers a large-scale parafoil for 6000 kg payload modelled using available data on the FASTWing and FASTWing CL parafoils [<xref ref-type="bibr" rid="bibr7-0954410011413637">7</xref>]. The research focuses on design of guidance laws for precision landing of the parafoil; then, a behavioural strategy for relative motion control of multiple parafoils is proposed and its effects on the baseline guidance are investigated. Formulation of the behaviour-based rules for coordinated descent of multiple parafoils constitutes the main contribution of this study.</p></sec>
+<sec id="sec2-0954410011413637"><title>2 RELATED WORK</title>
+<p>An inflated parafoil canopy is essentially a low aspect ratio wing with a characteristic arc anhedral. Study of its aerodynamics began after Jalbert published his invention of the ram-air-inflated parachute, or parafoil, in 1964 (US Patent no. 3 285 546). Several researchers reported results of wind tunnel investigations of parafoil characteristics [<xref ref-type="bibr" rid="bibr8-0954410011413637">8</xref>–<xref ref-type="bibr" rid="bibr11-0954410011413637">11</xref>]. Iacomini and Cerimele [<xref ref-type="bibr" rid="bibr12-0954410011413637">12</xref>, <xref ref-type="bibr" rid="bibr13-0954410011413637">13</xref>] presented aerodynamic characteristics of a large-scale parafoil estimated from a series of flight tests performed during the X-38 program. Other researchers employed an analytic approach for the derivation of the parafoil's aerodynamic properties. A thorough treatment of a gliding parachute flight mechanics and aerodynamics is presented by Iosilevskii [<xref ref-type="bibr" rid="bibr14-0954410011413637">14</xref>] in his report. In reference [<xref ref-type="bibr" rid="bibr15-0954410011413637">15</xref>], Iosilevskii analysed the longitudinal trim and stability of a parafoil and derived the limits on its centre of gravity (CG) and minimal lift coefficient. He also used the extended lifting-line theory to derive approximate expressions for the aerodynamic coefficients of a gliding parachute [<xref ref-type="bibr" rid="bibr16-0954410011413637">16</xref>]. Jann [<xref ref-type="bibr" rid="bibr17-0954410011413637">17</xref>] compared the aerodynamic coefficients predicted by the lifting-line theory with parameters estimated from flight tests. Slegers and Costello [<xref ref-type="bibr" rid="bibr18-0954410011413637">18</xref>] modelled a parafoil canopy as several joined panels and computed the aerodynamic forces and moments by summation of the lift and drag forces experienced by the panels. Lingard [<xref ref-type="bibr" rid="bibr19-0954410011413637">19</xref>] provided a review of ram-air parachute design and aerodynamics, offering a valuable insight into parafoil performance and dynamics.</p>
+<p>Concurrent with investigation of the parafoil aerodynamics, equations of motion (EOM) for simulation of the parafoil–payload system were developed. In a 1968 NASA technical report [<xref ref-type="bibr" rid="bibr20-0954410011413637">20</xref>], Gamble developed two sets of six-degrees-of-freedom (DOFs) rigid-body EOM for the parafoil and the payload, adding the constraints of the risers and suspension lines. In the years to come, various mathematical models were considered, ranging from three to nine DOF.</p>
+<p>Models with nine DOF comprise the high end of high-fidelity simulations [<xref ref-type="bibr" rid="bibr18-0954410011413637">18</xref>, <xref ref-type="bibr" rid="bibr21-0954410011413637">21</xref>, <xref ref-type="bibr" rid="bibr22-0954410011413637">22</xref>]. They consider the parafoil canopy and the payload as two rigid bodies with position of the payload constrained by the suspension lines. Thus, these models include the six DOFs of the parafoil plus three rotational DOF of the payload.</p>
+<p>It can be claimed that the payload roll is effectively constrained by the tension of suspension lines, so that the payload is only free to pitch and yaw. Therefore, eight DOFs are sufficient to fully describe the motion of a parafoil–payload system [<xref ref-type="bibr" rid="bibr23-0954410011413637">23</xref>, <xref ref-type="bibr" rid="bibr24-0954410011413637">24</xref>].</p>
+<p>For many applications, however, the relative motion of the parafoil and the payload can be neglected. Then, a parafoil–payload system can be treated as a rigid body using 6-DOF EOM [<xref ref-type="bibr" rid="bibr25-0954410011413637">25</xref>–<xref ref-type="bibr" rid="bibr28-0954410011413637">28</xref>].</p>
+<p>Even a more simplified modelling approach is usually employed for motion planning or guidance design [<xref ref-type="bibr" rid="bibr29-0954410011413637">29</xref>–<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>]. A parafoil motion is described by purely kinematic relations based on the assumption of equilibrium glide. Models of this type do not need a full aerodynamic database, but the knowledge of the equilibrium glide ratio, the gliding speed, and the maximum rate of turn is required. As a crude approximation, the glide parameters can be assumed constant throughout the flight. However, the turns usually comprise a substantial portion of the descent. Neglecting their effect on the glide angle would lead to large errors in prediction of the gliding trajectory. Jann [<xref ref-type="bibr" rid="bibr29-0954410011413637">29</xref>] compares a 3-DOF model assuming a constant speed and glide ratio to a 4-DOF model which includes a DOF in roll. Either the rate of turn or the bank angle can be viewed as a control input. Parafoil response to lateral control can have a large time constant; to account for the lag in response, the quasi-steady model can be supplemented by linear dynamics. In references [<xref ref-type="bibr" rid="bibr29-0954410011413637">29</xref>] to [<xref ref-type="bibr" rid="bibr31-0954410011413637">31</xref>], a first-order lag between the control deflection and the bank angle is assumed.</p>
+<p>Most authors include the added, or apparent, mass terms in the EOM. A general analysis of the EOM of a vehicle in a moving fluid giving rise to those terms is performed by Thomasson [<xref ref-type="bibr" rid="bibr33-0954410011413637">33</xref>]. Lissaman and Brown [<xref ref-type="bibr" rid="bibr34-0954410011413637">34</xref>] and Barrows [<xref ref-type="bibr" rid="bibr35-0954410011413637">35</xref>] solve the problem of identifying the centre of apparent mass of a parafoil and provide parametric forms for estimating the apparent mass terms.</p>
+<p>Early parafoil guidance concepts developed in the 1960s to 1970s relied on a radio beacon placed at the target that allowed the gliding parachute to home in on its signal [<xref ref-type="bibr" rid="bibr36-0954410011413637">36</xref>]. Introduction of the GPS enabled development of more sophisticated guidance laws. A guidance, navigation, and control concept for automatic landing of a large parafoil developed for the European Space Agency was adopted by NASA for its X-38 Crew Return Vehicle parachute landing system [<xref ref-type="bibr" rid="bibr37-0954410011413637">37</xref>, <xref ref-type="bibr" rid="bibr38-0954410011413637">38</xref>]. The same concept was used in the guided parafoil system developed by NASA for the US Army [<xref ref-type="bibr" rid="bibr39-0954410011413637">39</xref>]. This concept features a trajectory planning in a wind-fixed reference frame. In this way, the trajectory can be planned as if there were no wind drift. The wind is assumed to be known in advance.</p>
+<p>Jann [<xref ref-type="bibr" rid="bibr29-0954410011413637">29</xref>, <xref ref-type="bibr" rid="bibr40-0954410011413637">40</xref>] proposes a similar concept. Here, the trajectory is also planned in the wind-fixed frame and the guidance is divided into three phases. The main difference is in the energy management (EM) phase: an adjustable T-shaped pattern is flown. Flight test results with this guidance scheme were presented in Jann [<xref ref-type="bibr" rid="bibr41-0954410011413637">41</xref>].</p>
+<p>A simpler approach is taken by Rademacher in reference [<xref ref-type="bibr" rid="bibr42-0954410011413637">42</xref>]. During the first phase, the vehicle homes onto a waypoint directly above the target. Then, EM is performed by flying a racetrack pattern between two waypoints offset upwind and downwind from the target until the parafoil reaches certain altitude, after which the final homing to the target is executed. The waypoints are placed in an inertial frame of references; thus, no assumptions about the wind profile are needed. The exit from the EM phase is timed to accommodate the most adverse wind conditions.</p>
+<p>Calise and Preston [<xref ref-type="bibr" rid="bibr30-0954410011413637">30</xref>] describe a different scheme. Here, the guidance law also calls for several flight phases. However, the homing and EM phases are merged: first, most of the excess energy is disposed off by executing a spiral descent. Then, the remaining excess energy is regulated by performing s-turns along the way to the target. The wind profile is assumed to be known and the expected wind drift – the wind velocity integrated over the altitude-to-go – is taken into account during the computation of the desired altitude, although there is no explicit transformation into a wind-fixed frame.</p>
+<p>Another approach is taken by Kaminer and Yakimenko in reference [<xref ref-type="bibr" rid="bibr43-0954410011413637">43</xref>]. The main idea is to generate a single smooth reference trajectory that takes the parafoil from initial release point to touch down at a desired target. The shape of the trajectory is motivated by the solution to the minimal-time optimal control problem. Such a trajectory is shown to consist of helices and straight glide segments. However, the actual real-time trajectory generation is based on the problem geometry and parafoil performance without considering optimality. In essence, the trajectory consists of three segments resembling the three phases described above. Trajectory planning takes place in the inertial frame and the wind is treated as an unknown disturbance. However, it is not shown whether the parafoil can track the reference trajectory under such a disturbance.</p>
+<p>A more recent guidance algorithm from Draper Laboratory [<xref ref-type="bibr" rid="bibr44-0954410011413637">44</xref>] still includes the classical three phases with a figure-eight EM pattern, but the terminal phase (TP) implements an optimal guidance law – a heading rate command that minimizes a specific miss-distance-related function. This steering command is computed offline and tabulated in a sufficiently large neighbourhood of the target. It was reported recently that the optimization can be performed in real time aboard a 30 000 lbs class Megafly parafoil using a simplex search algorithm [<xref ref-type="bibr" rid="bibr45-0954410011413637">45</xref>].</p>
+<p>Slegers and Yakimenko [<xref ref-type="bibr" rid="bibr28-0954410011413637">28</xref>] have recently presented a guidance algorithm for miniature parafoils. This concept divides the precision delivery mission into six phases. The trajectory is planned in the inertial frame and the four first phases are waypoint based. The most crucial for accurate landing is the fifth phase, which is a 180° turn to the final approach. Although the start of the turn is carefully timed, unmodelled winds and sensor errors can lead to large position errors at the end of this phase. Therefore, an optimal turn rate command is computed for this phase to satisfy the final conditions and minimize the error in time of arrival to the final approach point. As the vehicle may deviate from the desired path, the optimal trajectory is updated repeatedly during the final turn.</p>
+<p>Another recent concept due to Rademacher <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>, <xref ref-type="bibr" rid="bibr46-0954410011413637">46</xref>] is to plan a smooth feasible reference trajectory for the entire mission [<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>, <xref ref-type="bibr" rid="bibr46-0954410011413637">46</xref>]. The path-planning problem is cast as a two-dimensional (2D) planning problem by a suitable change of the independent variable and formulated in the wind-fixed coordinate frame. A measure of excess energy, called an altitude margin, is derived and the reference trajectory is computed by the method based on the planar Dubins minimum-time path [<xref ref-type="bibr" rid="bibr47-0954410011413637">47</xref>]. An alternate path planning method proposed is the optimal planning with fully specified final conditions that minimizes the control effort energy. An overall guidance strategy using both path generation methods and based on the altitude margin is also presented.</p>
+<p>Thus, existing guidance concepts vary in their approach to trajectory planning. In most approaches, it is suggested to divide the mission into several phases. Some authors construct a waypoint- and heuristics-based trajectory, while others employ optimal control methods to trajectory planning. Several recent concepts combine both strategies during different flight phases. All reviewed works use GPS as the main source of navigation data.</p>
+<p>Multiagent coordination, as applied to autonomous parafoils, was addressed in several works. Kaminer <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr48-0954410011413637">48</xref>] proposed a methodology for coordinated control of parafoils, where collision avoidance constraints were explicitly introduced during reference trajectory generation. Calise and Preston [<xref ref-type="bibr" rid="bibr30-0954410011413637">30</xref>] used behaviour-based rules for coordination among the parafoils. Gurfil and Feldman [<xref ref-type="bibr" rid="bibr31-0954410011413637">31</xref>] considered cooperative task management based on inter-parafoil <italic>ad hoc</italic> communication for increasing the probability of successful airdrop.</p></sec>
+<sec id="sec3-0954410011413637"><title>3 PARAFOIL MODELLING</title>
+<p>The first step is the development of the full parafoil models, from which the simplified models will be subsequently derived. The full models deal with a fully inflated parafoil wing assuming it is a rigid body. In the present scope, the whole parafoil–payload system is treated as a single rigid body, which requires integrating 6-DOF EOM. A more sophisticated approach is to treat the parafoil–payload system as a multibody problem, adding the DOFs for the relative motion, which would bring the total number of DOFs to 8 or 9. Nevertheless, a 6-DOF model has the capability to capture most of the important properties of the parafoil system and such models are commonly used [<xref ref-type="bibr" rid="bibr17-0954410011413637">17</xref>, <xref ref-type="bibr" rid="bibr25-0954410011413637">25</xref>–<xref ref-type="bibr" rid="bibr28-0954410011413637">28</xref>].</p>
+<p>Building up a realistic parafoil model is a major challenge, since published parafoil aerodynamic data is scarce. Many sources have incomplete or inconsistent data, or data that applies only to specific parafoils [<xref ref-type="bibr" rid="bibr8-0954410011413637">8</xref>–<xref ref-type="bibr" rid="bibr14-0954410011413637">14</xref>]. The common practice for establishing a computational database for simulation is via parameter identification in flight tests [<xref ref-type="bibr" rid="bibr12-0954410011413637">12</xref>, <xref ref-type="bibr" rid="bibr13-0954410011413637">13</xref>, <xref ref-type="bibr" rid="bibr17-0954410011413637">17</xref>, <xref ref-type="bibr" rid="bibr25-0954410011413637">25</xref>]. However, testing an actual parafoil was outside the scope of this research. The present model is based on the FASTWing CL parafoil [<xref ref-type="bibr" rid="bibr7-0954410011413637">7</xref>]. It is based on the geometry, dimensions, weights, and some aerodynamic properties of the FASTWing CL system, but complete aerodynamic data was not available.</p>
+<p>Working with 6-DOF EOM makes the modelling very similar to that of an airplane. The general references on the airplane EOM include references [<xref ref-type="bibr" rid="bibr49-0954410011413637">49</xref>] and [<xref ref-type="bibr" rid="bibr50-0954410011413637">50</xref>]. The following sections describe the 6-DOF model in detail.</p>
+<p>A ram-air parachute is controlled by pulling the control lines attached to either outboard sections of the canopy trailing edge, which causes deflection of portions of the trailing edge, called also <italic>flap deflection</italic> or <italic>brake deflection</italic> [<xref ref-type="bibr" rid="bibr12-0954410011413637">12</xref>, <xref ref-type="bibr" rid="bibr19-0954410011413637">19</xref>]. Right and left flap deflection are designated, respectively, by δ<sub>r</sub> and δ<sub>l</sub>. The differential flap deflection, defined here as δ<sub>a</sub> ≜ δ<sub><italic>l</italic></sub> − δ<sub><italic>r</italic></sub>, produces asymmetric drag and causes the canopy to turn in the direction of the lower flap. Bank angle develops as a consequence of the turn rate due to a centrifugal force acting on the suspended payload. Such turn response is known as <italic>skid-to-turn</italic>. A symmetric deflection of flaps, <inline-formula id="ilm1-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math1-0954410011413637"><mml:mrow><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mtext>s</mml:mtext></mml:mrow></mml:msub><mml:mrow><mml:munder accentunder="true"><mml:munder accentunder="true"><mml:mi>Δ</mml:mi><mml:mo stretchy="true">¯</mml:mo></mml:munder><mml:mo stretchy="true">¯</mml:mo></mml:munder><mml:mfrac><mml:mn>1</mml:mn><mml:mn>2</mml:mn></mml:mfrac></mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mtext>l</mml:mtext></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mtext>r</mml:mtext></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo></mml:mrow></mml:math></inline-formula>, produces an increase in lift and drag coefficients, but the lift-to-drag ratio <italic>L</italic>/<italic>D</italic> and the trim angle of attack are usually affected only slightly; the significant increases in lift and drag coefficients result only in reduced velocity [<xref ref-type="bibr" rid="bibr19-0954410011413637">19</xref>]. Controlling the glide slope by the means of symmetric trailing edge deflection is not feasible. Therefore, the main usage of symmetric flap deflection is for landing flare, in order to decrease horizontal and vertical velocities.</p>
+<p>Trimming of a parafoil is achieved by rigging the suspension lines, which, in effect, determines the longitudinal position of the payload with respect to the canopy. The rigging angle, designated as Γ in <xref ref-type="fig" rid="fig1-0954410011413637">Fig. 1</xref>, is analogous to the angle of incidence of fixed-wing aircraft. It is defined as the angle between the normal to the canopy chord and the line connecting the reference points of the canopy and the payload. It is convenient to define the body reference frame (see below) relative to the canopy chord, therefore <italic>x</italic><sub>b</sub> in <xref ref-type="fig" rid="fig1-0954410011413637">Fig. 1</xref> is the longitudinal body axis and θ and α the pitch angle and the angle of attack, respectively. The rigging angle is usually fixed prior to deployment and is not variable in flight.
+<fig id="fig1-0954410011413637" position="float"><label>Fig. 1</label><caption><p>The rigging angle, pitch angle, and the angle of attack of parafoil</p></caption><graphic xlink:href="10.1177_0954410011413637-fig1.tif"/></fig></p>
+<sec id="sec4-0954410011413637"><title>3.1 Equations of motion</title>
+<p>The following reference frames will be used in the subsequent developments.</p>
+<sec id="sec5-0954410011413637"><title>3.1.1 Inertial frame</title>
+<p>This frame's origin is fixed on the Earth surface (assumed to be flat and non-rotating). The axes are oriented with the <italic>x</italic>-axis pointing north, the <italic>y</italic>-axis pointing east, and the <italic>z</italic>-axis pointing down. This coordinate system will be used as the inertial reference frame and is designated by <italic>n</italic>. In the parafoil guidance context, the origin will usually coincide with the landing location.</p></sec>
+<sec id="sec6-0954410011413637"><title>3.1.2 Body frame</title>
+<p>This axes system is fixed relatively to the parafoil and has its origin at the parafoil–payload system CG. The <italic>x</italic>-axis is aligned with the parafoil wing chord and points forward, the <italic>y</italic>-axis points to the right, and the <italic>z</italic>-axis points down. The body reference frame will be denoted by ‘b’. The EOM are integrated in this frame of reference.</p>
+<p>The position of the parafoil–payload CG in the inertial reference frame will be denoted by
+<disp-formula id="disp-formula1-0954410011413637"><label>(1)</label><graphic xlink:href="10.1177_0954410011413637-eq1.tif"/></disp-formula></p>
+<p>Orientation of the body reference frame with respect to the inertial reference frame is given by the three Euler angles ϕ, θ, and ψ. Using the standard rotation sequence (ψ–θ–ϕ), the transformation from the inertial frame to the body frame is given by the matrix
+<disp-formula id="disp-formula2-0954410011413637"><label>(2)</label><graphic xlink:href="10.1177_0954410011413637-eq2.tif"/></disp-formula></p>
+<p>The inverse transformation is given by
+<disp-formula id="disp-formula3-0954410011413637"><label>(3)</label><graphic xlink:href="10.1177_0954410011413637-eq3.tif"/></disp-formula></p></sec>
+<sec id="sec7-0954410011413637"><title>3.1.3 Wind frame (body carried)</title>
+<p>The wind-axis system has its origin at the CG – coincident with the body frame origin. However, the <italic>x</italic>-axis is aligned, at any given moment, with the velocity vector relative to the air mass. This reference frame is related to the body frame by rotations about the <italic>y</italic>-axis through the angle of attack and about the <italic>z</italic>-axis through the angle of sideslip. Thus, the transformation from body to wind axes is given by
+<disp-formula id="disp-formula4-0954410011413637"><label>(4)</label><graphic xlink:href="10.1177_0954410011413637-eq4.tif"/></disp-formula>
+The wind-axis reference frame is used for evaluation of the aerodynamic force coefficients.</p></sec>
+<sec id="sec8-0954410011413637"><title>3.1.4 Wind-fixed (atmosphere) frame</title>
+<p>This coordinate system moves with the air mass. At the time of landing, its origin coincides with the target. Orientation of the wind-fixed frame relatively to the inertial frame is fixed. The <italic>x</italic>-axis points to the desired landing heading (i.e. into the wind at the target) and the <italic>z</italic>-axis points down.</p></sec></sec>
+<sec id="sec9-0954410011413637"><title>3.2 Kinematics and dynamics</title>
+<p>The inertial position <bold><italic>x</italic></bold> evolves in time according to
+<disp-formula id="disp-formula5-0954410011413637"><label>(5)</label><graphic xlink:href="10.1177_0954410011413637-eq5.tif"/></disp-formula>
+where <bold><italic>v</italic></bold> = [<italic>u</italic>, <italic>v</italic>, <italic>w</italic>]<sup>T</sup> is the inertial velocity expressed in the body reference frame. In addition
+<disp-formula id="disp-formula6-0954410011413637"><label>(6)</label><graphic xlink:href="10.1177_0954410011413637-eq6.tif"/></disp-formula>
+where <bold><italic>ω</italic></bold> = [<italic>p</italic>, <italic>q</italic>, <italic>r</italic>]<sup>T</sup> is the angular velocity in the body reference frame.</p>
+<p>The equations of translational and rotational dynamics are given by
+<disp-formula id="disp-formula7-0954410011413637"><label>(7)</label><graphic xlink:href="10.1177_0954410011413637-eq7.tif"/></disp-formula>
+<disp-formula id="disp-formula8-0954410011413637"><label>(8)</label><graphic xlink:href="10.1177_0954410011413637-eq8.tif"/></disp-formula>
+where <bold><italic>F</italic></bold><sub>aero</sub> and <bold><italic>M</italic></bold><sub>aero</sub> are the aerodynamic forces and moments defined in subsequent paragraphs, <italic>g</italic> the gravity acceleration, <italic>m</italic> the vehicle mass and <italic>I</italic> the inertia matrix for a body with a single plane of symmetry given by
+<disp-formula id="disp-formula9-0954410011413637"><label>(9)</label><graphic xlink:href="10.1177_0954410011413637-eq9.tif"/></disp-formula></p>
+<p>This section presents the expressions for the body-axes aerodynamic forces and moments as a function of the non-dimensional aerodynamic coefficients. The assumption is that the force coefficients are given in the wind axes. The aerodynamic coefficients are usually evaluated at some reference point different from the CG.</p>
+<p>Let <bold><italic>r</italic></bold> be the vector from the CG to the aerodynamics reference point. The aerodynamic forces and moments can be calculated as follows
+<disp-formula id="disp-formula10-0954410011413637"><label>(10)</label><graphic xlink:href="10.1177_0954410011413637-eq10.tif"/></disp-formula>
+<disp-formula id="disp-formula11-0954410011413637"><label>(11)</label><graphic xlink:href="10.1177_0954410011413637-eq11.tif"/></disp-formula>
+where ρ is the air density, <italic>V</italic> the airspeed, <italic>S</italic> the reference canopy area, <italic>b</italic> the wing span, <italic>c</italic> the mean aerodynamic chord, <italic>C</italic><sub>L</sub>, <italic>C</italic><sub>D</sub>, and <italic>C</italic><sub>Y</sub> the lift, drag, and side force coefficients, and <italic>C</italic><sub><italic>l</italic></sub>, <italic>C</italic><sub><italic>m</italic></sub> and <italic>C</italic><sub><italic>n</italic></sub> the rolling, pitching, and yawing moment coefficients.</p></sec>
+<sec id="sec10-0954410011413637"><title>3.3 Flight parameters and wind effects</title>
+<p>Wind effects are accounted for via the flight parameters used in the computation of the aerodynamic coefficients. Velocity of the parafoil relative to the air is given by
+<disp-formula id="disp-formula12-0954410011413637"><label>(12)</label><graphic xlink:href="10.1177_0954410011413637-eq12.tif"/></disp-formula>
+The true airspeed, <italic>V</italic> is the magnitude of <bold><italic>v</italic></bold><sub>a</sub>, <italic>V</italic> = ‖<bold><italic>v</italic></bold><sub>a</sub>‖, and the angle of attack and sideslip angle are computed as
+<disp-formula id="disp-formula13-0954410011413637"><label>(13a)</label><graphic xlink:href="10.1177_0954410011413637-eq13a.tif"/></disp-formula>
+<disp-formula id="disp-formula14-0954410011413637"><label>(13b)</label><graphic xlink:href="10.1177_0954410011413637-eq13b.tif"/></disp-formula></p></sec>
+<sec id="sec11-0954410011413637"><title>3.4 Parafoil aerodynamics</title>
+<p>An initial source of aerodynamic data was the wind tunnel test report from the University of Notre Dame [<xref ref-type="bibr" rid="bibr10-0954410011413637">10</xref>]. Another way of obtaining a computational database is using analytical approximations to calculate the aerodynamic coefficients.</p>
+<p>The ram-air inflated canopy is typically shaped as a low-aspect-ratio wing with an arc-anhedral (<xref ref-type="fig" rid="fig2-0954410011413637">Fig. 2</xref>). Application of Prandtl's lifting-line theory to this class of wings was treated in references [<xref ref-type="bibr" rid="bibr14-0954410011413637">14</xref>, <xref ref-type="bibr" rid="bibr16-0954410011413637">16</xref>, <xref ref-type="bibr" rid="bibr17-0954410011413637">17</xref>]. According to Iosilevskii [<xref ref-type="bibr" rid="bibr14-0954410011413637">14</xref>], the lift and drag coefficients can be approximated in the following way.
+<fig id="fig2-0954410011413637" position="float"><label>Fig. 2</label><caption><p>Geometry of parafoil with arc anhedral</p></caption><graphic xlink:href="10.1177_0954410011413637-fig2.tif"/></fig></p>
+<p>Let the canopy span be denoted by <italic>b</italic>, the line length (arc radius) by <italic>R</italic>, and the canopy reference chord by <italic>c</italic>. The half-wing arc spread is given by
+<disp-formula id="disp-formula15-0954410011413637"><label>(14)</label><graphic xlink:href="10.1177_0954410011413637-eq14.tif"/></disp-formula>
+The projected span is therefore
+<disp-formula id="disp-formula16-0954410011413637"><label>(15)</label><graphic xlink:href="10.1177_0954410011413637-eq15.tif"/></disp-formula>
+and the projected canopy area (given a rectangular planform) is
+<disp-formula id="disp-formula17-0954410011413637"><label>(16)</label><graphic xlink:href="10.1177_0954410011413637-eq16.tif"/></disp-formula>
+Other useful definitions are the projected aspect ratio
+<disp-formula id="disp-formula18-0954410011413637"><label>(17)</label><graphic xlink:href="10.1177_0954410011413637-eq17.tif"/></disp-formula>
+the correction for wing curvature
+<disp-formula id="disp-formula19-0954410011413637"><label>(18)</label><graphic xlink:href="10.1177_0954410011413637-eq18.tif"/></disp-formula>
+the corrected profile lift curve slope
+<disp-formula id="disp-formula20-0954410011413637"><label>(19)</label><graphic xlink:href="10.1177_0954410011413637-eq19.tif"/></disp-formula>
+where <italic>a</italic><sub>0</sub> is the profile lift curve slope. The wing lift curve slope
+<disp-formula id="disp-formula21-0954410011413637"><label>(20)</label><graphic xlink:href="10.1177_0954410011413637-eq20.tif"/></disp-formula>
+the lift coefficient
+<disp-formula id="disp-formula22-0954410011413637"><label>(21)</label><graphic xlink:href="10.1177_0954410011413637-eq21.tif"/></disp-formula>
+the correction for non-elliptic lift distribution
+<disp-formula id="disp-formula23-0954410011413637"><label>(22)</label><graphic xlink:href="10.1177_0954410011413637-eq22.tif"/></disp-formula>
+the induced drag coefficient
+<disp-formula id="disp-formula24-0954410011413637"><label>(23)</label><graphic xlink:href="10.1177_0954410011413637-eq23.tif"/></disp-formula>
+and the total drag coefficient
+<disp-formula id="disp-formula25-0954410011413637"><label>(24)</label><graphic xlink:href="10.1177_0954410011413637-eq24.tif"/></disp-formula></p>
+<p>Apparent mass terms in the inertia matrix can account for changes in the momentum of surrounding air caused by the parafoil motion. For parafoils, the apparent mass effect is expected to be significant due to low wing loading and large distance between the lifting surface and centre of mass (CM) of the vehicle. The theory of apparent mass and methods for calculating the apparent mass of a parafoil are discussed in references [<xref ref-type="bibr" rid="bibr33-0954410011413637">33</xref>] to [<xref ref-type="bibr" rid="bibr35-0954410011413637">35</xref>]. However, experimentally measured aerodynamic data typically include the apparent mass effects. Due to uncertainty of available data, it was decided not to include apparent mass effects explicitly.</p>
+<p>Thus, the computational database was compiled empirically, based on different sources. The aerodynamic coefficients are computed as follows
+<disp-formula id="disp-formula26-0954410011413637"><label>(25a)</label><graphic xlink:href="10.1177_0954410011413637-eq25a.tif"/></disp-formula>
+<disp-formula id="disp-formula27-0954410011413637"><label>(25b)</label><graphic xlink:href="10.1177_0954410011413637-eq25b.tif"/></disp-formula>
+<disp-formula id="disp-formula28-0954410011413637"><label>(25c)</label><graphic xlink:href="10.1177_0954410011413637-eq25c.tif"/></disp-formula>
+<disp-formula id="disp-formula29-0954410011413637"><label>(25d)</label><graphic xlink:href="10.1177_0954410011413637-eq25d.tif"/></disp-formula>
+<disp-formula id="disp-formula30-0954410011413637"><label>(25e)</label><graphic xlink:href="10.1177_0954410011413637-eq25e.tif"/></disp-formula>
+<disp-formula id="disp-formula31-0954410011413637"><label>(25f)</label><graphic xlink:href="10.1177_0954410011413637-eq25f.tif"/></disp-formula></p>
+<p>The moments of inertia were estimated according to a simple lumped-mass distribution model [<xref ref-type="bibr" rid="bibr14-0954410011413637">14</xref>]
+<disp-formula id="disp-formula32-0954410011413637"><label>(26a)</label><graphic xlink:href="10.1177_0954410011413637-eq26a.tif"/></disp-formula>
+<disp-formula id="disp-formula33-0954410011413637"><label>(26b)</label><graphic xlink:href="10.1177_0954410011413637-eq26b.tif"/></disp-formula>
+<disp-formula id="disp-formula34-0954410011413637"><label>(26c)</label><graphic xlink:href="10.1177_0954410011413637-eq26c.tif"/></disp-formula>
+<disp-formula id="disp-formula35-0954410011413637"><label>(26d)</label><graphic xlink:href="10.1177_0954410011413637-eq26d.tif"/></disp-formula>
+where <italic>m</italic><sub>c</sub> and <italic>m</italic><sub>p</sub> are the masses of the canopy (including the air within its volume) and of the payload, respectively, <italic>x</italic><sub>c</sub> and <italic>z</italic><sub>c</sub> the horizontal and vertical locations of canopy CM and <italic>x</italic><sub>p</sub>, <italic>z</italic><sub>p</sub> the location of the payload CM.</p></sec>
+<sec id="sec12-0954410011413637"><title>3.5 Sensor and actuation models</title>
+<p>The only sensors selected for the guidance and control algorithms presented in this article are a GPS receiver and an inertial measurement unit (IMU). The sensor models are based on the Aerosim Blockset [<xref ref-type="bibr" rid="bibr51-0954410011413637">51</xref>]. The GPS model includes latency and slowly varying bias modelled as a Gauss–Markov process. The inertial sensors are modelled as second-order linear systems. Their error model consists of white noise and a varying bias. The IMU is assumed to be calibrated to compensate for constant and temperature-dependent biases. Effects of axis-non-orthogonality and acceleration-dependent bias are neglected. All sensor models include sampling and quantization effects. The sensor characteristics as modelled are generic and not represent any specific device. However, many sensors that meet or exceed assumed performance are commercially available; References [<xref ref-type="bibr" rid="bibr52-0954410011413637">52</xref>] and [<xref ref-type="bibr" rid="bibr53-0954410011413637">53</xref>] provide some examples. The specification of the sensors as modelled is given in <xref ref-type="table" rid="table1-0954410011413637">Table 1</xref>.
+<table-wrap id="table1-0954410011413637" position="float"><label>Table 1</label><caption><p>Sensor model parameters</p></caption>
+<graphic alternate-form-of="table1-0954410011413637" xlink:href="10.1177_0954410011413637-table1.tif"/>
+<table frame="hsides">
+<tbody>
+<tr>
+<td>GPS</td></tr>
+<tr>
+<td> Output rate</td>
+<td>10 Hz</td></tr>
+<tr>
+<td> Data latency</td>
+<td>100 ms</td></tr>
+<tr>
+<td> Position resolution</td>
+<td>1 m</td></tr>
+<tr>
+<td> Velocity range</td>
+<td>100 m/s</td></tr>
+<tr>
+<td> Velocity resolution</td>
+<td>0.05 m/s</td></tr>
+<tr>
+<td> Accuracy (1σ)</td>
+<td/></tr>
+<tr>
+<td>  Horizontal position</td>
+<td>1.5 m</td></tr>
+<tr>
+<td>  Vertical position</td>
+<td>4.5 m</td></tr>
+<tr>
+<td>  Velocity</td>
+<td>0.1 m/s</td></tr>
+<tr>
+<td> Error correlation time</td>
+<td>100 s</td></tr>
+<tr>
+<td>Angular rate</td></tr>
+<tr>
+<td> Output rate</td>
+<td>50 Hz</td></tr>
+<tr>
+<td> Range</td>
+<td>±100°/s</td></tr>
+<tr>
+<td> Resolution</td>
+<td>0.05°/s</td></tr>
+<tr>
+<td> Bandwidth</td>
+<td>30 rad/s</td></tr>
+<tr>
+<td> Output noise (1σ)</td>
+<td>0.2°/s</td></tr>
+<tr>
+<td> Bias stability (1σ)</td>
+<td>0.1°/s (correlation time 15 s)</td></tr>
+<tr>
+<td>Acceleration</td></tr>
+<tr>
+<td> Output rate</td>
+<td>50 Hz</td></tr>
+<tr>
+<td> Range</td>
+<td>±50 m/s<sup>2</sup></td></tr>
+<tr>
+<td> Resolution</td>
+<td>0.025 m/s<sup>2</sup></td></tr>
+<tr>
+<td> Bandwidth</td>
+<td>30 rad/s</td></tr>
+<tr>
+<td> Output noise (1σ)</td>
+<td>0.1 m/s<sup>2</sup></td></tr>
+<tr>
+<td> Bias stability</td>
+<td>0.02 m/s<sup>2</sup> (correlation time 15 s)</td></tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table2-0954410011413637" position="float"><label>Table 2</label><caption><p>Flocking strategy combinations</p></caption>
+<graphic alternate-form-of="table2-0954410011413637" xlink:href="10.1177_0954410011413637-table2.tif"/>
+<table frame="hsides"><thead>
+<tr><th/>
+<th>Attraction (cohesion)</th>
+<th>Repulsion (separation)</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Centroid based</td>
+<td>Centroid based</td></tr>
+<tr>
+<td>2</td>
+<td>Flockmate based</td>
+<td>Flockmate based</td></tr>
+<tr>
+<td>3</td>
+<td>Centroid based</td>
+<td>Flockmate based</td></tr>
+<tr>
+<td>4</td>
+<td>Flockmate based</td>
+<td>Centroid based</td></tr>
+<tr>
+<td>5</td>
+<td>Centroid based</td>
+<td>Centroid and flockmate based</td></tr>
+<tr>
+<td>6</td>
+<td>Flockmate based</td>
+<td>Centroid and flockmate based</td></tr>
+<tr>
+<td>7</td>
+<td>Centroid and flockmate based</td>
+<td>Centroid based</td></tr>
+<tr>
+<td>8</td>
+<td>Centroid and flockmate based</td>
+<td>Flockmate based</td></tr>
+<tr>
+<td>9</td>
+<td>Centroid and flockmate based</td>
+<td>Centroid and flockmate based</td></tr>
+</tbody>
+</table>
+</table-wrap></p>
+<p>The parafoil is equipped with two control actuators for deflecting the flaps. The actuators are electric winches that reel up the control lines thereby deflecting the trailing edge of the canopy. Each actuator is modeled as a second-order linear system with a natural frequency of 30 rad/s and damping coefficient 0.7. Position limits and rate limit of 1 s for a full stroke are imposed.</p></sec>
+<sec id="sec13-0954410011413637"><title>3.6 Simplified steady-state model</title>
+<p>Solution of the trajectory design problem requires a simple, analytically tractable representation of the system. Since most of the flight, the parafoil is (nominally) in straight or turning equilibrium glide, such model can be constructed using only kinematic relationships and the parafoil steady-state performance data. Derivation of the quasi-steady model is rooted in the analysis of steady-state uncoordinated turn in a wind field.</p>
+<p>As was mentioned previously, parafoils usually exhibit skid-to-turn (as opposed to bank-to-turn) behaviour. Deflection of one of the trailing edge flaps produces asymmetrical drag and causes a yawing moment in the direction of the lowered flap – in a conventional airplane, one would expect banking motion in the opposite direction. Bank angle develops as a consequence of the turn rate due to a centrifugal force acting on the suspended payload. The resulting turn is not coordinated; in the general case, <italic>Y</italic> ≠ 0 and β ≠ 0. That means that the bank angle (σ) of the force normal to the flight path (<italic>L</italic>′) is different from the body bank angle ϕ (<xref ref-type="fig" rid="fig3-0954410011413637">Fig. 3</xref>). The angle σ will be referred to as the <italic>generalized bank angle</italic>.
+<fig id="fig3-0954410011413637" position="float"><label>Fig. 3</label><caption><p>A parafoil in turning flight</p></caption><graphic xlink:href="10.1177_0954410011413637-fig3.tif"/></fig></p>
+<p>Let the direction of the velocity vector with respect to the wind be ξ. It is different from the parafoil heading angle ψ since ξ = ψ + β. However, <inline-formula id="ilm2-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math2-0954410011413637"><mml:mrow><mml:mover><mml:mrow><mml:mi>β</mml:mi></mml:mrow><mml:mi>·</mml:mi></mml:mover><mml:mo>=</mml:mo><mml:mn>0</mml:mn></mml:mrow></mml:math></inline-formula> in equilibrium, therefore <inline-formula id="ilm3-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math3-0954410011413637"><mml:mrow><mml:mover><mml:mrow><mml:mi>ξ</mml:mi></mml:mrow><mml:mi>·</mml:mi></mml:mover><mml:mo>=</mml:mo><mml:mover><mml:mrow><mml:mi>ψ</mml:mi></mml:mrow><mml:mi>·</mml:mi></mml:mover></mml:mrow></mml:math></inline-formula>. The position components of the parafoil evolve in time according to the kinematic equations
+<disp-formula id="disp-formula36-0954410011413637"><label>(27a)</label><graphic xlink:href="10.1177_0954410011413637-eq27a.tif"/></disp-formula>
+<disp-formula id="disp-formula37-0954410011413637"><label>(27b)</label><graphic xlink:href="10.1177_0954410011413637-eq27b.tif"/></disp-formula>
+<disp-formula id="disp-formula38-0954410011413637"><label>(27c)</label><graphic xlink:href="10.1177_0954410011413637-eq27c.tif"/></disp-formula></p>
+<p>An equilibrium turning glide implies the condition <inline-formula id="ilm4-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math4-0954410011413637"><mml:mrow><mml:mover><mml:mrow><mml:mi>V</mml:mi></mml:mrow><mml:mi>·</mml:mi></mml:mover><mml:mo>=</mml:mo><mml:mover><mml:mrow><mml:mi>γ</mml:mi></mml:mrow><mml:mi>·</mml:mi></mml:mover><mml:mo>=</mml:mo><mml:mover><mml:mrow><mml:mi>ξ</mml:mi></mml:mrow><mml:mi>··</mml:mi></mml:mover><mml:mo>=</mml:mo><mml:mn>0</mml:mn></mml:mrow></mml:math></inline-formula>.</p>
+<p>Considering the forces acting on the gliding parafoil (<xref ref-type="fig" rid="fig4-0954410011413637">Fig. 4</xref>), for static equilibrium one obtains
+<disp-formula id="disp-formula39-0954410011413637"><label>(28a)</label><graphic xlink:href="10.1177_0954410011413637-eq28a.tif"/></disp-formula>
+<disp-formula id="disp-formula40-0954410011413637"><label>(28b)</label><graphic xlink:href="10.1177_0954410011413637-eq28b.tif"/></disp-formula>
+It follows that the equilibrium gliding angle can be found as
+<disp-formula id="disp-formula41-0954410011413637"><label>(29)</label><graphic xlink:href="10.1177_0954410011413637-eq29.tif"/></disp-formula>
+assuming <italic>L</italic>′/<italic>D</italic> ≈ <italic>L</italic>/<italic>D</italic>. The turn rate is given by
+<disp-formula id="disp-formula42-0954410011413637"><label>(30)</label><graphic xlink:href="10.1177_0954410011413637-eq30.tif"/></disp-formula>
+<fig id="fig4-0954410011413637" position="float"><label>Fig. 4</label><caption><p>Force diagram – side view</p></caption><graphic xlink:href="10.1177_0954410011413637-fig4.tif"/></fig>To be able to propagate the EOM, one should determine <italic>L</italic>/<italic>D</italic>, σ, and <italic>V</italic>. For a given parafoil with a fixed rigging angle and a fixed symmetric flap deflection, these parameters can be expressed in terms of the differential flap deflection and the altitude
+<disp-formula id="disp-formula43-0954410011413637"><label>(31a)</label><graphic xlink:href="10.1177_0954410011413637-eq31a.tif"/></disp-formula>
+<disp-formula id="disp-formula44-0954410011413637"><label>(31b)</label><graphic xlink:href="10.1177_0954410011413637-eq31b.tif"/></disp-formula>
+<disp-formula id="disp-formula45-0954410011413637"><label>(31c)</label><graphic xlink:href="10.1177_0954410011413637-eq31c.tif"/></disp-formula>
+Here, <italic>L</italic>/<italic>D</italic>(δ<sub>a</sub>) is one of the parafoil characteristics. If σ<sub>0</sub>(δ<sub>a</sub>) is the steady-state generalized bank angle at some given altitude, written as a function of the differential flap deflection, then σ at some other altitude can be approximated as
+<disp-formula id="disp-formula46-0954410011413637"><label>(32)</label><graphic xlink:href="10.1177_0954410011413637-eq32.tif"/></disp-formula>
+where ρ(<italic>h</italic>) is the air density as function of altitude and <italic>h</italic><sub>0</sub> the reference altitude.</p>
+<p>Equation (<xref ref-type="disp-formula" rid="disp-formula41-0954410011413637">29</xref>) gives the gliding angle as a function of the bank angle and, eventually, flap deflection. Let γ<sub>0</sub> be the flight path angle in symmetric glide
+<disp-formula id="disp-formula47-0954410011413637"><label>(33)</label><graphic xlink:href="10.1177_0954410011413637-eq33.tif"/></disp-formula>
+Substituting <italic>L</italic>′ = 1/2ρ<italic>V</italic> <sup>2</sup><italic>SC</italic><sub><italic>L</italic>′</sub> and σ = 0 into (<xref ref-type="disp-formula" rid="disp-formula40-0954410011413637">28b</xref>) yields
+<disp-formula id="disp-formula48-0954410011413637"><label>(34)</label><graphic xlink:href="10.1177_0954410011413637-eq34.tif"/></disp-formula>
+For σ ≠ 0
+<disp-formula id="disp-formula49-0954410011413637"><label>(35)</label><graphic xlink:href="10.1177_0954410011413637-eq35.tif"/></disp-formula>
+Assuming <italic>C</italic><sub><italic>L</italic>′0</sub> = <italic>C</italic><sub><italic>L</italic>′</sub>, yields
+<disp-formula id="disp-formula50-0954410011413637"><label>(36)</label><graphic xlink:href="10.1177_0954410011413637-eq36.tif"/></disp-formula>
+where <italic>V</italic><sub>0</sub> is the airspeed in straight glide. However, a parafoil trims at a constant lift coefficient, and hence the dynamic pressure is constant. Thus, it is convenient to specify the gliding airspeed in terms of the equivalent airspeed
+<disp-formula id="disp-formula51-0954410011413637"><label>(37)</label><graphic xlink:href="10.1177_0954410011413637-eq37.tif"/></disp-formula></p>
+<p>Now all flight parameters are defined in terms of the control input, parafoil state (altitude), and constant parafoil parameters. Consequently, the following parafoil properties have to be known:
+<list id="list1-0954410011413637" list-type="alpha-lower">
+<list-item><p><italic>L</italic>/<italic>D</italic>(δ<sub>a</sub>) – the glide ratio as a function of differential flap deflection;</p></list-item>
+<list-item><p>σ<sub>0</sub>(δ<sub>a</sub>) – the bank response to differential flap deflection at reference altitude;</p></list-item>
+<list-item><p><italic>V</italic><sub>eq<sub>0</sub></sub> – the equivalent equilibrium gliding airspeed at zero differential flap deflection.</p></list-item>
+</list>For a given canopy, these properties depend on the rigging angle, symmetric flap deflection, and the wing loading. The air density ρ(<italic>h</italic>) is known from the atmosphere model. If the rate of turn is measured in test drops, it can replace σ in the model presented. Using σ as an intermediate variable merely simplifies the equations.</p>
+<p>For the current parafoil model, the best gliding ratio is obtained with a 50 per cent symmetric flap deflection. This symmetric deflection will be considered nominal and referred to as the <italic>base flap deflection</italic>. The steering algorithm will command differential flap deflection around this base value: lowering one flap will occur along with raising the opposite one by the same angle. Such mode of control is beneficial also for lateral response as both flaps are not saturated; moreover, it helps to avoid control reversal typical for small flap deflections [<xref ref-type="bibr" rid="bibr12-0954410011413637">12</xref>]. For the current model one can also assume that σ ≈ ϕ, which is convenient since ϕ is more readily identified from a 6-DOF simulation or from a test drop than σ. It can further be assumed, for the steering mode chosen, that <italic>L</italic>/<italic>D</italic> and σ<sub>0</sub> depend linearly on δ<sub>a</sub>.</p>
+<p>From now on, the following data will be used
+<disp-formula id="disp-formula99-0954410011413637"><graphic xlink:href="10.1177_0954410011413637-eq74.tif"/></disp-formula></p></sec></sec>
+<sec id="sec14-0954410011413637"><title>4 TRAJECTORY DESIGN, GUIDANCE, AND CONTROL</title>
+<p>In this section, the key building blocks of the trajectory design methodology are outlined.</p>
+<sec id="sec15-0954410011413637"><title>4.1 Wind estimation</title>
+<p>Determination of the wind vector is based on the equation
+<disp-formula id="disp-formula52-0954410011413637"><label>(38)</label><graphic xlink:href="10.1177_0954410011413637-eq38.tif"/></disp-formula>
+where <bold><italic>v</italic></bold><sub><italic>g</italic></sub> is the inertial velocity vector, <bold><italic>v</italic></bold><sub><italic>a</italic></sub> the vector of velocity relative to the air, <bold><italic>v</italic></bold><sub><italic>w</italic></sub> the wind velocity vector, and <inline-formula id="ilm5-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math5-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mtext>b</mml:mtext> </mml:mrow><mml:mrow><mml:mtext>n</mml:mtext></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> the body-to-inertial rotation matrix. This equation can be simplified by considering the horizontal velocity components only. From now on
+<disp-formula id="disp-formula100-0954410011413637"><graphic xlink:href="10.1177_0954410011413637-eq75.tif"/></disp-formula>
+and write the previous equation as
+<disp-formula id="disp-formula53-0954410011413637"><label>(39)</label><graphic xlink:href="10.1177_0954410011413637-eq39.tif"/></disp-formula>
+After neglecting the sideslip angle, the horizontal components of the velocity relative to the air are given by
+<disp-formula id="disp-formula54-0954410011413637"><label>(40a)</label><graphic xlink:href="10.1177_0954410011413637-eq40a.tif"/></disp-formula>
+<disp-formula id="disp-formula55-0954410011413637"><label>(40b)</label><graphic xlink:href="10.1177_0954410011413637-eq40b.tif"/></disp-formula>
+where ψ is the heading angle and <italic>V</italic> the airspeed magnitude. Thus, ideally, one needs to measure the ground speed vector, the true airspeed, and the heading angle in order to compute the wind velocity. If some of these measurements are not available and/or noisy, more sophisticated techniques should be employed.</p>
+<p>Several observations can assist in selection of an appropriate wind estimation method for the present application. First, the wind speed is changing slowly and the estimation of its rapid fluctuations are not of interest. Second, the parafoil airspeed can be assumed constant with respect to the wind estimation time scale, except its deviations during turning flight. Moreover, the airspeed can be determined from the parafoil model. For a given canopy, the airspeed depends mostly on the rigged payload, and it is assumed that the load is always known prior to the mission.</p>
+<p>When designing a wind estimation scheme for a parafoil system, the differences between a parafoil and a powered rigid aircraft must be kept in mind. Most importantly, the measurements of airspeed and attitude are complicated by low flight speeds and relative motion between the canopy, suspension lines, and the payload. Moreover, dedicated manoeuvres for wind estimation are sometimes impossible since they come on the expense of altitude. These are the reasons that render wind determination methods developed for powered uninhabited air vehicles not applicable to parafoils.</p>
+<p>The above considerations lead to the investigation of an approach that would use GPS measurements only and would not employ dedicated manoeuvres. In theory, the wind components could be computed by solving a non-linear set of equations for the sum of velocities. If the airspeed is known, with GPS measurements for two time instances, there are four equations for two wind components (assuming that they remain unchanged between the measurements) and heading at two time instances – total of four variables. With three measurements, the airspeed can also be computed from six equations with six unknowns: two wind components, airspeed, and three headings. However, as noted by Jahn [<xref ref-type="bibr" rid="bibr40-0954410011413637">40</xref>], this set of equations presents numerical problems and cannot be solved reliably in practice. Thus, Jahn [<xref ref-type="bibr" rid="bibr40-0954410011413637">40</xref>] suggested two other approaches.
+<list id="list2-0954410011413637" list-type="order">
+<list-item><p>Measure ground speed, airspeed, and heading, subtract the airspeed vector from the ground speed vector, and apply a recursive mean filter to smooth the result.</p></list-item>
+<list-item><p>Use only GPS ground speed data and apply a non-linear estimation filter based on the kinematic model (airspeed and heading are estimated as a by-product).</p></list-item>
+</list></p>
+<p>The second method was selected for implementation. At first, this method was employed without assuming a known airspeed. However, testing revealed problems with simultaneous estimation of the wind speed and the airspeed: the filter failed to converge to correct values. Consequently, the assumption of a known airspeed was adopted. The gliding velocity – in terms of equivalent airspeed, <italic>V</italic><sub>eq</sub> – is constant for a given loading and rigging of the parafoil. This fixed airspeed is corrected during turns using the aerodynamic data and then converted it into the true airspeed using the GPS altitude. Under assumption of standard atmosphere, the true airspeed is given by the relation
+<disp-formula id="disp-formula56-0954410011413637"><label>(41)</label><graphic xlink:href="10.1177_0954410011413637-eq41.tif"/></disp-formula>
+where <italic>V</italic><sub>eq</sub>(δ<sub>a</sub>) is the equivalent airspeed as a function of the steering command as predicted by the simplified model described above and ρ the air density.</p>
+<p>The estimator states are the wind velocity <inline-formula id="ilm6-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math6-0954410011413637"><mml:mrow><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mstyle mathvariant="bold"><mml:mi>v</mml:mi></mml:mstyle></mml:mrow><mml:mi>∧</mml:mi></mml:mover></mml:mrow><mml:mrow><mml:mtext>w</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> and heading <inline-formula id="ilm7-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math7-0954410011413637"><mml:mrow><mml:mover><mml:mrow><mml:mi>ψ</mml:mi></mml:mrow><mml:mi>∧</mml:mi></mml:mover></mml:mrow></mml:math></inline-formula>. Correction of the wind velocity estimate is given by
+<disp-formula id="disp-formula57-0954410011413637"><label>(42)</label><graphic xlink:href="10.1177_0954410011413637-eq42.tif"/></disp-formula>
+where <italic>K</italic><sub>e</sub> is the estimator gain and <inline-formula id="ilm8-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math8-0954410011413637"><mml:mrow><mml:msub><mml:mrow><mml:mover><mml:mrow><mml:mstyle mathvariant="bold"><mml:mi>v</mml:mi></mml:mstyle></mml:mrow><mml:mi>∧</mml:mi></mml:mover></mml:mrow><mml:mrow><mml:mtext>g</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula> the predicted ground velocity given by
+<disp-formula id="disp-formula58-0954410011413637"><label>(43)</label><graphic xlink:href="10.1177_0954410011413637-eq43.tif"/></disp-formula>
+The estimated heading is corrected using the analytical heading derivative obtained as follows. By equations (<xref ref-type="disp-formula" rid="disp-formula53-0954410011413637">39</xref>) and (<xref ref-type="disp-formula" rid="disp-formula54-0954410011413637">40</xref>), the heading is given by
+<disp-formula id="disp-formula59-0954410011413637"><label>(44)</label><graphic xlink:href="10.1177_0954410011413637-eq44.tif"/></disp-formula>
+Taking the derivative
+<disp-formula id="disp-formula60-0954410011413637"><label>(45)</label><graphic xlink:href="10.1177_0954410011413637-eq45.tif"/></disp-formula>
+Substituting the estimated wind velocity into equation (<xref ref-type="disp-formula" rid="disp-formula60-0954410011413637">45</xref>), one obtains the equation for the estimated heading rate
+<disp-formula id="disp-formula61-0954410011413637"><label>(46)</label><graphic xlink:href="10.1177_0954410011413637-eq46.tif"/></disp-formula>
+The ground velocity components <italic>v</italic><sub>x</sub> and <italic>v</italic><sub><italic>y</italic></sub> are measured by the GPS and the inertial accelerations <inline-formula id="ilm9-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math9-0954410011413637"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>v</mml:mi></mml:mrow><mml:mrow><mml:mi>x</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mi>·</mml:mi></mml:mover></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm10-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math10-0954410011413637"><mml:mrow><mml:mover><mml:mrow><mml:msub><mml:mrow><mml:mi>v</mml:mi></mml:mrow><mml:mrow><mml:mi>y</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mi>·</mml:mi></mml:mover></mml:mrow></mml:math></inline-formula> are approximated by numerical differentiation (wash-out).</p>
+<p>The gain <italic>K</italic><sub>e</sub> can be made constant or adaptive. A fading gain that changes from an initial large value to a smaller value through some predefined time was implemented. The heading estimate is initialized to the measured ground track and the wind velocity estimate is initialized to the preloaded forecast velocity.</p>
+<p><xref ref-type="fig" rid="fig5-0954410011413637">Figure 5</xref> presents the results of wind estimation by the non-linear filter. In the cases shown, the parafoil flew a specific pattern consisting of straight legs and turns by the means of a simple waypoint-following algorithm. The tests included an ambient wind, Dryden turbulence, and measurement noise. The actual path flown was influenced by the wind and turbulence.
+<fig id="fig5-0954410011413637" position="float"><label>Fig. 5</label><caption><p>Example of a successful wind and heading estimation in the case of sufficient manoeuvring</p></caption><graphic xlink:href="10.1177_0954410011413637-fig5.tif"/></fig></p>
+<p>In the test case shown in <xref ref-type="fig" rid="fig5-0954410011413637">Fig. 5</xref>, the wind direction is from the east, becoming northeast as the parafoil descends; wind speed decreases at the same time. The parafoil is released heading north. The flight path as viewed from above is shown on the top-left plot. The filter manages to estimate the wind velocity and direction fairly well as shown on the bottom plots. The estimated heading is compared to the actual heading on the top-right plot.</p></sec>
+<sec id="sec16-0954410011413637"><title>4.2 The parafoil guidance problem</title>
+<p>Guiding a descending parafoil to the planned landing spot involves planning a reference trajectory in space and making the parafoil follow this trajectory. The formal statement of the guidance problem is as follows:<disp-quote>
+<p>Find a path from the initial configuration (<italic>x</italic><sub>0</sub>, <italic>y</italic><sub>0</sub>, <italic>h</italic><sub>0</sub>, ψ<sub>0</sub>) to the final configuration (<italic>x</italic><sub><italic>f</italic></sub>, <italic>y</italic><sub><italic>f</italic></sub>, <italic>h</italic><sub><italic>f</italic></sub>, ψ<sub><italic>f</italic></sub>) under the constraints given by the parafoil EOM.</p></disp-quote>The basic assumption is that a parafoil, at the time of its deployment, has enough energy to reach the target. A desired property of a reference trajectory is to spend the excess energy gradually and keep it roughly proportional to the remaining portion of the path. As evident in the literature survey, it is usually convenient to divide the guidance into the three phases of <italic>homing</italic>, (EM), and the (TP). Different trajectory shapes and guidance laws are appropriate for these portions of flight. Homing and the EM phase are commonly based on preplanned waypoints or heuristic rules, whereas for the TP, the trend is to use some form of optimal closed-loop trajectory planning, since this phase is responsible for minimizing the final miss distance. Thus, most of the research efforts are centred around the TP guidance. Alternatively, the entire flight can be viewed as a TP and a single continuous trajectory may be sought for.</p>
+<p>The chosen trajectory planning strategy is based on Rademacher <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>, <xref ref-type="bibr" rid="bibr46-0954410011413637">46</xref>]. The algorithm can be summarized as follows. A kinematic model similar to the one described in <xref ref-type="sec" rid="sec13-0954410011413637">section 3.6</xref> is used. Substituting τ = <italic>h</italic>(<italic>t</italic><sub>0</sub>) − <italic>h</italic>(<italic>t</italic>) as a new independent variable, allows planning the trajectory in the plane. Furthermore, the problem becomes a fixed-time problem. The EOM are transformed into the wind-fixed frame. Dubins' solution of the problem of shortest curves of bounded curvature in the plane [<xref ref-type="bibr" rid="bibr47-0954410011413637">47</xref>] is applied next to determine the minimal altitude required to reach the target and compute the <italic>altitude margin</italic>. Whenever the altitude margin is positive, a feasible reference trajectory is generated as a modified Dubins' path.</p>
+<p>The development in this section follows Rademacher <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>]. This study contributes a new implementation of Rademacher's path-planning method and evaluates it in a 6-DOF parafoil simulation. In a subsequent section, the path-planning method described here will be combined with behaviour-based rules for multiple parafoil coordination.</p></sec>
+<sec id="sec17-0954410011413637"><title>4.3 Change of the independent variable</title>
+<p>Define
+<disp-formula id="disp-formula62-0954410011413637"><label>(47)</label><graphic xlink:href="10.1177_0954410011413637-eq47.tif"/></disp-formula>
+Then, assuming without loss of generality that the target elevation is zero, <italic>h</italic>(<italic>t</italic><sub><italic>f</italic></sub>) = 0, τ(<italic>t</italic><sub>0</sub>) = 0, and τ(<italic>t</italic><sub><italic>f</italic></sub>) = <italic>h</italic>(<italic>t</italic><sub>0</sub>). Nominally, the altitude is strictly decreasing during gliding descent, and thus τ will be strictly increasing. Set τ as the new independent variable. Then
+<disp-formula id="disp-formula63-0954410011413637"><label>(48)</label><graphic xlink:href="10.1177_0954410011413637-eq48.tif"/></disp-formula>
+To distinguish between the time derivatives and the derivatives with respect to τ, the latter is denoted by (·)′. The system equations become
+<disp-formula id="disp-formula64-0954410011413637"><label>(49a)</label><graphic xlink:href="10.1177_0954410011413637-eq49a.tif"/></disp-formula>
+<disp-formula id="disp-formula65-0954410011413637"><label>(49b)</label><graphic xlink:href="10.1177_0954410011413637-eq49b.tif"/></disp-formula>
+<disp-formula id="disp-formula66-0954410011413637"><label>(49c)</label><graphic xlink:href="10.1177_0954410011413637-eq49c.tif"/></disp-formula>
+As noted in Rademacher <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>], the change of variables offers two benefits. First, it reduces the order of the system by one, thus decreasing the computational cost of evaluating trajectories. Second, the final time τ<sub>f</sub> becomes fixed for a given initial altitude, regardless of the trajectory.</p></sec>
+<sec id="sec18-0954410011413637"><title>4.4 Transformation to the wind-fixed frame</title>
+<p>The wind-fixed coordinate frame is a coordinate frame that moves with the air mass. If the trajectory is planned in this frame, the EOM will be further simplified by removing the wind drift. The origin of the inertial frame will be fixed at the target location with the <italic>x</italic>-axis pointing north. Let the wind-fixed frame have the same orientation as the inertial frame and locate its origin so that it coincides with the target at τ = τ<sub>f</sub>. The position in this wind-fixed frame is given by
+<disp-formula id="disp-formula67-0954410011413637"><label>(50a)</label><graphic xlink:href="10.1177_0954410011413637-eq50a.tif"/></disp-formula>
+<disp-formula id="disp-formula68-0954410011413637"><label>(50b)</label><graphic xlink:href="10.1177_0954410011413637-eq50b.tif"/></disp-formula>
+Here, another benefit of using τ as the independent variable is evident, as the wind profile is easily expressed as a function of altitude. On the other hand, position in the wind-fixed frame at τ, expressed this way, depends explicitly on the velocity and the glide-path angle of the vehicle along the entire trajectory up to landing. As there are no means to determine these values before the trajectory is known, they can be approximated by the equilibrium glide values <inline-formula id="ilm11-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math11-0954410011413637"><mml:mrow><mml:msub><mml:mi>V</mml:mi><mml:mtext>G</mml:mtext></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mi>V</mml:mi><mml:mrow><mml:msub><mml:mrow><mml:mtext>eq</mml:mtext></mml:mrow><mml:mtext>0</mml:mtext></mml:msub></mml:mrow></mml:msub><mml:msup><mml:mrow><mml:mo stretchy="false">(</mml:mo><mml:mi>ρ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mn>0</mml:mn><mml:mo stretchy="false">)</mml:mo><mml:mo>/</mml:mo><mml:mi>ρ</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:mi>h</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo stretchy="false">)</mml:mo></mml:mrow><mml:mrow><mml:mn>1</mml:mn><mml:mo>/</mml:mo><mml:mn>2</mml:mn></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula> and γ<sub>0</sub>, respectively. This will introduce another error in the transformation, in addition to the error resulting from imperfect knowledge of the wind. As pointed out in Rademacher <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>], choosing the equilibrium glide values will tend to overestimate the total drift due to the wind.</p>
+<p>Now one can write the EOM in the wind-fixed frame
+<disp-formula id="disp-formula69-0954410011413637"><label>(51a)</label><graphic xlink:href="10.1177_0954410011413637-eq51a.tif"/></disp-formula>
+<disp-formula id="disp-formula70-0954410011413637"><label>(51b)</label><graphic xlink:href="10.1177_0954410011413637-eq51b.tif"/></disp-formula>
+<disp-formula id="disp-formula71-0954410011413637"><label>(51c)</label><graphic xlink:href="10.1177_0954410011413637-eq51c.tif"/></disp-formula>
+In the subsequent trajectory synthesis procedure, the turn rate ξ′ will be considered a control input. The variable ξ′ is bounded due to the limitation on the flap deflection δ<sub>a</sub>. Consequently, the turn is limited by a minimal radius, <italic>R</italic>.</p></sec>
+<sec id="sec19-0954410011413637"><title>4.5 Construction of the minimal-altitude-loss path</title>
+<p>With the equations of motion put in a suitable form, one proceeds to define the measure of excess altitude, or the <italic>altitude margin</italic>, indicative of the difficulty to reach the target from a given position. In terms of equation (<xref ref-type="disp-formula" rid="disp-formula69-0954410011413637">51</xref>), the minimal altitude loss is the minimal ‘time’ τ<sub>min</sub> required for transition from the initial configuration Ξ<sub>0</sub> = (<italic>x</italic><sub>w0</sub>, <italic>y</italic><sub>w0</sub>, ξ<sub>0</sub>) to the final configuration Ξ<sub>f</sub> = (0, 0, ξ<sub>f</sub>). τ<sub>min</sub> corresponds to the minimal length of the path from Ξ<sub>0</sub> to Ξ<sub>f</sub>. The problem of finding the shortest path of this type was solved in 1957 by Dubins [<xref ref-type="bibr" rid="bibr47-0954410011413637">47</xref>], who showed that it<disp-quote>
+<p>is necessarily a continuously differentiable curve which consists of not more than three pieces, each of which is either a straight line segment or an arc of a circle of radius <italic>R</italic>.</p></disp-quote>To be more specific, the shortest path is given by one of the following six control sequences: RSR, RSL, LSR, LSL, LRL, or RLR, where R corresponds to a maximum right-hand turn, L a maximum left-hand turn, and S a straight line. These trajectories are referred to as <italic>Dubins paths</italic>. The same solution was obtained again by Boissonnat <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr54-0954410011413637">54</xref>] using the Pontryagin minimum principle.</p>
+<p>The goal is finding the cost of the shortest path in terms of altitude loss, as well as the point <inline-formula id="ilm12-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math12-0954410011413637"><mml:mrow><mml:msup><mml:mrow><mml:mi>Ξ</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msup><mml:mo stretchy="false">(</mml:mo><mml:mi>τ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>=</mml:mo><mml:mrow><mml:mo>(</mml:mo><mml:msubsup><mml:mrow><mml:mi>x</mml:mi></mml:mrow><mml:mrow><mml:mtext>w</mml:mtext> </mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msubsup><mml:mo stretchy="false">(</mml:mo><mml:mi>τ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mi>y</mml:mi></mml:mrow><mml:mrow><mml:mtext>w</mml:mtext> </mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msubsup><mml:mo stretchy="false">(</mml:mo><mml:mi>τ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>,</mml:mo><mml:msup><mml:mrow><mml:mi>ξ</mml:mi></mml:mrow><mml:mrow><mml:mo>*</mml:mo></mml:mrow></mml:msup><mml:mo stretchy="false">(</mml:mo><mml:mi>τ</mml:mi><mml:mo stretchy="false">)</mml:mo><mml:mo>)</mml:mo></mml:mrow></mml:mrow></mml:math></inline-formula> lying on the path for any given value of τ. This is accomplished by construction of all six candidate curves and selection of the shortest one. The process is illustrated in <xref ref-type="fig" rid="fig6-0954410011413637">Fig. 6</xref>. First, construct the four possible turn circles for given initial and final positions. For each pair of circles, find all common tangents, compute points of tangency and tangent directions. Then, select those that coincide with the flight direction for the origin circle and for the destination circle – only such tangents are shown in <xref ref-type="fig" rid="fig6-0954410011413637">Fig. 6</xref>. This will leave us with at most one feasible RSR/RSL/LSR/LSL path for each pair of circles. If possible, construct a middle circle tangent to both circles to get RLR and LRL paths. Now, compute the cost of all the candidate paths and select the optimal one. The cost of each of the four candidate paths in the example is shown in <xref ref-type="fig" rid="fig6-0954410011413637">Fig. 6</xref> and the optimal path is plotted as a bold line. A case with RLR candidate paths is illustrated in <xref ref-type="fig" rid="fig7-0954410011413637">Fig. 7</xref>; however, they are not optimal in this case. In case of <xref ref-type="fig" rid="fig8-0954410011413637">Fig. 8</xref>, the LRL path is optimal.
+<fig id="fig6-0954410011413637" position="float"><label>Fig. 6</label><caption><p>Dubins path construction process</p></caption><graphic xlink:href="10.1177_0954410011413637-fig6.tif"/></fig>
+<fig id="fig7-0954410011413637" position="float"><label>Fig. 7</label><caption><p>Dubins path construction – with RLR candidate paths</p></caption><graphic xlink:href="10.1177_0954410011413637-fig7.tif"/></fig>
+<fig id="fig8-0954410011413637" position="float"><label>Fig. 8</label><caption><p>Dubins path construction – LRL path is optimal</p></caption><graphic xlink:href="10.1177_0954410011413637-fig8.tif"/></fig></p>
+<p>The above process yields the minimal altitude τ<sub>min</sub>. The altitude required to make a 360° turn is denoted by τ<sub>360</sub>. The altitude margin will be defined as
+<disp-formula id="disp-formula72-0954410011413637"><label>(52)</label><graphic xlink:href="10.1177_0954410011413637-eq52.tif"/></disp-formula>
+This definition provides us with a necessary condition for existence of a path from Ξ<sub>0</sub> to Ξ<sub>f</sub>
+<disp-formula id="disp-formula73-0954410011413637"><label>(53)</label><graphic xlink:href="10.1177_0954410011413637-eq53.tif"/></disp-formula>
+Several notes should be made about the minimal-altitude-loss path.
+<list id="list3-0954410011413637" list-type="order">
+<list-item><p>In general, the minimal turn radius depends on the altitude, so the candidate paths cannot be constructed before the cost is known and <italic>vice versa</italic>. To avoid this complication, it is assumed that the turn radius is constant.</p></list-item>
+<list-item><p>In some cases, much shorter paths could be found if some error in the final conditions was allowed. Since the final conditions are rigidly fixed, a slight change in initial conditions can force the algorithm to switch to a much longer path.</p></list-item>
+<list-item><p>Instant switching between the trajectory segments is not possible due to the vehicle dynamics. However, if the turn radius leaves some manoeuvring margin, the vehicle can reconverge to the desired path if it deviates from it at some point. That is why the available command is limited to δ<sub>a</sub> ∈ [−0.8, 0.8] for path planning, i.e. to 80 per cent of the full stroke, and use a corresponding minimal turn radius – 180 m in the case of the present parafoil.</p></list-item>
+</list></p></sec>
+<sec id="sec20-0954410011413637"><title>4.6 Construction of the modified dubins path</title>
+<p>Whenever η &gt; 0, the optimal path itself is not useful, since it will leave the parafoil with excess altitude above the target. Thus, one has to seek a trajectory that will deal with the excess altitude. A straightforward way proposed in Rademacher <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>] is to modify the optimal Dubins path: generate a similar trajectory, but using a larger radius than the minimal turn radius.</p>
+<p>The modified path computation algorithm is laid out as follows. The minimal time τ<sub>min</sub> corresponds to the minimal turn radius <italic>R</italic>. The task is to find <italic>r</italic><sup>* </sup> &gt; <italic>R</italic> such that τ(<italic>r</italic><sup>* </sup>) = τ<sub>f</sub>.</p>
+<p><italic>Procedure</italic>
+<list id="list4-0954410011413637" list-type="order">
+<list-item><p>For a given <italic>r</italic>, the above minimum-time path procedure yields τ(<italic>r</italic>)</p></list-item>
+<list-item><p>Starting with <italic>r</italic><sub>min</sub>, double the radius until τ(<italic>r</italic>) &gt; τ<sub>f</sub></p></list-item>
+<list-item><p>Use the bisection method to converge on <italic>r</italic><sup>* </sup></p></list-item>
+</list></p>
+<p>An example of a modified Dubins path for different initial values of η is shown in <xref ref-type="fig" rid="fig9-0954410011413637">Fig. 9</xref>. A practical implementation of this method poses some difficulties since the function τ(<italic>r</italic>) is not continuous in <italic>r</italic>. Thus, for some given initial conditions, there is no modified path solution of this type. This is due to the fact that the search is limited to a certain family of curves, whereas the solution – that should exist for η &gt; 0 – may be of another type. The problem is particularly pronounced close to the target. Two ways are proposed for dealing with this complication. The first one is to compute another feasible path, e.g. a minimum-control-effort path; another way is to use heuristics in order to circumvent the problem.
+<fig id="fig9-0954410011413637" position="float"><label>Fig. 9</label><caption><p>Modified Dubins paths</p></caption><graphic xlink:href="10.1177_0954410011413637-fig9.tif"/></fig></p></sec>
+<sec id="sec21-0954410011413637"><title>4.7 Fixed-time optimal control formulations</title>
+<p>When the altitude loss constraint is inactive and the modified Dubins path generation fails, other optimality criteria can be used for trajectory generation. A reasonable choice for the optimization criterion is the control energy. First, the case of fixed initial and final conditions is examined, with a running cost on control effort only. The following development appears also in Rademacher <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>]. In this case, one is solving a standard optimal control problem that can be stated as follows. Determine the control <italic>u</italic>(τ) = ξ′(τ) for τ ∈ [0, τ<sub>f</sub>], where τ<sub>f</sub> is fixed, which minimizes the performance index
+<disp-formula id="disp-formula74-0954410011413637"><label>(54)</label><graphic xlink:href="10.1177_0954410011413637-eq54.tif"/></disp-formula>
+subject to the kinematic constraints of the system (<xref ref-type="disp-formula" rid="disp-formula69-0954410011413637">51</xref>) with prescribed initial and final configurations, Ξ<sub>0</sub> and Ξ<sub>f</sub>, respectively.</p>
+<p>The Hamiltonian for this problem is given by
+<disp-formula id="disp-formula75-0954410011413637"><label>(55)</label><graphic xlink:href="10.1177_0954410011413637-eq55.tif"/></disp-formula>
+where λ<sub><italic>x</italic></sub>, λ<sub><italic>y</italic></sub>, and λ<sub>ξ</sub> are costates. By the Pontryagin minimum principle
+<disp-formula id="disp-formula76-0954410011413637"><label>(56a)</label><graphic xlink:href="10.1177_0954410011413637-eq56a.tif"/></disp-formula>
+<disp-formula id="disp-formula77-0954410011413637"><label>(56b)</label><graphic xlink:href="10.1177_0954410011413637-eq56b.tif"/></disp-formula>
+<disp-formula id="disp-formula78-0954410011413637"><label>(56c)</label><graphic xlink:href="10.1177_0954410011413637-eq56c.tif"/></disp-formula>
+<disp-formula id="disp-formula79-0954410011413637"><label>(56d)</label><graphic xlink:href="10.1177_0954410011413637-eq56d.tif"/></disp-formula>
+It is assumed here that γ is constant and is not dependent on <italic>u</italic> and τ. One can now express λ<sub>ξ</sub> and <italic>u</italic> in terms of λ<sub><italic>x</italic></sub><italic>y</italic><sub><italic>w</italic></sub> and λ<sub><italic>y</italic></sub><italic>x</italic><sub><italic>w</italic></sub>. From equation (<xref ref-type="disp-formula" rid="disp-formula79-0954410011413637">56d</xref>)
+<disp-formula id="disp-formula80-0954410011413637"><label>(57)</label><graphic xlink:href="10.1177_0954410011413637-eq57.tif"/></disp-formula>
+Since λ<sub><italic>x</italic></sub> and λ<sub><italic>y</italic></sub> are constant by equations (<xref ref-type="disp-formula" rid="disp-formula77-0954410011413637">56b</xref>,<xref ref-type="disp-formula" rid="disp-formula78-0954410011413637">c</xref>), integrating equation (<xref ref-type="disp-formula" rid="disp-formula80-0954410011413637">57</xref>) yields
+<disp-formula id="disp-formula81-0954410011413637"><label>(58)</label><graphic xlink:href="10.1177_0954410011413637-eq58.tif"/></disp-formula>
+where <italic>c</italic> is a constant of integration. Equations (<xref ref-type="disp-formula" rid="disp-formula76-0954410011413637">56a</xref>) and (<xref ref-type="disp-formula" rid="disp-formula81-0954410011413637">47</xref>) yield
+<disp-formula id="disp-formula82-0954410011413637"><label>(59)</label><graphic xlink:href="10.1177_0954410011413637-eq59.tif"/></disp-formula>
+λ<sub><italic>x</italic></sub> and λ<sub><italic>y</italic></sub> are constant, therefore the general form of the control is
+<disp-formula id="disp-formula83-0954410011413637"><label>(60)</label><graphic xlink:href="10.1177_0954410011413637-eq60.tif"/></disp-formula>
+The constants <italic>c</italic><sub>1</sub>, <italic>c</italic><sub>2</sub>, and <italic>c</italic><sub>3</sub> can be found by solving a non-linear boundary value problem (BVP)
+<disp-formula id="disp-formula84-0954410011413637"><label>(61a)</label><graphic xlink:href="10.1177_0954410011413637-eq61a.tif"/></disp-formula>
+<disp-formula id="disp-formula85-0954410011413637"><label>(61b)</label><graphic xlink:href="10.1177_0954410011413637-eq61b.tif"/></disp-formula>
+<disp-formula id="disp-formula86-0954410011413637"><label>(61c)</label><graphic xlink:href="10.1177_0954410011413637-eq61c.tif"/></disp-formula>
+with boundary conditions at τ<sub>0</sub> and τ<sub>f</sub> fully specified. Unfortunately, this BVP is not known to have an analytical solution. References [<xref ref-type="bibr" rid="bibr32-0954410011413637">32</xref>] and [<xref ref-type="bibr" rid="bibr46-0954410011413637">46</xref>] mention a numerical solution, but it was not implemented in this article.</p>
+<p>Another case of the minimum-control-energy formulation involves free final conditions, a running cost on the control effort, and a terminal cost on the final position error. In this case, the solution does not change substantially; essentially, the same BVP is obtained.</p>
+<p>Minimizing the control effort is not the only possible objective for optimal trajectory design. Another option is minimizing the total distance travelled or time spent in flight, as this will also reduce sensitivity to unknown winds. This effectively amounts to flying with the worst aerodynamic efficiency that will still allow reaching the target, or minimizing <inline-formula id="ilm13-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math13-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mo>∫</mml:mo></mml:mrow><mml:mrow><mml:mn>0</mml:mn> </mml:mrow><mml:mrow><mml:msub><mml:mrow><mml:mi>τ</mml:mi></mml:mrow><mml:mrow><mml:mtext>f</mml:mtext></mml:mrow></mml:msub></mml:mrow></mml:msubsup><mml:mi>L</mml:mi><mml:mo>/</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>δ</mml:mi></mml:mrow><mml:mrow><mml:mtext>a</mml:mtext></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mi>cos</mml:mi><mml:mi>σ</mml:mi><mml:mtext>d</mml:mtext><mml:mi>τ</mml:mi></mml:mrow></mml:math></inline-formula>. This formulation will lead to bang-bang control – the path consisting of minimal-radius arcs.</p></sec>
+<sec id="sec22-0954410011413637"><title>4.8 Implementing the trajectory generation</title>
+<p>The algorithm implemented in simulation generates the modified Dubins path. The flowchart of the algorithm is presented in <xref ref-type="fig" rid="fig10-0954410011413637">Fig. 10</xref>. The computation should proceed through the following steps.
+<list id="list5-0954410011413637" list-type="order">
+<list-item><p>Using existing wind data (forecast or extrapolation of estimated wind), transform the vehicle position to the wind frame.</p></list-item>
+<list-item><p>Compute the Dubins path leading to (0, 0) position above the target at upwind heading and obtain the altitude margin.</p></list-item>
+<list-item><p>Recompute the Dubins path repetitively and reassess the altitude margin.</p></list-item>
+<list-item><p>Attempt to compute a modified Dubins path to the target. If the computation converges, this will be the reference path; otherwise, the Dubins path to the holding point will be flown and the modified path computation will be attempted repetitively.</p></list-item>
+<list-item><p>The reference trajectories are initially given in terms of the geometric trajectory elements: arc centres, radii, points of tangency. Transform the reference trajectory to (<italic>x</italic><sub><italic>w</italic></sub>, <italic>y</italic><sub><italic>w</italic></sub>) as a function of altitude. Other reference flight parameters such as heading, turn rate, control input are also computed.</p></list-item>
+<list-item><p>Using sensor data, compute the cross-range (lateral) and downrange (longitudinal) tracking error and the rate of convergence to the path.</p></list-item>
+<list-item><p>The lateral tracking controller shall command required control deflections as a function of the tracking error and reference data. The downrange error can be reduced by changing the turn radius and trading off lateral tracking.</p></list-item>
+<list-item><p>If the downrange error grows above a predefined threshold, recompute the reference trajectory from the actual vehicle position. The guidance will switch to the new trajectory only if the solution has converged with a positive altitude margin.</p></list-item>
+</list>
+<fig id="fig10-0954410011413637" position="float"><label>Fig. 10</label><caption><p>Flowchart of the trajectory generation algorithm</p></caption><graphic xlink:href="10.1177_0954410011413637-fig10.tif"/></fig></p></sec>
+<sec id="sec23-0954410011413637"><title>4.9 Simulation results</title>
+<p>This section summarizes the simulation results for the trajectory planning and guidance of a single parafoil. The following results were obtained using the 6-DOF parafoil simulation including sensor errors described in <xref ref-type="sec" rid="sec12-0954410011413637">section 3.5</xref> and Dryden turbulence.</p>
+<p><xref ref-type="fig" rid="fig11-0954410011413637">Figure 11</xref> shows a top view of a wind-free trajectory. The initial conditions for this case were <italic>x</italic><sub>0</sub> = 1000 m, and <italic>y</italic><sub>0</sub> = 2000 m, <italic>h</italic><sub>0</sub> = 1000 m, and ψ<sub>0</sub> = 180°. Trajectories in inertial coordinates and wind coordinates are identical. The discontinuities that can be seen in the reference trajectory occur due to re-planning of the trajectory whenever the parafoil deviates from the original reference by more than 50 m. The main cause for these deviations is the turbulence.
+<fig id="fig11-0954410011413637" position="float"><label>Fig. 11</label><caption><p>Trajectory for a sample no-wind case</p></caption><graphic xlink:href="10.1177_0954410011413637-fig11.tif"/></fig></p>
+<p>The altitude margin, η, decreases during the descent, being positive most of the time. Shortly before landing, the altitude margin becomes negative, indicating that the exact target location cannot be reached anymore. This is a typical behaviour since some deviation from the reference trajectory always exists, and at a low altitude and short range from the target, it cannot be corrected within the manoeuvring limits of the parafoil. In such a case, the parafoil retains the last valid reference trajectory. The reference trajectory passes exactly through the target. However, the parafoil slightly overshoots and lands about 28 m away from the target.</p>
+<p><xref ref-type="fig" rid="fig12-0954410011413637">Figure 12</xref> presents the trajectory for a case with constant and known wind of 10 m/s from a 270° heading. The initial conditions are <italic>x</italic><sub>0</sub> = 1000 m, <italic>y</italic><sub>0</sub> = −2000 m, <italic>h</italic><sub>0</sub> = 1000 m, and ψ<sub>0</sub> = 0°. This time, the difference between the inertial frame and the wind frame trajectories is clearly visible. The landing miss distance is 31 m.
+<fig id="fig12-0954410011413637" position="float"><label>Fig. 12</label><caption><p>Trajectory with known wind</p></caption><graphic xlink:href="10.1177_0954410011413637-fig12.tif"/></fig></p>
+<p>Finally, Monte Carlo simulation results evaluating the landing dispersion are presented. Two batches of 200 runs each were performed: with downtrack feedback (d<italic>x</italic>) and without it. The Monte Carlo simulation was performed in zero wind conditions from random initial positions within 2000 m from the target and altitude of 1000 m. The turbulence and sensor errors were present in all the simulation runs. <xref ref-type="fig" rid="fig13-0954410011413637">Figures 13</xref> and <xref ref-type="fig" rid="fig14-0954410011413637">14</xref> show the landing locations of the two batches. In each figure, the CEP is compared to a 100 m radius circle. The results show the benefit of using d<italic>x</italic> feedback. With this feedback, 75 per cent of the landings take place within the 100 m circle and the CEP is 65.4 m. In the other case, only 62 per cent of the landings were inside the 100 m circle and the CEP was 83 m.
+<fig id="fig13-0954410011413637" position="float"><label>Fig. 13</label><caption><p>Landing dispersion with d<italic>x</italic> feedback</p></caption><graphic xlink:href="10.1177_0954410011413637-fig13.tif"/></fig>
+<fig id="fig14-0954410011413637" position="float"><label>Fig. 14</label><caption><p>Landing dispersion without d<italic>x</italic> feedback</p></caption><graphic xlink:href="10.1177_0954410011413637-fig14.tif"/></fig></p></sec></sec>
+<sec id="sec24-0954410011413637"><title>5 MULTIPLE PARAFOIL FLOCKING</title>
+<p>Undoubtedly, precision guidance of parafoils to their intended target must rely on individual trajectory planning by each vehicle. Nevertheless, in a mass airdrop scenario, flocking (as an additional guidance layer) offers several potential benefits. Flocking among the parafoils aimed for the same landing spot can reduce touch-down dispersion, at the same time mitigating risk of collisions. It is expected that flocking will help the parafoils to fly on more similar trajectories, indirectly averaging out the wind estimation errors. Flocking can also assist the vehicles that fail to achieve a valid trajectory solution.</p>
+<p>However, flocking among parafoils poses several interesting challenges. Parafoils are different from powered aircraft in many aspects of flocking. First, parafoils cannot manoeuvre in the vertical plane or directly control their altitude. Next, there is little control over the horizontal speed. These two limitations restrict possible manoeuvres to horizontal (or, rather, descending) turns. In addition, large and heavy parafoils considered in this study are characterized by a low maximum turn rate and large turn radii. Turn radii of the order of hundreds of metres together with large canopy span necessitate a large safety distance among the vehicles. Considering the required landing dispersion of less than 100 m CEP, such parafoil properties severely limit flocking performance and diminish the possible benefits from flocking.</p>
+<p>To obtain a behaviour that would appear as flocking among parafoils, each vehicle in the flock should make lateral steering corrections as a function of a 3D metric on the local flock configuration. The parafoil behaviour will be comprised by the three classical rules of cohesion, separation, and alignment. The ways of implementing these rules are numerous. In the remaining part of this section and in the next section, a new class of flocking algorithms are developed for parafoils that implement Reynolds' flocking rules.</p>
+<p><bold>Cohesion and separation.</bold> The principles of cohesion and separation may be implemented separately or together, by definition of a suitable control law. This rule is manifesting itself through an attractive or repulsive force acting on the parafoil based on the <italic>local flock configuration</italic>. However, this force, or <italic>action vector</italic>, cannot be directly applied to the parafoil to produce an acceleration. Therefore, it will be translated into a suitable command of left or right turn. The local flock configuration can be defined in either one of two ways:
+<list id="list6-0954410011413637" list-type="simple">
+<list-item><p><italic>Centroid based</italic>: position vector of the local centroid in the own-vehicle centred axes – i.e. the average position of the vehicles within the <italic>local neighbourhood</italic>, including the own vehicle;</p></list-item>
+<list-item><p><italic>Flockmate based</italic>: set of positions of the vehicles within the <italic>local neighbourhood</italic> in the own-vehicle centred axes</p></list-item>
+</list></p>
+<p>At the same time, <italic>local neighbourhood</italic> can be defined either as all vehicles within a specified sensing zone of own parafoil (<italic>R-neighbourhood</italic>), or as <italic>N</italic> nearest vehicles regardless of their position (<italic>N-neighbourhood</italic>). <italic>N</italic>-neighbourhood can optionally be also limited by the maximum range from own vehicle. The two definitions of the neighbourhood are depicted in <xref ref-type="fig" rid="fig15-0954410011413637">Fig. 15</xref>.
+<fig id="fig15-0954410011413637" position="float"><label>Fig. 15</label><caption><p>Local neighbourhood</p></caption><graphic xlink:href="10.1177_0954410011413637-fig15.tif"/></fig></p>
+<p>It is customary to define the action – attraction or repulsion – vector as the reciprocal gradient of the potential field induced by the flock configuration [<xref ref-type="bibr" rid="bibr55-0954410011413637">55</xref>, <xref ref-type="bibr" rid="bibr56-0954410011413637">56</xref>]. A potential function is not explicitly defined; instead, action vectors with desired properties are directly defined. An action vector may produce both attraction and repulsion, or one of them. Since cohesion and separation are the two necessary basic behaviours, at least one source of each kind of force is needed. By combining two definitions of the flock configuration with different definitions of action vectors, nine different flocking strategies, summarized in <xref ref-type="table" rid="table2-0954410011413637">Table 2</xref>, can be obtained. <xref ref-type="fig" rid="fig16-0954410011413637">Figure 16</xref> illustrates some of the combinations.
+<fig id="fig16-0954410011413637" position="float"><label>Fig. 16</label><caption><p>Flocking strategy: possible ways to define the action vector</p></caption><graphic xlink:href="10.1177_0954410011413637-fig16.tif"/></fig></p>
+<p>However, only some of the possible combinations are practical. On one hand, separation cannot rely solely on centroid-based repulsion. To illustrate this, one can imagine two parafoils flying at the desired distance from the centroid and experiencing neither repulsion nor attraction while being dangerously close to each other, as shown in <xref ref-type="fig" rid="fig16-0954410011413637">Fig. 16</xref>(a). On the other hand, cohesion can be achieved with either definition of the flock configuration and it would be redundant to use both at the same time. Thus, combinations 2, 3, and 5 out of the nine possible combinations are being focused on the following.
+<list id="list7-0954410011413637" list-type="order">
+<list-item><p>Sum of flockmate-based attraction/repulsion vectors responsible for both cohesion and separation.</p></list-item>
+<list-item><p>Sum of centroid-based attraction vector responsible for cohesion only and flockmate-based repulsion vectors responsible for separation.</p></list-item>
+<list-item><p>Sum of centroid-based attraction/repulsion vector responsible for both cohesion and separation and flockmate-based repulsion vectors responsible for separation.</p></list-item>
+</list></p>
+<p><bold>Alignment.</bold> The trajectory-following guidance command may enforce the rule of velocity alignment, provided the parafoils fly on trajectories of similar shape. However, if the reference trajectories are not alike, velocity matching will not be obtained. Then, this rule should be implemented explicitly. In this case, only the velocities of parafoils close enough to own vehicle should be taken into account.</p>
+<p>For each of the described alternatives, there are several design decisions to make.
+<list id="list8-0954410011413637" list-type="order">
+<list-item><p>Select the exact definition of the local neighbourhood (<italic>R</italic>- or <italic>N</italic>-neighbourhood).</p></list-item>
+<list-item><p>Choose parameters <italic>R</italic> and/or <italic>N</italic>.</p></list-item>
+<list-item><p>Define the action vector function.</p></list-item>
+<list-item><p>Define the guidance law transforming the action vector into steering commands.</p></list-item>
+<list-item><p>Select the weights for combining the steering commands of each flocking rule with those of the reference trajectory guidance.</p></list-item>
+</list></p>
+<sec id="sec25-0954410011413637"><title>5.1 Formulation of the flocking laws</title>
+<sec id="sec26-0954410011413637"><title>5.1.1 Centroid and average velocity calculation</title>
+<p>Let <italic>n</italic> denote the number of vehicles within the <italic>local neighbourhood</italic>, and let
+<disp-formula id="disp-formula87-0954410011413637"><label>(62)</label><graphic xlink:href="10.1177_0954410011413637-eq62.tif"/></disp-formula>
+be the position of the <italic>i</italic>th vehicle in the local neighbourhood, with <bold><italic>x</italic></bold><sub>0</sub> being the own vehicle position. The relative position of the <italic>i</italic>th neighbour with respect to the own vehicle is given by
+<disp-formula id="disp-formula88-0954410011413637"><label>(63)</label><graphic xlink:href="10.1177_0954410011413637-eq63.tif"/></disp-formula>
+and the position of the local flock centroid is calculated as
+<disp-formula id="disp-formula89-0954410011413637"><label>(64)</label><graphic xlink:href="10.1177_0954410011413637-eq64.tif"/></disp-formula>
+The sum of position vectors in equation (<xref ref-type="disp-formula" rid="disp-formula89-0954410011413637">64</xref>) is divided by <italic>n</italic> + 1 to take into account own position, <inline-formula id="ilm14-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math14-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mstyle mathvariant="bold"><mml:mi>x</mml:mi></mml:mstyle></mml:mrow><mml:mrow><mml:mn>0</mml:mn> </mml:mrow><mml:mrow><mml:mi>l</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula>, which is [0, 0, 0]<sup>T</sup> by equation (<xref ref-type="disp-formula" rid="disp-formula88-0954410011413637">63</xref>). <inline-formula id="ilm15-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math15-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mstyle mathvariant="bold"><mml:mi>x</mml:mi></mml:mstyle></mml:mrow><mml:mrow><mml:mi>i</mml:mi> </mml:mrow><mml:mrow><mml:mi>h</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> will denote the <italic>i</italic>th vehicle relative position in the horizontal plane and, similarly, <inline-formula id="ilm16-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math16-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mstyle mathvariant="bold"><mml:mi>x</mml:mi></mml:mstyle></mml:mrow><mml:mrow><mml:mtext>c</mml:mtext> </mml:mrow><mml:mrow><mml:mtext>h</mml:mtext></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> the centroid position in the horizontal plane.</p>
+<p>The velocities are treated in a similar way. Let vectors <bold><italic>v</italic></bold><sub>0</sub> and <bold><italic>v</italic></bold><sub><italic>i</italic></sub> denote the horizontal velocities of the own parafoil and of the <italic>i</italic>th neighbour in the Earth's axis. The relative velocity of the <italic>i</italic>th neighbour is given by
+<disp-formula id="disp-formula90-0954410011413637"><label>(65)</label><graphic xlink:href="10.1177_0954410011413637-eq65.tif"/></disp-formula>
+and the average flock velocity along the Earth's axis is computed as
+<disp-formula id="disp-formula91-0954410011413637"><label>(66)</label><graphic xlink:href="10.1177_0954410011413637-eq66.tif"/></disp-formula>
+Then, the average velocity is transformed into the ground-track axes by
+<disp-formula id="disp-formula92-0954410011413637"><label>(67)</label><graphic xlink:href="10.1177_0954410011413637-eq67.tif"/></disp-formula>
+where χ is the own ground track.</p></sec>
+<sec id="sec27-0954410011413637"><title>5.1.2 Action vectors</title>
+<p>A smooth action vector providing both attraction and repulsion is defined in the horizontal plane. Its direction is along the horizontal direction to the local centroid, or to the corresponding flockmate, and its magnitude and sign are designed to produce (<italic>a</italic>) zero force at some nominal equilibrium range, (<italic>b</italic>) hyperbolically growing repulsion as the range approaches zero, and (<italic>c</italic>) linearly-growing attraction as the range increases beyond the equilibrium value.</p>
+<p>Consider a family of 2D vector-valued functions
+<disp-formula id="disp-formula93-0954410011413637"><label>(68)</label><graphic xlink:href="10.1177_0954410011413637-eq68.tif"/></disp-formula>
+where <italic>k</italic><sub><italic>a</italic></sub>, <italic>r</italic><sub><italic>e</italic></sub>, and <italic>p</italic> are parameters and ‖ · ‖ is the Euclidean norm. This function family has the following properties:
+<list id="list9-0954410011413637" list-type="order">
+<list-item><p>If <italic>k</italic><sub><italic>a</italic></sub> = 1, <italic>r</italic><sub><italic>e</italic></sub> &gt; 0 and <italic>p</italic> ⩾ 1, <bold><italic>f</italic></bold> represents either an attractive or a repulsive force:
+<list id="list10-0954410011413637" list-type="alpha-lower">
+<list-item><p>‖<bold><italic>f</italic></bold>‖ = 0 if, and only if, ‖<bold><italic>x</italic></bold><sub><italic>c</italic></sub>‖ = <italic>r</italic><sub><italic>e</italic></sub>. In this case, <italic>r</italic><sub><italic>e</italic></sub> is the equilibrium range;</p></list-item>
+<list-item><p>When ‖<bold><italic>x</italic></bold><sub>c</sub>‖ tends to zero, <bold><italic>f</italic></bold> acts from the centroid and ‖<bold><italic>f</italic></bold>‖ → ∞;</p></list-item>
+<list-item><p>When ‖<bold><italic>x</italic></bold><sub>c</sub>‖ &gt;&gt; <italic>r</italic><sub><italic>e</italic></sub>, <bold><italic>f</italic></bold> acts towards the centroid and ‖<bold><italic>f</italic></bold>‖ → ‖<bold><italic>x</italic></bold><sub><italic>c</italic></sub>‖.</p></list-item>
+</list></p></list-item>
+<list-item><p>If <italic>k</italic><sub><italic>a</italic></sub> = 0, <italic>r</italic><sub><italic>e</italic></sub> &gt; 0 and <italic>p</italic> ⩾ 1, <bold><italic>f</italic></bold> represents a repulsive force, growing hyperbolically as the range ‖<bold><italic>x</italic></bold><sub>c</sub>‖ approaches zero.</p></list-item>
+<list-item><p>If <italic>k</italic><sub><italic>a</italic></sub> &gt; 0 and <italic>r</italic><sub><italic>e</italic></sub> = 0, <bold><italic>f</italic></bold> represents an attractive force, growing linearly with the range.</p></list-item>
+</list></p>
+<p>For flockmate-based action vector, <bold><italic>x</italic></bold><sub>c</sub> and <inline-formula id="ilm17-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math17-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mtext mathvariant="bold">x</mml:mtext></mml:mrow><mml:mrow><mml:mtext>c</mml:mtext> </mml:mrow><mml:mrow><mml:mtext>h</mml:mtext></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> are replaced by <inline-formula id="ilm18-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math18-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mtext mathvariant="bold">x</mml:mtext></mml:mrow><mml:mrow><mml:mi>i</mml:mi> </mml:mrow><mml:mrow><mml:mi>l</mml:mi></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula> and <inline-formula id="ilm19-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math19-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mtext mathvariant="bold">x</mml:mtext></mml:mrow><mml:mrow><mml:mi>i</mml:mi> </mml:mrow><mml:mrow><mml:mtext>h</mml:mtext></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula>, respectively. Note, that <inline-formula id="ilm20-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math20-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mtext mathvariant="bold">x</mml:mtext></mml:mrow><mml:mrow><mml:mi>i</mml:mi> </mml:mrow><mml:mrow><mml:mi>l</mml:mi></mml:mrow></mml:msubsup><mml:mo>,</mml:mo><mml:msub><mml:mrow><mml:mtext mathvariant="bold">x</mml:mtext></mml:mrow><mml:mrow><mml:mtext>c</mml:mtext></mml:mrow></mml:msub><mml:mo>∈</mml:mo><mml:msup><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mn>3</mml:mn></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula>, i.e. include the vertical separation between the parafoils, whereas <inline-formula id="ilm21-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math21-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mtext mathvariant="bold">x</mml:mtext></mml:mrow><mml:mrow><mml:mi>i</mml:mi> </mml:mrow><mml:mrow><mml:mtext>h</mml:mtext></mml:mrow></mml:msubsup><mml:mo>,</mml:mo><mml:msubsup><mml:mrow><mml:mtext mathvariant="bold">x</mml:mtext></mml:mrow><mml:mrow><mml:mi>c</mml:mi> </mml:mrow><mml:mrow><mml:mtext>h</mml:mtext></mml:mrow></mml:msubsup><mml:mo>∈</mml:mo><mml:msup><mml:mrow><mml:mi>R</mml:mi></mml:mrow><mml:mrow><mml:mn>2</mml:mn></mml:mrow></mml:msup></mml:mrow></mml:math></inline-formula>.</p></sec>
+<sec id="sec28-0954410011413637"><title>5.1.3 Steering commands</title>
+<p>At this stage, there is either a single action vector <bold><italic>f</italic></bold><sub><italic>r</italic></sub> for <italic>r</italic>th flocking rule, or <italic>n</italic> vectors <bold><italic>f</italic></bold><sub><italic>r</italic><sub><italic>i</italic></sub></sub>, <italic>i</italic> ∈ [1, <italic>n</italic>]. In the latter case, the contributions of all the neighbours are added
+<disp-formula id="disp-formula94-0954410011413637"><label>(69)</label><graphic xlink:href="10.1177_0954410011413637-eq69.tif"/></disp-formula>
+Then, a scalar weight <italic>w</italic><sub><italic>r</italic></sub> for each rule is defined and the contributions of all the rules are added
+<disp-formula id="disp-formula95-0954410011413637"><label>(70)</label><graphic xlink:href="10.1177_0954410011413637-eq70.tif"/></disp-formula>
+Let ψ<sub><italic>f</italic></sub> be the orientation angle of the flocking vector <bold><italic>f</italic></bold> and χ the ground track of the vehicle. The course error is defined by
+<disp-formula id="disp-formula96-0954410011413637"><label>(71)</label><graphic xlink:href="10.1177_0954410011413637-eq71.tif"/></disp-formula></p>
+<p>The flocking steering command δ<sub>f</sub> is composed from the contributions of the action-vector-driven command and the alignment command. Both sources of the steering command are 2D vectors. They are transformed to a scalar command in a similar way: by a product of their orientation and their magnitude. The overall command is computed as a weighted sum of two components
+<disp-formula id="disp-formula97-0954410011413637"><label>(72)</label><graphic xlink:href="10.1177_0954410011413637-eq72.tif"/></disp-formula>
+where <italic>k</italic><sub>force</sub> and <italic>k</italic><sub>align</sub> are parameters. Finally, the flocking steering command is combined with a trajectory-tracking command using flocking weight <italic>w</italic><sub>f</sub> and trajectory weight <italic>w</italic><sub>t</sub>
+<disp-formula id="disp-formula98-0954410011413637"><label>(73)</label><graphic xlink:href="10.1177_0954410011413637-eq73.tif"/></disp-formula>
+where δ<sub>t</sub> is the output of the trajectory-tracking controller.</p></sec></sec>
+<sec id="sec29-0954410011413637"><title>5.2 Flocking simulation results</title>
+<p>Five variations of the flocking strategy were investigated.
+<list id="list11-0954410011413637" list-type="order">
+<list-item><p>Flockmate-based attraction/repulsion, <italic>N</italic>-neighbourhood, <italic>N</italic> = 2.</p></list-item>
+<list-item><p>Centroid-based attraction/repulsion, <italic>N</italic>-neighbourhood, <italic>N</italic> = 2 and repulsion from the nearest vehicle (flockmate-based, <italic>N</italic>-neighbourhood, <italic>N</italic> = 1).</p></list-item>
+<list-item><p>Centroid-based attraction/repulsion, <italic>N</italic>-neighbourhood, <italic>N</italic> = 2 and flockmate-based repulsion, <italic>N</italic>-neighbourhood, <italic>N</italic> = 2.</p></list-item>
+<list-item><p>Centroid-based attraction, <italic>N</italic>-neighbourhood, <italic>N</italic> = 2 and repulsion from the nearest vehicle (flockmate based, <italic>N</italic>-neighbourhood <italic>N</italic> = 1).</p></list-item>
+<list-item><p>Centroid-based attraction, <italic>N</italic>-neighbourhood, <italic>N</italic> = 2 and flockmate-based repulsion, <italic>N</italic>-neighbourhood, <italic>N</italic> = 2.</p></list-item>
+</list></p>
+<p>All of the above variations include the alignment rule based on <italic>R</italic>-neighbourhood with <italic>R</italic> = 500 m. Alignment behaviour was found to be essential, serving as a damping coefficient during flocking. Since prior to flocking the parafoils have no means for agreeing about a common trajectory, the reference trajectory cannot serve as an external migration vector for aligning the velocities of the parafoils.</p>
+<p>A difficulty arises with simultaneous flocking and trajectory following since the two guidance laws produce conflicting control demands. This problem has to be solved by a suitable control allocation. A somewhat unexpected conclusion was reached: For satisfactory guidance performance, one has to give the flocking commands priority over the tracking ones. This is due to the fact that flocking is a continuous process, whereas trajectory tracking is tolerant to deviations: if the vehicle veers off its path, a new trajectory is generated from the new position. Thus, once the flock has converged, the flocking frees the control for the path following. On the contrary, if the parafoil struggles to find its equilibrium position in the flock, the control can remain saturated for a long time. As a consequence, the parafoil will be carried too far away to reach the target, without any control over its trajectory.</p>
+<p>Flocking is possible only if there is enough excess altitude to spare during gathering. In the present implementation, priority is given to flocking by limiting the trajectory-tracking command before summation with the flocking command. The flocking command is not limited, whereas the total command is limited again after the summation.</p>
+<p>Even with the control allocation problem solved, however, the parafoils, as a flock, cannot land at the same spot. It was seen in simulation that minimal practical separation for parafoils of the kind studied is about 100 m. Therefore, if large number of parafoils are dropped and come for landing as a flock, some vehicles will land several hundred metres off the target. This effect is apparent from the simulation results.</p>
+<p>In general, the flocking process is highly non-linear. No formal stability analysis was done in the present scope. However, convergence properties were proved for similar algorithms in published studies – e.g. referebces [<xref ref-type="bibr" rid="bibr55-0954410011413637">55</xref>] and [<xref ref-type="bibr" rid="bibr56-0954410011413637">56</xref>]. In particular, Olfati-Saber [<xref ref-type="bibr" rid="bibr56-0954410011413637">56</xref>] proved for a group of agents applying an algorithm that embodies Reynolds' flocking rules that under certain conditions (a) the structural dynamics converges to an equilibrium; (b) the velocities of all agents asymptotically match; and (c) no inter-agent collisions occur. Olfati-Saber [<xref ref-type="bibr" rid="bibr56-0954410011413637">56</xref>] also indicated that for a generic set of initial states and a large number of agents, the Reynolds' algorithm is likely to lead to flock fragmentation.</p>
+<p>All the five described algorithm variations produced reasonable flocking after tuning of their parameters. <xref ref-type="table" rid="table3-0954410011413637">Table 3</xref> summarizes the parameter values for the five strategies.
+<table-wrap id="table3-0954410011413637" position="float"><label>Table 3</label><caption><p>Parameters of the flocking algorithms</p></caption>
+<graphic alternate-form-of="table3-0954410011413637" xlink:href="10.1177_0954410011413637-table3.tif"/>
+<table frame="hsides"><thead>
+<tr><th align="center" colspan="2">Variations<hr/></th>
+<th align="center" colspan="5">Values<hr/></th></tr>
+<tr><th>Rule</th>
+<th>Parameter</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th></tr></thead>
+<tbody>
+<tr>
+<td rowspan="7">Rule 1</td>
+<td>Type</td>
+<td>c/s</td>
+<td>c/s</td>
+<td>c/s</td>
+<td>c</td>
+<td>c</td></tr>
+<tr>
+<td>Configuration</td>
+<td>f</td>
+<td>c</td>
+<td>c</td>
+<td>c</td>
+<td>c</td></tr>
+<tr>
+<td><italic>N</italic></td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>2</td></tr>
+<tr>
+<td><italic>k</italic><sub><italic>a</italic></sub></td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td></tr>
+<tr>
+<td><italic>r</italic><sub><italic>e</italic></sub> (m)</td>
+<td>100</td>
+<td>75</td>
+<td>75</td>
+<td>0</td>
+<td>0</td></tr>
+<tr>
+<td><italic>p</italic></td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>N/A</td>
+<td>N/A</td></tr>
+<tr>
+<td><italic>w</italic></td>
+<td>N/A</td>
+<td>3</td>
+<td>3</td>
+<td>3</td>
+<td>3</td></tr>
+<tr>
+<td rowspan="7">Rule 2</td>
+<td>Type</td>
+<td>none</td>
+<td>s</td>
+<td>s</td>
+<td>s</td>
+<td>s</td></tr>
+<tr>
+<td>Configuration</td>
+<td/>
+<td>f</td>
+<td>f</td>
+<td>f</td>
+<td>f</td></tr>
+<tr>
+<td><italic>N</italic></td>
+<td/>
+<td>1</td>
+<td>2</td>
+<td>1</td>
+<td>2</td></tr>
+<tr>
+<td><italic>k</italic><sub><italic>a</italic></sub></td>
+<td/>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td></tr>
+<tr>
+<td><italic>r</italic><sub><italic>e</italic></sub> (m)</td>
+<td/>
+<td>150</td>
+<td>150</td>
+<td>150</td>
+<td>150</td></tr>
+<tr>
+<td><italic>p</italic></td>
+<td/>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td></tr>
+<tr>
+<td><italic>w</italic></td>
+<td/>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td></tr>
+<tr>
+<td colspan="2"><italic>k</italic><sub>force</sub></td>
+<td>0.003</td>
+<td>0.0015</td>
+<td>0.0015</td>
+<td>0.0015</td>
+<td>0.0015</td></tr>
+<tr>
+<td rowspan="2">Alignment</td>
+<td><italic>R</italic> (m)</td>
+<td>500</td>
+<td>500</td>
+<td>500</td>
+<td>500</td>
+<td>500</td></tr>
+<tr>
+<td><italic>k</italic><sub>align</sub></td>
+<td>0.2</td>
+<td>0.1</td>
+<td>0.1</td>
+<td>0.2</td>
+<td>0.1</td></tr>
+</tbody>
+</table>
+<table-wrap-foot>
+<fn id="table-fn1-0954410011413637"><p>Notes: Type: c, cohesion; s, separation; Configuration: f, flockmate based; c, centroid based.</p></fn>
+</table-wrap-foot>
+</table-wrap></p>
+<p>Landing dispersion under combined trajectory-tracking and flocking laws was evaluated in a Monte Carlo simulation. Two batches were performed for each algorithm: one does not include atmospheric disturbances and sensor errors, whereas the other includes turbulence and sensor noise. In all of the batches, the parafoils were deployed at random positions and headings within 2000 m from the target and at an altitude of 2000 m. ( The range from the target was distributed uniformly between 0 and 2000 m and both the bearing from the target and the heading angle were distributed uniformly between 0° and 360°.) In each case, six parafoils were deployed and assigned the same target (located at the origin). Although the batches consist of a relatively small number of runs (between 15 and 60), the statistics are supported by another simulation session.</p>
+<p><xref ref-type="fig" rid="fig17-0954410011413637">Figure 17</xref> presents the landing dispersion in CEP values for <italic>individual parafoils</italic> for each of the five algorithms. The superiority of Algorithm 5 can be observed. In the absence of disturbances, the fifth variation achieves CEP of 73 m, comparable with that of the basic guidance algorithm without flocking. The diagram also shows strong influence of the turbulence and sensor errors on the scatter. However, the trend among the different algorithms remains unchanged.
+<fig id="fig17-0954410011413637" position="float"><label>Fig. 17</label><caption><p>CEP values for five flocking variations</p></caption><graphic xlink:href="10.1177_0954410011413637-fig17.tif"/></fig></p>
+<p>Additional measure of the flocking performance is the miss distance of a group of the parafoils, landing as a flock. <xref ref-type="fig" rid="fig18-0954410011413637">Figure 18</xref> shows the mean miss distance of the flock centroid. The very low value for Algorithm 5 (44 m) indicates that most of the total scatter should be attributed to the separation among the parafoils in the flock. The landing dispersion for Algorithms 3 and 5 is depicted in <xref ref-type="fig" rid="fig19-0954410011413637">Fig. 19</xref>. The circles around the target show the CEP of each batch. Finally, sample trajectories of a flock of six parafoils flying under Algorithm 5 are presented. A case of correct flocking and guidance is shown in <xref ref-type="fig" rid="fig20-0954410011413637">Fig. 20</xref>. <xref ref-type="fig" rid="fig21-0954410011413637">Figure 21</xref> shows a case in which the parafoils gather into two separated components of three vehicles, each of them tracking another trajectory. This is an example of fragmentation mentioned above. It occurs because of the limited number of flockmates included in the local neighbourhood of each parafoil. In the present implementation, this number is two. Hence, if a component of three parafoils is formed, in which the parafoils are attracted to each other, there will be no cohesion between these three parafoils and the rest of the flock. In the case shown, since both groups approach the target at the same time, the flock joins before the parafoils begin to land.
+<fig id="fig18-0954410011413637" position="float"><label>Fig. 18</label><caption><p>Mean distance of the flock centroid from the target</p></caption><graphic xlink:href="10.1177_0954410011413637-fig18.tif"/></fig>
+<fig id="fig19-0954410011413637" position="float"><label>Fig. 19</label><caption><p>Flocking Monte Carlo simulation: landing dispersion</p></caption><graphic xlink:href="10.1177_0954410011413637-fig19.tif"/></fig>
+<fig id="fig20-0954410011413637" position="float"><label>Fig. 20</label><caption><p>Sample flocking trajectories for Algorithm 5</p></caption><graphic xlink:href="10.1177_0954410011413637-fig20.tif"/></fig>
+<fig id="fig21-0954410011413637" position="float"><label>Fig. 21</label><caption><p>Flocking trajectories for Algorithm 5 showing the fragmentation phenomenon</p></caption><graphic xlink:href="10.1177_0954410011413637-fig21.tif"/></fig></p>
+<p>To summarize the simulation results, one can make several observations. In most cases tested, the parafoils were able to establish flocking and also land close to their intended target. All three basic behaviours are essential for correct flocking and all five flocking algorithms can establish and maintain a flock. However, flocking motion resulting from different algorithms can appear visually very different and lead to different levels of landing dispersion. Safe separation among the parafoils is maintained during flocking.</p>
+<p>Comparison between the flocking algorithms, won by Algorithm 5, shows that the best results are obtained with centroid-based cohesion and flockmate-based separation. In addition, it is beneficial to base the separation on more than one flockmate, such as done in Algorithm 5.</p>
+<p>There are several suggestions that may help to increase the benefit from integrating a flocking behaviour with parafoil guidance algorithms. One idea is to elect in distributed manner one vehicle to execute guidance to the target without flocking. Thus, this vehicle will become a flock leader. One possible choice of a leader is a vehicle that reports itself healthy and has the lowest positive altitude margin. The choice of a leader might change during flight. Another proposition is to use the flocking rules for collision avoidance only. In such a case, only separation and alignment laws will be used. Cohesion will not be required since each parafoil will navigate to the target by itself.</p></sec></sec>
+<sec id="sec30-0954410011413637" sec-type="conclusions"><title>6 CONCLUSIONS</title>
+<p>Comparison of five variations of the flocking strategy shows that the best combined flocking and tracking performance is obtained with centroid-based cohesion and flockmate-based separation. The overall landing dispersion with flocking is higher than in the case of trajectory tracking alone due to separation of the parafoils in the flock. However, with more advanced cooperation among the flocking parafoils, there is a potential to improve the landing accuracy.</p>
+<p>The main contributions of this study are the development of flocking rules for cooperative parafoils and validation of these rules by simulation. In the simulation, the parafoils were able to gather into a flock and maintain the flock while gliding to the target. The simulation results confirm the feasibility of tracking a reference trajectory and flocking simultaneously, thus avoiding collisions among the parafoils. The main conclusion is that cooperation among autonomous parafoils, can make airdrop a more efficient and reliable way of delivering critical supplies exactly where they are needed.</p></sec>
+</body>
+<back>
+<sec id="sec31-0954410011413637"><title>FUNDING</title>
+<p>This study was supported by the European Commission's Sixth Framework Programme (FP6) through the FASTWing CL project.</p></sec>
+<ref-list>
+<title>REFERENCES</title>
+<ref id="bibr1-0954410011413637"><label>1</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Stein</surname><given-names>J. M.</given-names></name></person-group> <article-title>Parachute testing for the NASA X-38 crew return vehicle</article-title>. <source>In Society of flight test engineers 36th annual international symposium</source>, <comment>Fort Worth, Texas, 3–6 October 2005</comment>.</citation></ref>
+<ref id="bibr2-0954410011413637"><label>2</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Uhl</surname><given-names>E.</given-names></name><name><surname>Schulte</surname><given-names>C.</given-names></name><name><surname>Ulbrich</surname><given-names>C.</given-names></name><name><surname>Burkhardt</surname><given-names>O.</given-names></name></person-group> <article-title>The FASTWing CL project – a self navigated gliding system for capital loads</article-title>. <conf-name>20th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Seattle, Washington, 4–7 May 2009, AIAA-2009-2930</comment>.</citation></ref>
+<ref id="bibr3-0954410011413637"><label>3</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Benney</surname><given-names>R.</given-names></name><name><surname>Henry</surname><given-names>M.</given-names></name><name><surname>Lafond</surname><given-names>K.</given-names></name><name><surname>Meloni</surname><given-names>A.</given-names></name><name><surname>Patel</surname><given-names>S.</given-names></name></person-group> <article-title>DoD new JPADS programs and NATO activities</article-title>. <comment>In <italic>20th AIAA aerodynamic decelerator systems technology conference and seminar</italic>, Seattle, Washington, 4–7 May 2009, AIAA-2009-2952</comment>.</citation></ref>
+<ref id="bibr4-0954410011413637"><label>4</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Hattis</surname><given-names>P. D.</given-names></name><name><surname>Appleby</surname><given-names>B. D.</given-names></name><name><surname>Fill</surname><given-names>T. J.</given-names></name><name><surname>Benney</surname><given-names>R.</given-names></name></person-group> <article-title>Precision guided airdrop system flight test results</article-title>. <conf-name>14th AIAA aerodynamic decelerator systems technology conference</conf-name>, <comment>15–18 May, San Francisco, California, 3–5 June 1997, AIAA-1997-1468</comment>.</citation></ref>
+<ref id="bibr5-0954410011413637"><label>5</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Benney</surname><given-names>R.</given-names></name><name><surname>Barber</surname><given-names>J.</given-names></name><name><surname>McGrath</surname><given-names>J.</given-names></name><name><surname>McHugh</surname><given-names>J.</given-names></name><name><surname>Noetscher</surname><given-names>G.</given-names></name><name><surname>Tavan</surname><given-names>S.</given-names></name></person-group> <article-title>The joint precision airdrop system advanced concept technology demonstration</article-title>. <conf-name>18th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Munich, Germany, 23–26 May 2005</comment>.</citation></ref>
+<ref id="bibr6-0954410011413637"><label>6</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Benney</surname><given-names>R.</given-names></name><name><surname>McGrath</surname><given-names>J.</given-names></name><name><surname>McHugh</surname><given-names>J.</given-names></name><name><surname>Meloni</surname><given-names>A.</given-names></name><name><surname>Noetscher</surname><given-names>G.</given-names></name><name><surname>Tavan</surname><given-names>S.</given-names></name><name><surname>Patel</surname><given-names>S.</given-names></name></person-group> <article-title>DoD JPADS programs overview and NATO activities</article-title>. <conf-name>19th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Williamsburg, Virginia, 21–24 May 2007, AIAA-2007-2576</comment>.</citation></ref>
+<ref id="bibr7-0954410011413637"><label>7</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Wegereef</surname><given-names>J. W.</given-names></name><name><surname>Benolol</surname><given-names>S.</given-names></name><name><surname>Uhl</surname><given-names>E.</given-names></name><name><surname>Ulbrich</surname><given-names>C.</given-names></name></person-group> <article-title>A high-glide ram-air parachute for 6,000 kg payloads, tested with the FASTWing CL test-vehicle</article-title>. <conf-name>20th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Seattle, Washington, 4–7 May 2009, AIAA-2009-2933</comment>.</citation></ref>
+<ref id="bibr8-0954410011413637"><label>8</label><citation citation-type="other"><comment>Burk, S. M. and Ware, G. M. Static aerodynamic characteristics of three ram-air-inflated low-aspect-ratio fabric wings. NASA Technical Report TN D-4182, 1967</comment>.</citation></ref>
+<ref id="bibr9-0954410011413637"><label>9</label><citation citation-type="other"><comment>Ware, G. M. and Hassel, J. L. Wind-tunnel investigation of ram-air-inflated all-flexible wings of aspect ratios 1.0 to 3.0. NASA Technical Report TM SX-1923, 1969</comment>.</citation></ref>
+<ref id="bibr10-0954410011413637"><label>10</label><citation citation-type="other"><comment>Nicolaides, J. D. Parafoil wind tunnel test. NASA, Technical Report AFFDL-TR-70-146, Air Force Flight Dynamics Laboratory, 1971</comment>.</citation></ref>
+<ref id="bibr11-0954410011413637"><label>11</label><citation citation-type="other"><comment>Geiger, R. H. and Wailes, W. K. Advanced recovery systems wind tunnel test report. NASA Contractor Report 177563, 1990</comment>.</citation></ref>
+<ref id="bibr12-0954410011413637"><label>12</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Iacomini</surname><given-names>C. S.</given-names></name><name><surname>Cerimele</surname><given-names>C. J.</given-names></name></person-group> <article-title>Lateral-directional aerodynamics from a large scale parafoil test program</article-title>. <conf-name>15th AIAA aerodynamic decelerator systems conference</conf-name>, <comment>Toulouse, France, 9–11 June 1999, AIAA-1999-1731</comment>.</citation></ref>
+<ref id="bibr13-0954410011413637"><label>13</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Iacomini</surname><given-names>C. S.</given-names></name><name><surname>Cerimele</surname><given-names>C. J.</given-names></name></person-group> <article-title>Longitudinal aerodynamics from a large scale parafoil test program</article-title>. <conf-name>15th AIAA aerodynamic decelerator systems conference</conf-name>, <comment>Toulouse, France, 9–11 June 1999, AIAA-1999-1732</comment>.</citation></ref>
+<ref id="bibr14-0954410011413637"><label>14</label><citation citation-type="other"><comment>Iosilevskii, G. Paraglider  performance, aerodynamics and flight mechanics. Technical Report TAE-Report 692, Technion-IIT, 1993</comment>.</citation></ref>
+<ref id="bibr15-0954410011413637"><label>15</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Iosilevskii</surname><given-names>G.</given-names></name></person-group> <article-title>Center of gravity and minimal lift coefficient limits of a gliding parachute</article-title>. <source>J. Aircr.</source>, <year>1995</year>, <volume>32</volume>(<issue>6</issue>), <fpage>1297</fpage>–<lpage>1302</lpage>.</citation></ref>
+<ref id="bibr16-0954410011413637"><label>16</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Iosilevskii</surname><given-names>G.</given-names></name></person-group> <article-title>Lifting-line theory of an arched wing in asymmetric flight</article-title>. <source>J. Aircr.</source>, <year>1996</year>, <volume>33</volume>(<issue>5</issue>), <fpage>1023</fpage>–<lpage>1026</lpage>.</citation></ref>
+<ref id="bibr17-0954410011413637"><label>17</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Jann</surname><given-names>T.</given-names></name></person-group> <article-title>Aerodynamic coefficients for a parafoil wing with arc anhedral – theoretical and experimantal results</article-title>. <conf-name>17th AIAA aerodynamic decelerator systems technology conference</conf-name>, <comment>Monterey, California, 19–22 May 2003, AIAA-2003-2106</comment>.</citation></ref>
+<ref id="bibr18-0954410011413637"><label>18</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Slegers</surname><given-names>N.</given-names></name><name><surname>Costello</surname><given-names>M.</given-names></name></person-group> <article-title>Comparison of measured and simulated motion of a controllable parafoil and payload system</article-title>. <conf-name>AIAA atmospheric flight mechanics conference and exhibit</conf-name>, <comment>Austin, Texas, 11–14 August 2003, AIAA-2003-5611</comment>.</citation></ref>
+<ref id="bibr19-0954410011413637"><label>19</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Lingard</surname><given-names>S. J.</given-names></name></person-group> <article-title>Ram-air parachute design</article-title>. <conf-name>Precision air delivery seminar, 13th AIAA aerodynamic decelerator systems technology conference</conf-name>, <comment>Clearwater Beach, Florida, 15–18 May 1995</comment>.</citation></ref>
+<ref id="bibr20-0954410011413637"><label>20</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Gamble</surname><given-names>D.</given-names></name></person-group> <source><italic>A</italic> <italic>mathematical model for calculating the flight dynamics of a general parachute-payload system. NASA</italic></source>. <publisher-name>Technical Report TN D-4859</publisher-name>, <year>1968</year>.</citation></ref>
+<ref id="bibr21-0954410011413637"><label>21</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Slegers</surname><given-names>N.</given-names></name><name><surname>Costello</surname><given-names>M.</given-names></name></person-group> <article-title>On the use of rigging angle and canopy tilt for control of a parafoil and payload system</article-title>. <conf-name>AIAA atmospheric flight mechanics conference and exhibit</conf-name>, <comment>Austin, Texas, 11–14 August 2003, AIAA-2003-5609</comment>.</citation></ref>
+<ref id="bibr22-0954410011413637"><label>22</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Slegers</surname><given-names>N.</given-names></name><name><surname>Costello</surname><given-names>M.</given-names></name></person-group> <article-title>Aspects of control for a parafoil and payload system</article-title>. <source>J. Guid. Contr. Dynam.</source>, <year>2003</year>, <volume>26</volume>(<issue>6</issue>), <fpage>898</fpage>–<lpage>905</lpage>.</citation></ref>
+<ref id="bibr23-0954410011413637"><label>23</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Müller</surname><given-names>S.</given-names></name><name><surname>Wagner</surname><given-names>O.</given-names></name><name><surname>Sachs</surname><given-names>G.</given-names></name></person-group> <article-title>A high-fidelity nonlinear multibody simulation model for parafoil systems</article-title>. <conf-name>17th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Monterey, California, 19–22 May 2003, AIAA-2003-2120</comment>.</citation></ref>
+<ref id="bibr24-0954410011413637"><label>24</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Slegers</surname><given-names>N. J.</given-names></name></person-group> <article-title>Effects of canopy-payload relative motion on control of autonomous parafoils</article-title>. <conf-name>20th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Seattle, Washington, 4–7 May 2009, AIAA-2009-2929</comment>.</citation></ref>
+<ref id="bibr25-0954410011413637"><label>25</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Mortaloni</surname><given-names>P.</given-names></name><name><surname>Yakimenko</surname><given-names>O.</given-names></name><name><surname>Dobrokhodov</surname><given-names>V.</given-names></name><name><surname>Howard</surname><given-names>R.</given-names></name></person-group> <article-title>On the development of a six-degree-of-freedom model of a low-aspect-ratio parafoil delivery system</article-title>. <conf-name>17th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Monterey, California, 19–22 May 2003, AIAA-2003-2105</comment>.</citation></ref>
+<ref id="bibr26-0954410011413637"><label>26</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Slegers</surname><given-names>N.</given-names></name><name><surname>Costello</surname><given-names>M.</given-names></name></person-group> <article-title>Model predictive control of a parafoil and payload system</article-title>. <source>J. Guid. Contr. Dynam.</source>, <year>2005</year>, <volume>28</volume>(<issue>4</issue>), <fpage>816</fpage>–<lpage>821</lpage>.</citation></ref>
+<ref id="bibr27-0954410011413637"><label>27</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Slegers</surname><given-names>N.</given-names></name><name><surname>Beyer</surname><given-names>E.</given-names></name><name><surname>Costello</surname><given-names>M.</given-names></name></person-group> <article-title>Use of variable incidence angle for glide slope control of autonomous parafoils</article-title>. <source>J. Guid. Contr. Dynam.</source>, <year>2008</year>, <volume>31</volume>(<issue>3</issue>), <fpage>585</fpage>–<lpage>596</lpage>.</citation></ref>
+<ref id="bibr28-0954410011413637"><label>28</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Slegers</surname><given-names>N. J.</given-names></name><name><surname>Yakimenko</surname><given-names>O. A.</given-names></name></person-group> <article-title>Optimal control for terminal guidance of autonomous parafoils</article-title>. <conf-name>20th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Seattle, Washington, 4–7 May 2009, AIAA-2009-2958</comment>.</citation></ref>
+<ref id="bibr29-0954410011413637"><label>29</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Jann</surname><given-names>T.</given-names></name></person-group> <article-title>Aerodynamic model identification and GNC design for the parafoil-load system ALEX</article-title>. <conf-name>16th AIAA aerodynamic decelerator systems technology conference</conf-name>, <comment>Boston, Massachusetts, 15–18 May 2001, AIAA-2001-2015</comment>.</citation></ref>
+<ref id="bibr30-0954410011413637"><label>30</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Calise</surname><given-names>A.</given-names></name><name><surname>Preston</surname><given-names>D.</given-names></name></person-group> <article-title>Swarming/flocking and collision avoidance for mass airdrop of autonomous guided parafoils</article-title>. <conf-name>AIAA guidance, navigation, and control conference and exhibit</conf-name>, <comment>San Francisco, California, 15–18 August 2005, AIAA-2005-6477</comment>.</citation></ref>
+<ref id="bibr31-0954410011413637"><label>31</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Gurfil</surname><given-names>P.</given-names></name><name><surname>Feldman</surname><given-names>S.</given-names></name></person-group> <article-title>Coordination and communication of cooperative parafoil flocks for humanitarian aid</article-title>. <conf-name>48th Israel annual conference on aerospace sciences</conf-name>, <comment>Tel Aviv, 27–28 February 2008</comment>.</citation></ref>
+<ref id="bibr32-0954410011413637"><label>32</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Rademacher</surname><given-names>B. J.</given-names></name><name><surname>Lu</surname><given-names>P.</given-names></name><name><surname>Strahan</surname><given-names>A.</given-names></name><name><surname>Cerimele</surname><given-names>C.</given-names></name></person-group> <article-title>Trajectory design, guidance and control for autonomous parafoils</article-title>. <conf-name>AIAA guidance, navigation and control conference and exhibit</conf-name>, <comment>Honolulu, Hawaii, 18–21 August 2008, AIAA-2008-7417</comment>.</citation></ref>
+<ref id="bibr33-0954410011413637"><label>33</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Thomasson</surname><given-names>P. G.</given-names></name></person-group> <article-title>Equations of motion of a vehicle in a moving fluid</article-title>. <source>J. Aircr.</source>, <year>2000</year>, <volume>37</volume>(<issue>4</issue>), <fpage>630</fpage>–<lpage>639</lpage>.</citation></ref>
+<ref id="bibr34-0954410011413637"><label>34</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Lissaman</surname><given-names>P. B. S.</given-names></name><name><surname>Brown</surname><given-names>G. J.</given-names></name></person-group> <article-title>Apparent mass effects on parafoil dynamics</article-title>. <conf-name>12th RACS/AIAA ADS</conf-name>, <comment>London, England, 10–13 May 1993, AIAA-93-1236</comment>.</citation></ref>
+<ref id="bibr35-0954410011413637"><label>35</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Barrows</surname><given-names>T. M.</given-names></name></person-group> <article-title>Apparent mass of parafoils with spanwise camber</article-title>. <source>J. Aircr.</source>, <year>2002</year>, <volume>39</volume>(<issue>3</issue>), <fpage>445</fpage>–<lpage>451</lpage>.</citation></ref>
+<ref id="bibr36-0954410011413637"><label>36</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Goodrick</surname><given-names>T. F.</given-names></name><name><surname>Murphy</surname><given-names>A. L.</given-names></name><name><surname>Pearson</surname><given-names>A. E.</given-names></name></person-group> <article-title>Analysis of various automatic homing techniques for gliding airdrop systems with comparative performance in adverse winds</article-title>. <conf-name>4th AIAA aerodynamic decelerator systems technology conference</conf-name>, <comment>Palm Springs, California, 21–23 May 1973, AIAA-73-462</comment>.</citation></ref>
+<ref id="bibr37-0954410011413637"><label>37</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Soppa</surname><given-names>U.</given-names></name><name><surname>Strauch</surname><given-names>H.</given-names></name><name><surname>Goerig</surname><given-names>L.</given-names></name><name><surname>Belmont</surname><given-names>J. P.</given-names></name><name><surname>Cantinaud</surname><given-names>O.</given-names></name></person-group> <article-title>GNC concept for automated landing of a large parafoil</article-title>. <conf-name>14th AIAA aerodynamic decelerator systems technology conference</conf-name>, <comment>San Francisco, California, 3–5 June 1997, AIAA-1997-1464</comment>.</citation></ref>
+<ref id="bibr38-0954410011413637"><label>38</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Strahan</surname><given-names>A. L.</given-names></name></person-group> <article-title>Testing of parafoil autonomous GN&amp;C for X-38</article-title>. <conf-name>17th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Monterey, California, 19–22 May 2003, AIAA-2003-2115</comment>.</citation></ref>
+<ref id="bibr39-0954410011413637"><label>39</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Stein</surname><given-names>J. M.</given-names></name><name><surname>Madsen</surname><given-names>C. M.</given-names></name><name><surname>Strahan</surname><given-names>A. L.</given-names></name></person-group> <article-title>An overview of the guided parafoil system derived from X-38 experience</article-title>. <conf-name>18th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Munich, Germany, 23–26 May 2005, AIAA 2005-1652</comment>.</citation></ref>
+<ref id="bibr40-0954410011413637"><label>40</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Jann</surname><given-names>T.</given-names></name></person-group> <article-title>Advanced features for autonomous parafoil guidance, navigation and control</article-title>. <conf-name>18th AIAA aerodynamic decelerator systems technology conference</conf-name>, <comment>Munich, Germany, 23–26 May 2005, AIAA-2005-1642</comment>.</citation></ref>
+<ref id="bibr41-0954410011413637"><label>41</label><citation citation-type="other"><comment>Jann, T. Development and flight testing of an autonomous parafoil-load system demonstrator. In <italic>25th international congress of the aeronautical sciences</italic>, Hamburg, Germany, 3 8 September 2006</comment>.</citation></ref>
+<ref id="bibr42-0954410011413637"><label>42</label><citation citation-type="other"><person-group person-group-type="author"><name><surname>Rademacher</surname><given-names>B. J.</given-names></name></person-group> <article-title>Minimum complexity guidance, navigation, and control for an autonomous parafoil payload delivery system</article-title>. <source>Master's Thesis</source>, <year>2005</year>. <publisher-name>Iowa State University</publisher-name>.</citation></ref>
+<ref id="bibr43-0954410011413637"><label>43</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Kaminer</surname><given-names>I. I.</given-names></name><name><surname>Yakimenko</surname><given-names>O. A.</given-names></name></person-group> <article-title>Development of control algorithm for the autonomous gliding delivery system</article-title>. <conf-name>17th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Monterey, California, 19–22 May 2003, AIAA-2003-2116</comment>.</citation></ref>
+<ref id="bibr44-0954410011413637"><label>44</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Carter</surname><given-names>D. W.</given-names></name><name><surname>George</surname><given-names>S.</given-names></name><name><surname>Hattis</surname><given-names>P. D.</given-names></name><name><surname>McConley</surname><given-names>M. W.</given-names></name><name><surname>Rasmussen</surname><given-names>S. A.</given-names></name><name><surname>Singh</surname><given-names>L.</given-names></name></person-group> <article-title>Autonomous large parafoil guidance, navigation, and control system design status</article-title>. <conf-name>19th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Williamsburg, Virginia, 21–24 May 2007, AIAA-2007-2514</comment>.</citation></ref>
+<ref id="bibr45-0954410011413637"><label>45</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Carter</surname><given-names>D.</given-names></name><name><surname>Singh</surname><given-names>L.</given-names></name><name><surname>Wholey</surname><given-names>L.</given-names></name><name><surname>Rasmussen</surname><given-names>S.</given-names></name><name><surname>Barrows</surname><given-names>T.</given-names></name><name><surname>George</surname><given-names>S.</given-names></name><name><surname>McConley</surname><given-names>M.</given-names></name><name><surname>Gibson</surname><given-names>C.</given-names></name><name><surname>Tavan</surname><given-names>S.</given-names></name><name><surname>Bagdonovich</surname><given-names>B.</given-names></name></person-group> <article-title>Band-limited guidance and control of large parafoils</article-title>. <conf-name>20th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Seattle, Washington, 4–7 May 2009, AIAA-2009-2981</comment>.</citation></ref>
+<ref id="bibr46-0954410011413637"><label>46</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Rademacher</surname><given-names>B. J.</given-names></name><name><surname>Lu</surname><given-names>P.</given-names></name><name><surname>Strahan</surname><given-names>A. L.</given-names></name><name><surname>Cerimele</surname><given-names>C. J.</given-names></name></person-group> <article-title>In-flight trajectory planning and guidance for autonomous parafoils</article-title>. <source>J. Guid. Contr. Dynam.</source>, <year>2009</year>, <volume>32</volume>(<issue>6</issue>), <fpage>1697</fpage>–<lpage>1712</lpage>.</citation></ref>
+<ref id="bibr47-0954410011413637"><label>47</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Dubins</surname><given-names>L. E.</given-names></name></person-group> <article-title>On curves of minimal length with a constraint on average curvature, and with prescribed initial and terminal positions and tangents</article-title>. <source>Am. J. Math.</source>, <year>1957</year>, <volume>79</volume>(<issue>3</issue>), <fpage>497</fpage>–<lpage>516</lpage>.</citation></ref>
+<ref id="bibr48-0954410011413637"><label>48</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Kaminer</surname><given-names>I.</given-names></name><name><surname>Yakimenko</surname><given-names>O.</given-names></name><name><surname>Pascoal</surname><given-names>A.</given-names></name></person-group> <article-title>Coordinated payload delivery using high glide parafoil systems</article-title>. <conf-name>18th AIAA aerodynamic decelerator systems technology conference and seminar</conf-name>, <comment>Munich, Germany, 23–26 May 2005, AIAA-2005-1622</comment>.</citation></ref>
+<ref id="bibr49-0954410011413637"><label>49</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Etkin</surname><given-names>B.</given-names></name><name><surname>Reid</surname><given-names>L. D.</given-names></name></person-group> <source>Dynamics of flight stability and control.</source>, <edition>edition 3</edition>, <year>1996</year> (<publisher-name>John Wiley and Sons</publisher-name>, <publisher-loc>New York</publisher-loc>).</citation></ref>
+<ref id="bibr50-0954410011413637"><label>50</label><citation citation-type="book"><person-group person-group-type="author"><name><surname>Durham</surname><given-names>W.</given-names></name></person-group> <source>AOE5214 aircraft dynamics and control, course notes</source>, <volume>vol. 24061</volume>, <year>2004</year> (<publisher-name>virginia tech department of aerospace and ocean engineering, 215 Randolph Hall</publisher-name>, <publisher-loc>Blacksburg, Virginia</publisher-loc>).</citation></ref>
+<ref id="bibr51-0954410011413637"><label>51</label><citation citation-type="other"><comment>Aerosim. AeroSim Blockset product web page, available from <ext-link ext-link-type="uri" xlink:href="http://www.u-dynamics.com/aerosim/default.htm">http://www.u-dynamics.com/aerosim/default.htm</ext-link></comment>.</citation></ref>
+<ref id="bibr52-0954410011413637"><label>52</label><citation citation-type="other"><comment>Novatel. Novatel OEMStar GPS receiver brochure, available from <ext-link ext-link-type="uri" xlink:href="http://www.novatel.com/Documents/Papers/OEMStar.pdf">http://www.novatel.com/Documents/Papers/OEMStar.pdf</ext-link></comment>.</citation></ref>
+<ref id="bibr53-0954410011413637"><label>53</label><citation citation-type="other"><comment>ADIS16360/ADIS16365. Analog devices ADIS16360/ADIS16365 six degrees of freedom inertial sensor data sheet, available from <ext-link ext-link-type="uri" xlink:href="http://www.analog.com/static/imported-files/data_sheets/ADIS16360_16365.pdf">http://www.analog.com/static/imported-files/data_sheets/ADIS16360_16365.pdf</ext-link></comment>.</citation></ref>
+<ref id="bibr54-0954410011413637"><label>54</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Boissonnat</surname><given-names>J. D.</given-names></name><name><surname>Cerezo</surname><given-names>A.</given-names></name><name><surname>Leblond</surname><given-names>J.</given-names></name></person-group> <article-title>Shortest paths of bounded curvature in the plane</article-title>. <conf-name>IEEE international conference on robotics and automation</conf-name>, <comment>Nice, France, 12–14 May 1992</comment>.</citation></ref>
+<ref id="bibr55-0954410011413637"><label>55</label><citation citation-type="confproc"><person-group person-group-type="author"><name><surname>Tanner</surname><given-names>H.</given-names></name><name><surname>Jadbabaie</surname><given-names>A.</given-names></name><name><surname>Pappas</surname><given-names>G. J.</given-names></name></person-group> <article-title>Stable flocking of mobile agents, part I: Fixed topology</article-title>. <conf-name>IEEE conference on decision and control</conf-name>, <comment>Mawi, Hawaii, 9–12 December 2003, pp. 2010–2015</comment>.</citation></ref>
+<ref id="bibr56-0954410011413637"><label>56</label><citation citation-type="journal"><person-group person-group-type="author"><name><surname>Olfati-Saber</surname><given-names>R.</given-names></name></person-group> <article-title>Flocking for multi-agent dynamic systems: algorithms and theory</article-title>. <source>IEEE Trans. Autom. Control</source>, <year>2006</year>, <volume>51</volume>, <fpage>401</fpage>–<lpage>420</lpage>.</citation></ref>
+</ref-list>
+<app-group>
+<app><title>APPENDIX</title>
+<sec id="sec32-0954410011413637"><title/>
+<sec id="sec33-0954410011413637"><title>Notation</title>
+<p><def-list>
+<def-item><term><italic>a</italic><sub>0</sub></term><def><p>airfoil lift curve slope</p></def></def-item>
+<def-item><term><italic>A</italic></term><def><p>canopy aspect ratio</p></def></def-item>
+<def-item><term><italic>b</italic></term><def><p>wing span</p></def></def-item>
+<def-item><term><italic>c</italic></term><def><p>mean aerodynamic chord</p></def></def-item>
+<def-item><term><italic>c</italic><sub>1</sub>, <italic>c</italic><sub>2</sub>, <italic>c</italic><sub>3</sub>, …</term><def><p>constants of integration</p></def></def-item>
+<def-item><term><italic>C</italic><sub>D<italic>i</italic></sub></term><def><p>induced drag coefficient</p></def></def-item>
+<def-item><term><italic>C</italic><sub>Lα</sub></term><def><p>wing lift curve slope</p></def></def-item>
+<def-item><term><italic>C</italic><sub><italic>l</italic></sub>, <italic>C</italic><sub><italic>m</italic></sub>, <italic>C</italic><sub><italic>n</italic></sub></term><def><p>rolling, pitching, and yawing moment coefficients</p></def></def-item>
+<def-item><term><italic>C</italic><sub>L</sub>, <italic>C</italic><sub>D</sub>, <italic>C</italic><sub>Y</sub></term><def><p>lift, drag, and side force coefficients</p></def></def-item>
+<def-item><term><inline-formula id="ilm22-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math22-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mtext>n</mml:mtext> </mml:mrow><mml:mrow><mml:mtext>b</mml:mtext></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula></term><def><p>inertial to body reference frame transformation matrix</p></def></def-item>
+<def-item><term><inline-formula id="ilm23-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math23-0954410011413637"><mml:mrow><mml:msubsup><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mtext>w</mml:mtext> </mml:mrow><mml:mrow><mml:mtext>b</mml:mtext></mml:mrow></mml:msubsup></mml:mrow></mml:math></inline-formula></term><def><p>wind to body reference frame transformation matrix</p></def></def-item>
+<def-item><term><bold><italic>f</italic></bold></term><def><p>action force (flocking)</p></def></def-item>
+<def-item><term><bold><italic>F</italic></bold><sub>aero</sub></term><def><p>aerodynamic force</p></def></def-item>
+<def-item><term><italic>g</italic></term><def><p>gravity acceleration</p></def></def-item>
+<def-item><term><italic>h</italic></term><def><p>altitude</p></def></def-item>
+<def-item><term><italic>h</italic><sub>0</sub></term><def><p>deployment altitude</p></def></def-item>
+<def-item><term><italic>H</italic></term><def><p>Hamiltonian</p></def></def-item>
+<def-item><term><italic>I</italic></term><def><p>inertia matrix</p></def></def-item>
+<def-item><term><italic>I</italic><sub><italic>xx</italic></sub>, <italic>I</italic><sub><italic>yy</italic></sub>, <italic>I</italic><sub><italic>zz</italic></sub>, <italic>I</italic><sub><italic>xz</italic></sub></term><def><p>moments of inertia</p></def></def-item>
+<def-item><term><italic>J</italic></term><def><p>cost function</p></def></def-item>
+<def-item><term><italic>k</italic><sub><italic>a</italic></sub>, <italic>r</italic><sub><italic>e</italic></sub>, <italic>p</italic></term><def><p>action force parameters (flocking)</p></def></def-item>
+<def-item><term><italic>k</italic><sub>align</sub></term><def><p>flocking alignment weight</p></def></def-item>
+<def-item><term><italic>k</italic><sub>force</sub></term><def><p>flocking action force weight</p></def></def-item>
+<def-item><term><italic>K</italic><sub>e</sub></term><def><p>wind estimator gain</p></def></def-item>
+<def-item><term><italic>L</italic>, <italic>D</italic>, <italic>Y</italic></term><def><p>aerodynamic lift, drag, and side forces</p></def></def-item>
+<def-item><term><italic>m</italic></term><def><p>mass of vehicle</p></def></def-item>
+<def-item><term><italic>m</italic><sub>c</sub></term><def><p>mass of the canopy</p></def></def-item>
+<def-item><term><italic>m</italic><sub>p</sub></term><def><p>mass of payload</p></def></def-item>
+<def-item><term><bold><italic>M</italic></bold><sub>aero</sub></term><def><p>aerodynamic moment</p></def></def-item>
+<def-item><term><italic>N</italic></term><def><p>number of parafoils in the <italic>N</italic>-neighbourhood (flocking)</p></def></def-item>
+<def-item><term><italic>p</italic>, <italic>q</italic>, <italic>r</italic></term><def><p>body-axis roll, pitch, and yaw rates</p></def></def-item>
+<def-item><term><italic>r</italic></term><def><p>turn radius</p></def></def-item>
+<def-item><term><bold><italic>r</italic></bold></term><def><p>aerodynamic reference position in body axes</p></def></def-item>
+<def-item><term><italic>R</italic></term><def><p>suspension line length, turn radius, radius of the <italic>R</italic>-neighbourhood</p></def></def-item>
+<def-item><term><italic>S</italic></term><def><p>reference area</p></def></def-item>
+<def-item><term><italic>t</italic></term><def><p>time</p></def></def-item>
+<def-item><term><italic>u</italic>, <italic>v</italic>, <italic>w</italic></term><def><p>inertial velocity components in body axes</p></def></def-item>
+<def-item><term><italic>u</italic><sub>a</sub>, <italic>v</italic><sub>a</sub>, <italic>w</italic><sub>a</sub></term><def><p>airspeed components in body axes</p></def></def-item>
+<def-item><term><italic>u</italic><sub><italic>x</italic></sub>, <italic>u</italic><sub><italic>y</italic></sub></term><def><p>airspeed north and east components</p></def></def-item>
+<def-item><term><bold><italic>v</italic></bold></term><def><p>inertial velocity vector in body axes</p></def></def-item>
+<def-item><term><inline-formula id="ilm24-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math24-0954410011413637"><mml:mrow><mml:mover><mml:mrow><mml:mstyle mathvariant="bold"><mml:mi>v</mml:mi></mml:mstyle></mml:mrow><mml:mo>¯</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula></term><def><p>average flock velocity</p></def></def-item>
+<def-item><term><bold><italic>v</italic></bold><sub>a</sub></term><def><p>vector of velocity relative to the air, or airspeed, in body axes</p></def></def-item>
+<def-item><term><bold><italic>v</italic></bold><sub><italic>g</italic></sub>, <bold><italic>v</italic></bold><sub>w</sub></term><def><p>inertial velocity and wind velocity vectors expressed in the inertial north–east–down axes</p></def></def-item>
+<def-item><term><italic>v</italic><sub><italic>x</italic></sub>, <italic>v</italic><sub><italic>y</italic></sub></term><def><p>inertial velocity north and east components</p></def></def-item>
+<def-item><term><italic>V</italic></term><def><p>true airspeed</p></def></def-item>
+<def-item><term><italic>V</italic><sub>eq</sub></term><def><p>equivalent airspeed</p></def></def-item>
+<def-item><term><italic>w</italic></term><def><p>flocking rule weights</p></def></def-item>
+<def-item><term><italic>w</italic><sub>f</sub>, <italic>w</italic><sub>t</sub></term><def><p>flocking and trajectory following command weights</p></def></def-item>
+<def-item><term><italic>w</italic><sub><italic>x</italic></sub>, <italic>w</italic><sub><italic>y</italic></sub></term><def><p>wind velocity north and east components</p></def></def-item>
+<def-item><term><bold><italic>x</italic></bold></term><def><p>position vector</p></def></def-item>
+<def-item><term><bold><italic>x</italic></bold><sub>c</sub></term><def><p>flock centroid position</p></def></def-item>
+<def-item><term><bold><italic>x</italic></bold><sup>h</sup></term><def><p>horizontal position vector (2D)</p></def></def-item>
+<def-item><term><italic>x</italic>, <italic>y</italic>, <italic>z</italic></term><def><p>inertial position coordinates</p></def></def-item>
+<def-item><term><italic>x</italic><sub>c</sub>, <italic>z</italic><sub>c</sub></term><def><p>location of the canopy CG in the body axes</p></def></def-item>
+<def-item><term><italic>x</italic><sub>p</sub>, <italic>z</italic><sub>p</sub></term><def><p>location of payload CG in the body axes</p></def></def-item>
+<def-item><term><italic>x</italic><sub>w</sub>, <italic>y</italic><sub>w</sub></term><def><p>position coordinates in the wind-fixed axes</p></def></def-item></def-list></p></sec>
+<sec id="sec34-0954410011413637"><title/>
+<p><def-list>
+<def-item><term>α, β, γ</term><def><p>angle of attack, angle of sideslip, flight path angle</p></def></def-item>
+<def-item><term>δ</term><def><p>control command</p></def></def-item>
+<def-item><term>δ<sub>f</sub>, δ<sub>t</sub></term><def><p>flocking and trajectory following control commands</p></def></def-item>
+<def-item><term>δ<sub>l</sub>, δ<sub>r</sub></term><def><p>left and right flap deflection</p></def></def-item>
+<def-item><term>δ<sub>s</sub>, δ<sub>a</sub></term><def><p>symmetric and differential control deflection</p></def></def-item>
+<def-item><term>η</term><def><p>normalized altitude margin</p></def></def-item>
+<def-item><term>λ</term><def><p>costate</p></def></def-item>
+<def-item><term>ξ</term><def><p>wind-relative course</p></def></def-item>
+<def-item><term>Ξ<sub>0</sub>, Ξ<sub>f</sub></term><def><p>initial and final configurations in wind-fixed axes</p></def></def-item>
+<def-item><term>ρ</term><def><p>air density</p></def></def-item>
+<def-item><term>σ</term><def><p>generalized roll angle</p></def></def-item>
+<def-item><term>τ</term><def><p>independent variable</p></def></def-item>
+<def-item><term>Γ</term><def><p>rigging angle</p></def></def-item>
+<def-item><term>χ</term><def><p>ground track angle</p></def></def-item>
+<def-item><term>χ<sub>e</sub></term><def><p>course error</p></def></def-item>
+<def-item><term><bold><italic>ω</italic></bold></term><def><p>angular velocity vector</p></def></def-item>
+<def-item><term>ϕ, θ, ψ</term><def><p>Euler angles</p></def></def-item>
+<def-item><term><inline-formula id="ilm25-0954410011413637"><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline" id="mml:math25-0954410011413637"><mml:mrow><mml:mover><mml:mo>□</mml:mo><mml:mo>.</mml:mo></mml:mover></mml:mrow></mml:math></inline-formula></term><def><p>derivative with respect to time</p></def></def-item>
+<def-item><term>□′</term><def><p>derivative with respect to τ</p></def></def-item></def-list></p></sec></sec></app></app-group>
+</back>
+</article>

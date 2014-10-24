@@ -1,0 +1,523 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">DMS</journal-id>
+<journal-id journal-id-type="hwp">spdms</journal-id>
+<journal-title>The Journal of Defense Modeling and Simulation: Applications, Methodology, Technology</journal-title>
+<issn pub-type="ppub">1548-5129</issn>
+<issn pub-type="epub">1557-380X</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1548512912458482</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1548512912458482</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Special Issue Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Graphical Processing Unit accelerated radio path-loss estimation with neural networks</article-title>
+</title-group>
+<contrib-group content-type="issue">
+<contrib contrib-type="guest-editor">
+<name><surname>Henshaw</surname><given-names>Michael</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Brathen</surname><given-names>Karsten</given-names></name>
+</contrib>
+<contrib contrib-type="guest-editor">
+<name><surname>Isler</surname><given-names>Veysi</given-names></name>
+</contrib>
+</contrib-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>McLeod</surname><given-names>Adam</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Bai</surname><given-names>Scott</given-names></name>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Meyer</surname><given-names>Joseph</given-names></name>
+</contrib>
+<aff id="aff1-1548512912458482">MITRE, McLean, USA</aff>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-1548512912458482">Adam McLeod, MITRE, 7515 Colshire Dr., McLean, VA 22102, USA. Email: <email>amcleod@mitre.org</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2013</year>
+</pub-date>
+<volume>10</volume>
+<issue>2</issue>
+<issue-title>Special Issue: Modelling and Simulation for NEC</issue-title>
+<fpage>117</fpage>
+<lpage>130</lpage>
+<permissions>
+<copyright-statement>© 2012 The Society for Modeling and Simulation International</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">The Society for Modeling and Simulation International</copyright-holder>
+</permissions>
+<abstract>
+<p>Radio path-loss prediction is an important but computationally expensive component of wireless communications simulation. Models may require significant computation to reach a solution or require that information about the environment between transceivers be collected as model inputs, which may also be computationally expensive. Despite the complexity of the underlying model that generates a path-loss solution, the resulting function is not necessarily complex, and there may be ample opportunity for compression. We introduce a method for rapidly estimating radio path loss with Feed-Forward Neural Networks (FFNNs), in which not only path-loss models but also map topology is implicitly encoded in the network. Since FFNN simulation is amenable to Single Instruction Multiple Data architecture, additional performance can be gained by implementing a trained model in a parallel manner with a Graphical Processing Unit (GPU), such as those found on modern video cards. We first describe the properties of the training data used, which is either taken from measurements of the continental United States, or generated with random processes. Secondly, we discuss the model selection process and the training algorithm used on all candidate networks. Thirdly, we show accuracy evaluations of a number of FFNNs trained to estimate both commercial and public-domain path-loss solution sets. Lastly, we describe the approach used to implement trained networks on a GPU, and provide performance evaluations versus conventional path-loss models running on a Central Processing Unit.</p>
+</abstract>
+<kwd-group>
+<kwd>path loss</kwd>
+<kwd>TIREM</kwd>
+<kwd>Feed-Forward Neural Network</kwd>
+<kwd>conjugate gradient descent</kwd>
+<kwd>Compute Unified Device Architecture</kwd>
+<kwd>Graphical Processing Unit</kwd>
+<kwd>Single Instruction Multiple Data</kwd>
+<kwd>Multi-Layer Perceptron</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1548512912458482" sec-type="intro">
+<title>1. Introduction</title>
+<p>An approach to agent-based modeling that favors speed of simulation over accuracy and precision is occasionally preferred over slower high-fidelity models because of the former’s ability to generate a more complete description of its own state space given equal computing resources.<sup><xref ref-type="bibr" rid="bibr1-1548512912458482">1</xref></sup> When designing a system under this philosophy, computing radio path loss becomes an issue, not only because of the computational requirements of the model itself (as is the case with some theoretical models<sup><xref ref-type="bibr" rid="bibr2-1548512912458482">2</xref></sup>), but also because of the time required to gather analysis of the terrain that the model requires as input. Some models require a line trace of elevations between the transmitter and receiver, while others require input that is an analysis of a line trace. The ideal model would:</p>
+<list id="list1-1548512912458482" list-type="alpha-lower">
+<list-item><p>require a small number of inputs that are immediately available in memory during simulation;</p></list-item>
+<list-item><p>take a very small amount of time to run;</p></list-item>
+<list-item><p>be valid over a wide range of terrain;</p></list-item>
+<list-item><p>maintain high accuracy.</p></list-item>
+</list>
+<p>Most path-loss estimation solutions are strong in some subset of items (a)–(d). Simple models, such as the Two-Ray model,<sup><xref ref-type="bibr" rid="bibr3-1548512912458482">3</xref></sup> are very strong in regards to items (a), (b), and (d), but are critically weak at item (c). More complex models, such as Longley-Rice,<sup><xref ref-type="bibr" rid="bibr4-1548512912458482">4</xref></sup> are stronger at (c), but at a cost of performance at items (a) and (b). The proposed model is able to accept example data from models that are strong in (c) and (d), and improve performance at items (a) and (b) at an acceptable cost to (d). This is accomplished by using a function approximator to map the inputs of a computationally expensive radio path-loss model acting on a particular terrain to its outputs.</p>
+<p>Feed-Forward Neural Networks (FFNNs) are general function approximators, so named because the computational units and connections between them bear a crude resemblance to clusters of biological neurons within a brain. Functions are realized by recursively multiplying a vector (beginning with the input vector) by a weight matrix, and then transforming each element of the result via a continuously differentiable activation function, such as the hyperbolic tangent or sigmoid. Networks typically begin with randomly initialized weight matrices. A corpus of training data (tuples of input vectors and corresponding output vectors) are required to iteratively optimize the weight matrices such that the network approximates the function described by the training set. A more in-depth description of FFNNs can be found in Haykin.<sup><xref ref-type="bibr" rid="bibr5-1548512912458482">5</xref></sup></p>
+<p>FFNNs have several qualities that make them good candidates for a fast, general path-loss estimator. In an agent-based simulation, intra-timestep path-loss calculations are often independent of one another, allowing performance gains from parallel computation. After training, FFNNs can be simulated via a series of matrix multiplications: a tractable and scalable procedure for modern Graphical Processing Units (GPUs). Implementation of FFNNs on a GPU allows parallelism that can decrease simulation time. In addition, rather than task the neural network with learning a model exclusively, we may task the neural network with learning the model and also learning an implicit representation of the map itself, thus removing the need to compute line traces or other map-related input data. This is done by training the network to map a minimal set of inputs (transmitter and receiver locations, plus distance) to a path-loss solution. In short, the novelty of the technique is based on the exploitation of neural networks as a method of data compression of a four-dimensional (4D) data space (comprising the Cartesian coordinates of transmitter and receiver), allowing fast approximation of a complex surface. Consequently, the technique is valid in cases where complex radio path-loss models must be used to generate a solution that exhibits low spatial variation.</p>
+<p>While the use of neural networks to predict path loss is by no means novel, previous work has primarily focused on improving aspects of fidelity as opposed to speed. Early work by Stocker et al.<sup><xref ref-type="bibr" rid="bibr6-1548512912458482">6</xref></sup> showed that neural networks were capable of approximating the Hata<sup><xref ref-type="bibr" rid="bibr7-1548512912458482">7</xref></sup> and Keller<sup><xref ref-type="bibr" rid="bibr8-1548512912458482">8</xref></sup> models, as well as generalize across a corpus of field strength measurements. Balandier et al.<sup><xref ref-type="bibr" rid="bibr9-1548512912458482">9</xref></sup> highlighted that a neural network can simultaneously capitalize on both physical and theoretical data. Chang and Yang<sup><xref ref-type="bibr" rid="bibr10-1548512912458482">10</xref></sup> were able to apply Radial Basis Function (RBF) networks to empirical data to create a model that showed a performance increase over the Hata model. Popescu et al.<sup><xref ref-type="bibr" rid="bibr11-1548512912458482">11</xref>,<xref ref-type="bibr" rid="bibr12-1548512912458482">12</xref></sup> also used RBF networks and Multi-Layer Perceptrons<sup><xref ref-type="bibr" rid="bibr13-1548512912458482">13</xref></sup> to model urban and suburban field strength as a function of antenna distances and properties of the environment specific to urban/suburban terrain, such as street width. Neskovic et al.<sup><xref ref-type="bibr" rid="bibr14-1548512912458482">14</xref></sup> also created an urban path-loss model that uses analysis of elevation and ground cover databases as input. Olivier et al.<sup><xref ref-type="bibr" rid="bibr15-1548512912458482">15</xref></sup> address the performance benefits of a neural network used to correct a model based on ray-tracing. Wolfle and Landstorfer<sup><xref ref-type="bibr" rid="bibr16-1548512912458482">16</xref>,<xref ref-type="bibr" rid="bibr17-1548512912458482">17</xref></sup> developed neural models for indoor path loss that estimate field strength based on an analysis of the environment submitted to the network inputs.</p>
+</sec>
+<sec id="section2-1548512912458482">
+<title>2. Data selection and generation</title>
+<p>Training sets were generated in two phases: acquisition or synthesis of terrain data, and then analysis of that terrain data with a path-loss prediction model. The first stage yields a set of terrain models defined as a two-dimensional (2D) array denoting height information about a set of points (the “elevation profile”), and an optional 2D array that classifies each point as being foliated, urban, or unobstructed in nature (the “terrain-type profile”). The last stage yields a corpus of examples that consist of 2D transmitter and receiver positions, the Euclidean distance between them, and the predicted path loss given both locations and a terrain model. The path-loss solution will be compared to the network output, while the other five components of the sample make up the network input. Only a small amount of pre-processing (normalization and the calculation of Euclidean distance) is required to generate network inputs, which is consistent with the desire to generate path-loss estimations quickly. In the experiments described in later sections, three types of terrain model are used to create training set variants.</p>
+<p>The first terrain model type is based on selected elevation scans of the continental United States, taken from the United States Geological Survey (USGS) Seamless Server,<sup><xref ref-type="bibr" rid="bibr18-1548512912458482">18</xref></sup> which will be referred to as the “type-1 real terrain model”. These were analyzed with the commercial path-loss prediction utility TIREM. Each of these models represents approximately 104 square kilometers with elevation profiles taken from the Rocky Mountain area of either Colorado or California, and are assumed to be unobstructed and completely rural (no urban areas). The second and third types are based on 25 square kilometers of synthetic terrain, with elevation profiles generated via Perlin Noise<sup><xref ref-type="bibr" rid="bibr19-1548512912458482">19</xref></sup> and randomly generated terrain-type profiles generated with Gaussian blur filters on uniform random noise followed by a threshold, and finally a median filter. These will be referred to as “synthetic terrain models”. Type-2 synthetic models vary only in their urban and foliated regions, and all share a single elevation profile. Type-3 synthetic models vary in both elevation and terrain-type profile.</p>
+<p>Synthetic terrain models have a maximum height that is determined by a Gaussian random process that does not exceed 1000 meters.</p>
+<p>Given the inherently random nature of Perlin noise and the required human decision-making steps in choosing regions from USGS databases, some measure was required to ensure that type-1 real and type-3 synthetic models contained a range of spatial features. To accomplish this, model data was oversampled and over-generated by a factor of four (equating to 200 instances of each model variant), and then ranked according to the sum of spatial frequency components (denoted R), computed via 2D Fast Fourier Transform (FFT). The method of deriving the rank <italic>R</italic> is shown in <xref ref-type="disp-formula" rid="disp-formula1-1548512912458482">Equation (1)</xref>, where the magnitude of the elements of the spatial FFT (denoted <italic>F</italic>) of a terrain model (indexed in polar coordinates) are normalized over frequency (denoted <italic>r</italic> and limited to half the image width, <italic>w</italic>) and summed over orientation (denoted θ). The resulting ranking places all terrain models in a rough order of “flattest” to “bumpiest” (<xref ref-type="fig" rid="fig1-1548512912458482">Figures 1</xref> and <xref ref-type="fig" rid="fig2-1548512912458482">2</xref>). Every fourth model in the ranked list was retained for use in generating data. Variation in type-2 synthetic terrain models was achieved by gradually shrinking the Gaussian blur kernel applied to uniform random noise, creating 50 models with increasingly complex delineations between the three types of terrain (<xref ref-type="fig" rid="fig3-1548512912458482">Figure 3</xref>). The height profile applied to type-2 synthetic terrain models is that of the median-scoring model of the type-3 synthetic set (number 25, shown in the middle of <xref ref-type="fig" rid="fig2-1548512912458482">Figure 2</xref>):</p>
+<fig id="fig1-1548512912458482" position="float">
+<label>Figure 1.</label>
+<caption>
+<p>Areas of California (a) and Colorado (b), and the subsections selected for data generation as type-1 real terrain models.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig1.tif"/>
+</fig>
+<fig id="fig2-1548512912458482" position="float">
+<label>Figure 2.</label>
+<caption>
+<p>Tenth (top), 25th (middle), and 40th (bottom) ranked type-3 synthetic terrain models. Color indicates land cover, with blue being radio unobstructed (e.g. a desert), green being forest, and red being urban terrain (color online only).</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig2.tif"/>
+</fig>
+<fig id="fig3-1548512912458482" position="float">
+<label>Figure 3.</label>
+<caption>
+<p>Selected type-2 synthetic terrain profiles. Numbers in the lower-left corner denote which of the 50 generated terrain models each terrain profile applies to. Color indicates land cover as described in <xref ref-type="fig" rid="fig2-1548512912458482">Figure 2</xref>.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig3.tif"/>
+</fig>
+<p>
+<disp-formula id="disp-formula1-1548512912458482">
+<label>(1)</label>
+<mml:math display="block" id="math1-1548512912458482">
+<mml:mrow>
+<mml:mi>R</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+<mml:mo stretchy="false">/</mml:mo>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>r</mml:mi>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>θ</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>π</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:mi>F</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>r</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>θ</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1548512912458482" xlink:href="10.1177_1548512912458482-eq1.tif"/>
+</disp-formula>
+</p>
+<p>Training data based on type-1 real terrain models was generated using the commercial path-loss library TIREM (version 3.02). TIREM was used to generate type-1 models because it is well known and commonly employed in industry. However, TIREM does not include urban or foliage models, and therefore terrain-type profiles for type-1 models are assumed to be uniformly unobstructed. Obstruction of terrain by urban or foliated areas can significantly influence (and even dominate) the path-loss solution. To test the technique on terrain models with variation in land cover, a generator other than TIREM was used.</p>
+<p>The training data based on synthetic terrain models was generated with an amalgamation of common radio path-loss models (Weissberger,<sup><xref ref-type="bibr" rid="bibr20-1548512912458482">20</xref></sup> Two-Ray,<sup><xref ref-type="bibr" rid="bibr3-1548512912458482">3</xref></sup> the ITS Irregular Terrain Model (ITM),<sup><xref ref-type="bibr" rid="bibr4-1548512912458482">4</xref></sup> etc.) collectively referred to as “Prototype B”. Prototype B selects a path-loss model to use for a particular solution based primarily on the terrain-type profile. For this reason, the most salient features of the 4D space defined by Prototype B acting on a terrain model are the artifacts and fissure lines between model choices, which are heavily influenced by the 2D fissure lines defined by differing terrain regions. <xref ref-type="fig" rid="fig4-1548512912458482">Figure 4</xref> illustrates this effect with a “spatial path-loss image”, which uses color to convey the normalized path loss from the center of the terrain model to the region denoted by each pixel, with dark blue having the lowest path-loss values and dark red having the highest. Prototype B is naïve in the manner that it combines models, and is not presented as a high-accuracy reference but rather as a source of sharp discontinuities and artifacts that might arise from combining empirical urban and foliage models with theoretical models such as the ITM.</p>
+<fig id="fig4-1548512912458482" position="float">
+<label>Figure 4.</label>
+<caption>
+<p>(a) Terrain-type profile from terrain model number 3 of the type-2 synthetic models. (b) A spatial path-loss diagram generated by Prototype B. Color represents normalized path loss from the center of the model to the location corresponding to each pixel (color online only).</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig4.tif"/>
+</fig>
+<p>The three sets comprise sweeps over feature types that are likely influential over neural network generalization. From each terrain model, ten million training examples were generated by uniform random sampling of transmitter and receiver locations, simulating a transmission at 900 MHz from antennas located 2 meters above ground level. Urban areas appear on the elevation profile as being 15 meters taller than the surrounding area. The process is summarized in the chart shown in <xref ref-type="fig" rid="fig5-1548512912458482">Figure 5</xref>.</p>
+<fig id="fig5-1548512912458482" position="float">
+<label>Figure 5.</label>
+<caption>
+<p>Chart illustrating procedural steps used to generate all three terrain model sets.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig5.tif"/>
+</fig>
+</sec>
+<sec id="section3-1548512912458482">
+<title>3. Model selection and training</title>
+<p>Preliminary tests carried out with MATLAB suggested that FFNNs could generalize the large-scale characteristics of the path-loss solution generated by either Prototype B or TIREM. <xref ref-type="fig" rid="fig6-1548512912458482">Figure 6</xref> shows the result of an early test that used 499,500 randomly sampled TIREM solutions over an elevation profile (i.e. a terrain model without land cover data) describing an approximately 109 square kilometer area surrounding Cortez, Colorado. This profile was used to train a neural network with input and output layers as described above (having sizes 5 and 1, respectively), and two hidden layers. The first hidden layer (connected to the input layer) contained 100 neurons, and the second contained 30 neurons. This network is denoted as a 5/100/30/1 FFNN. Both preliminary tests used the Levenberg–Marquardt algorithm to train their respective networks, and hyperbolic tangent squashing functions. Antenna heights were set at 2 meters above ground, and transmission frequency was set at 2.4 GHz. <xref ref-type="fig" rid="fig6-1548512912458482">Figure 6</xref> shows three spatial path-loss diagrams similar to that of <xref ref-type="fig" rid="fig4-1548512912458482">Figure 4</xref>, overlaid on a grayscale representation of the elevation profile. The top left section of <xref ref-type="fig" rid="fig7-1548512912458482">Figure 7</xref> shows the transmitter location within each of the three spatial path-loss images, as well as two salient terrain features: a “Hill” and “Basin” area. Note that as the transmitter moves from the top left of the elevation profile to the bottom right, the hill area maintains low path loss, while the basin area demonstrates high path loss until the transmitter is within the basin. Similarly, a 5/150/30/1 FFNN trained with 500,000 examples from Prototype B acting on a synthetic terrain pictured at the top of <xref ref-type="fig" rid="fig7-1548512912458482">Figure 7</xref> was able to mimic the large-scale features of the Prototype B solution.</p>
+<fig id="fig6-1548512912458482" position="float">
+<label>Figure 6.</label>
+<caption>
+<p>Preliminary test results of the Feed-Forward Neural Network solution based on TIREM data. Upper left: elevation profile of Cortez, Colorado area. The red dots indicate the transmitter positions in the adjacent quadrants, and two salient features are labeled (color online only). Other quadrants: spatial path-loss images overlaid with elevation profile.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig6.tif"/>
+</fig>
+<fig id="fig7-1548512912458482" position="float">
+<label>Figure 7.</label>
+<caption>
+<p>Top: a synthetic terrain model generated with sine waves. Bottom left: Prototype B path-loss solutions for three transmitter positions acting on the synthetic model. Bottom right: 5/150/30/1 Feed-Forward Neural Network estimations corresponding to each solution set.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig7.tif"/>
+</fig>
+<p>The production training system is written in Java, and uses the Polak–Ribiere conjugate gradient descent (CGD) technique<sup><xref ref-type="bibr" rid="bibr5-1548512912458482">5</xref></sup> to train FFNNs. Polak–Ribiere CGD was chosen as it is considered more efficient for large networks with many interconnections. The hyperbolic tangent is also used as the squashing function of each neuron.</p>
+<p>The production training algorithm divides a training set into validation, test, and training subsets, composed of 20, 20, and 60% of the data, respectively. All data is normalized to a range of [–1, 1]. The algorithm terminates either by reaching a maximum number of gradient descent iterations, or by satisfying the validation-stop criterion. A validation-stop occurs when the sum of first derivatives of the validation set error over 40 consecutive measurements is positive. Training is undertaken in epochs of 4000 samples, with a maximum of 100 gradient descent steps per epoch. Each epoch is composed of a random sampling (with replacement) from the training set. Both for model selection and model accuracy evaluation, training sets composed of ten million samples were generated.</p>
+<p>Model selection (choosing an appropriately sized network) was undertaken by training disparately sized networks on the median-complexity training set from each of the three set variants. To make operation on a GPU more efficient, hidden layer sizes in candidate networks were constrained to low multiples of powers of two (this constraint is an artifact of FFNN implementation for a GPU, discussed in Section 6). The validation set error after each iteration was logged and is shown in <xref ref-type="fig" rid="fig8-1548512912458482">Figure 8</xref>. Each of the six network configurations displayed relatively equivalent performance when acting on a training set, making the logical choice of model that which is most computationally efficient: 5/64/32/1.</p>
+<fig id="fig8-1548512912458482" position="float">
+<label>Figure 8.</label>
+<caption>
+<p>Top: results of neural network selection trials, showing logarithmic error trend as a function of training iterations, and relative invariance to the range of networks evaluated. Bottom: spatial path-loss images from the median-ranked terrain models used in the trial, from left to right: TIREM on median-scoring type-1 real model; Prototype-B on median-scoring type-3 synthetic model; and Prototype B on median-ranked type-2 synthetic model.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig8.tif"/>
+</fig>
+</sec>
+<sec id="section4-1548512912458482">
+<title>4. Model accuracy evaluation</title>
+<p><xref ref-type="fig" rid="fig9-1548512912458482">Figure 9</xref> shows the result of 150 trials wherein a 5/64/32/1 neural network is trained against data sets representing 50 each of types 1, 2, and 3 terrain. Observed mean absolute error was as low as 4.03 dB for type-1 real terrain models, and as high as 26.35 dB for type-2 synthetic models. Error manifests itself as a “blurring” of features in spatial path-loss images, as shown in <xref ref-type="fig" rid="fig10-1548512912458482">Figure 10</xref>.</p>
+<fig id="fig9-1548512912458482" position="float">
+<label>Figure 9.</label>
+<caption>
+<p>One hundred and fifty training sets, based on 50 selected terrains of each of the three terrain variants were used to train a 5/64/32/1 Feed-Forward Neural Network.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig9.tif"/>
+</fig>
+<fig id="fig10-1548512912458482" position="float">
+<label>Figure 10.</label>
+<caption>
+<p>Rows from top to bottom: results from selected type-1, 2, and 3 terrain models, respectively. Columns from left to right: views of each selected model; reference spatial path-loss images generated by the model used to make the training set; and the corresponding image produced by a Feed-Forward Neural Network.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig10.tif"/>
+</fig>
+</sec>
+<sec id="section5-1548512912458482">
+<title>5. Implementation on a Graphical Processing Unit</title>
+<p>The FFNN simulation is implemented on a GPU in order to exploit the high floating-point throughput of modern graphics hardware. We use NVIDIA’s Compute Unified Device Architecture (CUDA) to compute the FFNN outputs in parallel on an NVIDIA GeForce GTX 285. The GTX 285 operates at a clock speed of 1476 MHz, and has 30 multiprocessors with 8 cores each for a total of 240 cores. CUDA threads execute in groups called blocks, which are scheduled at runtime to execute on available multiprocessors on the GPU. Blocks whose threads are waiting for memory transactions to complete may be swapped out in favor of blocks containing threads that are ready to execute. All threads execute the same program, called the kernel, in single-program multiple data (SPMD) fashion. Threads execute in an undefined order, and only threads within the same block may be synchronized (via a barrier mechanism). Each multiprocessor can perform eight floating-point adds, multiplies, or multiply-adds per clock cycle.<sup><xref ref-type="bibr" rid="bibr21-1548512912458482">21</xref>,<xref ref-type="bibr" rid="bibr22-1548512912458482">22</xref></sup> To most efficiently utilize the floating-point functional units, an algorithm should combine multiplies and adds into multiply-add operations whenever possible.</p>
+<p>The output of a neuron is a weighted sum of each of its inputs. This can be efficiently expressed as a sequence of multiply-add operations in which the product of each input and its corresponding weight is summed. A squashing function is then applied to ensure that the output value is within the range [–1, 1]. Each neuron output is computed by a separate CUDA thread on the GPU. For sufficiently large FFNNs, hundreds of threads may be spawned to simulate a single instance of the FFNN. As shown in <xref ref-type="fig" rid="fig11-1548512912458482">Figure 11</xref>, each layer’s output edges feed directly into every neuron of the next layer as inputs. Because CUDA has no built-in mechanism to synchronize threads across different blocks (which may reside on different multiprocessors), all threads assigned to simulate the same FFNN query must belong to the same block, such that output values from a preceding layer are written before being read as input values to the current layer. For a single FFNN query, the process is as follows.</p>
+<fig id="fig11-1548512912458482" position="float">
+<label>Figure 11.</label>
+<caption>
+<p>Example Feed-Forward Neural Network with <italic>N</italic> hidden layers. Each layer’s outputs are inputs to the subsequent layer. The Graphical Processing Unit iterates through each hidden or output layer, computing individual neuron outputs in parallel for each layer in the sequence.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig11.tif"/>
+</fig>
+<list id="list2-1548512912458482" list-type="order">
+<list-item><p>Copy the FFNN inputs from the host to global memory on the device. These are the neuron outputs of the input layer. Weights for the FFNN are assumed to be static across queries and stored in global memory throughout the simulation.</p></list-item>
+<list-item><p>Call the kernel function, spawning a block of threads whose size is equal to the number of neurons in the largest layer of the FFNN.</p></list-item>
+<list-item><p>For each layer excluding the input layer, assign one thread to each neuron in the layer. Step (2) guarantees there are sufficient threads for any layer in the network. Each thread computes a weighted sum of the outputs from the preceding layer, and applies the squashing function to the sum. Save the outputs for the current layer to global memory. Call the intrinsic barrier synchronization function to ensure all threads have written their outputs before proceeding. Repeat for the subsequent layer, using the current layer’s outputs as inputs.</p></list-item>
+<list-item><p>When the output layer’s output values have been computed, the kernel returns. Copy the values from device global memory to the host.</p></list-item>
+</list>
+<p>A key factor in GPU performance is latency hiding, in which threads waiting on data from memory are swapped out of a multiprocessor in favor of threads that are ready to execute, thus keeping the hardware occupied. Without this technique, processor cores can lie idle while waiting for memory transactions to complete. A large number of threads should be spawned in each kernel call, such that the multiprocessor has a surplus of threads that are awaiting execution. If this is done, then stalled threads that are waiting for data can be swapped out for others that can do useful work immediately.</p>
+<p>A single path-loss query for a given pair of positions within a terrain model is answered by simulating the FFNN once with a given set of inputs. Given the size of the networks used to estimate path loss in the experiments described above, a single query does not involve enough computation on the GPU to offset the performance overhead incurred in copying the inputs onto the GPU, launching the kernel, and returning the outputs. In addition, a single instance of the FFNN does not contain enough mutually independent computations to spawn a large number of threads, making it difficult for the GPU to perform latency hiding. However, if hundreds or thousands of queries are answered in a single kernel call, the overhead time is amortized and the increased number of blocks (one for each query) improves utilization of the GPU’s processor cores by enabling more latency hiding. Batching the corresponding FFNN computations together into a single multi-block kernel call greatly improves the rate at which queries can be answered. This effect is beneficial to the agent-based simulation use case, where large numbers of simultaneous, independent path-loss queries are typical.</p>
+<p>The GPU implementation can be compiled to simulate different sizes of FFNN. The maximum block size currently permitted by the CUDA framework is 768 threads.<sup><xref ref-type="bibr" rid="bibr21-1548512912458482">21</xref></sup> Because each thread is assigned to compute the output value of one neuron within a layer, the maximum layer size the software can accommodate is the same. In practice, the FFNNs used to estimate path loss will have known layer dimensions, and adequate performance has been measured in layer sizes below 768. In such cases, it is advantageous to reduce the block size to the nearest multiple of 32 (the size of a CUDA warp), which is still larger than the size of the largest layer in the FFNN to be simulated. A block size that is too large will contain threads that are not assigned to any neuron, and do not complete any work as a result. These threads will simply waste time and resources idling. The effects on performance of block size and neural network size are discussed in the next section.</p>
+<p>The CUDA kernel function may be spawned with tens of thousands of blocks. Calling the kernel with a larger batch size spawns more blocks of threads, each block corresponding to a single query within the batch. In an agent-based model with hundreds or thousands of communicating agents, a large number of queries to the path-loss estimator are expected in each time step. As will be shown in the next section, these queries should be batched together for optimal performance on the GPU.</p>
+</sec>
+<sec id="section6-1548512912458482">
+<title>6. Performance</title>
+<p>If all layers in an FFNN are of identical size, the number of multiply-add operations to be computed (ignoring bias edges) is <inline-formula id="inline-formula1-1548512912458482"><mml:math display="inline" id="math2-1548512912458482"><mml:mrow><mml:mi>num</mml:mi><mml:mi>_</mml:mi><mml:mi>ops</mml:mi><mml:mo>=</mml:mo><mml:mi>layer</mml:mi><mml:mi>_</mml:mi><mml:mi>size</mml:mi><mml:mo>*</mml:mo><mml:mi>layer</mml:mi><mml:mi>_</mml:mi><mml:mi>size</mml:mi><mml:mo>*</mml:mo><mml:mrow><mml:mo>(</mml:mo><mml:mi>num</mml:mi><mml:mi>_</mml:mi><mml:mi>layers</mml:mi><mml:mo>−</mml:mo><mml:mn>1</mml:mn><mml:mo>)</mml:mo></mml:mrow></mml:mrow></mml:math></inline-formula>, which varies linearly with the number of layers. <xref ref-type="fig" rid="fig12-1548512912458482">Figure 12(a)</xref> shows GPU execution time for batches of FFNN simulations. For each given layer size between 8 and 431, increasing the number of layers increases execution time linearly. On the other hand, <italic>num</italic>_<italic>ops</italic> is proportional to the square of <italic>layer</italic>_<italic>size</italic>, resulting in the quadratic curves shown in <xref ref-type="fig" rid="fig12-1548512912458482">Figure 12(b)</xref>.</p>
+<fig id="fig12-1548512912458482" position="float">
+<label>Figure 12.</label>
+<caption>
+<p>Execution time in microseconds per Feed-Forward Neural Network (FFNN) simulation on the Graphical Processing Unit. (a) Execution time versus number of layers. (b) Execution time versus number of neurons per layer. Note that since simulations are batched, reported per-simulation times are <italic>effective</italic> execution times computed by dividing the total batch execution time by the size of the batch (in this case, approx. 500 FFNN simulations).</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig12.tif"/>
+</fig>
+<p>Larger batch sizes, as discussed previously, allow the GPU to perform latency hiding by scheduling blocks to execute when other blocks are stalled waiting for a memory transaction to complete. <xref ref-type="fig" rid="fig13-1548512912458482">Figure 13</xref> shows the effect of batch size on execution time, for a 5/64/32/1 network. Increasing the number of FFNN simulations per batch increases total execution time for that batch. However, the effective execution time per simulation decreases, because the GPU is better able to utilize its parallel cores when more work is available. Note that batch sizes of 1–64 have approximately the same per-batch execution time of just over 200 μs, while all other batch sizes result in strictly larger call times. This implies there is a corresponding fixed overhead associated with performing each kernel call, which for larger batches is amortized over all the queries in the batch. In the worst case of one query per batch, a single query requires 200 μs to compute, which is worse than the average call time for a single query in TIREM. On the other hand, a batch size of 512 is computed in approximately 900 μs, meaning that the effective time per query is less than 2 μs. A plot of averaged TIREM call times is shown in <xref ref-type="fig" rid="fig14-1548512912458482">Figure 14</xref>.</p>
+<fig id="fig13-1548512912458482" position="float">
+<label>Figure 13.</label>
+<caption>
+<p>Effect of batch size on execution time. Time per batch increases with batch size, but effective time per query decreases.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig13.tif"/>
+</fig>
+<fig id="fig14-1548512912458482" position="float">
+<label>Figure 14.</label>
+<caption>
+<p>Averaged call times (latency) of 50 trials, with each data point representing the mean over one million queries to TIREM, acting on each of the type-1 real terrain models. The trials were carried out on a Core 2 Quad processor running at 2.66 GHz.</p>
+</caption>
+<graphic xlink:href="10.1177_1548512912458482-fig14.tif"/>
+</fig>
+<p>Performance differences between a GPU-based neural network approach and TIREM are significant. A tuned FFNN/GPU solution was able to average a 69-fold speed increase over TIREM calls to a 1600 × 1600 element terrain model. Queries were organized into large batches (approximately 500 queries per batch) to obtain optimal performance. This difference is shown in <xref ref-type="table" rid="table1-1548512912458482">Table 1</xref>, where the mean and standard deviation of call times are shown for both approaches.</p>
+<table-wrap id="table1-1548512912458482" position="float">
+<label>Table 1.</label>
+<caption>
+<p>Mean and standard deviation of call times for both TIREM and a Feed-Forward Neural Network/Graphical Processing Unit (FFNN/GPU) solution.</p>
+</caption>
+<graphic alternate-form-of="table1-1548512912458482" xlink:href="10.1177_1548512912458482-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">TIREM v3.02</th>
+<th align="left">FFNN/GPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mean call time (µS)</td>
+<td>120.77</td>
+<td>1.713</td>
+</tr>
+<tr>
+<td>Standard deviation (µS)</td>
+<td>2.83</td>
+<td>0.085</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+</sec>
+<sec id="section7-1548512912458482" sec-type="conclusions">
+<title>7. Conclusions</title>
+<p>This paper has demonstrated that a FFNN is capable of delivering significant speed advantages to path-loss models. While the associated cost to model accuracy is not negligible, it is acceptable for some simulation configurations where many low-fidelity data points are preferred over fewer of higher fidelity. This approach also has advantages in being very deterministic. All queries require the same amount of computation, and the overhead associated with choosing which of an aggregation of path-loss models is appropriate is effectively front-loaded to the pre-simulation training period and encoded directly into the neural structure along with other terrain model-specific features (e.g. the effect of a particular mountain or city).</p>
+</sec>
+<sec id="section8-1548512912458482">
+<title>8. Future work</title>
+<p>While the method described above shows that a neural network can encode spatial path-loss information, it takes a brute-force approach in that the network is tasked to generalize solutions across all possible point tuples. This solution space may be larger than some applications require; it is common in simulations for agent movement to be constrained to networks of paths (such as road networks) that not only reduce the total number of solutions to generalize across, but might also be represented in fewer, more meaningful values (such as a distance along an Eulerian path, if one exists). Estimating a function that translates constrained agent positions into path loss may be a more tractable task for a neural network than estimating path loss from unconstrained agent positions.</p>
+<p>The issue of selecting an appropriate network size was addressed by simply trying many networks and observing the cost/benefit of simulation time versus testing error. The NEAT algorithm<sup><xref ref-type="bibr" rid="bibr23-1548512912458482">23</xref></sup> presents a way to search for optimal network weights and structure simultaneously, which if effective may simplify the training process.</p>
+</sec>
+</body>
+<back>
+<ack><p>The authors would like to thank Shawn Duffalo of the MITRE Corporation for his advice and assistance with the TIREM program. The work described here was conducted as part of The MITRE Corporation support to the Department of the Army. The opinions expressed are those of the author and do not reflect official positions of The MITRE Corporation or the US Army.</p></ack>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<label>Funding.</label>
+<p>This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.</p>
+</fn>
+</fn-group>
+<bio>
+<title>Author Biographies</title>
+<p><bold>Adam McLeod</bold> received his BS and MSECE from the University of Miami in 2003, and is currently a doctoral student at the University of Florida while working for the MITRE Corporation. His research interests include machine learning for agent-based modeling, and robotics.</p>
+<p><bold>Scott Bai</bold> received his BSECE from the University of Texas at Austin in 2006, and his MSECE from the University of Illinois at Urbana-Champaign in 2008. He currently works at the MITRE Corporation. His research interests include General-purpose Computation on Graphics Processing Units (GPGPUs), simulation, and high-performance computing.</p>
+<p><bold>Joseph Meyer</bold> is an undergraduate at George Mason University, studying Computer Science and Computer Engineering. He contributed to this paper during a summer internship at the MITRE Corporation. His interests include artificial intelligence and physics.</p>
+</bio>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1548512912458482">
+<label>1.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Axtell</surname><given-names>R</given-names></name>
+</person-group>. <source>Why agents? On the varied motivations for agent computing in the social sciences</source>. Working Paper 17, <publisher-name>Center on Social and Economic Dynamics</publisher-name>, <publisher-loc>Brookings Institution</publisher-loc>, <year>2000</year>.</citation>
+</ref>
+<ref id="bibr2-1548512912458482">
+<label>2.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Huschka</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Ray tracing models for indoor environments and their computational complexity</article-title>. In: <conf-name>5th IEEE international symposium on personal, indoor and mobile radio communications</conf-name>, <year>1994</year>, pp.<fpage>486</fpage>–<lpage>490</lpage>.</citation>
+</ref>
+<ref id="bibr3-1548512912458482">
+<label>3.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Rappaport</surname><given-names>T</given-names></name>
+</person-group>. <source>Wireless communications</source>. <person-group person-group-type="editor">
+<name><surname>Rappaport</surname><given-names>T</given-names></name>
+</person-group>. (ed.). <series>Prentice Hall Communications Engineering and Emerging Technologies Series</series>, Bernard M. Goodwin, <publisher-loc>Saddle River, NJ</publisher-loc>: <publisher-name>Prentice Hall</publisher-name> <year>2002</year>.</citation>
+</ref>
+<ref id="bibr4-1548512912458482">
+<label>4.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Hufford</surname><given-names>GA</given-names></name>
+</person-group>. <source>The ITS Irregular Terrain Model version 1.2.2, The Algorithm</source>, <publisher-name>U.S.D.o.C. NTIA/ITS</publisher-name>, Editor, <year>1995</year>.</citation>
+</ref>
+<ref id="bibr5-1548512912458482">
+<label>5.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Haykin</surname><given-names>S</given-names></name>
+</person-group>. <source>Neural networks: a comprehensive foundation</source>. <person-group person-group-type="editor">
+<name><surname>Horton</surname><given-names>M</given-names></name>
+</person-group> (ed.). <publisher-loc>Tom Robbins, Saddle River, NJ</publisher-loc>: <publisher-name>Prentice Hall</publisher-name> <year>1999</year>.</citation>
+</ref>
+<ref id="bibr6-1548512912458482">
+<label>6.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Stocker</surname><given-names>KE</given-names></name>
+<name><surname>Gschwendtner</surname><given-names>BE</given-names></name>
+<name><surname>Landstorfer</surname><given-names>FM</given-names></name>
+</person-group>. <article-title>Neural-network approach to prediction of terrestrial wave-propagation for mobile radio</article-title>. In: <conf-name>IEE proceedings-H microwaves antennas and propagation</conf-name>, <year>1993</year>, pp.<fpage>315</fpage>–<lpage>320</lpage>.</citation>
+</ref>
+<ref id="bibr7-1548512912458482">
+<label>7.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hata</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Empirical formula for propagation loss in land mobile radio services</article-title>. <source>IEEE Trans Veh Technol</source> <year>1980</year>; <volume>29</volume>: <fpage>317</fpage>–<lpage>325</lpage>.</citation>
+</ref>
+<ref id="bibr8-1548512912458482">
+<label>8.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Keller</surname><given-names>JB</given-names></name>
+</person-group>. <article-title>Citation classic - geometrical-theory of diffraction</article-title>. <source>Curr Contents Eng Technol Appl Sci</source> <year>1980</year>; <volume>14</volume>: <fpage>12</fpage>.</citation>
+</ref>
+<ref id="bibr9-1548512912458482">
+<label>9.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Balandier</surname><given-names>T</given-names></name><etal/>
+</person-group>. <article-title>170 MHz field strength prediction in urban environment using neural nets</article-title>. In: <conf-name>sixth IEEE international symposium on personal, indoor and mobile radio communications</conf-name>, <year>1995</year>, pp.<fpage>120</fpage>–<lpage>124</lpage>.</citation>
+</ref>
+<ref id="bibr10-1548512912458482">
+<label>10.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chang</surname><given-names>PR</given-names></name>
+<name><surname>Yang</surname><given-names>WH</given-names></name>
+</person-group>. <article-title>Environment-adaptation mobile radio propagation prediction using radial basis function neural networks</article-title>. <source>IEEE Trans Veh Technol</source> <year>1997</year>; <volume>46</volume>: <fpage>155</fpage>–<lpage>160</lpage>.</citation>
+</ref>
+<ref id="bibr11-1548512912458482">
+<label>11.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Popescu</surname><given-names>I</given-names></name><etal/>
+</person-group>. <article-title>Applications of generalized RBF-NN for path loss prediction</article-title>. In: <conf-name>the 13th IEEE international symposium on personal, indoor and mobile radio communications</conf-name>, <year>2002</year>.</citation>
+</ref>
+<ref id="bibr12-1548512912458482">
+<label>12.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Popescu</surname><given-names>I</given-names></name><etal/>
+</person-group>. <article-title>Generalized regression neural network prediction model for indoor environment</article-title>. In: <conf-name>ninth international symposium on computers and communications (ISCC 2004)</conf-name>, <year>2004</year>.</citation>
+</ref>
+<ref id="bibr13-1548512912458482">
+<label>13.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Popescu</surname><given-names>I</given-names></name><etal/>
+</person-group>. <article-title>Neural networks applications for the prediction of propagation path loss in urban environments</article-title>. In: <conf-name>IEEE 53rd vehicular technology conference</conf-name>, <year>2001</year>.</citation>
+</ref>
+<ref id="bibr14-1548512912458482">
+<label>14.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Neskovic</surname><given-names>A</given-names></name>
+<name><surname>Neskovic</surname><given-names>N</given-names></name>
+<name><surname>Paunovic</surname><given-names>D</given-names></name>
+</person-group>. <article-title>Macrocell electric field strength prediction model based upon artificial neural networks</article-title>. <source>IEEE J Sel Areas Commun</source> <year>2002</year>; <volume>20</volume>: <fpage>1170</fpage>–<lpage>1177</lpage>.</citation>
+</ref>
+<ref id="bibr15-1548512912458482">
+<label>15.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Olivier</surname><given-names>P</given-names></name>
+<name><surname>Rossi</surname><given-names>J-P</given-names></name>
+<name><surname>Balandier</surname><given-names>T</given-names></name>
+</person-group>. <article-title>Predicting field strength with a neural ray-tracing model</article-title>. In: <conf-name>global telecommunications conference</conf-name>, <year>1996</year>, pp.<fpage>1167</fpage>–<lpage>1171</lpage>.</citation>
+</ref>
+<ref id="bibr16-1548512912458482">
+<label>16.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wolfle</surname><given-names>G</given-names></name>
+<name><surname>Landstorfer</surname><given-names>FM</given-names></name>
+</person-group>. <article-title>Field strength prediction in indoor environments with neural networks</article-title>. In: <conf-name>IEEE 47th vehicular technology conference</conf-name>, <year>1997</year>.</citation>
+</ref>
+<ref id="bibr17-1548512912458482">
+<label>17.</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wolfle</surname><given-names>G</given-names></name>
+<name><surname>Landstorfer</surname><given-names>FM</given-names></name>
+</person-group>. <article-title>A recursive model for the field strength prediction with neural networks</article-title>. In: <conf-name>IEE 10th international conference on antennas and propagation</conf-name>, <year>1997</year>.</citation>
+</ref>
+<ref id="bibr18-1548512912458482">
+<label>18.</label>
+<citation citation-type="gov">
+<collab>The National Map Seamless Server</collab>, <ext-link ext-link-type="uri" xlink:href="http://nationalmap.gov/index.html">http://nationalmap.gov/index.html</ext-link>. (<access-date>Accessed 23 August 2012</access-date>)</citation>
+</ref>
+<ref id="bibr19-1548512912458482">
+<label>19.</label>
+<citation citation-type="web">
+<person-group person-group-type="author">
+<name><surname>Perlin</surname><given-names>K</given-names></name>
+</person-group>. <article-title>Making noise</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.noisemachine.com/talk1/">http://www.noisemachine.com/talk1/</ext-link> (<year>1999</year>). (<access-date>Accessed 23 August 2012</access-date>).</citation>
+</ref>
+<ref id="bibr20-1548512912458482">
+<label>20.</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Weissberger</surname><given-names>M</given-names></name>
+</person-group>. <source>An initial critical summary of models for predicting the attenuation of radio waves by trees</source>. <publisher-loc>Annapolis, MD</publisher-loc>: <publisher-name>E.C.A.C. Department of Defense</publisher-name>, <year>1982</year>.</citation>
+</ref>
+<ref id="bibr21-1548512912458482">
+<label>21.</label>
+<citation citation-type="other">
+<collab>NVIDIA</collab>. <source>NVIDIA CUDA programming guide</source>. <year>2009</year>.</citation>
+</ref>
+<ref id="bibr22-1548512912458482">
+<label>22.</label>
+<citation citation-type="web">
+<collab>NVIDIA</collab>. <article-title>GeForce GTX 285 specifications</article-title>, <ext-link ext-link-type="uri" xlink:href="http://www.nvidia.com/object/product_geforce_gtx_285_us.html">http://www.nvidia.com/object/product_geforce_gtx_285_us.html</ext-link> (<year>2009</year>).</citation>
+</ref>
+<ref id="bibr23-1548512912458482">
+<label>23.</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Stanley</surname><given-names>KO</given-names></name>
+<name><surname>Miikkulainen</surname><given-names>R</given-names></name>
+</person-group>. <article-title>Evolving neural networks through augmenting topologies</article-title>. <source>Evol Comput</source> <year>2002</year>; <volume>10</volume>: <fpage>99</fpage>–<lpage>127</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

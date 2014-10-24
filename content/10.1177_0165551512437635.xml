@@ -1,0 +1,1748 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JIS</journal-id>
+<journal-id journal-id-type="hwp">spjis</journal-id>
+<journal-title>Journal of Information Science</journal-title>
+<issn pub-type="ppub">0165-5515</issn>
+<issn pub-type="epub">1741-6485</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/0165551512437635</article-id>
+<article-id pub-id-type="publisher-id">10.1177_0165551512437635</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Articles</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Vector space model for patent documents with hierarchical class labels</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<name><surname>Chen</surname><given-names>Yen-Liang</given-names></name>
+<aff id="aff1-0165551512437635">National Central University, ROC</aff>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Chiu</surname><given-names>Yu-Ting</given-names></name>
+<aff id="aff2-0165551512437635">National Central University, ROC</aff>
+</contrib>
+</contrib-group>
+<author-notes>
+<corresp id="corresp1-0165551512437635">Yen-Liang Chen, Department of Information Management, National Central University, Chung-Li, Taiwan 320, ROC. Email: <email>ylchen@mgt.ncu.edu.tw</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>6</month>
+<year>2012</year>
+</pub-date>
+<volume>38</volume>
+<issue>3</issue>
+<fpage>222</fpage>
+<lpage>233</lpage>
+<permissions>
+<copyright-statement>© The Author(s) 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="sage">Chartered Institute of Library and Information Professionals</copyright-holder>
+</permissions>
+<abstract>
+<p>A vector space model (VSM) composed of selected important features is a common way to represent documents, including patent documents. Patent documents have some special characteristics that make it difficult to apply traditional feature selection methods directly: (a) it is difficult to find common terms for patent documents in different categories; and (b) the class label of a patent document is hierarchical rather than flat. Hence, in this article we propose a new approach that includes a hierarchical feature selection (HFS) algorithm which can be used to select more representative features with greater discriminative ability to present a set of patent documents with hierarchical class labels. The performance of the proposed method is evaluated through application to two documents sets with 2400 and 9600 patent documents, where we extract candidate terms from their titles and abstracts. The experimental results reveal that a VSM whose features are selected by a proportional selection process gives better coverage, while a VSM whose features are selected with a weighted-summed selection process gives higher accuracy.</p>
+</abstract>
+<kwd-group>
+<kwd>document classification</kwd>
+<kwd>feature selection</kwd>
+<kwd>hierarchical class label</kwd>
+<kwd>vector space model (VSM)</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-0165551512437635" sec-type="intro">
+<title>1. Introduction</title>
+<p>Vector space models (VSMs) commonly represent documents as vectors with multiple features (i.e. terms). As there are thousands upon thousands of unique terms in a document set, it is almost impossible to construct a VSM using all of these terms. It is instead more efficient to use fewer terms to build a VSM to represent a document [<xref ref-type="bibr" rid="bibr1-0165551512437635">1</xref>, <xref ref-type="bibr" rid="bibr2-0165551512437635">2</xref>]. A method for reducing the terms, a so-called dimensionality reduction method, is needed. The methods for the dimensionality reduction process can be further divided into two categories: feature selection and feature extraction [<xref ref-type="bibr" rid="bibr3-0165551512437635">3</xref>]. This article designs a feature-selection method for reducing the dimensions in the term space to build a more efficient VSM.</p>
+<p>Generally, there are two types of methods for feature selection: (a) simple feature selection and (b) feature selection with class labels. The main difference between them is whether they have class labels or not. In the scenario of simple feature selection methods, no document has a class label. The objective of a simple feature selection method is to select those features (i.e. terms) with more discriminative or representative abilities. On the other hand, feature selection methods with class labels can be applied to a set of documents with class labels. An example of a class label contained in a document set would be ‘food’ or ‘3C products’. In other words, some documents in the document set will belong to the ‘food’ class, while others will belong to the ‘3C product’ class. Terms like chocolate cake or noodles might be appropriately classified as representing documents in the food class since these terms are mostly used to describe food. On the other hand, terms such as mobile phones or laptops might be most appropriately classified as representing documents in the 3C product category, since these terms are mostly used to describe 3C products. The objective of this type of method is not only to select features with more discriminative or representative abilities, but also to increase categorization accuracy.</p>
+<p>The target data used in this research is a set of patent documents. A patent document is quite similar to a general document except that the latter contains only unstructured data (i.e. text), while the former contains both unstructured and structured data. There are thus two main differences between a general document and a patent document: (a) it is difficult to find common terms for patent documents in different categories; and (b) the class labels of patent documents are hierarchical rather than flat. These differences are part of the special characteristics of patent documents.</p>
+<p>Since patent documents are meant to describe the full scope of an industrial product innovation, the terms used in patent documents are not limited to a small scope, but encompass a full scale. Since different terms are used in different domains, it is not possible to use the terminology used in one domain to describe a patent document from another. For example, the terms used in patents in the ‘Textiles and Paper Section’ are naturally very different from those used in the ‘Electricity Section’. This lack of intersection makes it difficult to build a base of common terms (i.e. VSM) for all types of patent documents. Without a common term base, the vector representing a patent will degenerate into a zero-vector.</p>
+<p>The International Patent Classification (IPC) hierarchy is the natural class labelling system for organizing patent documents. An IPC code can be viewed as a class label in the hierarchy. Class labels for patent documents are different from those used for tagging general documents. The latter is usually a flat label, while the former is part of the hierarchical structure. This hierarchical structure is divided into five levels: section, class, subclass, group and subgroup [<xref ref-type="bibr" rid="bibr4-0165551512437635">4</xref>, <xref ref-type="bibr" rid="bibr5-0165551512437635">5</xref>]. Thus, IPC codes are hierarchical class labels. Therefore, when selecting the most representative terms for patent documents one should consider the discrimination ability both on the lower and upper levels. The advantage of ensuring that the discrimination abilities of a term cover all five levels is that, when these terms are used as VSMs for patent document classification, the predicted class label can hit a class label on an upper level, even though it might not hit a class label on the bottom level. It is better to hit a class label on a higher level than not at all.</p>
+<p>Traditionally, selection of discriminative terms can be performed using the TFIDF method [<xref ref-type="bibr" rid="bibr6-0165551512437635">6</xref>], the entropy method [<xref ref-type="bibr" rid="bibr7-0165551512437635">7</xref>, <xref ref-type="bibr" rid="bibr8-0165551512437635">8</xref>] or the chi-square (χ<sup>2</sup>) method [<xref ref-type="bibr" rid="bibr9-0165551512437635">9</xref>, <xref ref-type="bibr" rid="bibr10-0165551512437635">10</xref>]. It is usually assumed in these methods that the document set consists of general documents with flat labels. Even though these methods have also been used to select features for patent documents with IPC labels [<xref ref-type="bibr" rid="bibr11-0165551512437635">11</xref>, <xref ref-type="bibr" rid="bibr12-0165551512437635">12</xref>], they still utilize general class labels with a flat structure. For example, Tseng et al. [<xref ref-type="bibr" rid="bibr11-0165551512437635">11</xref>] used categories such as ‘FED’ and ‘Device’ to calculate the value of the correlation coefficient. Xue et al. [<xref ref-type="bibr" rid="bibr12-0165551512437635">12</xref>] classified patents into four categories: ‘controlling and regulating device’, ‘cylinder and motor device’, ‘muffle and shock absorption device’ and ‘safety device’ in their experiment. The unique hierarchical feature of the system has never previously been considered as a way to improve classification accuracy for the upper or all levels. In other words, previously, the same feature selection methods as used for general documents have been applied to patent documents, and the hierarchical feature of patent documents has been neglected. To overcome this problem, a new feature selection method is needed that is capable of selecting the most discriminative terms for presenting the patent documents with the hierarchical class structure. Thus, this current work aims to modify the traditional feature selection method to do just that.</p>
+<p>The above motivates us to ask the following <italic>research question</italic>: how do we select the most discriminative terms with the consideration of the hierarchical class structure for patent documents? Accordingly, a new method is designed to select terms for representing patent documents based on the discrimination abilities at all levels.</p>
+<p>The advantages of the proposed method are: (a) the term’s discriminative abilities are considered at all levels while selecting features; and (b) the terms selected may be more general than those selected when only considering the abilities at the bottom level. This improved generality means that the more common terms can be used for patent classification in different categories. In turn, more patent documents can be successfully represented as non-zero vectors. For example, if term ‘A’ and term ‘B’ are the most representative words on level five (the bottom level) and level four, then term ‘B’ is very likely to appear in patents more often than ‘A’. So, if we include ‘B’ in the vector base, we will have more patents whose vectors have non-zero weights for element ‘B’. This can alleviate the problem of zero-vectors in representing patents as vectors.</p>
+<p>The primary contribution of this article is discussed below. A new approach to selecting representative features is proposed based on the special characteristics of patent documents. The proposed approach takes the generality of a term and its discrimination on every level into consideration. Moreover, we also design an evaluation procedure based on the special characteristics of patent documents to evaluate the performance of the proposed approach. In the experiment, the proposed approach, the hierarchical feature selection (HFS) algorithm, is used to select the terms. Using these terms to build a VSM we can then improve the correctness of the document matching process for documents containing hierarchical class labels (i.e. patent documents). In addition, it can also improve the coverage of patents – specifically, the percentage of patents which can be represented as non-zero vectors.</p>
+</sec>
+<sec id="section2-0165551512437635">
+<title>2. Literature review</title>
+<p>The following sub-sections review the relevant literature. We first introduce some background knowledge of the VSM. After a brief introduction of the VSM, the reasoning and the methodology for feature selection are demonstrated. After this, general information related to patent documents and the classification hierarchy is provided. Other relevant studies and information regarding patent classification are introduced in the final sub-section of the literature review.</p>
+<sec id="section3-0165551512437635">
+<title>2.1. VSM and feature selection</title>
+<p>The VSM was originally introduced by Salton et al. in 1975 [<xref ref-type="bibr" rid="bibr13-0165551512437635">13</xref>] for indexing and retrieving information, and is now widely used in text mining practices and document retrieval systems. All the documents and queries in VSM can be represented by vectors. VSM is also a popular method in information retrieval (IR) and is adapted to present patent documents in this research. In addition, documents that are presented by vectors can be compared through the measurement of similarity, distance or correlation between the vectors [<xref ref-type="bibr" rid="bibr1-0165551512437635">1</xref>, <xref ref-type="bibr" rid="bibr8-0165551512437635">8</xref>, <xref ref-type="bibr" rid="bibr13-0165551512437635">13</xref>, <xref ref-type="bibr" rid="bibr14-0165551512437635">14</xref>]. In addition to VSM, there are other methodologies to present documents. One of them, proposed by Jiang et al. [<xref ref-type="bibr" rid="bibr15-0165551512437635">15</xref>], is a graph-based method. Another one represents patent documents as vectors of IPC codes to avoid the problem of term selection [<xref ref-type="bibr" rid="bibr16-0165551512437635">16</xref>].</p>
+<p>The accuracy and performance of VSM are influenced by the selected indexing vocabulary. In order to build a more accurate and efficient indexing vocabulary, it is important to conduct a dimensionality reduction process. According to Li et al. [<xref ref-type="bibr" rid="bibr9-0165551512437635">9</xref>], a major challenge in the VSM methods is the high dimensionality of the feature space. Feature selection and feature extraction are two ways to simplify, refine, and obtain good attributes to build an indexing vocabulary. Trappey and Trappey [<xref ref-type="bibr" rid="bibr17-0165551512437635">17</xref>] indicated numerous methods for selecting index terms and reducing the dimensions of the created indexing vocabulary: term frequency (TF) [<xref ref-type="bibr" rid="bibr1-0165551512437635">1</xref>, <xref ref-type="bibr" rid="bibr17-0165551512437635">17</xref>], term frequency with inverse document frequency (TFIDF) [<xref ref-type="bibr" rid="bibr18-0165551512437635">18</xref>, <xref ref-type="bibr" rid="bibr19-0165551512437635">19</xref>], variants of TFIDF [<xref ref-type="bibr" rid="bibr6-0165551512437635">6</xref>], entropy [<xref ref-type="bibr" rid="bibr8-0165551512437635">8</xref>, <xref ref-type="bibr" rid="bibr7-0165551512437635">7</xref>], chi-square (χ<sup>2</sup>) [<xref ref-type="bibr" rid="bibr9-0165551512437635">9</xref>, <xref ref-type="bibr" rid="bibr10-0165551512437635">10</xref>], information gain and text clustering with feature selection (TCFS) [<xref ref-type="bibr" rid="bibr9-0165551512437635">9</xref>].</p>
+<p>However, these previous methods have been designed for documents without class labels or documents with flat class labels. This explains why it is necessary to design a new approach for selecting terms for documents with hierarchical labels. Thus we design a method of feature selection for patent documents which preserves their heterogeneous and informative attributes, by considering the hierarchical class labels within patent documents.</p>
+</sec>
+<sec id="section4-0165551512437635">
+<title>2.2. Patent documents and their classification hierarchy</title>
+<p>A general document is simply a textual article containing many paragraphs, sentences and words. A patent document is similar to a general document, but includes rich and varied technical information as well as important research results [<xref ref-type="bibr" rid="bibr11-0165551512437635">11</xref>, <xref ref-type="bibr" rid="bibr20-0165551512437635">20</xref>]. The difference between a patent document and a general document is that the former contains both unstructured data (i.e. textual articles) and semi-structured data. Patent documents can be retrieved from a patent database, such as the United States Patent and Trademark Office (USPTO). The USPTO issues over 150,000 patents each year to companies and individuals worldwide, and, as of February 2008, has granted over 7,950,000 patents [<xref ref-type="bibr" rid="bibr21-0165551512437635">21</xref>].</p>
+<p>The International Patent Classification (IPC) is an attribute within the patent document. It was first established by the Strasbourg Agreement in 1971. Information about the IPC is currently published by the World Intellectual Property Organization (WIPO). This officially published IPC structure is well constructed and has strong public confidence. The classification has a five-level hierarchical structure comprised of section, class, subclass, group and subgroup [<xref ref-type="bibr" rid="bibr4-0165551512437635">4</xref>]. ‘H01L027/18’ is an example of an IPC code, where ‘H’ represents a section, ‘01’ means a class, ‘L’ means a subclass, ‘027’ represents a main group and ‘18’ represents a subgroup. When we predict the label of a patent, hitting a class label on a higher level is better than not at all. For example, consider a patent document with an IPC code of ‘H01L027/01’. Suppose we have two incorrect classification results: H01L021/06 and H01L027/04. Although both predictions are wrong, the latter is better than the former, because the latter hits the label from the root to main group H01L027 but the former only to subclass H01L. Kang et al. [<xref ref-type="bibr" rid="bibr22-0165551512437635">22</xref>] notes that the IPC is a standard taxonomy for sorting, organizing, classifying, determining and searching patent documents. Thus, the IPC hierarchy can be viewed as a topic label or a class label regarding the contents.</p>
+</sec>
+<sec id="section5-0165551512437635">
+<title>2.3. Patent classification</title>
+<p>Patent mining consists of patent retrieval, patent classification and patent clustering. Previous studies have shown that classifying patent documents can be done automatically through various methods. Some of those methods, for example, are the <italic>k</italic>-nearest-neighbour classifiers and Bayesian classifiers [<xref ref-type="bibr" rid="bibr23-0165551512437635">23</xref>, <xref ref-type="bibr" rid="bibr24-0165551512437635">24</xref>], machine learning algorithms [<xref ref-type="bibr" rid="bibr25-0165551512437635">25</xref>], the <italic>k</italic>-nearest-neighbour with patent’s semantic structure [<xref ref-type="bibr" rid="bibr26-0165551512437635">26</xref>], back-propagation network [<xref ref-type="bibr" rid="bibr27-0165551512437635">27</xref>], or the artificial neural network with pre-constructed ontology schemas [<xref ref-type="bibr" rid="bibr28-0165551512437635">28</xref>]. Generally, traditional text mining approaches have been employed to build vectors for patent document representation, after which patent classification can be conducted through vector similarity calculation or other supporting techniques.</p>
+<p>The goal of this current work is not to solve the patent document classification problem but rather to find a better feature selection method for producing vectors. This method should demonstrate better classification results than using a standard method to predict the IPC label. We use patent classification as a means to prove the superiority of our proposed method.</p>
+</sec>
+</sec>
+<sec id="section6-0165551512437635">
+<title>3. Problem definition</title>
+<p>The goal of the design is to select the most representative terms for the patent document set and to construct a VSM for these patent documents. The problem is defined in the following paragraphs.</p>
+<p>According to the hierarchical structure of the IPC codes, there are five levels in the hierarchy (see <xref ref-type="fig" rid="fig1-0165551512437635">Figure 1</xref>). Each level can be denoted as <italic>l<sub>a</sub></italic> (<italic>a</italic> = 1–5). Since there are five levels, the set of IPC codes in each level is denoted as <italic>C<sub>a</sub></italic>, and the <italic>k</italic>th class label in set <italic>C<sub>a</sub></italic> is denoted as <italic>c<sub>ak</sub></italic>. For example, <italic>C</italic><sub>1</sub> is the set of IPC codes in the section level (i.e. <italic>l</italic><sub>1</sub>) within the hierarchy, and <italic>c</italic><sub>11</sub> is the first IPC code in set <italic>C</italic><sub>1</sub>. Similarly, <italic>c</italic><sub>5</sub><italic><sub>k</sub></italic> is the <italic>k</italic>th IPC code in the subgroup level (i.e. <italic>l</italic><sub>5</sub>) and <italic>c</italic><sub>51</sub> can be ‘A01B001/02’. The IPC codes are viewed as hierarchical class labels in this article.</p>
+<fig id="fig1-0165551512437635" position="float">
+<label>Figure 1.</label>
+<caption><p>Hierarchical structure of the IPC codes.</p></caption>
+<graphic xlink:href="10.1177_0165551512437635-fig1.tif"/>
+</fig>
+<p>A set of patent documents is denoted as <italic>D</italic> = {<italic>d</italic><sub>1</sub>, <italic>d</italic><sub>2</sub>,…, <italic>d<sub>n</sub></italic>}, where <italic>n</italic> is the total number of patent documents in set <italic>D</italic>. Every patent document in set <italic>D</italic> is denoted as <italic>d<sub>j</sub></italic> (<italic>j</italic> = 1 to <italic>n</italic>). Naturally, there are plenty of patent documents belonging to every single IPC code. The relationships among patent documents and class labels can now be expressed as:</p>
+<p>
+<disp-formula id="disp-formula1-0165551512437635">
+<mml:math display="block" id="math1-0165551512437635">
+<mml:mrow>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ak</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mo stretchy="false">{</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ak</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">}</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-0165551512437635" xlink:href="10.1177_0165551512437635-eq1.tif"/>
+</disp-formula></p>
+<p>which means all patent documents <italic>d<sub>j</sub></italic> with the class label <italic>c<sub>ak</sub></italic>. For example, document <italic>d</italic><sub>1</sub> belongs to the classes labelled <italic>c</italic><sub>51</sub> and <italic>c</italic><sub>52</sub>, and documents <italic>d</italic><sub>2</sub> and <italic>d</italic><sub>3</sub> belong to the class labelled <italic>c</italic><sub>52</sub>. The relations among these three patent documents and the two class labels are illustrated in <xref ref-type="fig" rid="fig2-0165551512437635">Figure 2</xref>. In other words, they can be denoted as <italic>D</italic>(<italic>c</italic><sub>51</sub>) = {<italic>d</italic><sub>1</sub>} and <italic>D</italic>(<italic>c</italic><sub>5</sub><sub>2</sub>) = {<italic>d</italic><sub>1</sub>, <italic>d</italic><sub>2</sub>, <italic>d</italic><sub>3</sub>}, respectively.</p>
+<fig id="fig2-0165551512437635" position="float">
+<label>Figure 2.</label>
+<caption><p>Relationships among patent documents and class labels.</p></caption>
+<graphic xlink:href="10.1177_0165551512437635-fig2.tif"/>
+</fig>
+<p>The terms contained in patent documents are the features to be selected in this research. The set of terms is denoted as <italic>T</italic> = {<italic>t</italic><sub>1</sub>, <italic>t</italic><sub>2</sub>,<italic>…, t<sub>q</sub></italic>}, where <italic>q</italic> is the total number of terms in set <italic>T</italic>. The variable <italic>t<sub>i</sub></italic> indicates the <italic>i</italic>th term in set <italic>T</italic>. Generally, a patent document consists of multiple terms, and a single term may appear in several different patent documents. Since there are numerous terms in a patent document and numerous patent documents in the document set, there will be thousands of terms <italic>t<sub>i</sub></italic> in set <italic>T</italic>, representing all the patent documents in set <italic>D</italic>.</p>
+<p>Let <italic>RT</italic> be the set of representative terms in the set of patent documents. Given a set of patent documents <italic>D</italic>, the proposed approach is to select the <italic>r</italic> most representative terms to store in <italic>RT</italic>. Thus, only <italic>r</italic> representative terms remain after selection.</p>
+</sec>
+<sec id="section7-0165551512437635">
+<title>4. Proposed HFS algorithm</title>
+<p>The aim of the HFS algorithm is to provide a procedure for selecting terms with higher representative abilities and greater discriminative abilities. The fact that the class labels (i.e. IPC codes) representing patent documents are not arranged in the format of a flat structure but a hierarchical structure is considered in the design of the HFS algorithm.</p>
+<p>In the procedure, the so-called ‘hp-entropy’ formula is designed based on the traditional entropy formula as follows:</p>
+<p>
+<disp-formula id="disp-formula2-0165551512437635">
+<label>(1)</label>
+<mml:math display="block" id="math2-0165551512437635">
+<mml:mrow>
+<mml:mi>entropy</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>D</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>×</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>log</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>p</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-0165551512437635" xlink:href="10.1177_0165551512437635-eq2.tif"/>
+</disp-formula></p>
+<p>where <italic>p<sub>i</sub></italic> is the probability of class <italic>C<sub>i</sub></italic> in <italic>D</italic><sub>1</sub>, determined by dividing the number of tuples of class <italic>C<sub>i</sub></italic> in <italic>D</italic><sub>1</sub> by |<italic>D</italic><sub>1</sub>|, the total number of tuples in <italic>D</italic><sub>1</sub> [<xref ref-type="bibr" rid="bibr29-0165551512437635">29</xref>].</p>
+<p>In this article, the proposed hp-entropy method is used to calculate the hierarchical entropy for a term <italic>t<sub>i</sub></italic> on level <italic>l<sub>a</sub></italic> as follows:</p>
+<p>
+<disp-formula id="disp-formula3-0165551512437635">
+<label>(2)</label>
+<mml:math display="block" id="math3-0165551512437635">
+<mml:mrow>
+<mml:mi>hp</mml:mi>
+<mml:mtext>-</mml:mtext>
+<mml:mi>entropy</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>m</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>iak</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ak</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>×</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>log</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>iak</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>ak</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-0165551512437635" xlink:href="10.1177_0165551512437635-eq3.tif"/>
+</disp-formula></p>
+<p>where <italic>n<sub>i</sub><sub>a</sub><sub>k</sub></italic> means the total number of documents containing term <italic>t<sub>i</sub></italic> with class label <italic>c<sub>a</sub><sub>k</sub></italic>; and <italic>n<sub>a</sub><sub>k</sub></italic> means the total number of documents with class label <italic>c<sub>a</sub><sub>k</sub></italic>. The variable <italic>m</italic> is the total number of class labels in level <italic>l<sub>a</sub></italic>. Moreover, both the denominator (i.e. <italic>n<sub>a</sub><sub>k</sub></italic>) and the numerator (i.e. <italic>n<sub>i</sub><sub>a</sub><sub>k</sub></italic>) are designed to be plus 1 to prevent a problem with the calculation of log<sub>2</sub>0. After <italic>hp-entropy</italic>(<italic>t<sub>i</sub>, l<sub>a</sub></italic>) has been computed for all terms in level <italic>l<sub>a</sub></italic>, they are stored in the <italic>TermList<sub>a</sub></italic>.</p>
+<p>Karanikolas and Skourlas [<xref ref-type="bibr" rid="bibr30-0165551512437635">30</xref>] proposed that ‘the appropriate key phrases for text classification are those that are frequent enough within the documents of only one or a few classes in the training set’. This statement is conceptually similar to the idea proposed in this research. However, the Authority List Creation Algorithm (ALCA) [<xref ref-type="bibr" rid="bibr30-0165551512437635">30</xref>] used the method of finding frequent item sets in association rules in data mining to form the feature list (a list of word-phrases). In addition, the class labels used in that work had a flat structure. The methodologies used in the ALCA and in this current article are quite different.</p>
+<p>A simple example illustrating the concept of hp-entropy is given in <xref ref-type="table" rid="table1-0165551512437635">Table 1</xref>. The value in the cell of <italic>t<sub>i</sub></italic> across <italic>c<sub>ak</sub></italic> in the table is the value of <italic>n<sub>iak</sub></italic> (which means the total number of documents containing term <italic>t<sub>i</sub></italic> with class label <italic>c<sub>a</sub><sub>k</sub></italic>). For example, there are in total four documents containing term <italic>t</italic><sub>8</sub> with class label <italic>c</italic><sub>51</sub>, and no documents containing term <italic>t</italic><sub>8</sub> with class labels <italic>c</italic><sub>52</sub>, <italic>c</italic><sub>53</sub> and <italic>c</italic><sub>54</sub>. The value of <italic>hp-entropy</italic>(<italic>t</italic><sub>8</sub>, <italic>l</italic><sub>5</sub>) is equivalent to 1.304201. The hp-entropy of <italic>t</italic><sub>8</sub> on level five is the lowest among all the hp-entropy scores for the other terms. This means that <italic>t</italic><sub>8</sub> is the most discriminative term in this example and should be selected.</p>
+<table-wrap id="table1-0165551512437635" position="float">
+<label>Table 1.</label>
+<caption><p>Example using hp-entropy to select terms</p></caption>
+<graphic alternate-form-of="table1-0165551512437635" xlink:href="10.1177_0165551512437635-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th/>
+<th align="left" colspan="4"><italic>c<sub>a</sub><sub>k</sub></italic> (<italic>a</italic> = 5)</th>
+<th align="left"><italic>hp-entropy</italic>(<italic>t<sub>i</sub>, l<sub>a</sub></italic>)</th>
+<th align="left">Selection order</th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th align="left"><italic>K</italic> = 1</th>
+<th align="left"><italic>K</italic> = 2</th>
+<th align="left"><italic>K</italic> = 3</th>
+<th align="left"><italic>K</italic> = 4</th>
+<th/>
+<th/>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><italic>t<sub>i</sub></italic></td>
+<td><italic>i</italic> = 1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1.445289</td>
+<td>9</td>
+</tr>
+<tr>
+<td/>
+<td>
+<italic>i</italic> = 2</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>1.537520</td>
+<td/>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 3</td>
+<td>3</td>
+<td>3</td>
+<td>0</td>
+<td>0</td>
+<td>1.520811</td>
+<td/>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 4</td>
+<td>4</td>
+<td>4</td>
+<td>0</td>
+<td>0</td>
+<td>1.423097</td>
+<td>7</td>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 5</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1.315297</td>
+<td>3</td>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 6</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1.361413</td>
+<td>5</td>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 7</td>
+<td>3</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1.353059</td>
+<td>4</td>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 8</td>
+<td>4</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1.304201</td>
+<td>1</td>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 9</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1.430890</td>
+<td/>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 10</td>
+<td>0</td>
+<td>0</td>
+<td>2</td>
+<td>2</td>
+<td>1.587663</td>
+<td/>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 11</td>
+<td>0</td>
+<td>0</td>
+<td>3</td>
+<td>3</td>
+<td>1.686763</td>
+<td/>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 12</td>
+<td>0</td>
+<td>0</td>
+<td>4</td>
+<td>4</td>
+<td>1.742978</td>
+<td/>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 13</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1.308098</td>
+<td>2</td>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 14</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>2</td>
+<td>1.386484</td>
+<td>6</td>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 15</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>3</td>
+<td>1.436034</td>
+<td>8</td>
+</tr>
+<tr>
+<td/>
+<td><italic>i</italic> = 16</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>4</td>
+<td>1.464142</td>
+<td>10</td>
+</tr>
+<tr>
+<td colspan="8">(<italic>n</italic><sub>51</sub>= 8; <italic>n</italic><sub>52</sub>= 8; <italic>n</italic><sub>53</sub>= 16; <italic>n</italic><sub>54</sub>= 16 )</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>After the above computation, each term will have five <italic>hp-entropy</italic>(<italic>t<sub>i</sub>, l<sub>a</sub></italic>) scores. Since the class labels of patent documents are hierarchical in structure, with five levels, every candidate term will have five hp-entropy scores corresponding to the five different levels. With this design there are two possible ways to find the hp-entropy score for a candidate term.</p>
+<sec id="section8-0165551512437635">
+<title>4.1. Proportional strategy</title>
+<p>In the proportional strategy, representative terms are selected level by level according to the hp-entropy scores (the smaller the better). The terms with lower hp-entropy scores from the fifth level are picked out first, followed by those from the fourth level, third level, second level and first level, successively. In addition, the proportion of terms selected on each level can be different.</p>
+<p>For example, if the total number of selected representative terms is set to be 100, the proportion of terms for each level can be 20, 20, 20, 20 and 20 terms, respectively. The proportion for each level can also be set differently, such as 40 terms from level five, 30 terms from level four, 20 terms from level three, 10 terms from level two, and zero from level one. Since the representative terms are selected level by level, terms may be duplicated from previous selections. In order to prevent duplication, a term which has already been picked from a lower level (e.g. level five) will not be selected for a higher level (e.g. level four).</p>
+</sec>
+<sec id="section9-0165551512437635">
+<title>4.2. Weighted-summed strategy</title>
+<p>In the weighted-summed strategy, representative terms are selected based on the aggregate scores of hp-entropy. Let <italic>w<sub>a</sub></italic> be the weight at level <italic>l<sub>a</sub></italic>. An aggregate score for a term is accumulated by manually assigning weights with the following formula:</p>
+<p>
+<disp-formula id="disp-formula4-0165551512437635">
+<label>(3)</label>
+<mml:math display="block" id="math4-0165551512437635">
+<mml:mrow>
+<mml:mi>Agg</mml:mi>
+<mml:mtext>-</mml:mtext>
+<mml:mi>score</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>hp</mml:mi>
+<mml:mtext>-</mml:mtext>
+<mml:mi>entropy</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>,</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>l</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>×</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>w</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>a</mml:mi>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-0165551512437635" xlink:href="10.1177_0165551512437635-eq4.tif"/>
+</disp-formula></p>
+<p>For example, the assigned weights for each level are 1.0, 0.5, 0.25, 0.125 and 0.0625 for the fifth, fourth, third, second and first levels, respectively. After the computation, every term is assigned an aggregate score of its own. The top <italic>k</italic> terms with the lowest aggregate hp-entropy scores will be picked out. If the total number of selected representative terms is set to be 100, the top 100 terms with the lowest aggregate hp-entropy scores will be chosen.</p>
+<p>In addition to the two proposed strategies for selecting representative terms with which to build a VSM, there is a traditional technique for selecting representative terms. This traditional strategy is utilized to provide a baseline for comparison and evaluation. The traditional technique selects representative terms using the hp-entropy scores on level five only. In other words, the top <italic>k</italic> terms <italic>t<sub>i</sub></italic> with the lowest hp-entropy(<italic>t<sub>i</sub>, l</italic><sub>5</sub>) values will be picked as representative terms.</p>
+</sec>
+</sec>
+<sec id="section10-0165551512437635">
+<title>5. Experiments and evaluation</title>
+<p>The set of patent documents used in the experiments were collected from the USPTO patent database. A total of 2400 and 9600 patent documents were collected from the USPTO patent database to form the patent document sets <italic>D</italic><sub>Exp1</sub> and <italic>D</italic><sub>Exp2</sub> for testing the performance of the proposed method. Patent documents for collection <italic>D</italic><sub>Exp1</sub> and <italic>D</italic><sub>Exp2</sub> were randomly and evenly selected from ‘Section A: Human necessities’ and ‘Section H: Electricity’. In other words, there were 1200 patent documents in section A and 1200 patent documents in section H for <italic>D</italic><sub>Exp1</sub>, and 4800 patent documents in section A and 4800 patent documents in section H for <italic>D</italic><sub>Exp2</sub>. These patent documents included two section-level IPC codes, four class-level IPC codes (two class-level IPC codes for each section-level IPC code), eight subclass-level IPC codes (two subclass-level IPC codes for each class-level IPC code), 16 group-level IPC codes (two group-level IPC codes for each subclass-level IPC code) and 80 subgroup-level IPC codes (five subgroup-level IPC codes for each group-level IPC code). In each branch of the subgroup-level IPC code, there were 30 patent documents collected for set <italic>D</italic><sub>Exp1</sub>, but for <italic>D</italic><sub>Exp2</sub> the number of patents collected in each branch ranged from 30 to 290 (preferably 120) because some branches did not have enough patent documents and we had to compensate the insufficient number by drawing more patents from other branches. The experiment where document set <italic>D</italic><sub>Exp1</sub> operates is named Exp-1 and that for document set <italic>D</italic><sub>Exp2</sub> is named Exp-2. Collecting patent documents from different branches of IPC codes can help preserve the diversity of the patent content.</p>
+<p>Tseng et al. [<xref ref-type="bibr" rid="bibr11-0165551512437635">11</xref>] indicated that fields in patent documents can be divided into structured and unstructured types. Since the main focus in this article is on designing a method for text mining, only unstructured fields are considered. Additionally, Xue et al. [<xref ref-type="bibr" rid="bibr12-0165551512437635">12</xref>] stated that the title field contains the subject of the invention (i.e. describes what the invention is), while the abstract field contains a brief statement of the main working principles or working structure of the invention (i.e. describes the core of the patent). To simplify the procedure, only the title and abstract of the patent documents were used for extracting candidate terms. From the 2400 patent documents collected, 16,345 unique terms were extracted as candidate terms, while 33,854 unique terms were extracted as candidates from the 9600 patent document set. The pre-processing operation to extract terms from the text of every patent document was then begun. The pre-processing procedure included the tasks of part-of-speech (POS) tagging, the elimination of stop words or insignificant terms, and morphological operations.</p>
+<p>The process of POS tagging involves the labelling of the corresponding syntactic features for every term in a sentence and every sentence in a document. Terms with the following POS tags were retained to be candidates of the representative and discriminative terms: singular or mass noun (NN), plural noun (NNS), singular proper noun (NNP), plural proper noun (NNPS), adjective (JJ), comparative adjective (JJR), superlative adjective (JJS), base form verb (VB), past tense verb (VBD), gerund or present participle (VBG), past participle (VBN), non-third-person singular present verb (VBP), and third-person singular present verb (VBZ). In the process of the elimination of stop words or insignificant terms, terms identified as useless were eliminated. The morphological operation dealt with the morphological problems associated with terms. For example, a plural noun ‘accessories’ would be transformed into a singular noun ‘accessory’. After the pre-processing procedure, the total number of terms that remained and were stored in the term set <italic>T</italic> was 9977 for Exp-1 and 16,206 for Exp-2.</p>
+<p>Afterwards the HFS algorithm was utilized to calculate the score of hp-entropy for each candidate term in set <italic>T</italic>. Since the hierarchy has five levels, every candidate term would have five hp-entropy scores for the five different levels. This article utilized two strategies for accumulating hp-entropy scores for every term: the proportional strategy and weighted-summed strategy.</p>
+<p>In Exp-1, a total of 1000 terms were selected as the most representative terms to present a patent document. There were a total of 11 sets of representative terms selected in the experiment. Using the traditional selection strategy, the representative terms were selected based on the score of hp-entropy for level five only. Hence, the 1000 terms selected using the traditional selection strategy in the experiment were the top 1000 terms with the lowest hp-entropy scores for level five. This served as a baseline for comparing and evaluating the performance of the other two proposed techniques. Similarly, in Exp-2 the 2000 most discriminative terms were selected. Since the size of the patent document set in Exp-2 is larger than that in Exp-1, the number of selected terms should be larger.</p>
+<p>For the proportional strategy and weighted-summed strategy, five different sets of parameters were used to sift out a total of 10 sets of 1000 and 2000 representative terms (for Exp-1 and Exp-2, respectively) from candidate terms as described in <xref ref-type="table" rid="table2-0165551512437635">Table 2</xref>. Take ‘P-1’ in the proportional selection strategy in Exp-1 as an example. The 333 terms, 267 terms, 200 terms, 133 terms and 67 terms with the lowest hp-entropy scores were selected for the fifth, fourth, third, second and first levels, respectively. Another example is: ‘W-1’ in the weighted-summed selection strategy in Exp-1. The accumulated hp-entropy score for a term is summed from the hp-entropy in level five times one, in level four times one, in level three times one, in level two times one and in level one times one, respectively. Finally, the 1000 terms with the lowest accumulated hp-entropy scores were picked out for ‘W-1’ selection strategy in Exp-1.</p>
+<table-wrap id="table2-0165551512437635" position="float">
+<label>Table 2.</label>
+<caption><p>Parameters used in each selection strategy</p></caption>
+<graphic alternate-form-of="table2-0165551512437635" xlink:href="10.1177_0165551512437635-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" colspan="2">Selection strategy</th>
+<th align="left" colspan="10">Variable used for each level</th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th align="left" colspan="5">Exp-1</th>
+<th align="left" colspan="5">Exp-2</th>
+</tr>
+<tr>
+<th/>
+<th/>
+<th align="left">L5</th>
+<th align="left">L4</th>
+<th align="left">L3</th>
+<th align="left">L2</th>
+<th align="left">L1</th>
+<th align="left">L5</th>
+<th align="left">L4</th>
+<th align="left">L3</th>
+<th align="left">L2</th>
+<th align="left">L1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left" colspan="2">Traditional</td>
+<td>1000</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>2000</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td rowspan="3">Proportional(selected number of terms)</td>
+<td align="left">P-1</td>
+<td>333</td>
+<td>267</td>
+<td>200</td>
+<td>133</td>
+<td>67</td>
+<td>666</td>
+<td>534</td>
+<td>400</td>
+<td>266</td>
+<td>134</td>
+</tr>
+<tr>
+<td align="left">P-2</td>
+<td>67</td>
+<td>133</td>
+<td>200</td>
+<td>267</td>
+<td>333</td>
+<td>134</td>
+<td>266</td>
+<td>400</td>
+<td>534</td>
+<td>666</td>
+</tr>
+<tr>
+<td align="left">P-3</td>
+<td>200</td>
+<td>200</td>
+<td>200</td>
+<td>200</td>
+<td>200</td>
+<td>400</td>
+<td>400</td>
+<td>400</td>
+<td>400</td>
+<td>400</td>
+</tr>
+<tr>
+<td/>
+<td align="left">P-4</td>
+<td>500</td>
+<td>500</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1000</td>
+<td>1000</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td/>
+<td align="left">P-5</td>
+<td>400</td>
+<td>300</td>
+<td>300</td>
+<td>0</td>
+<td>0</td>
+<td>800</td>
+<td>600</td>
+<td>600</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td rowspan="3">Weighted-summed(weights to sum up the score of terms)</td>
+<td align="left">W-1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td align="left">W-2</td>
+<td>1</td>
+<td>0.5</td>
+<td>0.25</td>
+<td>0.125</td>
+<td>0.0625</td>
+<td>1</td>
+<td>0.5</td>
+<td>0.25</td>
+<td>0.125</td>
+<td>0.0625</td>
+</tr>
+<tr>
+<td align="left">W-3</td>
+<td>0.0625</td>
+<td>0.125</td>
+<td>0.25</td>
+<td>0.5</td>
+<td>1</td>
+<td>0.0625</td>
+<td>0.125</td>
+<td>0.25</td>
+<td>0.5</td>
+<td>1</td>
+</tr>
+<tr>
+<td/>
+<td align="left">W-4</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td/>
+<td align="left">W-5</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>After the term selection process, each set of 1000 or 2000 representative terms was utilized to build a VSM for Exp-1 or Exp-2, respectively. The 11 VSMs in either Exp-1 or Exp-2 were named: Traditional, VSM-P-1, VSM-P-2, VSM-P-3, VSM-P-4, VSM-P-5, VSM-W-1, VSM-W-2, VSM-W-3, VSM-W-4 and VSM-W-5, respectively. All of the patent documents (a total of 2400 in Exp-1 and a total of 9600 in Exp-2) were transformed to their corresponding document vectors based on these 11 VSMs. In addition, the value of a term in the VSM for a document vector was computed utilizing the TFICF (term frequency, inverse category frequency) formula – in other words, it was used to compute the weighting scores of each representative term in a patent document to form the document vector. The TFICF considers the weight of a term across document categories, while traditional TFIDF (term frequency, inverse document frequency) considers the weight of a term across documents [<xref ref-type="bibr" rid="bibr6-0165551512437635">6</xref>]. Since the classifiers introduced later are meant to distinguish between the categories of documents, it is more appropriate to use TFICF than TFIDF. The TFICF formula is</p>
+<p><disp-formula id="disp-formula5-0165551512437635">
+<label>(4)</label>
+<mml:math display="block" id="math5-0165551512437635">
+<mml:mrow>
+<mml:mi>TFICF</mml:mi>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+<mml:mo>=</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>f</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+<mml:mo>,</mml:mo>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>×</mml:mo>
+<mml:mi>log</mml:mi>
+<mml:mfrac>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mrow>
+<mml:mo>|</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>5</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>t</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>i</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>∈</mml:mo>
+<mml:mi>D</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>5</mml:mn>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>|</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-0165551512437635" xlink:href="10.1177_0165551512437635-eq5.tif"/>
+</disp-formula></p>
+<p>where TFICF(<italic>t<sub>i</sub></italic>) stands for the weight of term <italic>t<sub>i</sub></italic> in document <italic>d<sub>j</sub>; tf<sub>i,j</sub></italic> is the occurrence of term <italic>t<sub>i</sub></italic> in document <italic>d<sub>j</sub></italic>; |<italic>C</italic><sub>5</sub>| is the total number of class labels in level five; and |<italic>C</italic><sub>5</sub>(<italic>t<sub>i</sub></italic>∈<italic>D</italic>(<italic>c<sub>5k</sub></italic>))| is the number of class labels in level five whose documents contain term <italic>t<sub>i</sub></italic>. The TFICF formula is used for assigning different weights for each selected term. The first constituent (<italic>tf<sub>i,j</sub></italic>) increases the weight of term <italic>t<sub>i</sub></italic> for a given document <italic>d<sub>j</sub></italic> proportional to the frequency of the term in the document. The second constituent (<inline-formula id="inline-formula1-0165551512437635"><mml:math display="inline" id="math6-0165551512437635"><mml:mrow><mml:mi>log</mml:mi><mml:mfrac><mml:mrow><mml:mrow><mml:mo>|</mml:mo><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mn>5</mml:mn></mml:mrow></mml:msub><mml:mo>|</mml:mo></mml:mrow></mml:mrow><mml:mrow><mml:mrow><mml:mo>|</mml:mo><mml:msub><mml:mrow><mml:mi>C</mml:mi></mml:mrow><mml:mrow><mml:mn>5</mml:mn></mml:mrow></mml:msub><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>t</mml:mi></mml:mrow><mml:mrow><mml:mi>i</mml:mi></mml:mrow></mml:msub><mml:mo>∈</mml:mo><mml:mi>D</mml:mi><mml:mo stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>c</mml:mi></mml:mrow><mml:mrow><mml:mn>5</mml:mn><mml:mi>k</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false">)</mml:mo><mml:mo stretchy="false">)</mml:mo><mml:mo>|</mml:mo></mml:mrow></mml:mrow></mml:mfrac></mml:mrow></mml:math></inline-formula>) increases the weight of terms existing in only a few classes.</p>
+<p>VSMs, which consist of varied features (i.e. terms), will have different abilities to represent a patent document. In order to realize the representative abilities of every VSM, an evaluation process was designed. In the evaluation process, a set of document vectors transformed by one of the 11 VSMs in either Exp-1 or Exp-2 were first treated as training documents to learn the classification model using the support vector machine (SVM). Each classification model is named after its name in VSM. For example, a classification model for the vector space model VSM-P-1 is called CMd-P-1. The classification accuracy of each model (listed as Acc. in <xref ref-type="table" rid="table3-0165551512437635">Tables 3</xref> and <xref ref-type="table" rid="table4-0165551512437635">4</xref>) was estimated by the percentage of patent documents that were correctly classified by the model.</p>
+<table-wrap id="table3-0165551512437635" position="float">
+<label>Table 3.</label>
+<caption><p>Results of Exp-1 for each selection strategy with different parameter settings</p></caption>
+<graphic alternate-form-of="table3-0165551512437635" xlink:href="10.1177_0165551512437635-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" colspan="7">
+<italic>n</italic> = 2400 in <italic>D</italic><sub>Exp1</sub>; <italic>r</italic> = 1000 in <italic>RT</italic></th>
+</tr>
+<tr>
+<th align="left" colspan="1">Classification model</th>
+<th align="left" colspan="2">Acc. (<italic>P</italic>-value)</th>
+<th align="left" colspan="2">Hie-Acc. (<italic>P</italic>-value)</th>
+<th align="left" colspan="1">Coverage</th>
+<th align="left" colspan="1">Recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Traditional model</td>
+<td>81.39%</td>
+<td/>
+<td>85.46%</td>
+<td/>
+<td>8.62%</td>
+<td>7.01%</td>
+</tr>
+<tr>
+<td>CMd-P-1</td>
+<td>74.94%</td>
+<td>(1.122E−02*)</td>
+<td>89.84%</td>
+<td>(1.187E−02*)</td>
+<td>9.64%</td>
+<td>7.23%</td>
+</tr>
+<tr>
+<td>CMd-P-2</td>
+<td>81.95%</td>
+<td>(4.182E−01)</td>
+<td>94.74%</td>
+<td>(1.156E−07***)</td>
+<td>8.53%</td>
+<td>6.99%</td>
+</tr>
+<tr>
+<td>CMd-P-3</td>
+<td>77.46%</td>
+<td>(8.116E−02)</td>
+<td>92.02%</td>
+<td>(2.171E−04***)</td>
+<td>9.11%</td>
+<td>7.06%</td>
+</tr>
+<tr>
+<td>CMd-P-4</td>
+<td>85.34%</td>
+<td>(6.502E−02)</td>
+<td>91.83%</td>
+<td>(9.261E−04***)</td>
+<td>8.89%</td>
+<td>7.59%</td>
+</tr>
+<tr>
+<td>CMd-P-5</td>
+<td>77.07%</td>
+<td>(5.789E−02)</td>
+<td>90.06%</td>
+<td>(9.076E−03**)</td>
+<td>10.07%</td>
+<td>7.76%</td>
+</tr>
+<tr>
+<td>CMd-W-1</td>
+<td>96.48%</td>
+<td>(4.416E−12***)</td>
+<td>99.08%</td>
+<td>(2.295E−15***)</td>
+<td>7.89%</td>
+<td>7.61%</td>
+</tr>
+<tr>
+<td>CMd-W-2</td>
+<td>96.39%</td>
+<td>(7.100E−12***)</td>
+<td>99.06%</td>
+<td>(2.619E−15***)</td>
+<td>7.70%</td>
+<td>7.42%</td>
+</tr>
+<tr>
+<td>CMd-W-3</td>
+<td>96.48%</td>
+<td>(4.416E−12***)</td>
+<td>99.08%</td>
+<td>(2.295E−15***)</td>
+<td>7.89%</td>
+<td>7.61%</td>
+</tr>
+<tr>
+<td>CMd-W-4</td>
+<td>91.73%</td>
+<td>(8.921E−06***)</td>
+<td>95.09%</td>
+<td>(3.490E−07***)</td>
+<td>8.27%</td>
+<td>7.59%</td>
+</tr>
+<tr>
+<td>CMd-W-5</td>
+<td>94.65%</td>
+<td>(3.703E−09***)</td>
+<td>97.59%</td>
+<td>(1.042E−11***)</td>
+<td>8.00%</td>
+<td>7.57%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table4-0165551512437635" position="float">
+<label>Table 4.</label>
+<caption><p>Results of Exp-2 for each selection strategy with different parameter settings</p></caption>
+<graphic alternate-form-of="table4-0165551512437635" xlink:href="10.1177_0165551512437635-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left" colspan="7">
+<italic>n</italic> = 9600 in <italic>D</italic><sub>Exp2</sub>; <italic>r</italic> = 2000 in <italic>RT</italic></th>
+</tr>
+<tr>
+<th align="left" colspan="1">Classification model</th>
+<th align="left" colspan="2">Acc. (<italic>P</italic>-value)</th>
+<th align="left" colspan="2">Hie-Acc. (<italic>P</italic>-value)</th>
+<th align="left" colspan="1">Coverage</th>
+<th align="left" colspan="1">Recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Traditional model</td>
+<td>89.73%</td>
+<td/>
+<td>90.73%</td>
+<td/>
+<td>6.74%</td>
+<td>6.05%</td>
+</tr>
+<tr>
+<td>CMd-P-1</td>
+<td>74.60%</td>
+<td>(2.464E−29***)</td>
+<td>88.54%</td>
+<td>(1.199E−02*)</td>
+<td>8.41%</td>
+<td>6.28%</td>
+</tr>
+<tr>
+<td>CMd-P-2</td>
+<td>71.93%</td>
+<td>(2.274E−38***)</td>
+<td>89.95%</td>
+<td>(1.935E−01)</td>
+<td>8.51%</td>
+<td>6.12%</td>
+</tr>
+<tr>
+<td>CMd-P-3</td>
+<td>72.74%</td>
+<td>(1.515E−35***)</td>
+<td>89.55%</td>
+<td>(1.024E− 01)</td>
+<td>8.49%</td>
+<td>6.18%</td>
+</tr>
+<tr>
+<td>CMd-P-4</td>
+<td>82.42%</td>
+<td>(4.797E−09***)</td>
+<td>91.69%</td>
+<td>(1.627E−01)</td>
+<td>7.65%</td>
+<td>6.31%</td>
+</tr>
+<tr>
+<td>CMd-P-5</td>
+<td>75.33%</td>
+<td>(8.741E−27***)</td>
+<td>88.68%</td>
+<td>(1.838E−02*)</td>
+<td>8.24%</td>
+<td>6.21%</td>
+</tr>
+<tr>
+<td>CMd-W-1</td>
+<td>98.38%</td>
+<td>(9.348E−22***)</td>
+<td>99.50%</td>
+<td>(1.550E−28***)</td>
+<td>6.09%</td>
+<td>5.99%</td>
+</tr>
+<tr>
+<td>CMd-W-2</td>
+<td>99.02%</td>
+<td>(4.341E−26***)</td>
+<td>99.59%</td>
+<td>(4.419E−29***)</td>
+<td>6.03%</td>
+<td>5.97%</td>
+</tr>
+<tr>
+<td>CMd-W-3</td>
+<td>97.03%</td>
+<td>(1.406E−14***)</td>
+<td>99.21%</td>
+<td>(7.384E−27***)</td>
+<td>6.16%</td>
+<td>5.97%</td>
+</tr>
+<tr>
+<td>CMd-W-4</td>
+<td>94.38%</td>
+<td>(4.429E−06***)</td>
+<td>94.82%</td>
+<td>(1.534E−05***)</td>
+<td>6.33%</td>
+<td>5.98%</td>
+</tr>
+<tr>
+<td>CMd-W-5</td>
+<td>98.09%</td>
+<td>(4.205E−20***)</td>
+<td>98.79%</td>
+<td>(1.078E−22***)</td>
+<td>6.23%</td>
+<td>6.11%</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>Since it is better to classify a document into a partially correct class than not at all, it is worth demonstrating the hierarchical accuracy of the classification model. The hierarchical accuracy (listed as Hie-Acc. in <xref ref-type="table" rid="table3-0165551512437635">Tables 3</xref> and <xref ref-type="table" rid="table4-0165551512437635">4</xref>) is proposed to measure the correctness of document classification on every level of the hierarchy and is computed by taking the average correctness score <italic>SC<sub>j</sub></italic> for every document <italic>d<sub>j</sub></italic> classified by the model. In the evaluation process, if the classification model classifies a document with a completely accurate class label, the correctness score for this document will be one. If a document is classified with an accurate class label on the group level, subclass level, class level and section level, the correctness score for this document will be 0.8, 0.6, 0.4 and 0.2, respectively.</p>
+<p><disp-formula id="disp-formula6-0165551512437635">
+<label>(5)</label>
+<mml:math display="block" id="math7-0165551512437635">
+<mml:mrow>
+<mml:mi>Hie</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>Acc</mml:mi>
+<mml:mo>.</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:munderover>
+<mml:mo>∑</mml:mo>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>n</mml:mi>
+</mml:mrow>
+</mml:munderover>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>{</mml:mo>
+<mml:mi>S</mml:mi>
+<mml:msub>
+<mml:mrow>
+<mml:mi>C</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mtable align="left">
+<mml:mtr>
+<mml:mtd columnalign="center">
+<mml:mrow>
+<mml:mn>1</mml:mn>
+<mml:mspace width="0.25em"/>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>is</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>classified</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>accurately</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>in</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>the</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>subgroup</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>level</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>8</mml:mn>
+<mml:mspace width="0.25em"/>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>is</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>classified</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>accurately</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>in</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>the</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>group</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>level</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>6</mml:mn>
+<mml:mspace width="0.25em"/>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>is</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>classified</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>accurately</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>in</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>the</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>subclass</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>level</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>4</mml:mn>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>is</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>classified</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>accurately</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>in</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>the</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>class</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>level</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mo>.</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mspace width="0.25em"/>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>is</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>classified</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>accurately</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>in</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>the</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>section</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>level</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd columnalign="center" columnspan="1">
+<mml:mrow>
+<mml:mn>0</mml:mn>
+<mml:mspace width="0.25em"/>
+<mml:mtext>if</mml:mtext>
+<mml:msub>
+<mml:mrow>
+<mml:mi>d</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>j</mml:mi>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mspace width="0.25em"/>
+<mml:mtext>is</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>not</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>classified</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>accurately</mml:mtext>
+</mml:mrow>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+<mml:mo>
+</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-0165551512437635" xlink:href="10.1177_0165551512437635-eq6.tif"/>
+</disp-formula></p>
+<p>When a patent is transformed to a vector according to a VSM, if all of the TFICF weights are zero, then the vector will degenerate into a zero vector and this VSM model fails to represent this patent. Thus, we define the value of coverage as being indicative of the representative abilities of the selected terms in each VSM. The higher the value of coverage, the better the selected terms represent the patent documents in the document set. Thus, coverage is a good indicator for identifying the quality of the selected terms to represent a document set:</p>
+<p><disp-formula id="disp-formula7-0165551512437635">
+<label>(6)</label>
+<mml:math display="block" id="math8-0165551512437635">
+<mml:mrow>
+<mml:mi>Coverage</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mtext># of nonzero vectors</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>total # of vectors</mml:mtext>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-0165551512437635" xlink:href="10.1177_0165551512437635-eq7.tif"/>
+</disp-formula></p>
+<p>Besides the measurement of coverage, another estimation method known as recall is used to measure the percentage of the document vectors that are correctly recognized. The score of recall is obtained via the multiplication of the accuracy (i.e. Acc.) and the coverage</p>
+<p><disp-formula id="disp-formula8-0165551512437635">
+<label>(7)</label>
+<mml:math display="block" id="math9-0165551512437635">
+<mml:mrow>
+<mml:mi>recall</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:mi>Acc</mml:mi>
+<mml:mo>.</mml:mo>
+<mml:mo>×</mml:mo>
+<mml:mi>Coverage</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-0165551512437635" xlink:href="10.1177_0165551512437635-eq8.tif"/>
+</disp-formula></p>
+<p>The results obtained from Exp-1 using each selection strategy with different parameter settings are shown in <xref ref-type="table" rid="table3-0165551512437635">Table 3</xref>. Additionally, <xref ref-type="table" rid="table4-0165551512437635">Table 4</xref> shows the outcome of Exp-2 using each of the two selection strategies with different parameter settings. In the table, the classification models are named after the term selection strategies as well as the parameters. For example, the one using the proportional selection strategy with the parameter setting of P-1 is named ‘CMd-P-1’.</p>
+<p>The experimental results show that the VSMs constructed using the terms picked out by the proportional selection and weighted-summed selection strategies were better (for accuracy, coverage and recall) than the VSM formed by the traditional method. Furthermore, the proportional classification models (CMd-P-1 to CMd-P-5) gave the highest coverage, while the weighted-summed classification models (CMd-W-1 to CMd-W-5) gave the highest accuracy and the highest hierarchical accuracy.</p>
+</sec>
+<sec id="section11-0165551512437635" sec-type="discussion">
+<title>6. Discussion</title>
+<p>The accuracy rate means the ratio of correctly predicted vectors (i.e. patent documents) to non-zero vectors. The <italic>P</italic>-value is used to demonstrate the significance and extent of the difference in accuracy between a model constructed using the proposed method and one built with the traditional method. If the <italic>P</italic>-value is less than 0.05* appears after the value and it denotes a significant difference; ** after the value denotes a <italic>P</italic>-value of less than 0.01, meaning a highly significant difference; *** indicates a <italic>P</italic>-value of less than 0.001, which represents an extremely significant difference. The coverage means the ability of a classification model to represent patent documents. When the coverage rate is relatively low, it means that the number of non-zero vectors, i.e. the number of patent documents for prediction, is less. The accuracy is independent of the coverage. High coverage would not directly lead to a high or low accuracy. The recall rate can be used to measure the overall performance of the classification model.</p>
+<p>In Exp-1, the accuracy rates of classification models CMd-P-2, CMd-P-4, CMd-W-1, CMd-W-2, CMd-W-3, CMd-W-4 and CMd-W-5 were higher than those of the traditional model. Furthermore, the classification models CMd-W-1, CMd-W-2, CMd-W-3, CMd-W-4 and CMd-W-5 had <italic>P</italic>-values of less than 0.001, indicating an extremely significant difference from the traditional model. The hierarchical accuracy rates of all the classification models were higher than those of the traditional model. The improved performance means that these classification models could predict the class label more correctly. Among them, the classification models CMd-W-1 and CMd-W-3 had the best performance in terms of hierarchical accuracy in Exp-1. The classification models CMd-P-1, CMd-P-3, CMd-P-4 and CMd-P-5 had better coverage scores than the traditional model. The best coverage was obtained with CMd-P-5. Thus, the classification model CMd-P-5 in Exp-1 could represent the most patent documents (which are non-zero vectors). All the recall rates of the classification models, with the exception of CMd-P-2 in Exp-1, were higher than those obtained with the traditional model, and the recall rate for CMd-P-5, 7.76%, is the highest in Exp-1. This means that the classification model CMd-P-5 had the best overall performance during experiment Exp-1. The correctness of the prediction obtained using CMd-P-5 for both non-zero vectors and zero vectors was the highest.</p>
+<p>In Exp-2, the accuracy rates of CMd-W-1, CMd-W-2, CMd-W-3, CMd-W-4 and CMd-W-5 were higher than those of the traditional model. Their <italic>P</italic>-value of less than 0.001 indicated an extremely significant difference between these models and the traditional model. Furthermore, the hierarchical accuracy rates obtained with CMd-P-4, CMd-W-1, CMd-W-2, CMd-W-3, CMd-W-4 and CMd-W-5 were higher than those of the traditional model. The five classification models that used weighted-summed selection strategies had <italic>P</italic>-values of less than 0.001 and were extremely significantly different from the traditional model. Among them, CMd-W-2 had the best performance in terms of hierarchical accuracy in Exp-2. The coverage scores obtained with CMd-P-1, CMd-P-2, CMd-P-3, CMd-P-4 and CMd-P-5 were higher than those of the traditional model. The best coverage was obtained with CMd-P-2. This means that the classification model CMd-P-2 in Exp-2 could represent the largest amount of patent documents. Since the size of the document set was much larger than that in the experiment Exp-1, the number of selected terms (i.e. 2000) was higher than that used in the experiment Exp-1 (i.e. 1000). The reason for increasing the amount was to retain the coverage rate. According to <xref ref-type="table" rid="table3-0165551512437635">Tables 3</xref> and <xref ref-type="table" rid="table4-0165551512437635">4</xref>, the coverage rates of the classification models in Exp-1 ranged from 6% to 9% and the coverage rates of the classification models in Exp-2 ranged from 7% to 10%. The coverage rates in the two experiments were approximately the same. The recall rates of CMd-P-1, CMd-P-2, CMd-P-3, CMd-P-4, CMd-P-5 and CMd-W-5 in Exp-2 were higher than those of the traditional model. Among them, CMd-P-4 had the highest recall rate (6.31%) in Exp-2, which means that CMd-P-4 had the best overall performance in Exp-2.</p>
+<p>The reason for the high coverage of the proportional classification model could be that it collected the most representative terms from each level. Since the most representative terms could cover more documents, considering the representative abilities level by level could result in maximum coverage. In addition, the proportional classification models could expand the representative abilities and retain the commonly used terms on the higher level (e.g. section level). On the other hand, the reason for the high accuracy of the weighted-summed classification model could be that it considered the representative ability of a term on all levels simultaneously. The classification models CMd-W-1, CMD-W-2 and CMd-W-3 took the discrimination abilities of a term on all five of the levels into consideration, while CMd-W-4 and CMd-W-5 only took into consideration the discrimination abilities of a term on two or three levels. The higher accuracy of the CMd-W-1, CMD-W-2, CMd-W-3 results than the CMd-W-4 and CMd-W-5 results show that weighting more levels can produce higher accuracy than weighting fewer levels. This proves the validity of the proposed approach. In other words, a classification model will perform better if it is based on a VSM that considers terms’ discrimination abilities for all levels.</p>
+<p>According to the results in the experiment and evaluation, this research proved that the accuracy and coverage can be enhanced by considering the relationship between the hierarchical levels and the term discrimination abilities. This is a revolutionary finding in feature selection regarding hierarchical class labels because no previous research has ever included this relationship to help select discriminative features. Although it is now in the preliminary stage, this finding might revolutionize the way we select most discriminative features for documents with hierarchical labels. In the future, it is expected that new feature selection methods will be developed based on this finding to further improve the performance of feature selection. In addition, we can attempt to apply these feature selection methods to different document domains with hierarchical labels such as news classification structure, disease classification code and book classification code.</p>
+<p>In summary, the results of the two experiments indicate a trend that was not be affected by the size of the document set: the proportional selection strategies could lead a higher coverage and a higher recall rate, and the weighted-summed selection strategies could lead a higher accuracy rate.</p>
+</sec>
+<sec id="section12-0165551512437635" sec-type="conclusions">
+<title>7. Conclusion and future study</title>
+<p>This article proposes an approach for constructing VSMs to represent patent documents. The results of the experiments and the process of evaluation reveal that a VSM built on terms selected by a proportional selection strategy can give higher coverage, while a VSM built on terms selected via a weighted-summed strategy can have higher accuracy. Furthermore, the results also indicate that both proposed methods can significantly improve the hierarchical accuracy of patent classification.</p>
+<p>The limitations of this research are explained below. The proposed method provides a new approach to represent patent documents with hierarchical class labels via VSM. In order to test the performance of the proposed method, we built a classification model via SVM (which is the most popularly used method for classification) from the vectors generated from patent documents. Although the experimental results indicate that our method can generate vectors with better performance, the validity of our results is limited to classification tasks with the SVM method. It is still unknown if similar results can be obtained by applying the generated vectors to other tasks or other classification models rather than SVM.</p>
+<p>This is the first article that utilizes the hierarchical label structure to design a better feature selection scheme. This effort points out an interesting direction for future research, not only for patent documents, but also for documents with hierarchical labels. That is, what other hierarchical label structures can be used to design improved methods for feature selection, feature extraction, classification and other tasks? For example, we may consider another kind of hierarchical label structure such as is used in medicine, i.e. the International Statistical Classification of Diseases and Related Health Problems or commonly known as International Classification of Disease (ICD).</p>
+<p>Future studies could be carried out: to test more possible parameters and settings in each selection strategy to further demonstrate the validity of the proposed method; utilizing normalization on the basis of the most frequent term of the <italic>j</italic>th document while calculating the value of TFICF; trying other ways of setting correctness scores for testing the validity of the measurement of hierarchical accuracy; trying other sizes of patent document set to further prove the validity of the proposed method; to test more possibilities of setting different amounts of selected terms to see whether there is any difference among the experimental results; or to use more textual fields such as the claim and description in patent documents to evaluate the validity of the proposed method.</p>
+</sec>
+</body>
+<back>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-0165551512437635">
+<label>[1]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Baeza-Yates</surname><given-names>R</given-names></name>
+<name><surname>Ribeiro-Neto</surname><given-names>B</given-names></name>
+</person-group>. <source>Modern information retrieval</source>. <publisher-loc>Wokingham, UK</publisher-loc>: <publisher-name>Addison-Wesley</publisher-name>, <year>1999</year>, pp. <fpage>163</fpage>–<lpage>190</lpage>.</citation>
+</ref>
+<ref id="bibr2-0165551512437635">
+<label>[2]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Manning</surname><given-names>CD</given-names></name>
+<name><surname>Raghavan</surname><given-names>P</given-names></name>
+<name><surname>Schütze</surname><given-names>H</given-names></name>
+</person-group>. <source>Introduction to information retrieval</source>. <publisher-loc>New York, USA</publisher-loc>: <publisher-name>Cambridge University Press</publisher-name>, <year>2008</year>, pp. <fpage>234</fpage>–<lpage>265</lpage>.</citation>
+</ref>
+<ref id="bibr3-0165551512437635">
+<label>[3]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Tan</surname><given-names>PN</given-names></name>
+<name><surname>Steinbach</surname><given-names>M</given-names></name>
+<name><surname>Kumar</surname><given-names>V</given-names></name>
+</person-group>. <source>Introduction to data mining</source>. <publisher-loc>USA</publisher-loc>: <publisher-name>Addison Wesley</publisher-name>, <year>2005</year>, pp. <fpage>19</fpage>–<lpage>95</lpage>.</citation>
+</ref>
+<ref id="bibr4-0165551512437635">
+<label>[4]</label>
+<citation citation-type="web">
+<collab>WIPO</collab>. ‘<article-title>Frequently Asked Questions about the International Patent Classification (IPC): What is the IPC?’</article-title>, <comment><ext-link ext-link-type="uri" xlink:href="http://www.wipo.int/classifications/ipc/en/faq/index.html#G1">http://www.wipo.int/classifications/ipc/en/faq/index.html#G1</ext-link></comment> (<year>2010</year>, <access-date>accessed May 2011</access-date>).</citation>
+</ref>
+<ref id="bibr5-0165551512437635">
+<label>[5]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Tikk</surname><given-names>D</given-names></name>
+<name><surname>Biró</surname><given-names>G</given-names></name>
+<name><surname>Törcsvári</surname><given-names>A</given-names></name>
+</person-group>. <article-title>A hierarchical online classifier for patent categorization</article-title>. In: <person-group person-group-type="editor">
+<name><surname>Prado</surname><given-names>HAD</given-names></name>
+<name><surname>Ferneda</surname><given-names>E</given-names></name>
+</person-group> (eds) <source>Emerging technologies of text mining: techniques and applications</source>. <publisher-loc>New York, USA</publisher-loc>: <publisher-name>Idea Group Publishing</publisher-name>, <year>2007</year>, pp. <fpage>244</fpage>–<lpage>267</lpage>.</citation>
+</ref>
+<ref id="bibr6-0165551512437635">
+<label>[6]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Salton</surname><given-names>G</given-names></name>
+<name><surname>Buckley</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Term-weighting approaches in automatic text retrieval</article-title>. <source>Information Processing &amp; Management</source> <year>1988</year>; <volume>24</volume>(<issue>5</issue>): <fpage>513</fpage>–<lpage>523</lpage>.</citation>
+</ref>
+<ref id="bibr7-0165551512437635">
+<label>[7]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lochbaum</surname><given-names>KE</given-names></name>
+<name><surname>Streeter</surname><given-names>LA</given-names></name>
+</person-group>. <article-title>Combining and comparing the effectiveness of latent semantic indexing and the ordinary vector space model for information retrieval</article-title>. <source>Information Processing &amp; Management</source> <year>1989</year>; <volume>25</volume>(<issue>6</issue>): <fpage>665</fpage>–<lpage>676</lpage>.</citation>
+</ref>
+<ref id="bibr8-0165551512437635">
+<label>[8]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Hotho</surname><given-names>A</given-names></name>
+<name><surname>Nürnberger</surname><given-names>A</given-names></name>
+<name><surname>Paaß</surname><given-names>G</given-names></name>
+</person-group>. <article-title>A brief survey of text mining</article-title>. <source>LDV-Forum GLDV Journal for Computational Linguistics and Language Technology</source> <year>2005</year>; <volume>20</volume>(<issue>1</issue>): <fpage>19</fpage>–<lpage>62</lpage>.</citation>
+</ref>
+<ref id="bibr9-0165551512437635">
+<label>[9]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Li</surname><given-names>YJ</given-names></name>
+<name><surname>Luo</surname><given-names>C</given-names></name>
+<name><surname>Chung</surname><given-names>SM</given-names></name>
+</person-group>. <article-title>Text clustering with feature selection by using statistical data</article-title>. <source>IEEE Transactions on Knowledge and Data Engineering</source> <year>2008</year>; <volume>20</volume>(<issue>5</issue>): <fpage>641</fpage>–<lpage>652</lpage>.</citation>
+</ref>
+<ref id="bibr10-0165551512437635">
+<label>[10]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Feldman</surname><given-names>R</given-names></name>
+<name><surname>Sanger</surname><given-names>J</given-names></name>
+</person-group>. <source>The text mining handbook: advanced approaches in analyzing unstructured data</source>. <publisher-loc>New York, USA</publisher-loc>: <publisher-name>Cambridge University Press</publisher-name>, <year>2007</year>.</citation>
+</ref>
+<ref id="bibr11-0165551512437635">
+<label>[11]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tseng</surname><given-names>YH</given-names></name>
+<name><surname>Lin</surname><given-names>CJ</given-names></name>
+<name><surname>Lin</surname><given-names>YI</given-names></name>
+</person-group>. <article-title>Text mining techniques for patent analysis</article-title>. <source>Information Processing &amp; Management</source> <year>2007</year>; <volume>43</volume>(<issue>5</issue>): <fpage>1216</fpage>–<lpage>1247</lpage>.</citation>
+</ref>
+<ref id="bibr12-0165551512437635">
+<label>[12]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Xue</surname><given-names>C</given-names></name>
+<name><surname>Qiu</surname><given-names>QY</given-names></name>
+<name><surname>Feng</surname><given-names>PE</given-names></name>
+<name><surname>Yao</surname><given-names>ZN</given-names></name>
+</person-group>. <article-title>An automatic classification method for patents</article-title>. In: <conf-name>2010 seventh international conference on fuzzy systems and knowledge discovery</conf-name> <year>2010</year>; <fpage>1497</fpage>–<lpage>1501</lpage>.</citation>
+</ref>
+<ref id="bibr13-0165551512437635">
+<label>[13]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Salton</surname><given-names>G</given-names></name>
+<name><surname>Wong</surname><given-names>A</given-names></name>
+<name><surname>Yang</surname><given-names>CS</given-names></name>
+</person-group>. <article-title>A vector space model for automatic indexing</article-title>. <source>Communications of the ACM</source> <year>1975</year>; <volume>18</volume>(<issue>11</issue>): <fpage>613</fpage>–<lpage>620</lpage>.</citation>
+</ref>
+<ref id="bibr14-0165551512437635">
+<label>[14]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Herlocker</surname><given-names>JL</given-names></name>
+<name><surname>Konstan</surname><given-names>JA</given-names></name>
+<name><surname>Borchers</surname><given-names>A</given-names></name>
+<name><surname>Riedll</surname><given-names>J</given-names></name>
+</person-group>. <article-title>An algorithmic framework for performing collaborative filtering</article-title>. In: <conf-name>Proceedings of the 22nd conference on research and development in information retrieval (SIGIR’99)</conf-name> <year>1999</year>; <fpage>230</fpage>–<lpage>237</lpage>.</citation>
+</ref>
+<ref id="bibr15-0165551512437635">
+<label>[15]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Jiang</surname><given-names>CT</given-names></name>
+<name><surname>Coenen</surname><given-names>F</given-names></name>
+<name><surname>Sanderson</surname><given-names>R</given-names></name>
+<name><surname>Zito</surname><given-names>M</given-names></name>
+</person-group>. <article-title>Text classification using graph mining-based feature extraction</article-title>. <source>Knowledge-based Systems</source> <year>2010</year>; <volume>23</volume>(<issue>3</issue>): <fpage>302</fpage>–<lpage>308</lpage>.</citation>
+</ref>
+<ref id="bibr16-0165551512437635">
+<label>[16]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chen</surname><given-names>YL</given-names></name>
+<name><surname>Chiu</surname><given-names>YT</given-names></name>
+</person-group>. <article-title>An IPC-based vector space model for patent retrieval</article-title>. <source>Journal of Information Processing &amp; Management</source> <year>2011</year>; <volume>47</volume>(<issue>3</issue>): <fpage>309</fpage>–<lpage>322</lpage>.</citation>
+</ref>
+<ref id="bibr17-0165551512437635">
+<label>[17]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Trappey</surname><given-names>AJC</given-names></name>
+<name><surname>Trappey</surname><given-names>CV</given-names></name>
+</person-group>. <article-title>An R&amp;D knowledge management method for patent document</article-title>. <source>Industrial Management &amp; Data Systems</source> <year>2008</year>; <volume>108</volume>(<issue>1–2</issue>): <fpage>245</fpage>–<lpage>257</lpage>.</citation>
+</ref>
+<ref id="bibr18-0165551512437635">
+<label>[18]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Salton</surname><given-names>G</given-names></name>
+<name><surname>McGill</surname><given-names>M</given-names></name>
+</person-group>. <source>Introduction to modern information retrieval</source>. <publisher-loc>McGraw-Hill, USA</publisher-loc>: <publisher-name>New York</publisher-name>, <year>1983</year>.</citation>
+</ref>
+<ref id="bibr19-0165551512437635">
+<label>[19]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Salton</surname><given-names>G</given-names></name>
+<name><surname>Allan</surname><given-names>J</given-names></name>
+<name><surname>Buckley</surname><given-names>C</given-names></name>
+</person-group>. <article-title>Automatic structuring and retrieval of large text files</article-title>. <source>Communications of the ACM</source> <year>1994</year>; <volume>37</volume>(<issue>2</issue>): <fpage>97</fpage>–<lpage>108</lpage>.</citation>
+</ref>
+<ref id="bibr20-0165551512437635">
+<label>[20]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lai</surname><given-names>KK</given-names></name>
+<name><surname>Lin</surname><given-names>ML</given-names></name>
+<name><surname>Chang</surname><given-names>SM</given-names></name>
+</person-group>. <article-title>Research trends on patent analysis: an analysis of the research published in library’s electronic databases</article-title>. <source>The Journal of American Academy of Business</source> <year>2006</year>; <volume>8</volume>(<issue>2</issue>): <fpage>248</fpage>–<lpage>253</lpage>.</citation>
+</ref>
+<ref id="bibr21-0165551512437635">
+<label>[21]</label>
+<citation citation-type="web">
+<collab>Wikipedia, United States Patent and Trademark Office</collab>, <day>30</day> <month>September</month> <year>2011</year>, <comment><ext-link ext-link-type="uri" xlink:href="http://en.wikipedia.org/wiki/USPTO">http://en.wikipedia.org/wiki/USPTO</ext-link></comment>.</citation>
+</ref>
+<ref id="bibr22-0165551512437635">
+<label>[22]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kang</surname><given-names>IS</given-names></name>
+<name><surname>Na</surname><given-names>SH</given-names></name>
+<name><surname>Kim</surname><given-names>J</given-names></name>
+<name><surname>Lee</surname><given-names>JH</given-names></name>
+</person-group>. <article-title>Cluster-based patent retrieval</article-title>. <source>Information Processing &amp; Management</source> <year>2007</year>; <volume>43</volume>(<issue>5</issue>): <fpage>1173</fpage>–<lpage>1182</lpage>.</citation>
+</ref>
+<ref id="bibr23-0165551512437635">
+<label>[23]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Larkey</surname><given-names>LS</given-names></name>
+</person-group>. <article-title>Some issues in the automatic classification of U.S. patents</article-title>. In: <conf-name>Working notes for the AAAI-98 workshop on learning for text categorization</conf-name> <year>1998</year>; <fpage>87</fpage>–<lpage>90</lpage>.</citation>
+</ref>
+<ref id="bibr24-0165551512437635">
+<label>[24]</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Larkey</surname><given-names>LS</given-names></name>
+</person-group>. <article-title>A patent search and classification system</article-title>. In: <conf-name>Proceedings of the fourth ACM conference on digital libraries</conf-name> <year>1999</year>; <fpage>79</fpage>–<lpage>87</lpage>.</citation>
+</ref>
+<ref id="bibr25-0165551512437635">
+<label>[25]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Fall</surname><given-names>CJ</given-names></name>
+<name><surname>Törcsvári</surname><given-names>A</given-names></name>
+<name><surname>Benzineb</surname><given-names>K</given-names></name>
+<name><surname>Karetka</surname><given-names>G</given-names></name>
+</person-group>. <article-title>Automated categorization in the international patent classification</article-title>. <source>SIGIR Forum</source> <year>2003</year>; <volume>37</volume>(<issue>1</issue>): <fpage>10</fpage>–<lpage>25</lpage>.</citation>
+</ref>
+<ref id="bibr26-0165551512437635">
+<label>[26]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Kim</surname><given-names>JH</given-names></name>
+<name><surname>Choi</surname><given-names>KS</given-names></name>
+</person-group>. <article-title>Patent document categorization based on semantic structural information</article-title>. <source>Information Processing &amp; Management</source> <year>2007</year>; <volume>43</volume>(<issue>5</issue>): <fpage>1200</fpage>–<lpage>1215</lpage>.</citation>
+</ref>
+<ref id="bibr27-0165551512437635">
+<label>[27]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Trappey</surname><given-names>AJC</given-names></name>
+<name><surname>Hsu</surname><given-names>FC</given-names></name>
+<name><surname>Trappey</surname><given-names>CV</given-names></name>
+<name><surname>Lin</surname><given-names>CI</given-names></name>
+</person-group>. <article-title>Development of a patent document classification and search platform using a back-propagation network</article-title>. <source>Expert Systems with Applications</source> <year>2006</year>; <volume>31</volume>(<issue>4</issue>): <fpage>755</fpage>–<lpage>765</lpage>.</citation>
+</ref>
+<ref id="bibr28-0165551512437635">
+<label>[28]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Trappey</surname><given-names>AJC</given-names></name>
+<name><surname>Trappey</surname><given-names>CV</given-names></name>
+<name><surname>Hsieh</surname><given-names>ECH</given-names></name>
+</person-group>. <article-title>Automatic categorization of patent documents for R&amp;D knowledge self-organization</article-title>. <source>Journal of Management</source> <year>2006</year>; <volume>23</volume>(<issue>4</issue>): <fpage>413</fpage>–<lpage>424</lpage>.</citation>
+</ref>
+<ref id="bibr29-0165551512437635">
+<label>[29]</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Han</surname><given-names>J</given-names></name>
+<name><surname>Kamber</surname><given-names>M</given-names></name>
+<name><surname>Pei</surname><given-names>J</given-names></name>
+</person-group>.<source>Data mining: concepts and techniques</source>. <edition>2nd ed.</edition> <publisher-loc>San Francisco, CA</publisher-loc>: <publisher-name>Morgan Kaufmann</publisher-name>, <year>2006</year>, pp. <fpage>89</fpage>–<lpage>90</lpage>.</citation>
+</ref>
+<ref id="bibr30-0165551512437635">
+<label>[30]</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Karanikolas</surname><given-names>N</given-names></name>
+<name><surname>Skourlas</surname><given-names>C</given-names></name>
+</person-group>. <article-title>A parametric methodology for text classification</article-title>. <source>Journal of Information Science</source> <year>2010</year>; <volume>36</volume>(<issue>4</issue>): <fpage>421</fpage>–<lpage>442</lpage>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>

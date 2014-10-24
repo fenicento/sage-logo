@@ -1,0 +1,2580 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD Journal Publishing DTD v2.3 20070202//EN" "journalpublishing.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+<front>
+<journal-meta>
+<journal-id journal-id-type="publisher-id">JER</journal-id>
+<journal-id journal-id-type="hwp">spjer</journal-id>
+<journal-title>International Journal of Engine Research</journal-title>
+<issn pub-type="ppub">1468-0874</issn>
+<issn pub-type="epub">2041-3149</issn>
+<publisher>
+<publisher-name>SAGE Publications</publisher-name>
+<publisher-loc>Sage UK: London, England</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1177/1468087411424377</article-id>
+<article-id pub-id-type="publisher-id">10.1177_1468087411424377</article-id>
+<title-group>
+<article-title>Development of a model-based transient calibration process for diesel engine electronic control module tables – Part 2: modelling and optimization</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<name><surname>Brahma</surname><given-names>I</given-names></name>
+<xref ref-type="aff" rid="aff1-1468087411424377">1</xref>
+<xref ref-type="corresp" rid="corresp1-1468087411424377">*</xref>
+</contrib>
+<contrib contrib-type="author">
+<name><surname>Chi</surname><given-names>J N</given-names></name>
+<xref ref-type="aff" rid="aff2-1468087411424377">2</xref>
+</contrib>
+</contrib-group>
+<aff id="aff1-1468087411424377"><label>1</label>Mechanical Engineering, Bucknell University, Lewisburg, PA, USA</aff>
+<aff id="aff2-1468087411424377"><label>2</label>Duke University, Durham, NC, USA</aff>
+<author-notes>
+<corresp id="corresp1-1468087411424377"><label>*</label>Bucknell University, Lewisburg, PA 17837, USA. email: <email>indranil.brahma@bucknell.edu</email></corresp>
+</author-notes>
+<pub-date pub-type="epub-ppub">
+<month>4</month>
+<year>2012</year>
+</pub-date>
+<volume>13</volume>
+<issue>2</issue>
+<fpage>147</fpage>
+<lpage>168</lpage>
+<history>
+<date date-type="received">
+<day>19</day>
+<month>1</month>
+<year>2011</year>
+</date>
+<date date-type="accepted">
+<day>12</day>
+<month>8</month>
+<year>2011</year>
+</date>
+</history>
+<permissions>
+<copyright-statement>© IMechE 2012</copyright-statement>
+<copyright-year>2012</copyright-year>
+<copyright-holder content-type="society">Institution of Mechanical Engineers</copyright-holder>
+</permissions>
+<abstract>
+<p>This is the second part of a study investigating a model-based transient calibration process for diesel engines. The first part addressed the data requirements and data processing required for empirical transient emission and torque models. The current work focuses on modelling and optimization. The unexpected result of this investigation is that when trained on transient data, simple regression models perform better than more powerful methods such as neural networks or localized regression. This result has been attributed to extrapolation over data that have estimated rather than measured transient air-handling parameters. The challenges of detecting and preventing extrapolation using statistical methods that work well with steady-state data have been explained. The concept of constraining the distribution of statistical leverage relative to the distribution of the starting solution to prevent extrapolation during the optimization process has been proposed and demonstrated. Separate from the issue of extrapolation is preventing the search from being quasi-static. Second-order linear dynamic constraint models have been proposed to prevent the search from returning solutions that are feasible if each point were run at steady state, but which are unrealistic in a transient sense. Dynamic constraint models translate commanded parameters to actually achieved parameters that then feed into the transient emission and torque models. Combined model inaccuracies have been used to adjust the optimized solutions. To frame the optimization problem within reasonable dimensionality, the coefficients of commanded surfaces that approximate engine tables are adjusted during search iterations, each of which involves simulating the entire transient cycle. The resulting strategy, different from the corresponding manual calibration strategy and resulting in lower emissions and efficiency, is intended to improve rather than replace the manual calibration process.</p>
+</abstract>
+<kwd-group>
+<kwd>model-based transient calibration process</kwd>
+<kwd>diesel engine</kwd>
+<kwd>electronic control module (ECM) tables</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="section1-1468087411424377" sec-type="intro">
+<title>1 Introduction</title>
+<p>This article is broadly divided into three sections: transient emission models, dynamic constraint models, and optimization. As described in part 1 [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>], all of the current literature, with a single exception, addresses one or more of these three components for purposes other than developing transient engine maps. These researchers, for example references [<xref ref-type="bibr" rid="bibr2-1468087411424377">2</xref>–<xref ref-type="bibr" rid="bibr4-1468087411424377">4</xref>], have investigated transient segments rather than regulatory cycles, and their model predictions did not need to be accurate enough to be used for calibration purposes. Both of these requirements preclude non-empirical methods. The exception is Atkinson <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr5-1468087411424377">5</xref>, <xref ref-type="bibr" rid="bibr6-1468087411424377">6</xref>] who has used neural networks for dynamic emission modelling and even semi-empirical phenomenological techniques previously reported by the author [<xref ref-type="bibr" rid="bibr7-1468087411424377">7</xref>]. The goal here was a proof-of-concept of the benefits of a particular model-based transient calibration process, rather than an investigation of the process itself. The current work asks three questions not found in the literature.</p>
+<list id="list2-1468087411424377" list-type="order">
+<list-item><p>What kind of empirical modelling methods are most suitable for modelling transient emissions and torque?</p></list-item>
+<list-item><p>How can such models be used within a search algorithm so that the optimized solutions at each transient operating condition are achievable from previous states, i.e. transient rather than quasi-static optimums?</p></list-item>
+<list-item><p>How can such an optimization problem be framed mathematically so that it is manageable in size and it does not extrapolate?</p></list-item>
+</list>
+<p>The unexpected answer to the first question, addressed in section 2, is that the simplest forms of empiricism, such as a single equation global regression model, work better than more powerful techniques, such as neural networks, because the inaccuracies in transient estimates of air-handling model parameters cause the latter to ‘learn’ non-existent correlations. This results in poor prediction accuracy and unrealistic extrapolations. It should be noted that this conclusion holds true only when the model is trained on transient data, the rationale for which is available in the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>].</p>
+<p>The answer to the second question, addressed in section 3, is that air-handling model parameters have to be constrained so that they are achievable dynamically. Second-order linear ‘dynamic constraint models’ that translate table commanded air-handling to actually achieved states have been developed for this purpose; optimized solutions without such constraints were unrealistic. No similar work in the literature could be identified for the purpose specified, although engine air-handling dynamics have been modelled empirically by some researchers, see the work by Poloni <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr8-1468087411424377">8</xref>] for example that examines autoregressive exogenous (ARX) networks for examining air–fuel ratio dynamics in gasoline engines.</p>
+<p>The last question is addressed in section 4. The size of the optimization problem could only be handled by optimizing coefficients of surfaces representing electronic control module (ECM) tables rather than individual table elements. Extrapolation has been prevented in a relative manner by prohibiting the outliers of the optimized space to stray beyond the outliers of the training data. Such constraints made the solution very prone to local minima and hence multiple start points were used with the gradient-based search. As with dynamic constraints, answers to this question could not be found in the literature. Steady-state or quasi-steady optimization problems have been investigated by many researchers, e.g. Lee and Reitz [<xref ref-type="bibr" rid="bibr9-1468087411424377">9</xref>], Liu <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr10-1468087411424377">10</xref>], and Brahma and Rutland [<xref ref-type="bibr" rid="bibr11-1468087411424377">11</xref>]. Response surface methods, as well as evolutionary approaches (to a lesser extent) for the model-based steady-state optimization problem, are currently well established. Most transient optimization work reported in the literature, however, such as that by Benz <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr4-1468087411424377">4</xref>], addresses short transient segments rather than entire cycles, while some, such as that by Malikopoulos <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr12-1468087411424377">12</xref>, <xref ref-type="bibr" rid="bibr13-1468087411424377">13</xref>], are futuristic adaptive schemes that are beyond the current scope of ECMs or measurement systems. Atkinson <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr5-1468087411424377">5</xref>] and Castagna <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr14-1468087411424377">14</xref>] have not reported the particulars of their optimization scheme. The latter has used a commercial product ‘AVL Cameo’ to do an adaptive online design of experiments (DOE) on ECM parameters. The results of the current work are less impressive than those reported by Atkinson; however, the benefits of any model-based transient calibration process have been demonstrated to be substantial.</p>
+<p>The current and companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>] is based on empirical models. The choice of empirical models over zero-dimensional and phenomenological model was dictated by computational time and accuracy requirements. Model-based calibration requires optimization within precise emission limits so accurate emission numbers rather than just the correct trends are required. All steady-state engine calibration software, including recent commercial products by Mathworks, Ricardo, AVL, and IAV among others, use empirical models for this reason. Moreover, the computational time requirement for transient optimization is an order of magnitude greater than steady-state optimization. This is because transient optimization cannot be performed at discrete operating conditions; rather, entire transient segments or the complete transient cycle needs to be simulated. As explained in section 2.2 of the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>], transient emissions are the result of deficits of exhaust gas recirculation (EGR) or fresh air flow during transitions that must be traded-off with the rate of transition. This is further illustrated in section 3.</p>
+</sec>
+<sec id="section2-1468087411424377">
+<title>2 Transient Emission and Torque Models</title>
+<p>This section describes the modelling approach used for predicting transient emissions and torque as a function of engine parameters, which can be calibrated and which are suitable for use within a model-based transient calibration process, while comparing other empirical approaches. The six transient parameters that could be calibrated were engine speed, fuel mass injected per stroke, EGR fraction, charge flowrate, injection timing, and rail pressure. A small pilot for noise reduction and post injection for smoke reduction was used over some operating regions, but they were fixed (and could not be calibrated), and were therefore not included as independent variables (model inputs). The discussion has been divided into (a) the chosen modelling method and model form, (b) a model comparison and chosen model justification, and (c) an estimation of chosen model accuracy.</p>
+<sec id="section3-1468087411424377">
+<title>2.1 Modelling method and model form</title>
+<p>The chosen model form was the full quadratic global regression equation. Transient NO<sub><italic>x</italic></sub> mass flowrate, NO<sub><italic>x</italic></sub> concentration and smoke (opacity), and torque were modelled directly. Particulate matter (PM) rates were derived from smoke predictions and this helped model predictions compared to predicting PM rates directly. NO<sub><italic>x</italic></sub> mass flowrates and PM rate predictions were required for cumulative cycle emission optimization while opacity predictions were required to constrain smoke/PM spikes. The full quadratic form was found superior to linear or pure quadratic models and included 28 regressor variables corresponding to the six parameters that could be calibrated. A Box–Cox [<xref ref-type="bibr" rid="bibr15-1468087411424377">15</xref>] transform was used for the emission models based on previous work by Brahma <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr16-1468087411424377">16</xref>, <xref ref-type="bibr" rid="bibr17-1468087411424377">17</xref>], which suggests that an exponential dependence of emissions on engine parameters increases prediction accuracy because it represents the physical phenomena better than a linear quadratic expression. However, the Box–Cox transform, commonly used by statisticians, imposes an exponential dependence between emissions and all independent variables, as illustrated by <xref ref-type="disp-formula" rid="disp-formula2-1468087411424377">equation (1)</xref>. This cannot parallel the physical phenomena; for example, it is hard to imagine an exponential relationship between PM and engine speed (r/min) or injection timing, but not for the oxygen mole fraction</p>
+<p>
+<disp-formula id="disp-formula1-1468087411424377">
+<mml:math display="block" id="math1-1468087411424377">
+<mml:mrow>
+<mml:mtext>ln</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Y</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>engine</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>speed</mml:mtext>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>timing</mml:mtext>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>O</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>fraction</mml:mtext>
+<mml:mo>…</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula1-1468087411424377" xlink:href="10.1177_1468087411424377-eq1.tif"/>
+</disp-formula>
+</p>
+<p>
+<disp-formula id="disp-formula2-1468087411424377">
+<label>(1)</label>
+<mml:math display="block" id="math2-1468087411424377">
+<mml:mrow>
+<mml:mo>⇒</mml:mo>
+<mml:mi>Y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>e</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo>·</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>e</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>engine</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>speed</mml:mtext>
+</mml:mrow>
+</mml:msup>
+<mml:mo>·</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>e</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>timing</mml:mtext>
+</mml:mrow>
+</mml:msup>
+<mml:mo>·</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>e</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>O</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>fraction</mml:mtext>
+</mml:mrow>
+</mml:msup>
+<mml:mo>…</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula2-1468087411424377" xlink:href="10.1177_1468087411424377-eq2.tif"/>
+</disp-formula>
+</p>
+<p>An improvement of about 4 per cent was obtained for PM models when training data were used to select which parameters did have exponential dependence and which did not. This is seen through <xref ref-type="disp-formula" rid="disp-formula3-1468087411424377">equation (2)</xref>, where by using a logarithmic transform and by regressing the logarithm of engine speed and injection timing, the exponential dependence of those two parameters have been removed, yet by not regressing the logarithm of the oxygen mole fraction, its exponential dependence has been retained</p>
+<p>
+<disp-formula id="disp-formula3-1468087411424377">
+<label>(2)</label>
+<mml:math display="block" id="math3-1468087411424377">
+<mml:mrow>
+<mml:mtext>ln</mml:mtext>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>Y</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mtext>log</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mtext>engine</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>speed</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>log</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mtext>timing</mml:mtext>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>O</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>fraction</mml:mtext>
+<mml:mo>…</mml:mo>
+<mml:mo>⇒</mml:mo>
+<mml:mi>Y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>e</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>0</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo>·</mml:mo>
+<mml:mtext>engine</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mtext>spee</mml:mtext>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo>·</mml:mo>
+<mml:mtext>timin</mml:mtext>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>g</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msup>
+<mml:mo>·</mml:mo>
+<mml:msup>
+<mml:mrow>
+<mml:mtext>e</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:msub>
+<mml:mrow>
+<mml:mtext>O</mml:mtext>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mspace width="0.25em"/>
+<mml:mtext>fraction</mml:mtext>
+</mml:mrow>
+</mml:msup>
+<mml:mo>…</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula3-1468087411424377" xlink:href="10.1177_1468087411424377-eq3.tif"/>
+</disp-formula>
+</p>
+<p>An algorithm that iteratively took logarithms of every possible combination of independent variables and chose the combination based on training data residual returned sensible results, removing exponential dependencies from engine speed, the injection pressure, and injection timing, and resulting in a 4 per cent improvement of PM model accuracy over the test dataset. Another substantial improvement was made by using oxygen mole fraction as a model parameter instead of EGR fraction, although the latter was the parameter that could be calibrated. The oxygen mole fraction was calculated from ECM estimates of EGR fraction and charge flow, and resulted in a 10 per cent improvement in PM predictions, even though the ECM estimates have been shown to be inaccurate in the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>]. This is consistent with previous conclusions reached by Brahma <italic>et al</italic>. that empirical models benefit from using more fundamental model parameters, even if they themselves are derived from higher level parameters [<xref ref-type="bibr" rid="bibr18-1468087411424377">18</xref>].</p>
+<p>As will be described in the next subsections, this simple model outperformed more complex empirical approaches and predicted cumulative cycle NO<sub><italic>x</italic></sub> and PM within 3 per cent and 15 per cent, respectively, see <xref ref-type="table" rid="table4-1468087411424377">Tables 4</xref> and <xref ref-type="table" rid="table5-1468087411424377">5</xref> later on. However, model accuracy over individual points, as measured by per cent standard deviation, was poor relative to steady-state models of any kind [<xref ref-type="bibr" rid="bibr16-1468087411424377">16</xref>], and further model performance was dependent on the calibration(s) used to generate the training data, particularly for opacity and PM predictions. The reasons have been described in the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>].</p>
+</sec>
+<sec id="section4-1468087411424377">
+<title>2.2 Model comparison and model justification</title>
+<p>This subsection compares the main empirical modelling methods commonly used in engineering on their performance at predicting transient emissions. <xref ref-type="table" rid="table1-1468087411424377">Table 1</xref> summarizes the test methodology, which was designed to test the ability of the model to predict an entirely different cycle, as well as an entirely different calibration, to its own training data. The cycles listed in <xref ref-type="table" rid="table1-1468087411424377">Table 1</xref> were a subset of the calibration spectrum comprising of 31 federal test procedure (FTP) cycles, and corresponding snap throttle cycles have been described in the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>]. <xref ref-type="table" rid="table2-1468087411424377">Table 2</xref> shows results for PM mass flowrate predictions for the main methods tested. The first column reports the average relative standard deviation computed over the eight test cycles, and is the primary metric of model selection, while the second column reports the worst relative standard deviation observed over any of the eight test cycles. The third and the fourth columns show the average and the worst cycle cumulative PM mass prediction errors, respectively, and were considered secondary metrics. It is seen that, except for neural networks, there is not much variation in model performance. Each method represents a family of approaches experimented with, and is described briefly in the following.</p>
+<table-wrap id="table1-1468087411424377" position="float">
+<label>Table 1</label>
+<caption>
+<p>Test methodology for model selection</p>
+</caption>
+<graphic alternate-form-of="table1-1468087411424377" xlink:href="10.1177_1468087411424377-table1.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="left"/>
+<col align="left"/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Data used to train model</th>
+<th align="center" colspan="2">Data used to test model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FTP – initial calibration</td>
+<td>FTP – intermediate calibration</td>
+<td>FTP – final calibration</td>
+</tr>
+<tr>
+<td>FTP – intermediate calibration</td>
+<td>FTP – initial calibration</td>
+<td>FTP – final calibration</td>
+</tr>
+<tr>
+<td>FTP – final calibration</td>
+<td>FTP – initial calibration</td>
+<td>FTP – intermediate calibration</td>
+</tr>
+<tr>
+<td>Snap throttle cycle – initial calibration</td>
+<td colspan="2">FTP – final calibration</td>
+</tr>
+<tr>
+<td>Snap throttle cycle – final calibration</td>
+<td colspan="2">FTP – initial calibration</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table2-1468087411424377" position="float">
+<label>Table 2</label>
+<caption>
+<p>Test results for model selection – PM rate predictions</p>
+</caption>
+<graphic alternate-form-of="table2-1468087411424377" xlink:href="10.1177_1468087411424377-table2.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Particulate rate (PM) predictions over the eight test cycles of <xref ref-type="table" rid="table1-1468087411424377">Table 1</xref></th>
+<th align="left">Average <italic>σ</italic>/<italic>μ</italic></th>
+<th align="left">Worst <italic>σ</italic>/<italic>μ</italic></th>
+<th align="left">Error (cumulative mass emitted) over all test cycles (%)</th>
+<th align="left">Worst error (cumulative mass emitted) over any single test cycle (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Global regression</td>
+<td>1.12</td>
+<td>1.83</td>
+<td>27.99</td>
+<td>46.45</td>
+</tr>
+<tr>
+<td>2. Neural networks</td>
+<td>1.46</td>
+<td>1.90</td>
+<td>43.88</td>
+<td>74.22</td>
+</tr>
+<tr>
+<td>3. Two-zone regression</td>
+<td>1.13</td>
+<td>1.69</td>
+<td>26.46</td>
+<td>40.20</td>
+</tr>
+<tr>
+<td>4. Localized regression</td>
+<td>1.23</td>
+<td>1.81</td>
+<td>29.70</td>
+<td>47.93</td>
+</tr>
+<tr>
+<td>5. Robust regression</td>
+<td>1.20</td>
+<td>1.92</td>
+<td>30.52</td>
+<td>51.44</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<list id="list1-1468087411424377" list-type="order">
+<list-item><p><italic>Global regression.</italic> This was chosen for optimization in section 4. The results shown in <xref ref-type="table" rid="table2-1468087411424377">Table 2</xref> correspond to a single full quadratic regression equation of 28 terms comprised of the six engine parameters, but using the oxygen mole fraction instead of EGR fraction. Opacity is predicted directly, and PM is derived from it. The model form described by <xref ref-type="disp-formula" rid="disp-formula2-1468087411424377">equation (2)</xref> was used. The average per cent standard deviation was 1.31 without any of these improvements, i.e. with a standard quadratic equation using EGR fraction and predicting PM directly, so the combined effect of the improvements was substantial. Without synchronizing the data, the average standard deviation was even worse at 1.46, see section 3 of the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>] for details.</p></list-item>
+<list-item><p><italic>Neural networks.</italic> A simple feedforward structure consisting of a single hidden layer with ten neurons and a sigmoid transfer function and one output layer with a single neuron and a linear transfer function was used. The number of neurons in the hidden layer is more than required but this does not impair network generalization if early stopping is used to stop overfitting [<xref ref-type="bibr" rid="bibr19-1468087411424377">19</xref>]. One-quarter of the training dataset was separated for validation, i.e. for early stopping to avoid overfitting. The networks were trained with the Levenberg–Marquardt-based back-propagation method available in MATLAB. This network architecture has been shown to work well for steady-state engine data [<xref ref-type="bibr" rid="bibr16-1468087411424377">16</xref>, <xref ref-type="bibr" rid="bibr20-1468087411424377">20</xref>]. Other network architectures, including recursive networks, were experimented with as well, but did not result in improvements in prediction accuracy. The relatively poor performance of neural net-works was attributed to the efficient learning ofnon-causative correlations between engine and emission events typical of noisy transient data. Such correlations are dictated by the calibration used to generate the training data, and so model predictions are poor when the test data are generated with a different calibration, even if early stopping is used to prevent overfitting the training data.</p></list-item>
+<list-item><p><italic>Two-zone regression.</italic> This method was developed on the hypothesis that building separate models for rich and lean fuel–air ratios would aid generalization. High PM spikes produce large least-square residuals, but are greatly outnumbered by lower PM data. Each of the two models, separated by a partition as shown in <xref ref-type="fig" rid="fig1-1468087411424377">Fig. 1</xref>, used all training data for model building, but the data on each side were weighted differently. It was observed that each model benefited from weighing its ‘side’ of the data more than the other side, but not from excluding the data entirely from the other side. The magnitude of the uniform weight and the partitioning fuel–air ratio were parameters extracted from the training data. This was done by iteratively varying both parameters and choosing the combination that resulted in the smallest regression coefficients. This prevented overfitting and improved generalization. The two-zone model has been described here because it is believed that it is a potential improvement over the single equation model if the inaccuracies in transient air-handling estimation are reduced.</p></list-item>
+<list-item><p><italic>Localized regression.</italic> The exponential weighting used previously for steady-state calibration [<xref ref-type="bibr" rid="bibr16-1468087411424377">16</xref>] proved to be unreliable for predicting transients, and was replaced by a step function weighting scheme; yet the results were unexpectedly poor. In localized regression, a new regression equation is created for each point to be predicted. Data in the vicinity of the point to be predicted are weighted more than data that are far away in the multidimensional model parameter space. The weight assigned to each point in the original scheme increased exponentially with decreasing Mahalanobis distance, but such localization caused frequent unrealistically large predictions and matrix inversion problems. The step function scheme did not cause such problems. It weighted the local area around the point to be predicted uniformly rather than exponentially. The relatively poor performance of both schemes was attributed to the same reason as neural networks: the increased parameterization of these more complex models cause the ‘memorization’ of non-causative correlations between engine and emission events that are mere functions of the calibration used to generate the data. Akin to early stopping, localized regression uses a cross-validation technique [<xref ref-type="bibr" rid="bibr16-1468087411424377">16</xref>] to prevent excess localization, yet differences in the calibration used to generate training and testing datasets can cause poor performance. Exponential weighting results in more of such false ‘memorization’ as a very small number of neighbours disproportionately affect the regression coefficients. Such neighbouring data points have little variation in the model input space (because of which they are close neighbours), but relatively large variations in the modelled response primarily due to inaccuracies in ECM air-handling estimates and imperfect synchronization. These large variations in the emissions are, therefore, regressed against the very small non-causative variations in engine parameters. Uniform weighing increases the number of ‘effective’ neighbours and also their variation so that it is harder to correlate non-causative events.</p></list-item>
+<list-item><p><italic>Robust regression.</italic> This technique, available in MATLAB, builds a weighted global model iteratively each time weighing the higher residuals less. It was investigated because such weighting is an antidote to the above mentioned learning of non-causative correlations believed to be responsible for the poor performance of neural networks and localized regression. Although the root mean square (RMS) errors from robust regression were lower than both those methods, the model ignored the spikes in the training data because they corresponded to higher residuals. The model predictions were qualitatively observed to be rather poor at capturing emission spikes, particularly PM spikes.</p></list-item>
+</list>
+<fig id="fig1-1468087411424377" position="float">
+<label>Fig. 1</label>
+<caption>
+<p>Two-zone model: each region uses its own model built from all data but weighted more by its own data</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig1.tif"/>
+</fig>
+<p>None of these methods are time-series models because experiments with regression and neural networks using previous history revealed that such models fit the training data very well, but significantly extrapolate if the test data were from a different cycle or calibration, because of the same reason hindering the performance of neural networks and localized regression explained previously. This applied to many other experiments with many other modelling techniques, none of which could perform better than global quadratic regression.</p>
+<p>The relative performance of these different models also remained unchanged for NO<sub><italic>x</italic></sub> rate and torque predictions. The simplest model, with the least number of parameters, performed better than more complex models because of the reduced ability of simple models to correlate non-causative emission and engine events present in noisy transient data. <xref ref-type="table" rid="table3-1468087411424377">Table 3</xref> shows results for the two extremes of model complexity. No model was seen to improve upon the results of global regression. The RMS and cumulative errors were slightly better than PM predictions, but NO<sub><italic>x</italic></sub> predictions were qualitatively observed to capture spikes better and be less calibration dependent. Torque predictions, required for estimating brake specific fuel consumption (BSFC), approached calibration independence.</p>
+<table-wrap id="table3-1468087411424377" position="float">
+<label>Table 3</label>
+<caption>
+<p>Test results for model selection – NO<sub><italic>x</italic></sub> rate predictions</p>
+</caption>
+<graphic alternate-form-of="table3-1468087411424377" xlink:href="10.1177_1468087411424377-table3.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">NO<sub><italic>x</italic></sub> rate predictions over the eight test cycles of <xref ref-type="table" rid="table1-1468087411424377">Table 1</xref></th>
+<th align="left">Average <italic>σ</italic>/<italic>μ</italic></th>
+<th align="left">Worst <italic>σ</italic>/<italic>μ</italic></th>
+<th align="left">Error (cumulative mass emitted) (%)</th>
+<th align="left">Worst error (cumulative mass emitted) over any cycle (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Global regression</td>
+<td>0.97</td>
+<td>1.59</td>
+<td>25.88</td>
+<td>48.14</td>
+</tr>
+<tr>
+<td>2. Neural networks</td>
+<td>1.29</td>
+<td>2.14</td>
+<td>33.93</td>
+<td>68.03</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>The comparative model performance was unexpected because it showed the exact opposite trend reported for steady-state data [<xref ref-type="bibr" rid="bibr16-1468087411424377">16</xref>] where neural networks were clearly the best method in terms of accuracy and robustness, followed by localized regression, and then by global regression. This trend reversal has been explained above by the more efficient mapping between non-causative but correlated engine and emission events by more powerful empirical techniques like neural networks. <xref ref-type="fig" rid="fig2-1468087411424377">Figures 2</xref> and <xref ref-type="fig" rid="fig4-1468087411424377">4</xref> explain this statement further by comparing PM predictions over a rail pressure swing with neural network and global regression, respectively. The centroid of the six engine parameters is shown by the hollow circle; all parameters, except the rail pressure, are held constant throughout the rail pressure swing. It is seen that the neural network predicts a rather convoluted and obviously incorrect PM versus rail pressure trend. The training data points nearest to each prediction (shown by the dots) are helpful in understanding why. All such points whose statistical leverage does not exceed the leverage limit are in general very similar in parameters other than rail pressure, and so the neural network has correlated the variation in rail pressure to the variation in PM. This is why the neural network predictions over the sweep generally ‘fit’ training data points below 0.6 normalized rail pressures. The training data points themselves exhibit this seemingly incorrect trend because of errors in ECM air-handling estimates and synchronization errors. Trying to explain this PM variation with the only parameter that is varying (rail pressure) is the key shortcoming of the neural network method, as well as all other powerful empirical methods, and this is particularly noticeable during extrapolation. As has been explained in the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>], extrapolation is unavoidable with transient data. It should be noted that measures were taken to prevent overfitting for every empirical method described in the current and companion work, yet it was impossible not to create convoluted mappings when powerful empiricism was applied to noisy transient data. Examples of the resulting occasional overpredictions are shown in <xref ref-type="fig" rid="fig3-1468087411424377">Fig. 3</xref>, and are the primary reason for the poor neural network accuracy numbers of <xref ref-type="table" rid="table2-1468087411424377">Tables 2</xref> and <xref ref-type="table" rid="table3-1468087411424377">3</xref>. Global regression predictions on the other hand do not explain local variation resulting from noise so they succeed in predicting the correct trend in general. This is particularly true of points with high statistical leverage. A more general way of understanding the adverse effects of extrapolation for more powerful empirical models is to consider the PM spike shown in <xref ref-type="fig" rid="fig18-1468087411424377">Fig. 18</xref> of the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>]. The EGR decreases during the spike event and rail pressure increases because fuelling increases. A neural network model will locally correlate the reduced EGR and increased rail pressure with the PM spike (as explained in the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>], the spike is not completely explained by air-handling events due to inaccuracies in ECM estimates), even though the exact opposite trend is present over the majority of (non-spike) data. Such local correlations will be created, regardless of early stopping, because of the numerous opportunities for their creation, and manifest their ill-effects during the inevitable extrapolations during the optimization process. Global regression will not be able to capture such local and obviously false local correlations.</p>
+<fig id="fig2-1468087411424377" position="float">
+<label>Fig. 2</label>
+<caption>
+<p>Neural network PM predictions over a rail pressure swing around the centroid of the training dataset</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig2.tif"/>
+</fig>
+<fig id="fig3-1468087411424377" position="float">
+<label>Fig. 3</label>
+<caption>
+<p>Occasional large overpredictions are observed with neural networks</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig3.tif"/>
+</fig>
+<fig id="fig4-1468087411424377" position="float">
+<label>Fig. 4</label>
+<caption>
+<p>Global regression PM predictions over a rail pressure swing around the centroid of the training dataset</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig4.tif"/>
+</fig>
+<p>Previous steady-state work by Brahma <italic>et al</italic>. [<xref ref-type="bibr" rid="bibr16-1468087411424377">16</xref>] found that neural networks performed worse than global regression only when the training data were correlated differently from the test data and there was noise in the training data model inputs. The transient results mirror these observations. The argument for using simple rather than powerful empirical models when training on and predicting transient emissions, particularly smoke, can be generalized in the following manner.</p>
+<list id="list2-1468087411424377" list-type="order">
+<list-item><p>All powerful empirical models, such as neural networks and localized regression, tend to overfit, because of which, techniques such as early stopping are used routinely. Overfitting cannot be avoided with transient data because the inaccuracies in the estimates of ECM air-handling parameters and errors in synchronizing engine events and emission events, particularly during emission spike events, create numerous opportunities for local correlations between emission spikes and non-causative parametric variation.</p></list-item>
+<list-item><p>These local, incorrect, and calibration-dependent correlations adversely affect model predictions during extrapolation when the model encounters parameter combinations outside the multidimensional cloud of training data. Extrapolation is inevitable with transient data because of the size of this multidimensional cloud.</p></list-item>
+<list-item><p>The formation of local calibration dependent correlations is hindered when the training data include a spectrum of calibrations. It becomes more difficult to detect patterns within the non-causative parametric variation of such data. This underscores the recommendation made in section 2.1 of the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>] that transient data acquisition with different calibrations should continue until the correlation between every parametric pair ceases to decrease.</p></list-item>
+</list>
+</sec>
+<sec id="section5-1468087411424377">
+<title>2.3 Estimation of chosen model accuracy</title>
+<p>The expected accuracy of global regression models during the optimization process was determined by training the model with data from three snap throttle cycles and testing it on 13 FTP cycles. These cycles were chosen from the 31 FTP cycles and corresponding snap throttle cycles described in the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>] to span the calibration spectrum in an equidistant manner. No FTP cycle data were included in the training data to ensure that the model was not ‘memorizing’ the FTP cycle. Additionally, the proposed calibration process is most useful if prescribed cycles like the FTP are not required to be run prior to optimization; the snap throttle cycle involves the simple snapping of the throttle from 0 to 100 per cent at different engine speeds, and can be run in any standard steady-state test cell. At the same time, no snap throttle data were included in the test data because the expected accuracy over such a cycle was not of interest. Unlike the test methodology for model selection, which tested the ability of each modelling method to predict a different calibration to its training data, the methodology assumed that the training data would include the complete calibration spectrum and, as per the recommendation of section 2.1 of the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>], any addition to this training dataset would not reduce the correlations between model parametric pairs. <xref ref-type="table" rid="table4-1468087411424377">Table 4</xref> shows the measured cumulative PM mass, predicted cumulative mass, corresponding per cent error, relative standard deviation over all data points in each FTP cycle (the primary metric used for model selection), and percentage of points exceeding the statistical leverage limit for each of the 13 FTP test cycles. There is more variation among the 13 test cycles than the cumulative numbers suggest because variation in the local emission events average out to the same cumulative number. It is seen that the per cent errors and the relative standard deviation for most test cycles are lower than those shown in <xref ref-type="table" rid="table2-1468087411424377">Table 2</xref>; this is a consequence of the training data, including data from across the calibration spectrum as per the above-mentioned recommendation made in section 2.1 of the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>]. The large percentage of predictions violating statistical leverage is typical of transient data and cannot be reduced substantially, regardless of the training dataset, not only because of the large multidimensional space alluded to previously, but also because the statistical leverage limit is based on the assumption that the model parameters are independent, while transient model parameters are highly correlated by the calibration(s) used to generate the data. The PM is underpredicted over all but two FTP cycles, primarily because of the inability of the model to predict spike events. This is shown by <xref ref-type="fig" rid="fig5-1468087411424377">Fig. 5</xref>, which shows predictions over FTP test cycle 9 that best represents the 13 test cycles, both qualitatively as well as quantitatively, in terms of the accuracy numbers. The three snap throttle cycles used for model training corresponded to low, intermediate, and high PM. The measured spikes of <xref ref-type="fig" rid="fig5-1468087411424377">Fig. 5</xref> could have been captured better if the model had been trained solely on the high PM data. However, this would have resulted in overpredictions over other test cycles with lower measured PM. This is demonstrated by <xref ref-type="fig" rid="fig6-1468087411424377">Figs 6</xref> and <xref ref-type="fig" rid="fig7-1468087411424377">7</xref>. <xref ref-type="fig" rid="fig6-1468087411424377">Figure 6</xref> shows predictions over the same FTP test cycle 9 shown in <xref ref-type="fig" rid="fig5-1468087411424377">Fig. 5</xref>, but with the model trained on the single high PM snap throttle only. The spikes are captured much better, but the model overpredicts low PM test cycles such as the FTP test cycle 2 shown in <xref ref-type="fig" rid="fig7-1468087411424377">Fig. 7</xref>, which shows corresponding model predictions over low PM FTP test cycle 9. The cumulative error for FTP test cycle 9 increases to 34 per cent from the 9.4 per cent reported in <xref ref-type="table" rid="table4-1468087411424377">Table 4</xref>. The PM spikes corresponding to high PM calibrations could be captured only when the training data originated from high PM calibrations, but non-existent spike predictions could only be avoided when the training data included low PM calibrations. This held true for every empirical model. Every conceivable experiment to make the model calibration independent failed. This supports the claim made in the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>] and other work by Brahma [<xref ref-type="bibr" rid="bibr21-1468087411424377">21</xref>] that transient ECM air-handling estimates are inaccurate because the volumetric efficiency as well as EGR flow are affected by the high engine difference between exhaust and intake manifold pressures (Δ<italic>P</italic>) and misestimated during rapid transients. <xref ref-type="fig" rid="fig8-1468087411424377">Figure 8</xref> shows the data from the high and low opacity data generated from either end of the calibration spectrum overlaid on each other. Note that the high PM magnitudes seen in transient data cannot be explained by non-air-handling parameters. It is seen that the fuel–oxygen ratio calculated from the ECM estimated charge flow and EGR fraction is inconsistent between the two datasets. The ECM estimates were found to be calibration dependent, i.e. the ECM estimates were affected by engine Δ<italic>P</italic>, which was much higher for the high opacity–fast torque response final calibration. Furthermore, engine Δ<italic>P</italic> is not a model parameter but a result of the model parameters so its effects cannot be incorporated within the model. This is why it is necessary to include both high and low smoke calibrations in the training data to maintain a balance between capturing actual PM spike events and preventing the prediction of non-existent spikes. As per the recommendations made in the companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>], the inaccuracies of the ECM estimates can be partially accounted for empirically if the training data include transient segments with faster than target torque response (to account for the effect of high engine Δ<italic>P</italic> on volumetric efficiency) and lower than target NO<sub><italic>x</italic></sub> (to account for the effect of high engine Δ<italic>P</italic> on EGR flow).</p>
+<table-wrap id="table4-1468087411424377" position="float">
+<label>Table 4</label>
+<caption>
+<p>PM rate predictions over 13 FTP cycles used to estimate model accuracy during optimization</p>
+</caption>
+<graphic alternate-form-of="table4-1468087411424377" xlink:href="10.1177_1468087411424377-table4.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">PM measured (g)</th>
+<th align="left">PM predicted (g)</th>
+<th align="left">Error (%)</th>
+<th align="left"><inline-formula id="inline-formula1-1468087411424377"><mml:math display="inline" id="math4-1468087411424377"><mml:mrow><mml:mi>σ</mml:mi><mml:mo stretchy="false">/</mml:mo><mml:mi>μ</mml:mi></mml:mrow></mml:math></inline-formula></th>
+<th align="left">Leverage exceeded (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test cycle 1</td>
+<td>3.5</td>
+<td>2.7</td>
+<td>−23.9</td>
+<td>0.89</td>
+<td>23.0</td>
+</tr>
+<tr>
+<td>Test cycle 2</td>
+<td>2.4</td>
+<td>2.7</td>
+<td>9.4</td>
+<td>0.46</td>
+<td>15.6</td>
+</tr>
+<tr>
+<td>Test cycle 3</td>
+<td>2.5</td>
+<td>2.7</td>
+<td>9.5</td>
+<td>0.52</td>
+<td>14.9</td>
+</tr>
+<tr>
+<td>Test cycle 4</td>
+<td>3.1</td>
+<td>2.8</td>
+<td>−9.2</td>
+<td>0.78</td>
+<td>40.1</td>
+</tr>
+<tr>
+<td>Test cycle 5</td>
+<td>2.7</td>
+<td>2.7</td>
+<td>−0.4</td>
+<td>0.38</td>
+<td>40.1</td>
+</tr>
+<tr>
+<td>Test cycle 6</td>
+<td>3.2</td>
+<td>2.9</td>
+<td>−9.0</td>
+<td>0.79</td>
+<td>38.0</td>
+</tr>
+<tr>
+<td>Test cycle 7</td>
+<td>4.1</td>
+<td>2.9</td>
+<td>−29.9</td>
+<td>0.91</td>
+<td>38.6</td>
+</tr>
+<tr>
+<td>Test cycle 8</td>
+<td>3.7</td>
+<td>2.8</td>
+<td>−24.7</td>
+<td>0.55</td>
+<td>41.3</td>
+</tr>
+<tr>
+<td>Test cycle 9</td>
+<td>3.4</td>
+<td>2.9</td>
+<td>−13.8</td>
+<td>0.87</td>
+<td>40.3</td>
+</tr>
+<tr>
+<td>Test cycle 10</td>
+<td>3.7</td>
+<td>3.0</td>
+<td>−18.2</td>
+<td>1.07</td>
+<td>40.9</td>
+</tr>
+<tr>
+<td>Test cycle 11</td>
+<td>4.7</td>
+<td>3.2</td>
+<td>−31.7</td>
+<td>1.90</td>
+<td>42.8</td>
+</tr>
+<tr>
+<td>Test cycle 12</td>
+<td>4.0</td>
+<td>3.2</td>
+<td>−21.9</td>
+<td>1.44</td>
+<td>42.3</td>
+</tr>
+<tr>
+<td>Test cycle 13</td>
+<td>5.5</td>
+<td>3.9</td>
+<td>−29.3</td>
+<td>1.64</td>
+<td>46.3</td>
+</tr>
+<tr>
+<td>Average</td>
+<td>3.6</td>
+<td>2.9</td>
+<td>−14.9</td>
+<td>0.94</td>
+<td>35.7</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig5-1468087411424377" position="float">
+<label>Fig. 5</label>
+<caption>
+<p>Predictions over FTP test cycle 9 are representative of the 13 cycles. Cumulative PM mass is underpredicted by about 13 per cent, but the large spikes are not captured</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig5.tif"/>
+</fig>
+<fig id="fig6-1468087411424377" position="float">
+<label>Fig. 6</label>
+<caption>
+<p>Predictions over FTP test cycle 9 shown in <xref ref-type="fig" rid="fig5-1468087411424377">Fig. 5</xref> when the model is trained on the single high PM snap throttle cycle. The spikes are captured much better, but the model overpredicts low PM test cycles such as FTP test cycle 2 shown in <xref ref-type="fig" rid="fig7-1468087411424377">Fig. 7</xref></p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig6.tif"/>
+</fig>
+<fig id="fig7-1468087411424377" position="float">
+<label>Fig. 7</label>
+<caption>
+<p>The low PM FTP test cycle 2 is overpredicted when the model is trained solely on data from the high PM calibration used for <xref ref-type="fig" rid="fig6-1468087411424377">Fig. 6</xref>. The cumulative error increases from the 9 per cent (see <xref ref-type="table" rid="table4-1468087411424377">Table 4</xref>) to 34 per cent</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig7.tif"/>
+</fig>
+<fig id="fig8-1468087411424377" position="float">
+<label>Fig. 8</label>
+<caption>
+<p>Opacity data from either end of the calibration spectrum. The initial ‘low smoke calibration’ had poor torque response and lower engine Δ<italic>P</italic>, while the opposite was true of the final ‘high smoke calibration’. The engine Δ<italic>P</italic> level causes errors in the engine air-handling estimate, which therefore becomes calibration dependent</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig8.tif"/>
+</fig>
+<p><xref ref-type="table" rid="table5-1468087411424377">Table 5</xref> shows corresponding results for NO<sub><italic>x</italic></sub> rate predictions. Errors are significantly lower than those from PM predictions. NO<sub><italic>x</italic></sub> spike events are easier to predict than PM spikes because transient NO<sub><italic>x</italic></sub> spikes correspond to EGR deficits during transients, which are easier to detect than the in-cylinder oxygen estimation required for detecting PM spikes. The magnitude of NO<sub><italic>x</italic></sub> spikes is influenced by the injection events that are accurate, or at least consistent, irrespective of transient operation. NO<sub><italic>x</italic></sub> models were also seen to be calibration dependent, although to a lesser extent than PM models. Models built solely on data originating from high NO<sub><italic>x</italic></sub> calibrations tend to severely overpredict data originating from low NO<sub><italic>x</italic></sub> calibrations. NO<sub><italic>x</italic></sub> rate predictions over the FTP test cycle 8 shown in <xref ref-type="fig" rid="fig9-1468087411424377">Fig. 9</xref> are representative of the 13 FTP cycles. It is seen that the spike events are generally overpredicted, even though the cycle cumulative NO<sub><italic>x</italic></sub> mass is underpredicted by 9 per cent. This is because the EGR flow is underestimated by the ECM during high engine Δ<italic>P</italic> transients. The recommendations stated previously regarding the inclusion of higher than target torque response data and lower than target (higher EGR fractions) NO<sub><italic>x</italic></sub> data within the training data <italic>et al</italic>. so holds true for NO<sub><italic>i</italic></sub> emissions for the same reasons. Torque predictions were almost calibration independent because consistent fuel injection parameters and an approximate estimate of the air-handling parameters were sufficient for torque predictions that were of an order of magnitude superior to emission predictions. Results are shown in <xref ref-type="table" rid="table6-1468087411424377">Table 6</xref>, which reports emission and torque model predictions that use modelled charge flowrate and EGR fraction rather than ECM estimated quantities.</p>
+<table-wrap id="table5-1468087411424377" position="float">
+<label>Table 5</label>
+<caption>
+<p>NO<sub><italic>x</italic></sub> rate predictions over 13 FTP cycles were used to estimate model accuracy</p>
+</caption>
+<graphic alternate-form-of="table5-1468087411424377" xlink:href="10.1177_1468087411424377-table5.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">NO<sub><italic>x</italic></sub> measured (g)</th>
+<th align="left">NO<sub><italic>x</italic></sub> predicted (g)</th>
+<th align="left">Error (%)</th>
+<th align="left"><inline-formula id="inline-formula2-1468087411424377"><mml:math display="inline" id="math5-1468087411424377"><mml:mrow><mml:mi>σ</mml:mi><mml:mo stretchy="false">/</mml:mo><mml:mi>μ</mml:mi></mml:mrow></mml:math></inline-formula></th>
+<th align="left">Leverage exceeded (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test cycle 1</td>
+<td>18.0</td>
+<td>17.5</td>
+<td>−2.9</td>
+<td>0.60</td>
+<td>23.0</td>
+</tr>
+<tr>
+<td>Test cycle 2</td>
+<td>18.8</td>
+<td>17.4</td>
+<td>−7.7</td>
+<td>0.50</td>
+<td>15.6</td>
+</tr>
+<tr>
+<td>Test cycle 3</td>
+<td>17.4</td>
+<td>16.1</td>
+<td>−7.5</td>
+<td>0.53</td>
+<td>14.9</td>
+</tr>
+<tr>
+<td>Test cycle 4</td>
+<td>15.4</td>
+<td>14.4</td>
+<td>−6.5</td>
+<td>0.53</td>
+<td>40.1</td>
+</tr>
+<tr>
+<td>Test cycle 5</td>
+<td>16.9</td>
+<td>15.8</td>
+<td>−6.9</td>
+<td>0.47</td>
+<td>40.1</td>
+</tr>
+<tr>
+<td>Test cycle 6</td>
+<td>15.6</td>
+<td>14.4</td>
+<td>−8.1</td>
+<td>0.49</td>
+<td>38.0</td>
+</tr>
+<tr>
+<td>Test cycle 7</td>
+<td>18.1</td>
+<td>17.5</td>
+<td>−3.2</td>
+<td>0.75</td>
+<td>38.6</td>
+</tr>
+<tr>
+<td>Test cycle 8</td>
+<td>19.9</td>
+<td>18.1</td>
+<td>−9.3</td>
+<td>0.59</td>
+<td>41.3</td>
+</tr>
+<tr>
+<td>Test cycle 9</td>
+<td>18.1</td>
+<td>17.4</td>
+<td>−4.2</td>
+<td>1.03</td>
+<td>40.3</td>
+</tr>
+<tr>
+<td>Test cycle 10</td>
+<td>17.4</td>
+<td>17.8</td>
+<td>2.2</td>
+<td>0.88</td>
+<td>40.9</td>
+</tr>
+<tr>
+<td>Test cycle 11</td>
+<td>15.4</td>
+<td>16.0</td>
+<td>4.0</td>
+<td>0.62</td>
+<td>42.8</td>
+</tr>
+<tr>
+<td>Test cycle 12</td>
+<td>15.6</td>
+<td>16.0</td>
+<td>2.5</td>
+<td>0.66</td>
+<td>42.3</td>
+</tr>
+<tr>
+<td>Test cycle 13</td>
+<td>15.6</td>
+<td>16.8</td>
+<td>7.3</td>
+<td>0.75</td>
+<td>46.3</td>
+</tr>
+<tr>
+<td>Average</td>
+<td>17.1</td>
+<td>16.5</td>
+<td>−3.1</td>
+<td>0.65</td>
+<td>35.7</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<table-wrap id="table6-1468087411424377" position="float">
+<label>Table 6</label>
+<caption>
+<p>Emission and torque predictions over the same 13 FTP cycles of <xref ref-type="table" rid="table4-1468087411424377">Tables 4</xref> and <xref ref-type="table" rid="table5-1468087411424377">5</xref> when predicted rather than measured EGR fraction and charge flow are used in the emission models</p>
+</caption>
+<graphic alternate-form-of="table6-1468087411424377" xlink:href="10.1177_1468087411424377-table6.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Test cycle</th>
+<th align="left">1</th>
+<th align="left">2</th>
+<th align="left">3</th>
+<th align="left">4</th>
+<th align="left">5</th>
+<th align="left">6</th>
+<th align="left">7</th>
+<th align="left">8</th>
+<th align="left">9</th>
+<th align="left">10</th>
+<th align="left">11</th>
+<th align="left">12</th>
+<th align="left">13</th>
+<th align="left">Mean</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PM error (%)</td>
+<td>−25.8</td>
+<td>7.7</td>
+<td>7.9</td>
+<td>−6.3</td>
+<td>2.0</td>
+<td>−8.1</td>
+<td>−19.7</td>
+<td>−25.9</td>
+<td>−10.3</td>
+<td>−14.7</td>
+<td>−21.7</td>
+<td>−16.5</td>
+<td>−21.8</td>
+<td>−11.8</td>
+</tr>
+<tr>
+<td>PM <italic>σ</italic>/<italic>µ</italic></td>
+<td>0.95</td>
+<td>0.46</td>
+<td>0.55</td>
+<td>0.86</td>
+<td>0.46</td>
+<td>0.86</td>
+<td>0.91</td>
+<td>0.57</td>
+<td>0.93</td>
+<td>1.08</td>
+<td>2.56</td>
+<td>1.49</td>
+<td>2.52</td>
+<td>1.09</td>
+</tr>
+<tr>
+<td>NO<sub><italic>x</italic></sub> error (%)</td>
+<td>−12.5</td>
+<td>−16.2</td>
+<td>−17.9</td>
+<td>−16.0</td>
+<td>−17.7</td>
+<td>−19.0</td>
+<td>−8.9</td>
+<td>−22.1</td>
+<td>−17.5</td>
+<td>−11.6</td>
+<td>−8.5</td>
+<td>−10.2</td>
+<td>−5.7</td>
+<td>−14.1</td>
+</tr>
+<tr>
+<td>NO<sub><italic>x</italic></sub><italic>σ</italic>/<italic>µ</italic></td>
+<td>0.72</td>
+<td>0.61</td>
+<td>0.66</td>
+<td>0.70</td>
+<td>0.63</td>
+<td>0.61</td>
+<td>0.75</td>
+<td>0.75</td>
+<td>0.83</td>
+<td>0.78</td>
+<td>0.62</td>
+<td>0.62</td>
+<td>0.61</td>
+<td>0.68</td>
+</tr>
+<tr>
+<td>BSFC error (%)</td>
+<td>−4.2</td>
+<td>1.7</td>
+<td>−4.8</td>
+<td>−2.4</td>
+<td>−5.7</td>
+<td>−9.1</td>
+<td>5.5</td>
+<td>−9.1</td>
+<td>3.6</td>
+<td>−0.7</td>
+<td>−5.5</td>
+<td>−1.3</td>
+<td>−7.6</td>
+<td>−3.1</td>
+</tr>
+<tr>
+<td>Torque <italic>σ</italic>/<italic>µ</italic></td>
+<td>0.37</td>
+<td>0.43</td>
+<td>0.32</td>
+<td>0.39</td>
+<td>0.35</td>
+<td>0.36</td>
+<td>0.50</td>
+<td>0.35</td>
+<td>0.59</td>
+<td>0.58</td>
+<td>0.54</td>
+<td>0.57</td>
+<td>0.57</td>
+<td>0.46</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig9-1468087411424377" position="float">
+<label>Fig. 9</label>
+<caption>
+<p>Predictions over FTP test cycle 8 are representative of the 13 cycles. Cumulative NO<sub><italic>x</italic></sub> mass is underpredicted by about 9 per cent, but the spikes are overpredicted</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig9.tif"/>
+</fig>
+</sec>
+</sec>
+<sec id="section6-1468087411424377">
+<title>3 Dynamic Constraint Models</title>
+<p>The oxygen and EGR deficits that differentiate transient from steady-state emissions need to be incorporated within any transient optimization problem for the optimized solution to be realistic and dynamic as opposed to quasi-static. The model-based calibration methodology in the current work seeks to optimize three-dimensional table surfaces, including commanded EGR fraction and charge flow tables. Dynamic constraint models translate commanded flows and fractions to actually achieved quantities. The distinction between commanded and achieved flows and fractions is demonstrated by <xref ref-type="fig" rid="fig10-1468087411424377">Fig. 10</xref>. Each figure compares predicted emissions with and without dynamic constraint models translating the commanded EGR fraction or charge flow tables surfaces to achieved EGR fraction and charge flow feeding into the emission prediction models. The ‘with dynamic constraints’ subplot (top) shows the final results of the optimization process addressed in this work. The goal was to reduce the engine out brake specific NO<sub><italic>x</italic></sub> (BSNO<sub><italic>x</italic></sub>) from 0.75 g/bhp-h to 0.52 g/bhp-h, while reducing the PM to the lowest possible value. Model-based optimization with dynamic constraints could achieve 0.51 g/bhp-h BSNO<sub><italic>x</italic></sub> (0.51 with manual calibration) and 0.14 g/bhp-h PM (0.16 with manual calibration). Optimizing ‘without dynamic constraints’ (bottom subplot) resulted in an unrealistic solution of about 0.3 g/bhp-h BSNO<sub><italic>x</italic></sub> and 0.015 g/bhp-h brake specific diesel PM (BSDPM). This is only achievable if the air-handling had an infinitely fast system response. It should be noted that constraining the air-handling system response and preventing extrapolation are two separate issues, although the former does help the latter. Prevention of extrapolation during optimization is addressed in section 4. The following subsections discuss the dynamic constraint modelling method, results, and limitations. The reader is referred to related work by Brahma [<xref ref-type="bibr" rid="bibr22-1468087411424377">22</xref>] for greater detail on model selection, justification, and results.</p>
+<fig id="fig10-1468087411424377" position="float">
+<label>Fig. 10</label>
+<caption>
+<p>Transient (top) versus quasi-static (bottom) optimization of PM rate. Quasi-static results are unrealistic. Similar results are obtained for NO<sub><italic>x</italic></sub> predictions</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig10.tif"/>
+</fig>
+<sec id="section7-1468087411424377">
+<title>3.1 Method</title>
+<p>Achieved EGR fraction and charge flowrate were treated as second-order systems according to the following linear second-order equation</p>
+<p>
+<disp-formula id="disp-formula4-1468087411424377">
+<label>(3)</label>
+<mml:math display="block" id="math6-1468087411424377">
+<mml:mrow>
+<mml:mover>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>··</mml:mo>
+</mml:mover>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mover>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>u</mml:mi>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula4-1468087411424377" xlink:href="10.1177_1468087411424377-eq4.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>y</italic> is either the achieved EGR fraction or charge flow, <italic>u</italic> is defined as the forcing function to the system that drives <italic>y</italic>, and α<sub><italic>i</italic></sub> are model parameters. Since both EGR fraction and charge flowrate control for the particular engine used in this study is proportional–derivative (PD) controlled, <italic>u</italic> can be written as</p>
+<p>
+<disp-formula id="disp-formula5-1468087411424377">
+<label>(4)</label>
+<mml:math display="block" id="math7-1468087411424377">
+<mml:mrow>
+<mml:mi>u</mml:mi>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>c</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo>−</mml:mo>
+<mml:mover>
+<mml:mrow>
+<mml:mi>y</mml:mi>
+</mml:mrow>
+<mml:mo>·</mml:mo>
+</mml:mover>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula5-1468087411424377" xlink:href="10.1177_1468087411424377-eq5.tif"/>
+</disp-formula>
+</p>
+<p>where <italic>c</italic> represents commanded quantities, i.e. either commanded EGR fraction or commanded charge flow, and <italic>k</italic><sub>p</sub> and <italic>k</italic><sub>d</sub> are the proportional and derivative gains. Discretizing <xref ref-type="disp-formula" rid="disp-formula4-1468087411424377">equations (3)</xref> and <xref ref-type="disp-formula" rid="disp-formula5-1468087411424377">(4)</xref> with first-order accuracy yields</p>
+<p>
+<disp-formula id="disp-formula6-1468087411424377">
+<label>(5)</label>
+<mml:math display="block" id="math8-1468087411424377">
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula6-1468087411424377" xlink:href="10.1177_1468087411424377-eq6.tif"/>
+</disp-formula>
+</p>
+<p>where</p>
+<p>
+<disp-formula id="disp-formula7-1468087411424377">
+<mml:math display="block" id="math9-1468087411424377">
+<mml:mrow>
+<mml:mtable>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+<mml:mtr>
+<mml:mtd>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>=</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+</mml:mrow>
+<mml:mrow>
+<mml:mfrac>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:msup>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msup>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>α</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>(</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mo>+</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:mi>h</mml:mi>
+</mml:mrow>
+</mml:mfrac>
+<mml:mo>)</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:mfrac>
+</mml:mtd>
+</mml:mtr>
+</mml:mtable>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula7-1468087411424377" xlink:href="10.1177_1468087411424377-eq7.tif"/>
+</disp-formula>
+</p>
+<p><italic>t</italic> represents the time step and <italic>h</italic> is the size of the time step used for discretization. Since all data were captured with 5 Hz frequency, the time step duration (<italic>h</italic>) was chosen as 0.2 s for model training as well as testing. Although the PD gains are known for the second-order system, the α<sub><italic>i</italic></sub> values are not known so β<sub><italic>i</italic></sub> values cannot be determined. The approach used in this work is to use linear regression to extract the β<sub><italic>i</italic></sub> values from available system data. A prediction at any instant of time will therefore depend on the prediction at the previous two time steps, the current and the past commanded value. Although there seem to be four parameters in the final discretized <xref ref-type="disp-formula" rid="disp-formula6-1468087411424377">equation (5)</xref> as opposed to three parameters in the original model <xref ref-type="disp-formula" rid="disp-formula4-1468087411424377">equation (3)</xref>, <xref ref-type="disp-formula" rid="disp-formula6-1468087411424377">equation (5)</xref> can be written to include three parameters as shown by</p>
+<p>
+<disp-formula id="disp-formula8-1468087411424377">
+<label>(6)</label>
+<mml:math display="block" id="math10-1468087411424377">
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+</mml:msub>
+<mml:mrow>
+<mml:mo>[</mml:mo>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>−</mml:mo>
+<mml:mfrac>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>p</mml:mtext>
+</mml:mrow>
+</mml:msub>
+<mml:mi>h</mml:mi>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>k</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:mtext>d</mml:mtext>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:mfrac>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>]</mml:mo>
+</mml:mrow>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula8-1468087411424377" xlink:href="10.1177_1468087411424377-eq8.tif"/>
+</disp-formula>
+</p>
+<p>However, the model form in <xref ref-type="disp-formula" rid="disp-formula6-1468087411424377">equation (5)</xref> has still been used in the current work because of uncertainties associated with PD gains in the available datasets. It was observed that the system response was different depending on whether the system was trying to increase or decrease the charge flowrate/EGR fraction. Hence, <xref ref-type="disp-formula" rid="disp-formula6-1468087411424377">equation (5)</xref> was modified to <xref ref-type="disp-formula" rid="disp-formula9-1468087411424377">equation (7)</xref>, which is identical to <xref ref-type="disp-formula" rid="disp-formula6-1468087411424377">equation (5)</xref>, except that the four model parameters are separately defined based on whether the commanded quantity at the present time is higher or lower than the measured quantity at the previous time step. This piecewise model has been used in the current work for both EGR fraction and charge flowrate</p>
+<p>
+<disp-formula id="disp-formula9-1468087411424377">
+<label>(7)</label>
+<mml:math display="block" id="math11-1468087411424377">
+<mml:mrow>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>+</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>+</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>+</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>+</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>&gt;</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>=</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn>1</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn>2</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>2</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn>3</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>+</mml:mo>
+<mml:msub>
+<mml:mrow>
+<mml:mi>β</mml:mi>
+</mml:mrow>
+<mml:mrow>
+<mml:msub>
+<mml:mrow>
+<mml:mn>4</mml:mn>
+</mml:mrow>
+<mml:mrow>
+<mml:mo>−</mml:mo>
+</mml:mrow>
+</mml:msub>
+</mml:mrow>
+</mml:msub>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mtext>if</mml:mtext>
+<mml:mspace width="0.25em"/>
+<mml:mi>c</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo stretchy="false">)</mml:mo>
+<mml:mo>&lt;</mml:mo>
+<mml:mi>y</mml:mi>
+<mml:mo stretchy="false">(</mml:mo>
+<mml:mi>t</mml:mi>
+<mml:mo>−</mml:mo>
+<mml:mn>1</mml:mn>
+<mml:mo stretchy="false">)</mml:mo>
+</mml:mrow>
+</mml:math>
+<graphic alternate-form-of="disp-formula9-1468087411424377" xlink:href="10.1177_1468087411424377-eq9.tif"/>
+</disp-formula>
+</p>
+<p>Two important features of this linear second-order model should be mentioned. (a) Linear behaviour is merely an approximation made more effective by separating model parameters for ramp-ups and ramp-downs. It would be strictly valid only if unique linear equations described each engine operating condition. (b) Second-order behaviour was observed for both the EGR loop and the fresh air loop and produced better results than a first-order linear model [<xref ref-type="bibr" rid="bibr22-1468087411424377">22</xref>]. The second-order linear model also produced better results than neural network models built and tested for the same purpose [<xref ref-type="bibr" rid="bibr22-1468087411424377">22</xref>], as well as many other empirical approaches, including those that modelled the EGR fraction or charge flowrate at any instant as a function of previous ‘states’ comprising all engine parameter histories [<xref ref-type="bibr" rid="bibr22-1468087411424377">22</xref>].</p>
+</sec>
+<sec id="section8-1468087411424377">
+<title>3.2 Results</title>
+<p><xref ref-type="table" rid="table6-1468087411424377">Table 6</xref> reports model accuracy for emission and torque models with dynamic constraint model predictions of charge flowrate and EGR fraction used as model inputs (rather than ECM estimates) over the same 13 FTP test cycles shown in <xref ref-type="table" rid="table4-1468087411424377">Tables 4</xref> and <xref ref-type="table" rid="table5-1468087411424377">5</xref>. Torque models are relatively insensitive to measured or predicted air-handling, so the results have been shown just once in <xref ref-type="table" rid="table6-1468087411424377">Table 6</xref> and the following discussion pertains to the emission predictions. The average per cent standard deviation is seen to deteriorate somewhat, mainly because of the failure of the dynamic constraint models to predict low EGR fractions and low charge flowrates accurately [<xref ref-type="bibr" rid="bibr22-1468087411424377">22</xref>], see <xref ref-type="fig" rid="fig11-1468087411424377">Fig. 11</xref> for example. Predictions do not change qualitatively. Based on these results, it can be expected that cumulative PM, NO<sub><italic>x</italic></sub>, and torque would be underpredicted by 12 per cent, 14 per cent, and 3 per cent, respectively, during the optimization process.</p>
+<fig id="fig11-1468087411424377" position="float">
+<label>Fig. 11</label>
+<caption>
+<p>An example to illustrate the distinction between commanded, measured (ECM estimate), and predicted EGR fraction. Modelling the spike correctly requires the accurate prediction of EGR fractions at near-zero levels. The EGR fraction predictions at very low levels are adversely affected by the least-squares estimation of model coefficients from the measured EGR data, i.e. parameters are biased towards ‘fitting’ higher fractions better.</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig11.tif"/>
+</fig>
+<p>This does not mean that PM predictions are better than NO<sub><italic>x</italic></sub> predictions; point-by-point, they are significantly worse, as indicated by the mean per cent standard deviations of 1.09 and 0.68, respectively, which correspond to average R<sup>2</sup> values of 0.44 and 0.73, respectively. These numbers are poor relative to steady-state models for the reasons described in section 2; using predicted air-handling instead of ECM estimates in the models causes only a small decline. Not using dynamic constraints, however, either by using commanded charge flow/EGR fraction as a model parameter or by building emission models based on commanded charge flow/EGR fraction causes a significant deterioration in the results [<xref ref-type="bibr" rid="bibr22-1468087411424377">22</xref>].</p>
+</sec>
+<sec id="section9-1468087411424377">
+<title>3.3 Limitations</title>
+<p>The model used in the current work depends on the controller gains. The EGR fraction model based on <xref ref-type="disp-formula" rid="disp-formula9-1468087411424377">equation (7)</xref>, for example, represents the entire air-handling system, including the EGR cooler, valve, and turbocharger. The EGR fraction controls are also part of the system, and the model parameters depend on the controller gains, see <xref ref-type="disp-formula" rid="disp-formula6-1468087411424377">equation (5)</xref>. Hence, the optimization results are particular to the control calibration(s) used to generate the data. Controller calibration often changes with base table calibration, so any time an adjustment is made, the dynamic constraint models need to be retrained. An attractive alternative to the extraction of parameters from real data are the estimation of parameters with one-dimensional modelling using commercial packages like GT-Power. The other area that requires improvement is the coupling of the currently uncoupled charge flowrate and EGR fraction models, or at least the detection of infeasible EGR fraction–charge flowrate combinations. The authors have previously detected steady-state infeasible combinations by using pressure predictions across the EGR valve to predict the vena-contracta area using integral momentum and Bernoulli’s equations [<xref ref-type="bibr" rid="bibr23-1468087411424377">23</xref>], but have not extended this approach to transients. Coupling the two models would significantly improve model generalization.</p>
+</sec>
+</sec>
+<sec id="section10-1468087411424377">
+<title>4 Optimization</title>
+<p>The discussion on optimization has been divided into three subsections: optimization scheme, results, and the prevention of extrapolation.</p>
+<sec id="section11-1468087411424377">
+<title>4.1 Optimization scheme</title>
+<sec id="section12-1468087411424377">
+<title>4.1.1 Problem statement</title>
+<p>The manual calibration process achieved 0.514 g/bhp-h BSNO<sub><italic>x</italic></sub> corresponding to 0.160 g/bhp-h BSDPM and 0.462 g/bhp-h BSFC. The calibration effort was directed at reducing BSNO<sub><italic>x</italic></sub> from the 0.75 g/bhp-h level initial steady-state calibration while achieving acceptable torque response without large opacity spikes, both of which were subjective metrics at the discretion of the engineer. The goal of the model-based calibration process was to achieve the same BSNO<sub><italic>x</italic></sub> level with lower BSDPM and BSFC numbers, starting from the initial manual calibration. Maintaining or lowering cumulative BSFC with a fixed fuelling schedule resulted in maintaining or improving torque response. This was a much more efficient approach than trying to specify a minimum torque at each of the 1200 FTP points that greatly increase the size of the optimization problem. Note that the emission numbers mentioned above were based on NO<sub><italic>x</italic></sub> sensor, opacity, commanded fuelling, and dynamometer torque. The constant volume sampling (CVS) numbers were slightly lower, but do not participate in the model-based process. The numbers were also adjusted downwards according to the errors reported in <xref ref-type="table" rid="table6-1468087411424377">Table 6</xref>, e.g. the BSNO<sub><italic>x</italic></sub> target was set at 0.43 g/bhp-h assuming that it would be underpredicted by 14 per cent. Optimized emission numbers subsequently reported have all been adjusted upwards to account for the underpredictions. Note that, unlike the estimation of future accuracy, the emission and torque models used for optimization used FTP cycle data to provide the maximum amount of available information to the models.</p>
+</sec>
+<sec id="section13-1468087411424377">
+<title>4.1.2 Computational framework</title>
+<p><xref ref-type="fig" rid="fig12-1468087411424377">Figure 12</xref> shows the computational framework for the model-based optimization process. The two-dimensional speed-fuelling-based tables (which could be calibrated) or ‘engine maps’ are first transformed into two-dimensional surfaces represented by cubic regression equations. Regression coefficients corresponding to the ECM tables of the four parameters that can be calibrated, including commanded EGR fraction, commanded charge flow, commanded rail pressure, and commanded start of injection, are parsed into a single vector and sent to the search algorithm. The widely used gradient-based ‘fmincon’ algorithm within MATLAB was chosen as the search algorithm. The search algorithm adjusts each element of the parsed coefficient vector based on the gradient of the objective function and constrained functions with respect to that element. The search algorithm communicates only with the objective and constraint functions that, in turn, communicate with all other subroutines. The objective function unparses the coefficients and converts them into vectors of commanded parameters for the entire FTP cycle. The commanded EGR fraction and charge flowrate vectors are then passed on to the dynamic constraint model subroutine, which returns actually achievable fractions and flows based on previous air-handling history. All six parameter vectors are then passed through code that simulates the engine controller and implements derates according to the control strategy of the engine. Fuelling and EGR fraction are derated based on the estimated fuel–oxygen ratio for smoke mitigation and fast torque response, respectively. A speed-fuelling-based fuel–oxygen limit table (which can be calibrated), not optimized in this work, is used to derate fuelling directly, while the ratio of the commanded to derated fuel is used to derate (future) commanded EGR fraction through another speed-based table that can be calibrated. The derated commanded EGR for the next time step is the feedback signal feeding back into the dynamic constraint model in <xref ref-type="fig" rid="fig12-1468087411424377">Fig. 12</xref>. Current fuelling and future commanded EGR fractions are invariably derated during rapid transients. All of the six parameter vectors, including the derated fuelling, now feed into the emission and torque models. Cumulative cycle emissions, specific fuel consumption, and leverage constraints are then used to calculate objective and constraint function outputs within the objective and constrain function subroutines and sent back to the search algorithm. The entire computational framework has been implemented as a modular group of MATLAB ‘.m’ files. Manually calibrated tables were run through the system to ensure that the simulated controller derates matched the measured data.</p>
+<fig id="fig12-1468087411424377" position="float">
+<label>Fig. 12</label>
+<caption>
+<p>Computation framework for model-based transient optimization</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig12.tif"/>
+</fig>
+</sec>
+<sec id="section14-1468087411424377">
+<title>4.1.3 Search algorithm and computational time</title>
+<p>The four engine maps optimized in the current work include 300 table entries each. Optimizing 1200 parameters simultaneously is quite impossible, hence, the reduction of each table to eight regression coefficients. Optimizing 32 parameters simultaneously is not trivial either, and the dimensionality of the problem makes it prone to get trapped in local minima after a couple of iterations. Multiple starting points were therefore required to escape local minima. As shown in <xref ref-type="fig" rid="fig12-1468087411424377">Fig. 12</xref>, the starting point for each search was a perturbation of the initial calibration. Each table entry was perturbed by a random number varying (randomly again) from ± 0–25 per cent of its original value. The coefficients fitting the perturbed table were sent to the search algorithm. On average, it took about 10 starting points to find a solution superior to the manual calibration results in terms of emissions as well as torque response (specific fuel consumption). Multiple starting points were therefore indispensible with a gradient-based search. Evolutionary search algorithms were not attempted.</p>
+<p>Even though all models are empirical, computational time can be significant because of the size of the optimization problem and because the dynamic constraint model predictions at each point use the predictions at previous points, i.e. unlike emission models where the entire parameter vectors of the FTP cycle can be processed into corresponding emissions, the dynamic constraint models predict each point sequentially. Most of the computational time is spent calculating gradients for each of the 32 coefficients being optimized. Significant time savings can be achieved by avoiding repeat calculations that remain unchanged during gradient estimation. For example, all statistical leverage computations were performed only once at the start of every iteration and then entirely skipped during gradient estimation because leverage numbers cannot change with the small change in coefficient values required for determining gradients. Additionally, the leverage was computed for only one in five points. Furthermore, for each leverage calculation, a random sample of 5000 training data points was used to represent the much larger training dataset. This resulted in significant time saving because the calculation involves training data matrix inversion; the calculation itself was found to be insensitive to further increases in sample size. Computational time for each search was of the order of 8 min on a standard PC with 3.32 GHz CPU speed and 3.25 GB RAM completely dedicated to the task.</p>
+</sec>
+</sec>
+<sec id="section15-1468087411424377">
+<title>4.2 Optimization results</title>
+<p><xref ref-type="fig" rid="fig13-1468087411424377">Figure 13</xref> shows selected manual calibration results across the calibration spectrum, with the final calibration repeat runs producing 0.51g/bhp-h BSNO<sub><italic>x</italic></sub>. It is seen that the fuel consumption and PM penalties are rather steep at low NO<sub><italic>x</italic></sub> levels. The model-based optimization started from 868 random starting points and yielded 83 solutions that had lower emissions and fuel consumption. <xref ref-type="fig" rid="fig14-1468087411424377">Figure 14</xref> shows these model-based optimums. It is seen that the improvement relative to the manual solution displays a similar tradeoff, e.g. the solution that produces the lowest BSDPM relative to the manual solution also produces the least improvement in BSFC and vice versa. The best BSFC and the best BSDPM solutions are the two extremes of this tradeoff, and are marked in <xref ref-type="fig" rid="fig14-1468087411424377">Fig. 14</xref> and shown in <xref ref-type="table" rid="table7-1468087411424377">Table 7</xref>. The common strategy seen in all of the model-based optimums is described using the best BSFC solution for illustration purposes. Note that this strategy is a result of numerical optimization. <xref ref-type="fig" rid="fig15-1468087411424377">Figure 15</xref> compares the model-based best BSFC solution to the final manual calibration over the entire FTP cycle. The emission spikes are greatly reduced; the model-based cumulative numbers of <xref ref-type="table" rid="table7-1468087411424377">Table 7</xref> do not reflect this because they have been adjusted upwards according to the expected underpredictions reported in <xref ref-type="table" rid="table6-1468087411424377">Table 6</xref>. The circled spikes are representative and have been analysed in <xref ref-type="fig" rid="fig16-1468087411424377">Figs 16</xref> to <xref ref-type="fig" rid="fig18-1468087411424377">18</xref>. <xref ref-type="fig" rid="fig16-1468087411424377">Figure 16</xref> shows emissions, torque, and fuelling over this region spanning a 10 s period during which both engine speed and load rise sharply. The throttle position and commanded fuelling are identical for both model and manual solutions, but the fuel is derated differently depending on the in-cylinder fuel–oxygen ratio and its limit of calibration. It is necessary to understand the sequence of events occurring with the manual solution in order to understand the model-based strategy. Based on the ratio of commanded to derated fuel, the controller derates the EGR fraction at approximately 945 and 947.5 s, see <xref ref-type="fig" rid="fig17-1468087411424377">Fig. 17</xref>, in order to increase boost so that derated fuelling can be increased and rapid torque response is achieved. These two EGR derates cause the two NO<sub><italic>x</italic></sub> spikes of <xref ref-type="fig" rid="fig16-1468087411424377">Fig. 16</xref>. The fuel–oxygen ratio increases between the two EGR derates, resulting in the PM spike shown in <xref ref-type="fig" rid="fig18-1468087411424377">Fig. 18</xref>. The increase in the fuel–oxygen ratio is a result of the fresh air flow not keeping up with the rapid increase in fuelling because of ‘turbocharger lag’. The lag is worsened by two factors: (a) the sudden opening of the EGR valve shortly before 947 s as the controller ends the first EGR fraction derate, reducing the enthalpy available to the turbine and (b) the sudden increase in turbocharger nozzle restriction in response to the sudden increase in charge flow command seen shortly after 947 s in <xref ref-type="fig" rid="fig17-1468087411424377">Fig. 17</xref> adversely affects turbocharger efficiency and causes the engine Δ<italic>P</italic> to spike, as shown in <xref ref-type="fig" rid="fig18-1468087411424377">Fig. 18</xref>. Recent work by Brahma has shown that the fuel–oxygen ratio estimated from ECM charge flow and EGR fraction is underestimated during such high Δ<italic>P</italic> events [<xref ref-type="bibr" rid="bibr21-1468087411424377">21</xref>]; therefore, the real fuel–oxygen ratio for the manual calibration case is even higher than that shown in <xref ref-type="fig" rid="fig18-1468087411424377">Fig. 18</xref>. Compared to the initial manual calibration, however, the final manual calibration is not very different in terms of turbocharger lag, but achieves faster torque response by allowing the fuel to derate at higher fuel–oxygen ratios. The penalty is much higher smoke.</p>
+<fig id="fig13-1468087411424377" position="float">
+<label>Fig. 13</label>
+<caption>
+<p>Spectrum of manual calibrations</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig13.tif"/>
+</fig>
+<fig id="fig14-1468087411424377" position="float">
+<label>Fig. 14</label>
+<caption>
+<p>Model-based optimized solutions display the same tradeoffs as the manual solutions. Model-based numbers have been adjusted upwards to account for errors shown in Table 9</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig14.tif"/>
+</fig>
+<table-wrap id="table7-1468087411424377" position="float">
+<label>Table 7</label>
+<caption>
+<p>Manual versus model-based optimums. Model-based numbers have been adjusted upwards to account for errors shown in <xref ref-type="table" rid="table6-1468087411424377">Table 6</xref></p>
+</caption>
+<graphic alternate-form-of="table7-1468087411424377" xlink:href="10.1177_1468087411424377-table7.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th/>
+<th align="left">BSNO<sub><italic>x</italic></sub> (g/bhp-h)</th>
+<th align="left">BSDPM (g/bhp-h)</th>
+<th align="left">BSFC (g/bhp-h)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Manual optimum</td>
+<td>0.514</td>
+<td>0.160</td>
+<td>0.462</td>
+</tr>
+<tr>
+<td>Model-based best BSDPM optimum</td>
+<td>0.509</td>
+<td>0.139</td>
+<td>0.462</td>
+</tr>
+<tr>
+<td>Model-based best BSFC optimum</td>
+<td>0.502</td>
+<td>0.154</td>
+<td>0.449</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<fig id="fig15-1468087411424377" position="float">
+<label>Fig. 15</label>
+<caption>
+<p>Model-based solution reduces both PM and NO<sub><italic>x</italic></sub> spikes relative to manual solution</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig15.tif"/>
+</fig>
+<fig id="fig16-1468087411424377" position="float">
+<label>Fig. 16</label>
+<caption>
+<p>Emission, fuelling, speed, and torque over examined segment</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig16.tif"/>
+</fig>
+<fig id="fig17-1468087411424377" position="float">
+<label>Fig. 17</label>
+<caption>
+<p>Injection and air-handling parameters over examined segment</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig17.tif"/>
+</fig>
+<fig id="fig18-1468087411424377" position="float">
+<label>Fig. 18</label>
+<caption>
+<p>The model-based solution avoids fuel–oxygen ratio and exhaust pressure spikes</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig18.tif"/>
+</fig>
+<p>In contrast, the model-based solution does not allow the fuel–oxygen ratio or PM to spike by: (a) primarily derating fuelling at lower fuel–oxygen ratios, (b) not opening the EGR valve suddenly because there is no EGR derate in the first place, and (c) by commanding charge flow to increase earlier. The last two reasons improve fresh air flow. It can be seen from <xref ref-type="fig" rid="fig18-1468087411424377">Fig. 18</xref> that there is no sudden engine Δ<italic>P</italic> spike; this is because of lower exhaust pressure resulting from a less rapid increase in fuelling and a more uniform increase in charge flow. No NO<sub><italic>x</italic></sub> spikes result because there are no EGR fraction derates. How then does the model-based solution achieve torque response without derating EGR fraction? Inspection of <xref ref-type="fig" rid="fig16-1468087411424377">Fig. 16</xref> reveals that the model torque does lag behind the manual torque during the time periods corresponding to the (manual) EGR derates, but over the entire transient from 945 to 951 s, an identical increase in torque is achieved. Unlike the manual torque, which decreases twice at the end of each EGR fraction derate, the model torque increases throughout the period mentioned. The manual fuelling is increased faster than the model solution, but also decreased twice. It is obvious that a linear transition could have achieved the same result with less smoke. Note that the model BSFC is lower because of lower engine Δ<italic>P</italic> and slightly advanced injection timing.</p>
+<p>A few general observations can be made at this point. First, the manual solution is extremely complex because it involves fuelling derates and EGR fraction derates that are interdependent and interact with commanded air-handling quantities. Second, the sheer number of control parameters and possible controller actions makes it unlikely that the manual calibration process can be optimal. Third, the model-based solution is smoother; though fuelling derates are invoked, there are no EGR fraction derates. Fuelling, torque, charge flow, EGR fraction, fuel–oxygen ratio, and engine Δ<italic>P</italic> follow much smoother trajectories. It should be noted that the numerous control parameters triggering fuelling and EGR fraction derates have not been optimized in the model-based solution, but have been left at their default values existing at the beginning of the calibration process, while they have been continually adjusted throughout the manual process to increase torque response. The model-based solution derates fuel earlier, but still achieves the required torque response solely by adjusting the base calibration table. More uniform fuelling and uniform charge flow ramp rates at steady EGR fractions can produce lower emissions and fuel consumption with the same torque response as the manual solution. This suggests that control strategies can be made simpler with fewer add-on adjustments if the base calibration is scientifically optimized.</p>
+<p>The overall differences between manual and model-based solutions are explained statistically by <xref ref-type="fig" rid="fig19-1468087411424377">Figs 19</xref> and <xref ref-type="fig" rid="fig20-1468087411424377">20</xref>. Each plot in <xref ref-type="fig" rid="fig19-1468087411424377">Fig. 19</xref> shows parameters corresponding to all points in the FTP cycle where the manual solution produced high PM above the 95th percentile and where the model-based solution reduced these PM spikes by more than half. It is seen that, statistically speaking, the torque has not been compromised while reducing the PM. The centroid of the fuel–oxygen ratio remains unchanged, while rail pressure has been reduced slightly overall for NO<sub><italic>x</italic></sub> mitigation. Engine Δ<italic>P</italic>, however, is clearly lower for the model-based solution because of lower fuel ramp rates, earlier and more uniform increases in charge flow, and a lower number of EGR fraction derates. The greater EGR fraction is offset by lower but more uniform fuelling to maintain the centroid of fuel–oxygen ratio unchanged, in general. Similarly, <xref ref-type="fig" rid="fig20-1468087411424377">Fig. 20</xref> shows parameters corresponding to all points in the FTP cycle where the manual solution produced high NO<sub><italic>x</italic></sub> rates above the 95th percentile and where the model-based solution reduced these spikes by more than half. It is seen that almost all model data have higher CO2 mass fraction, which is a more accurate descriptor than EGR fraction for statistical analysis. Injection timing is significantly more advanced (unity on the axis is the most advanced BTDC (before top dead centre), while the zero is the most retarded ATDC (after top dead centre)) to help with torque production, even though it increases NO<sub><italic>x</italic></sub>, while rail pressure is somewhat lowered to compensate. Using injection timing for torque production while avoiding EGR derates for the same purpose was observed to be an important part of the overall model-based strategy. However, many exceptions are also observed, such as in the segment shown in <xref ref-type="fig" rid="fig17-1468087411424377">Fig. 17</xref> where the injection timing has been retarded relative to the manual calibration.</p>
+<fig id="fig19-1468087411424377" position="float">
+<label>Fig. 19</label>
+<caption>
+<p>Normalized parameter comparison for points where the model-based solution reduced the PM spikes of the manual solution by more than half. Also shown is the centroid of the data</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig19.tif"/>
+</fig>
+<fig id="fig20-1468087411424377" position="float">
+<label>Fig. 20</label>
+<caption>
+<p>Normalized parameter comparison for points where the model-based solution reduced the NO<sub><italic>x</italic></sub> spikes of the manual solution by more than half. Also shown is the centroid of the data</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig20.tif"/>
+</fig>
+<p><xref ref-type="fig" rid="fig21-1468087411424377">Figure 21</xref> shows how the more uniform model-based strategy is evident from ECM table surfaces and how the uniform strategy is a consequence of optimizing the surface coefficients rather than in individual table elements. Separate from the optimization strategy, the smoother model surface has two practical advantages over the irregular manual surface. A large fraction of the 300 plus table entries during the manual calibration process are not calibrated directly, but are interpolated from neighbouring directly calibrated elements to save test-cell time. Interpolations between optimums are not optimums, particularly if the neighbouring directly calibrated elements were calibrated for different tradeoffs, i.e. a non-flat emission surface. The model-based surface does not have this problem; it is optimum everywhere. The other practical advantage of smoother ECM tables is smoother engine operation and therefore greater expected durability, but this is hard to quantify or even prove.</p>
+<fig id="fig21-1468087411424377" position="float">
+<label>Fig. 21</label>
+<caption>
+<p>Engine maps generated by model-based process (bottom row) are much smoother than manually generated maps wherein each table entry is either generated independently of its neighbours or (non-optimally) interpolated</p>
+</caption>
+<graphic xlink:href="10.1177_1468087411424377-fig21.tif"/>
+</fig>
+</sec>
+<sec id="section16-1468087411424377">
+<title>4.3 The prevention of extrapolation</title>
+<p>The prevention of extrapolation is vital to any empirical model-based optimization process, but is particularly challenging with transient optimization. Statistical leverage and its limit have been used successfully for steady-state calibration [<xref ref-type="bibr" rid="bibr16-1468087411424377">16</xref>], but extending the approach to transient calibration creates two problems. First, the leverage limit is based on the assumption that the parameter space is uncorrelated [<xref ref-type="bibr" rid="bibr16-1468087411424377">16</xref>], so it is rather arbitrary when applied to highly correlated transient data. If extrapolation means exceeding this limit, then extrapolation is inevitable, as evident from the last column of <xref ref-type="table" rid="table4-1468087411424377">Tables 4</xref> and <xref ref-type="table" rid="table5-1468087411424377">5</xref>; rather, the goal should be the prevention of extrapolation beyond the level encountered during model testing. Second, constraining each point renders the optimization problem too large to handle. Therefore, the concept of a relative leverage distribution constraint has been proposed and used in the current work. In this concept, the statistical leverage distribution of the entire cycle during the search is constrained as a group to be identical to the leverage distribution of the starting solution. Constraining the leverage relative to the initial starting point anchors the optimized solution to the centroid of the training data at a multidimensional distance that is not greater than the corresponding distance of the initial solution. The validity of the model-based solution is then based on the premise that if the statistical leverage of the model-based solution is identical or lower than that of the initial FTP cycle, then the prediction error is known and already adjusted for. <xref ref-type="table" rid="table8-1468087411424377">Table 8</xref> illustrates this concept. It was found that constraining the leverage distribution at the upper end was sufficient to ensure that the optimized solution and the initial solution had an identical leverage distribution as well as point-to-point correspondence. Constraints for the 98th and 99th percentiles were used in the current work. The 3 per cent BSFC improvement or the 13 per cent BSDPM reduction effected by the model-based solution (see <xref ref-type="table" rid="table7-1468087411424377">Table 7</xref>) suggests that the approach is conservative. An identical approach was used to prevent the dynamic constraint models from extrapolating. The EGR fraction and charge flow models are also empirical and need leverage constraints. Altogether, eight constraints were used in the optimization constraint function subroutine, with a pair of leverage constraints for NO<sub><italic>x</italic></sub>, PM, EGR fraction, and charge flowrate models each.</p>
+<table-wrap id="table8-1468087411424377" position="float">
+<label>Table 8</label>
+<caption>
+<p>The statistical leverage of the optimized solution is not allowed to exceed that of the starting solution</p>
+</caption>
+<graphic alternate-form-of="table8-1468087411424377" xlink:href="10.1177_1468087411424377-table8.tif"/>
+<table>
+<colgroup>
+<col align="left"/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+<col align="char" char="."/>
+</colgroup>
+<thead>
+<tr>
+<th align="left">Percentile →</th>
+<th align="left">25th</th>
+<th align="left">50th</th>
+<th align="left">75th</th>
+<th align="left">90th</th>
+<th align="left">95th</th>
+<th align="left">99th</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NO<sub><italic>x</italic></sub> initial FTP</td>
+<td>0.0008</td>
+<td>0.0011</td>
+<td>0.0020</td>
+<td>0.0028</td>
+<td>0.0032</td>
+<td>0.0048</td>
+</tr>
+<tr>
+<td>NO<sub><italic>x</italic></sub> optimized FTP</td>
+<td>0.0012</td>
+<td>0.0013</td>
+<td>0.0017</td>
+<td>0.0025</td>
+<td>0.0030</td>
+<td>0.0043</td>
+</tr>
+<tr>
+<td>PM initial FTP</td>
+<td>0.0009</td>
+<td>0.0010</td>
+<td>0.0016</td>
+<td>0.0025</td>
+<td>0.0028</td>
+<td>0.0037</td>
+</tr>
+<tr>
+<td>PM optimized FTP</td>
+<td>0.0010</td>
+<td>0.0012</td>
+<td>0.0014</td>
+<td>0.0020</td>
+<td>0.0024</td>
+<td>0.0031</td>
+</tr>
+</tbody>
+</table>
+</table-wrap>
+<p>It is not realistic to expect the model-based process to replace the manual process; rather, both approaches should complement each other. The ideal workflow sequence would start with snap throttle cycles in a steady-state test cell that can be used to create emission and torque models and therefore optimized base tables. These tables would be the starting point of the manual process with a prescribed cycle in a CVS test cell. Every subsequent manual adjustment and test run on the engine would then be used to create a new model-based solution that would guide future adjustments and data collection. Since the model-based optimization currently requires a few hours on a standard PC, such iterations could very possibly occur daily. The resulting manual solution would be scientific, and the underlying model-based strategy would improve understanding. Beyond base tables, the model-based process could also be extended to optimize control parameters and control strategy. The optimization framework described in the current work was constructed long after the manual calibration process was undertaken, hence, this ideal workflow sequence could not be tested in practice and direct confirmation of the model-based solution on an engine could not be obtained.</p>
+</sec>
+</sec>
+<sec id="section17-1468087411424377" sec-type="conclusions">
+<title>5 Conclusions</title>
+<p>A model-based transient calibration methodology has been developed in the current and companion work [<xref ref-type="bibr" rid="bibr1-1468087411424377">1</xref>] addressing modelling/optimization and data acquisition/processing, respectively. The following conclusions summarize the main conclusions of the current work. They are particular to empirical models and based on the recommendations for training data made in the companion work.</p>
+<list id="list3-1468087411424377" list-type="order">
+<list-item><p>A single global regression equation was found to be more accurate and robust than more powerful methods, such as localized regression and neural networks, at predicting transient emissions. Predictions from global regression models, particularly emission spike events, were seen to depend on the calibrations used to generate training data.</p></list-item>
+<list-item><p>Inaccurate ECM estimation of air-handling parameters during transients and the correlated nature of transient data create numerous opportunities for powerful empirical models to create local correlations between emission spikes and non-causative parametric variation. These correlations adversely affect model predictions when tested on data generated from different calibrations than the training data.</p></list-item>
+<list-item><p>Transient air-handling systems were modelled as linear second-order ‘dynamic constraint models’ that translated ECM commanded charge flowrate and EGR fraction to actually achieved quantities. These models were found to be essential for the optimization to be transient rather than quasi-static. The expected error for the FTP cycle cumulative PM and NO<sub><italic>x</italic></sub> mass was −12 per cent and −14 per cent when such translated air-handling parameters were used as inputs to the emission models.</p></list-item>
+<list-item><p>Three-dimensional table surfaces representing ECM base tables (which can be calibrated) were translated into commands over the entire FTP cycle, which then fed into emission and torque models after being translated in actually achieved quantities by dynamic constraint models and derated by the control strategy. Parameters of these surfaces were optimized to produce a model-based solution that was superior to the manual solution both in terms of emissions and fuel consumption after adjusting for modelling errors, at the same level of torque response.</p></list-item>
+<list-item><p>The model-based strategy was simpler than the manual strategy. Relative to the manual solution, transient NO<sub><italic>x</italic></sub> spikes were significantly reduced by not employing EGR derates to increase torque response. Fuelling during transients was derated earlier relative to the manual solution such that fuel–oxygen ratios were uniformly constrained throughout the transient, even without EGR fraction derates, and this reduced PM spikes significantly.</p></list-item>
+<list-item><p>The commanded fuelling was identical for both manual and model-based solutions, but was derated differently. For the model-based solution, the increase in fuelling during transients was more uniform and monotonically increasing unlike the manual solution, which increased fuelling at a faster rate but also decreased it at the end of each EGR derate. The model-based torque response was therefore as fast as the manual solution over transient segments, but not at every point within each segment.</p></list-item>
+<list-item><p>The model-based solution could achieve lower fuel consumption primarily by avoiding engine Δ<italic>P</italic> spikes (lower pump work) by increasing fuelling and charge flow more uniformly; this also helped reduce PM spikes.</p></list-item>
+<list-item><p>In the absence of a valid and practical statistical leverage limit for transient data, a ‘relative leverage distribution constraint’ was used to prevent the search algorithm from extrapolating any more than the starting solution. Multiple starting points with random perturbations were used with gradient search to allow the solution to avoid local minima. Only about 10 per cent of starting points could improve upon the manual solution.</p></list-item>
+<list-item><p>The best BSFC solution showed a 3 per cent improvement and the best BSDPM solution showed a 13 per cent improvement over the manual solution. These improvements are modest, but can possibly be improved upon if the model-based process is used iteratively with the manual process by guiding data acquisition and by providing a new optimized calibration at the start of every test run.</p></list-item>
+</list>
+</sec>
+</body>
+<back>
+<fn-group>
+<fn fn-type="financial-disclosure">
+<p>This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.</p>
+</fn>
+</fn-group>
+<ref-list>
+<title>References</title>
+<ref id="bibr1-1468087411424377">
+<label>1</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Brahma</surname><given-names>I.</given-names></name>
+<name><surname>Chi</surname><given-names>J. N.</given-names></name>
+</person-group> <article-title>Development of a model-based transient calibration process for diesel engine electronic control module tables. Part 1: data requirements, processing and analysis</article-title>. <source>Int. J. Engine Res.</source>, <comment>in press</comment>.</citation>
+</ref>
+<ref id="bibr2-1468087411424377">
+<label>2</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Galindo</surname><given-names>J.</given-names></name>
+<name><surname>Bermudez</surname><given-names>V.</given-names></name>
+<name><surname>Serrano</surname><given-names>J. R.</given-names></name>
+<name><surname>Lopez</surname><given-names>J. J.</given-names></name>
+</person-group> <article-title>Cycle to cycle diesel combustion characterization during engine transient operation</article-title>. <comment>SAE paper 2001-01-3262</comment>, <year>2001</year>.</citation>
+</ref>
+<ref id="bibr3-1468087411424377">
+<label>3</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Tauzia</surname><given-names>X.</given-names></name>
+<name><surname>Chesse</surname><given-names>P.</given-names></name>
+<name><surname>Hetet</surname><given-names>J.-F.</given-names></name>
+<name><surname>Thouvenel</surname><given-names>N.</given-names></name>
+</person-group> <article-title>Measurement and simulation of instantaneous emissions of a heavy truck diesel engine during transients</article-title>. <source>J. Eng. Gas Turbines Power</source>, <year>2008</year>, <volume>130</volume>, <comment>012807</comment>.</citation>
+</ref>
+<ref id="bibr4-1468087411424377">
+<label>4</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Benz</surname><given-names>M.</given-names></name>
+<name><surname>Hehn</surname><given-names>M.</given-names></name>
+<name><surname>Onder</surname><given-names>C. H.</given-names></name>
+<name><surname>Guzzella</surname><given-names>L.</given-names></name>
+</person-group> <article-title>Model-based actuator trajectories optimization for a diesel engine using direct method</article-title>. <source>J. Eng. Gas Turbines Power</source>, <year>2011</year>, <volume>133</volume>, <comment>032806</comment>.</citation>
+</ref>
+<ref id="bibr5-1468087411424377">
+<label>5</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Atkinson</surname><given-names>C. M.</given-names></name>
+<name><surname>Allain</surname><given-names>M.</given-names></name>
+<name><surname>Zhang</surname><given-names>H.</given-names></name>
+</person-group> <article-title>Using model-based rapid transient calibration to reduce fuel consumption and emissions in diesel engines</article-title>. <comment>SAE paper 2008-01-1365</comment>, <year>2008</year>.</citation>
+</ref>
+<ref id="bibr6-1468087411424377">
+<label>6</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Atkinson</surname><given-names>C. M.</given-names></name>
+<name><surname>Mott</surname><given-names>G.</given-names></name>
+</person-group> <article-title>Dynamic model-based calibration optimization: an introduction and application to diesel engines</article-title>. <comment>SAE paper 2005-01-0026</comment>, <year>2005</year>.</citation>
+</ref>
+<ref id="bibr7-1468087411424377">
+<label>7</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Brahma</surname><given-names>I.</given-names></name>
+<name><surname>Foster</surname><given-names>D. E.</given-names></name>
+<name><surname>Rutland</surname><given-names>C. J.</given-names></name>
+<name><surname>He</surname><given-names>Y.</given-names></name>
+</person-group> <article-title>A new approach to systems level soot modelling</article-title>. <comment>SAE paper 2005-01-1122</comment>, <year>2005</year>.</citation>
+</ref>
+<ref id="bibr8-1468087411424377">
+<label>8</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Poloni</surname><given-names>T.</given-names></name>
+<name><surname>Johansen</surname><given-names>T. A.</given-names></name>
+<name><surname>Rohal’-llkiz</surname><given-names>B.</given-names></name>
+</person-group> <article-title>Modeling of air–fuel ratio dynamics of gasoline combustion engine with ARX network</article-title>. <source>J. Dyn. Sys., Measure. Contr.</source>, <year>2008</year>, <volume>130</volume>, <comment>061009</comment>.</citation>
+</ref>
+<ref id="bibr9-1468087411424377">
+<label>9</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Lee</surname><given-names>T.</given-names></name>
+<name><surname>Reitz</surname><given-names>R. D.</given-names></name>
+</person-group> <article-title>Response surface method optimization of a high-speed direct-injection diesel engine equipped with a common rail injection system</article-title>. <source>J. Eng. Gas Turbines Power</source>, <year>2003</year>, <volume>125</volume>, <fpage>541</fpage>–<lpage>546</lpage>.</citation>
+</ref>
+<ref id="bibr10-1468087411424377">
+<label>10</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Liu</surname><given-names>Y.</given-names></name>
+<name><surname>Reitz</surname><given-names>R. D.</given-names></name>
+<name><surname>Lu</surname><given-names>F.</given-names></name>
+</person-group> <article-title>Development and application of a non-gradient step-controlled search algorithm for engine combustion optimization</article-title>. <comment>SAE paper 2006-01-0239</comment>, <year>2006</year>.</citation>
+</ref>
+<ref id="bibr11-1468087411424377">
+<label>11</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Brahma</surname><given-names>I.</given-names></name>
+<name><surname>Rutland</surname><given-names>C. J.</given-names></name>
+</person-group> <article-title>Optimization of diesel engine operating parameters using neural networks</article-title>. <comment>SAE paper 2003-01-3228</comment>, <year>2003</year>.</citation>
+</ref>
+<ref id="bibr12-1468087411424377">
+<label>12</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Malikopoulos</surname><given-names>A. A.</given-names></name>
+<name><surname>Assanis</surname><given-names>D. N.</given-names></name>
+<name><surname>Papalambros</surname><given-names>P. Y.</given-names></name>
+</person-group> <article-title>Optimal engine calibration for individual driving styles</article-title>. <comment>SAE paper 2008-01-1367</comment>, <year>2008</year>.</citation>
+</ref>
+<ref id="bibr13-1468087411424377">
+<label>13</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Malikopoulos</surname><given-names>A. A.</given-names></name>
+<name><surname>Assanis</surname><given-names>D. N.</given-names></name>
+<name><surname>Papalambros</surname><given-names>P. Y.</given-names></name>
+</person-group> <article-title>Real-time self-learning optimization of diesel engine calibration</article-title>. <source>J. Eng. Gas Turbines Power</source>, <year>2009</year>, <volume>131</volume>, <comment>022803</comment>.</citation>
+</ref>
+<ref id="bibr14-1468087411424377">
+<label>14</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Castagna</surname><given-names>E.</given-names></name>
+<name><surname>Cottrell</surname><given-names>J.</given-names></name>
+<name><surname>Fino</surname><given-names>D.</given-names></name>
+<name><surname>Saracco</surname><given-names>G.</given-names></name>
+</person-group> <article-title>Combined steady state and transient optimization for dynamic smoke reduction on heavy duty engine (TIER3 applications)</article-title>. <comment>SAE paper 2007-24-0055</comment>, <year>2007</year>.</citation>
+</ref>
+<ref id="bibr15-1468087411424377">
+<label>15</label>
+<citation citation-type="book">
+<person-group person-group-type="author">
+<name><surname>Draper</surname><given-names>N. R.</given-names></name>
+<name><surname>Smith</surname><given-names>H.</given-names></name>
+</person-group> <source>Applied regression analysis</source>, <year>1981</year> (<publisher-name>John Wiley &amp; Sons</publisher-name>, <publisher-loc>New York</publisher-loc>).</citation>
+</ref>
+<ref id="bibr16-1468087411424377">
+<label>16</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Brahma</surname><given-names>I.</given-names></name>
+<name><surname>Sharp</surname><given-names>M. C.</given-names></name>
+<name><surname>Richter</surname><given-names>I. B.</given-names></name>
+<name><surname>Frazier</surname><given-names>T. R.</given-names></name>
+</person-group> <article-title>Development of the nearest neighbor multivariate localized regression modeling technique for steady state engine calibration and comparison with neural networks and global regression</article-title>. <source>Int. J. Engine Res.</source>, <year>2008</year>, <volume>9</volume>(<issue>4</issue>), <fpage>297</fpage>–<lpage>323</lpage>.</citation>
+</ref>
+<ref id="bibr17-1468087411424377">
+<label>17</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Brahma</surname><given-names>I.</given-names></name>
+<name><surname>Sharp</surname><given-names>M. C.</given-names></name>
+<name><surname>Frazier</surname><given-names>T. R.</given-names></name>
+</person-group> <article-title>Empirical modeling of transient emissions and transient response for transient optimization</article-title>. <source>Int. J. Engines</source>, <year>2009</year>, <volume>2</volume>, <fpage>1433</fpage>–<lpage>1443</lpage>.</citation>
+</ref>
+<ref id="bibr18-1468087411424377">
+<label>18</label>
+<citation citation-type="other">
+<person-group person-group-type="author">
+<name><surname>Brahma</surname><given-names>I.</given-names></name>
+<name><surname>Sharp</surname><given-names>M. C.</given-names></name>
+<name><surname>Frazier</surname><given-names>T. R.</given-names></name>
+</person-group> <article-title>Estimation of engine torque from a first law based model</article-title>. <comment>SAE paper 2008-01-1014</comment>, <year>2008</year>.</citation>
+</ref>
+<ref id="bibr19-1468087411424377">
+<label>19</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Wang</surname><given-names>L.</given-names></name>
+<name><surname>Quek</surname><given-names>H. C.</given-names></name>
+<name><surname>Tee</surname><given-names>K. H.</given-names></name>
+<name><surname>Zhou</surname><given-names>N.</given-names></name>
+</person-group> <article-title>Optimal size of a feedforward neural network: how much does it matter?</article-title> In <conf-name>Autonomic and autonomous systems and international conference on networking and services, ICAS-ICNS 2005</conf-name>, <conf-date>23–28 October 2005</conf-date>, pp. <fpage>69</fpage>–<lpage>69</lpage>.</citation>
+</ref>
+<ref id="bibr20-1468087411424377">
+<label>20</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>He</surname><given-names>Y.</given-names></name>
+<name><surname>Rutland</surname><given-names>C. J.</given-names></name>
+</person-group> <article-title>Application of artificial neural networks in engine modelling</article-title>. <source>Int. J. Engine Res.</source>, <year>2004</year>, <volume>5</volume>(<issue>4</issue>), <fpage>281</fpage>–<lpage>296</lpage>.</citation>
+</ref>
+<ref id="bibr21-1468087411424377">
+<label>21</label>
+<citation citation-type="confproc">
+<person-group person-group-type="author">
+<name><surname>Brahma</surname><given-names>I.</given-names></name>
+</person-group> <article-title>An investigation into the causes of transient particulate matter spikes in production diesel engines</article-title>. In <conf-name>Proceedings of the ASME 2011, Internal combustion engine division fall technical conference, ICEF 2011</conf-name>, <conf-loc>Morgantown, West Virginia, USA</conf-loc>, <conf-date>2–5 October 2011</conf-date>.</citation>
+</ref>
+<ref id="bibr22-1468087411424377">
+<label>22</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Brahma</surname><given-names>I.</given-names></name>
+</person-group> <article-title>Development of dynamic constraint models for a model based transient calibration process</article-title>. <source>Int. J. Engines</source>, <year>2011</year>, <volume>4</volume>(<issue>1</issue>), <fpage>828</fpage>–<lpage>836</lpage>. DOI: 10.4271/2011-01-0691<pub-id pub-id-type="doi">10.4271/2011-01-0691</pub-id>.</citation>
+</ref>
+<ref id="bibr23-1468087411424377">
+<label>23</label>
+<citation citation-type="journal">
+<person-group person-group-type="author">
+<name><surname>Chi</surname><given-names>J. N.</given-names></name>
+<name><surname>Mulloy</surname><given-names>J. M.</given-names></name>
+<name><surname>Popuri</surname><given-names>S. S.</given-names></name>
+<name><surname>Brahma</surname><given-names>I.</given-names></name>
+</person-group> <article-title>Model-based transient air handling controller for diesel engine applications</article-title>. <comment>Manuscript in preparation</comment>.</citation>
+</ref>
+</ref-list>
+</back>
+</article>
